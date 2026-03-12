@@ -130,6 +130,11 @@ static void initStatusBarTweak(void) {
         [self showStatusBarSettings];
     }]];
 
+    [alert addAction:[UIAlertAction actionWithTitle:@"Action Button: Flashlight"
+        style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        showAlert(@"Action Button", @"Single click: Toggle flashlight\nDouble click: Magic ✨\nLong press: Original action (Siri, Shortcut, etc.)\n\niPhone 15 Pro+ only (iOS 17)");
+    }]];
+
     [alert addAction:[UIAlertAction actionWithTitle:@"Load .dylib tweak"
         style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         UIDocumentPickerViewController *documentPickerVC = [[UIDocumentPickerViewController alloc]
@@ -252,6 +257,140 @@ static void initStatusBarTweak(void) {
 }
 @end
 
+#pragma mark - Action Button Tweak (iOS 17 - SBRingerHardwareButton)
+
+static BOOL g_actionLongPressActive = NO;
+static id g_lastDownEvent = nil;
+static NSInteger g_clickCount = 0;
+static NSTimeInterval g_firstClickTime = 0;
+static dispatch_source_t g_clickTimer = nil;
+
+static const NSTimeInterval kDoubleClickInterval = 0.22;
+static const NSTimeInterval kSingleClickTimeout = 0.52;
+
+static IMP orig_configureButtonArbiter = NULL;
+static IMP orig_actionButtonDown = NULL;
+static IMP orig_actionButtonUp = NULL;
+static IMP orig_actionButtonLongPress = NULL;
+
+static void toggleFlashlight(void) {
+    Class cls = objc_getClass("SBUIFlashlightController");
+    if (!cls) return;
+    id controller = ((id (*)(id, SEL))objc_msgSend)((id)cls, sel_registerName("sharedInstance"));
+    if (!controller) return;
+    NSUInteger level = ((NSUInteger (*)(id, SEL))objc_msgSend)(controller, sel_registerName("level"));
+    ((void (*)(id, SEL, NSUInteger))objc_msgSend)(controller, sel_registerName("setLevel:"), level > 0 ? 0 : 1);
+}
+
+static void openDoubleClickURL(void) {
+    NSURL *url = [NSURL URLWithString:@"https://www.youtube.com/watch?v=dQw4w9WgXcQ"];
+    ((void (*)(id, SEL, id, id, id))objc_msgSend)(
+        [UIApplication sharedApplication],
+        sel_registerName("openURL:options:completionHandler:"),
+        url, @{}, nil);
+}
+
+static void cancelClickTimer(void) {
+    if (g_clickTimer) {
+        dispatch_source_cancel(g_clickTimer);
+        g_clickTimer = nil;
+    }
+}
+
+static void hook_configureButtonArbiter(id self, SEL _cmd) {
+    ((void (*)(id, SEL))orig_configureButtonArbiter)(self, _cmd);
+    // Disable multi-click detection so buttonUp fires immediately
+    Ivar arbiterIvar = class_getInstanceVariable(object_getClass(self), "_buttonArbiter");
+    if (!arbiterIvar) return;
+    id arbiter = object_getIvar(self, arbiterIvar);
+    if (!arbiter) return;
+    SEL setMaxSel = sel_registerName("setMaximumRepeatedPressCount:");
+    if ([arbiter respondsToSelector:setMaxSel]) {
+        ((void (*)(id, SEL, unsigned long long))objc_msgSend)(arbiter, setMaxSel, 0);
+    }
+}
+
+static void hook_actionButtonDown(id self, SEL _cmd, id event) {
+    g_lastDownEvent = event;
+    // Suppress original — we handle action on button up
+}
+
+static void hook_actionButtonUp(id self, SEL _cmd, id event) {
+    if (g_actionLongPressActive) {
+        g_actionLongPressActive = NO;
+        ((void (*)(id, SEL, id))orig_actionButtonUp)(self, _cmd, event);
+        return;
+    }
+
+    NSTimeInterval now = [[NSProcessInfo processInfo] systemUptime];
+    g_clickCount++;
+
+    if (g_clickCount == 1) {
+        g_firstClickTime = now;
+        cancelClickTimer();
+        // Wait for possible second click
+        g_clickTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_main_queue());
+        dispatch_source_set_timer(g_clickTimer,
+            dispatch_time(DISPATCH_TIME_NOW, (int64_t)(kSingleClickTimeout * NSEC_PER_SEC)), DISPATCH_TIME_FOREVER, 0);
+        dispatch_source_set_event_handler(g_clickTimer, ^{
+            cancelClickTimer();
+            g_clickCount = 0;
+            toggleFlashlight();
+        });
+        dispatch_resume(g_clickTimer);
+    } else if (g_clickCount >= 2) {
+        NSTimeInterval interval = now - g_firstClickTime;
+        cancelClickTimer();
+        g_clickCount = 0;
+        if (interval <= kDoubleClickInterval) {
+            openDoubleClickURL();
+        } else {
+            // Too slow for double click — treat as single click
+            toggleFlashlight();
+        }
+    }
+}
+
+static void hook_actionButtonLongPress(id self, SEL _cmd, id event) {
+    g_actionLongPressActive = YES;
+    cancelClickTimer();
+    g_clickCount = 0;
+    // Pass through to original long press (Siri, Shortcut, etc.)
+    ((void (*)(id, SEL, id))orig_actionButtonDown)(self, _cmd, g_lastDownEvent);
+    ((void (*)(id, SEL, id))orig_actionButtonLongPress)(self, _cmd, event);
+}
+
+static void initActionButtonTweak(void) {
+    Class cls = objc_getClass("SBRingerHardwareButton");
+    if (!cls) return;
+
+    Method m;
+
+    m = class_getInstanceMethod(cls, @selector(_configureButtonArbiter));
+    if (m) {
+        orig_configureButtonArbiter = method_getImplementation(m);
+        method_setImplementation(m, (IMP)hook_configureButtonArbiter);
+    }
+
+    m = class_getInstanceMethod(cls, @selector(performActionsForButtonDown:));
+    if (m) {
+        orig_actionButtonDown = method_getImplementation(m);
+        method_setImplementation(m, (IMP)hook_actionButtonDown);
+    }
+
+    m = class_getInstanceMethod(cls, @selector(performActionsForButtonUp:));
+    if (m) {
+        orig_actionButtonUp = method_getImplementation(m);
+        method_setImplementation(m, (IMP)hook_actionButtonUp);
+    }
+
+    m = class_getInstanceMethod(cls, @selector(performActionsForButtonLongPress:));
+    if (m) {
+        orig_actionButtonLongPress = method_getImplementation(m);
+        method_setImplementation(m, (IMP)hook_actionButtonLongPress);
+    }
+}
+
 #pragma mark - FrontBoard Trust Bypass (AppSync-like)
 
 static IMP orig_trustStateForApplication = NULL;
@@ -314,6 +453,8 @@ __attribute__((constructor)) static void init() {
     initFrontBoardBypass();
     // Auto-enable status bar tweak on load (works on both iOS 16 and 17)
     initStatusBarTweak();
+    // Action button: single click = flashlight, long press = original (iOS 17)
+    initActionButtonTweak();
     // Add long press gesture to status bar
     [SpringBoard.sharedApplication initStatusBarGesture];
     
