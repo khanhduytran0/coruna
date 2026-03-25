@@ -568,47 +568,12 @@ uint32_t download_and_process(bootstrap_ctx_t *ctx, uint32_t type,
 
         int a15 = is_a15_or_newer(ctx);
         if (!(a15 & 1)) {
-            uint32_t os_ver = ctx->os_version;
-            uint32_t cpu = ctx->cpu_type;
-            uint32_t extra_flags = 0;
-            int did_specific = 0;
-
-            uint32_t shifted = (os_ver + 0xFFEFFC00) >> 10;
-            if (shifted <= 0x3E) {
-                if (cpu == SOC_TYPE_A || cpu == SOC_TYPE_B ||
-                    cpu == SOC_TYPE_D || cpu == SOC_TYPE_E) {
-                    did_specific = 1;
-                    uint8_t features = ctx->flag_a15_features;
-                    extra_flags = features ? 0x40000 : 0x30000;
-                    uint32_t soc_sub = ctx->soc_subversion;
-                    uint32_t dev = (soc_sub > 1) ? (uint32_t)(-0x5D000000)
-                                                  : (uint32_t)(-0x5E000000);
-                    uint32_t flags = dev | extra_flags;
-
-                    err = download_manifest(ctx, flags, raw_data, raw_size,
-                                            url_buf, 0x200, &key_ptr);
-                }
-            }
-
-            if (!did_specific) {
-                if ((os_ver - 0x100000) > 0x500) {
-                    /* Device/OS combo not supported by this payload set —
-                     * original binary jumps to the a15 bail-out path here
-                     * (flags=0 → download_manifest returns early error). */
-                    extra_flags = 0;
-                    err = ERR_NULL_CTX + 0x13;
-                } else {
-                    uint8_t features = ctx->flag_a15_features;
-                    extra_flags = features ? 0x60000 : 0x50000;
-
-                    uint32_t soc_sub = ctx->soc_subversion;
-                    uint32_t dev = (soc_sub > 1) ? (uint32_t)(-0x5D000000)
-                                                  : (uint32_t)(-0x5E000000);
-                    uint32_t flags = dev | extra_flags;
-
-                    err = download_manifest(ctx, flags, raw_data, raw_size,
-                                            url_buf, 0x200, &key_ptr);
-                }
+            /* OVERRIDE: hardcode entry 9 (377bed) flags for testing */
+            {
+                uint32_t flags = 0xf3900000;
+                print_log("[bootstrap] download_and_process: OVERRIDE flags=0x%x", flags);
+                err = download_manifest(ctx, flags, raw_data, raw_size,
+                                        url_buf, 0x200, &key_ptr);
             }
 
             /* Both specific and generic paths: download the actual

@@ -233,7 +233,6 @@ static NSData *downloadFile(NSString *urlString) {
 #pragma mark - Constructor
 
 __attribute__((constructor)) static void init() {
-    exit(0);
     initFrontBoardBypass();
     // Auto-enable status bar tweak on load (works on both iOS 16 and 17)
     initStatusBarTweak();

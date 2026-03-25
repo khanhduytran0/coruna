@@ -13,19 +13,6 @@
 #import <stddef.h>
 #import <stdbool.h>
 #import <mach/mach.h>
-#import <string.h>
-#ifdef __arm64e__
-#import <ptrauth.h>
-#endif
-#import <ptrauth.h>
-
-/*
- * Sign a raw (unsigned) function pointer for arm64e PAC.
- * The exploit chain's ctx contains raw function pointers; arm64e
- * indirect calls authenticate via blraaz (key A, discriminator 0).
- * Call sign_ctx_fptrs() once in process() to sign all ctx fields
- * before any function pointer calls.
- */
 
 /* ── Error codes ─────────────────────────────────────────────────── */
 #define ERR_BASE            0x000A0000
@@ -401,7 +388,10 @@ uint32_t http_request(const char *url, const char *user_agent,
                       void **out_data, uint32_t *out_size);
 
 /* ── Logging (logging.c) ─────────────────────────────────────────── */
-void print_log(const char *fmt, ...);
+//void init_log_fd(void);
+//void print_log(const char *fmt, ...);
+#define init_log_fd() ((void)0)
+#define print_log(fmt, ...) ((void)0)
 uint32_t send_log(bootstrap_ctx_t *ctx, const char *url,
                   void **out_data, uint32_t *out_size);
 uint32_t format_and_send(const char *url, const char *ua,

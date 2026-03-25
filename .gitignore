@@ -1,10 +1,10 @@
 .DS_Store
 *.o
 .theos
+tmp/
 
 # IDA files
 *.i64
-*.id0
-*.id1
+*.id*
 *.nam
 *.til

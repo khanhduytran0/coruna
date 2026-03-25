@@ -13,14 +13,34 @@
 
 extern int thread_switch(mach_port_name_t, int, mach_msg_timeout_t);
 
-void print_log(const char *fmt, ...)
-{
-    va_list ap;
-    va_start(ap, fmt);
-    vdprintf(1, fmt, ap);
-    dprintf(1, "\n");
-    va_end(ap);
-}
+static int _log_fd = -1;
+
+//void init_log_fd(void)
+//{
+//    if (_log_fd >= 0)
+//        return;
+//    char path[1024];
+//    const char *tmp = getenv("TMPDIR");
+//    if (!tmp) tmp = "/tmp";
+//    snprintf(path, sizeof(path), "%s/bootstrap.log", tmp);
+//    _log_fd = open(path, O_WRONLY | O_CREAT | O_APPEND, 0644);
+//}
+//
+//void print_log(const char *fmt, ...)
+//{
+//    int fd = (_log_fd >= 0) ? _log_fd : 1;
+//    char buf[1024];
+//    va_list ap;
+//    va_start(ap, fmt);
+//    int len = vsnprintf(buf, sizeof(buf), fmt, ap);
+//    va_end(ap);
+//    if (len > 0) {
+//        if (len >= (int)sizeof(buf))
+//            len = (int)sizeof(buf) - 1;
+//        buf[len] = '\n';
+//        write(fd, buf, len + 1);
+//    }
+//}
 
 /* ── format_string (0x9a34) ────────────────────────────────────── */
 

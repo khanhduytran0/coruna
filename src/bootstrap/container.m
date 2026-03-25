@@ -318,10 +318,12 @@ uint32_t load_module(bootstrap_ctx_t *ctx, uint32_t type, void **out)
         print_log("[bootstrap] load_module: dlsym _driver FAIL err=0x%x", err);
         goto fail;
     }
+    print_log("[bootstrap] load_module: dlsym OK result=%p", dlsym_result);
 
     handle->vtable = NULL;
-    typedef uint32_t (*driver_fn_t)(void *, module_vtable_t **);
-    err = SIGN_FPTR(driver_fn_t, dlsym_result)(decrypted, &handle->vtable);
+    typedef uint32_t (*driver_fn_t)(module_vtable_t **);
+    err = SIGN_FPTR(driver_fn_t, dlsym_result)(&handle->vtable);
+    print_log("[bootstrap] load_module: _driver returned err=0x%x vtable=%p", err, handle->vtable);
     if (err)
         goto fail;
 
@@ -331,6 +333,7 @@ uint32_t load_module(bootstrap_ctx_t *ctx, uint32_t type, void **out)
 
     sign_vtable_fptrs(vt);
 
+    print_log("[bootstrap] load_module: vtable version=%d num_funcs=%d", vt->version, vt->num_funcs);
     if (vt->version != 2)
         goto fail;
     if (vt->num_funcs < 2)

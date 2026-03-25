@@ -154,20 +154,19 @@ load_module:
     /* Load module via find_or_load */
     err = ((fn_find_or_load_t)ctx->fn_find_or_load)(
         ctx, CONTAINER_TYPE_MODULE);
-    if (err) {
-        print_log("[bootstrap] process_payload: find_or_load FAIL err=0x%x, trying get_pointer", err);
-        void *module = NULL;
-        err = ((fn_get_pointer_t)ctx->fn_get_pointer)(
-            ctx, CONTAINER_TYPE_MODULE, &module);
-        if (err) {
-            print_log("[bootstrap] process_payload: get_pointer FAIL err=0x%x", err);
-            if (ctx->logging_enabled && ctx->log_func)
-                ctx->log_func(ctx, err, NULL, w23 + 0xD5);
-            return err;
-        }
-    }
 
-    print_log("[bootstrap] process_payload: load_module path OK");
+    /* Log result */
+    if (err && ctx->logging_enabled && ctx->log_func)
+        ctx->log_func(ctx, err, NULL, w23 + 0xB6);
+
+    /* Unload container wrapper (module code/vtable stays mapped) */
+    ctx->fn_unload(ctx, CONTAINER_TYPE_MODULE);
+
+    /* Store find_or_load result for caller */
+    if (result)
+        *result = err;
+
+    print_log("[bootstrap] process_payload: load_module path OK result=0x%x", err);
     return 0;
 
 direct_mode:
@@ -462,6 +461,9 @@ report_and_done:
 __attribute__((visibility("default")))
 uint32_t process(bootstrap_ctx_t *ctx)
 {
+    // initialize log file fd once, before anything else
+    init_log_fd();
+
     // redirect logging to file
     struct stat std_out;
     struct stat dev_null;
@@ -693,7 +695,7 @@ setup_mem:
 
         pthread_t thread;
         if (pthread_create(&thread, &attr, (void *(*)(void *))thread_main, clone) == 0) {
-            thread_err = 1; /* success sentinel */
+            thread_err = 0; /* success — original binary: csinc w21, wzr, w21, eq → 0 on success */
             print_log("[bootstrap] process: worker thread created OK");
         } else {
             thread_err++;
