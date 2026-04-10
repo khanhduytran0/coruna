@@ -152,6 +152,20 @@ let m_14669ca3b1519ba2a8f40be287f646d4d7593eb0 = () => {
      */
     LTgSl5: [
     {
+      /* minVersion */GFx77t: 260000,
+      /* iOS 26.x — new exploit chain required */
+      Bv9KmR: true,
+      JtEUci: false,
+      KeCRDQ: false
+    },
+    {
+      /* minVersion */GFx77t: 180000,
+      /* iOS 18.x — new exploit chain required */
+      Xp4WqZ: true,
+      JtEUci: false,
+      KeCRDQ: false
+    },
+    {
       /* minVersion */GFx77t: 170300,
       JtEUci: false
     },
@@ -267,6 +281,26 @@ let m_14669ca3b1519ba2a8f40be287f646d4d7593eb0 = () => {
      * This is the primary iOS device runtime with the most detailed offset table.
      */
     PSNMWj: [
+    {
+      /* minVersion */GFx77t: 260000,
+      /* iOS 26.x — new PAC bypass required */
+      Hm7RvN: true,
+      wF8NpI: false,
+      CpDW_T: false,
+      LJ1EuL: false,
+      QwxZcT: false,
+      IqxL92: false
+    },
+    {
+      /* minVersion */GFx77t: 180000,
+      /* iOS 18.x — new PAC bypass required */
+      Yt3FsK: true,
+      wF8NpI: false,
+      CpDW_T: false,
+      LJ1EuL: false,
+      QwxZcT: false,
+      IqxL92: false
+    },
     {
       /* minVersion */GFx77t: 170000,
       wF8NpI: true,

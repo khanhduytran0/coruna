@@ -1,4 +1,4 @@
-TARGET := iphone:clang:latest:14.0
+TARGET := iphone:clang:latest:15.0
 ARCHS = arm64 arm64e
 FINALPACKAGE = 1
 STRIP = 0
@@ -10,6 +10,7 @@ LIBRARY_NAME = SpringBoardTweak
 
 SpringBoardTweak_FILES = SpringBoardTweak.m
 SpringBoardTweak_CFLAGS = -fobjc-arc
+SpringBoardTweak_LDFLAGS = -undefined dynamic_lookup
 SpringBoardTweak_INSTALL_PATH = /usr/local/lib
 
 include $(THEOS_MAKE_PATH)/library.mk

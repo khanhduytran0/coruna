@@ -175,7 +175,7 @@ coruna-main/
     └── <hash>/                     # Extracted entries per container
         ├── entry0_type0x08.dylib   # Kernel exploit runner -> powerd injector
         ├── entry1_type0x09.dylib   # Kernel exploit <- what jailbreak developers are most interested in
-        ├── entry2_type0x0f.dylib   # powerd implant
+        ├── entry2_type0x0f.dylib   # powerd implant, repurposed for SpringBoard
         ├── entry3_type0x07.bin
         └── ...
 ```

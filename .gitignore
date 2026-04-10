@@ -1,1 +1,13 @@
 .DS_Store
+*.o
+.theos
+
+# IDA files
+*.i64
+*.id0
+*.id1
+*.nam
+*.til
+
+# Decryption script output
+payloads_decrypted/

