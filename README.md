@@ -1,5 +1,8 @@
 # Coruna
 
+> [!CAUTION]
+> This repository hosts captured malicious payloads and is intended for educational and research purposes only. While all C2 URLs have been shut down, the payloads may still contain potentially harmful code.
+
 The leaked exploit toolkit for various iOS versions. Extracted from `https://sadjd.mijieqi[.]cn/group.html`
 
 Partially deobfuscated, symbolicated, and modified to load decrypted payloads by Claude (thanks @34306 for sponsor) and by hand.

@@ -263,7 +263,9 @@ let m_57620206d62079baad0e57e6d9ec93120c0f5247 = () => {
    */
   class Int64 {
     // Wrapper for compatibility with obfuscated modules
-    static ut(t) {return Int64.fromNumber(t);}
+    static ut(t) {
+      return Int64.fromNumber(t);
+    }
     static ot(t) {return Int64.fromBigInt(t);}
     static st(t) {return Int64.fromUnsigned(t);}
     static L(t) {return Int64.fromDouble(t);}
@@ -385,6 +387,11 @@ let m_57620206d62079baad0e57e6d9ec93120c0f5247 = () => {
     dt(t) {
       if (t >= 32) throw new Error("t >= 32");
       return new Int64(this.it >>> t | this.et << 32 - t, this.et >>> t);
+    }
+
+    /** Logical right shift (alias for dt). */
+    rshift(t) {
+      return this.dt(t);
     }
 
     toString() {
@@ -737,9 +744,9 @@ let m_57620206d62079baad0e57e6d9ec93120c0f5247 = () => {
   r.Xt = r.encodeLEB128 = function encodeLEB128(arr, n, value) {
     var byte;
     for (;;) {
-      byte = value.lo % 128; // 1466329413 ^ 1466329541
+      byte = value.it % 128; // 1466329413 ^ 1466329541
       value = value.sub(Int64.fromInt32(byte));
-      if (0 === value.hi && 0 === value.lo) {
+      if (0 === value.et && 0 === value.it) {
 
         // Last byte: no continuation bit
       } else {byte |= 128; // 1416853561 ^ 1416853689 (continuation)
