@@ -55,9 +55,13 @@ typedef uint64_t  _QWORD;
 typedef __int128  _OWORD;
 typedef uint8_t   _UNKNOWN;
 typedef int       _BOOL4;
-typedef __int128  __n128;
+typedef uint64_t  _BOOL8;
+typedef union { __int128 o; uint64_t n128_u64[2]; double n128_f64[2]; } __n128;
 typedef __int128  xmmword;
 typedef char      kernel_version_t[512];
+typedef mach_port_t io_master_t;
+typedef struct _opaque_pthread_t _opaque_pthread_t;
+#define dword_4339C (dword_43390 + 3)
 
 /* ---- IDA calling conventions (no-ops) ---- */
 #define __fastcall
@@ -86,6 +90,7 @@ typedef char      kernel_version_t[512];
 #define DWORD2(x)   (*((uint32_t*)&(x) + 2))
 #define __PAIR64__(h, l) (((uint64_t)(h) << 32) | (uint32_t)(l))
 #define __PAIR32__(h, l) (((uint32_t)(h) << 16) | (uint16_t)(l))
+#define IDA_INT128_C(h, l) (((__int128)(uint64_t)(h) << 64) | (uint64_t)(l))
 #define __CFADD__(a, b)  ((uint64_t)(a) > (uint64_t)(-1) - (uint64_t)(b))
 #define __OFSUB__(a, b)  (((a) ^ (b)) < 0 && ((a) ^ ((a) - (b))) < 0)
 #define __OFADD__(a, b)  (((a) ^ (b)) >= 0 && ((a) ^ ((a) + (b))) < 0)
@@ -98,7 +103,18 @@ typedef char      kernel_version_t[512];
 /* ---- IDA helpers ---- */
 #define __break(x)       __builtin_trap()
 #define bswap32(x)       __builtin_bswap32(x)
-static inline void __chkstk_darwin(void) {}
+static inline __int64 __chkstk_darwin(void) { return 0; }
+static inline __int64 ida_chkstk_darwin(void) { return 0; }
+#define __chkstk_darwin(...) ida_chkstk_darwin()
+#define MEMORY ((volatile _QWORD *)0)
+
+typedef unsigned int atomic_uint;
+typedef unsigned short atomic_ushort;
+typedef unsigned char atomic_uchar;
+#define atomic_load(p) (*(p))
+#define atomic_store(v, p) (*(p) = (v))
+#define atomic_fetch_add(p, v) (*(p) += (v))
+#define atomic_exchange(p, v) __extension__ ({ __typeof__(*(p)) _old = *(p); *(p) = (v); _old; })
 
 /* ---- NEON vector unions (IDA uses .i8[n] / .u8[n] member access) ---- */
 
@@ -117,8 +133,23 @@ typedef mach_port_t host_t;
 #endif
 
 /* ---- Private syscalls ---- */
-int __ulock_wait(uint32_t, void *, uint64_t, uint32_t) __attribute__((weak_import));
-int __ulock_wake(uint32_t, void *, uint64_t) __attribute__((weak_import));
+static inline mach_timespec_t ida_mach_timespec(uint64_t x) {
+    mach_timespec_t t;
+    t.tv_sec = (unsigned int)(x & 0x7FFFFFFFFULL);
+    t.tv_nsec = (clock_res_t)((x >> 35) & 0x1FFFFFFFULL);
+    return t;
+}
+#define IDA_MACH_TIMESPEC(x) ida_mach_timespec((uint64_t)(x))
+static inline void *ida_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset) {
+    (void)addr;
+    (void)len;
+    (void)prot;
+    (void)flags;
+    (void)fd;
+    (void)offset;
+    return (void *)-1;
+}
+#define mmap ida_mmap
 int open_dprotected_np(const char *, int, int, int, ...);
 int fileport_makeport(int fd, mach_port_t *port);
 int fileport_makefd(mach_port_t port);
@@ -155,7 +186,6 @@ static __attribute__((always_inline)) uint64_t _ReadStatusReg(uint32_t reg) {
 }
 
 /* IDA uses __semwait_signal, __memcpy_chk etc. as direct calls */
-extern int __semwait_signal(int, int, int, int, long long, int);
 
 /* struct tags C requires */
 typedef struct IONotificationPort IONotificationPort;
@@ -164,8 +194,7 @@ typedef struct IONotificationPort IONotificationPort;
 extern double dyldVersionNumber;
 
 /* _os_alloc_once */
-struct _os_alloc_once_s { long once; void *ptr; };
-extern struct _os_alloc_once_s _os_alloc_once_table[];
+extern _QWORD _os_alloc_once_table[];
 
 /* IOConnectTrap4/6 — marked unavailable on iOS in SDK but symbols exist.
    Use syscall wrappers instead of the SDK declarations. */
@@ -179,12 +208,71 @@ static inline kern_return_t _IOConnectTrap6(io_connect_t c, uint32_t i, uintptr_
 #define IOConnectTrap6 _IOConnectTrap6
 
 /* NEON union additions for i16/i32/i64/u32/u64 access */
-typedef union { int8_t i8[16]; uint8_t u8[16]; int16_t i16[8]; int32_t i32[4]; int64_t i64[2]; uint32_t u32[4]; uint64_t u64[2]; int8x16_t v; int64x2_t v64; } ida_int8x16_t;
-typedef union { int8_t i8[8]; uint8_t u8[8]; int16_t i16[4]; int32_t i32[2]; uint32_t u32[2]; uint8x8_t v; int8x8_t vs; int32x2_t v32; } ida_uint8x8_t;
+typedef union { int8_t i8[16]; uint8_t u8[16]; int16_t i16[8]; int32_t i32[4]; int64_t i64[2]; uint32_t u32[4]; uint64_t u64[2]; uint64_t q; __int128 o; int8x16_t v; int64x2_t v64; } ida_int8x16_t;
+typedef union { int8_t i8[8]; uint8_t u8[8]; int16_t i16[4]; int32_t i32[2]; uint32_t u32[2]; uint64_t q; uint8x8_t v; int8x8_t vs; int32x2_t v32; } ida_uint8x8_t;
 
 
 /* Additional NEON union types for IDA decompiler output */
-typedef union { int8_t i8[8]; uint8_t u8[8]; int16_t i16[4]; int32_t i32[2]; uint32_t u32[2]; uint64_t u64[1]; int64_t i64[1]; int8x8_t vs; } ida_int8x8_t;
-typedef union { int32_t i32[2]; uint32_t u32[2]; int64_t i64[1]; uint64_t u64[1]; int32x2_t v; } ida_int32x2_t;
-typedef union { int64_t i64[2]; uint64_t u64[2]; int32_t i32[4]; uint32_t u32[4]; int16_t i16[8]; int8_t i8[16]; uint8_t u8[16]; int64x2_t v64; int8x16_t v; } ida_int64x2_t;
+typedef union { int8_t i8[8]; uint8_t u8[8]; int16_t i16[4]; int32_t i32[2]; uint32_t u32[2]; uint64_t u64[1]; int64_t i64[1]; uint64_t q; int8x8_t vs; } ida_int8x8_t;
+typedef union { int32_t i32[2]; uint32_t u32[2]; int64_t i64[1]; uint64_t u64[1]; uint64_t q; int32x2_t v; } ida_int32x2_t;
+typedef union { int64_t i64[2]; uint64_t u64[2]; int32_t i32[4]; uint32_t u32[4]; int16_t i16[8]; int8_t i8[16]; uint8_t u8[16]; __int128 o; int64x2_t v64; int8x16_t v; } ida_int64x2_t;
+
+static inline ida_uint8x8_t ida_vcnt_s8(ida_int8x8_t x) {
+    ida_uint8x8_t r;
+    r.v = vcnt_s8(x.vs);
+    return r;
+}
+static inline uint16_t ida_vaddlv_u8(ida_uint8x8_t x) {
+    return vaddlv_u8(x.v);
+}
+static inline ida_int64x2_t ida_vaddq_s64(ida_int64x2_t a, ida_int64x2_t b) {
+    ida_int64x2_t r;
+    r.v64 = vaddq_s64(a.v64, b.v64);
+    return r;
+}
+static inline ida_int32x2_t ida_vrev64_s32(ida_int32x2_t x) {
+    ida_int32x2_t r;
+    r.v = vrev64_s32(x.v);
+    return r;
+}
+static inline ida_int32x2_t ida_vdup_n_s32(int32_t x) {
+    ida_int32x2_t r;
+    r.v = vdup_n_s32(x);
+    return r;
+}
+static inline ida_int64x2_t ida_vdupq_n_s64(int64_t x) {
+    ida_int64x2_t r;
+    r.v64 = vdupq_n_s64(x);
+    return r;
+}
+static inline ida_int8x16_t ida_vbslq_s8(ida_int8x16_t mask, ida_int8x16_t a, ida_int8x16_t b) {
+    ida_int8x16_t r;
+    r.v = vbslq_s8(mask.v, a.v, b.v);
+    return r;
+}
+static inline ida_int8x16_t ida_vextq_s8(ida_int8x16_t a, ida_int8x16_t b, int n) {
+    ida_int8x16_t r;
+    (void)n;
+    r.v = vextq_s8(a.v, b.v, 8);
+    return r;
+}
+static inline ida_int8x16_t ida_vdupq_n_s8(int8_t x) {
+    ida_int8x16_t r;
+    r.v = vdupq_n_s8(x);
+    return r;
+}
+#define int8x16_t ida_int8x16_t
+#define int8x8_t ida_int8x8_t
+#define uint8x8_t ida_uint8x8_t
+#define int32x2_t ida_int32x2_t
+#define int64x2_t ida_int64x2_t
+#define vcnt_s8 ida_vcnt_s8
+#define vaddlv_u8 ida_vaddlv_u8
+#define vaddq_s64 ida_vaddq_s64
+#define vrev64_s32 ida_vrev64_s32
+#define vdup_n_s32 ida_vdup_n_s32
+#define vdupq_n_s64 ida_vdupq_n_s64
+#define vdupq_n_s8 ida_vdupq_n_s8
+#define vbslq_s8 ida_vbslq_s8
+#define vextq_s8 ida_vextq_s8
 #endif /* IDA_TYPES_H */

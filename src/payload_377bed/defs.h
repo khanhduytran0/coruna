@@ -3,7 +3,6 @@
    It contains local type definitions from
    the type library 'entry1_type0x09.dylib'
 */
-@import Darwin;
 #include "ida_types.h"
 
 #define __int8 char
