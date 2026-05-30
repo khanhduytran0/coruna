@@ -16,6 +16,7 @@
 #include <sys/sysctl.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <pthread.h>
 #include <dlfcn.h>
@@ -103,9 +104,7 @@ typedef struct _opaque_pthread_t _opaque_pthread_t;
 /* ---- IDA helpers ---- */
 #define __break(x)       __builtin_trap()
 #define bswap32(x)       __builtin_bswap32(x)
-static inline __int64 __chkstk_darwin(void) { return 0; }
-static inline __int64 ida_chkstk_darwin(void) { return 0; }
-#define __chkstk_darwin(...) ida_chkstk_darwin()
+extern __int64 __chkstk_darwin();
 #define MEMORY ((volatile _QWORD *)0)
 
 typedef unsigned int atomic_uint;
@@ -140,16 +139,6 @@ static inline mach_timespec_t ida_mach_timespec(uint64_t x) {
     return t;
 }
 #define IDA_MACH_TIMESPEC(x) ida_mach_timespec((uint64_t)(x))
-static inline void *ida_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset) {
-    (void)addr;
-    (void)len;
-    (void)prot;
-    (void)flags;
-    (void)fd;
-    (void)offset;
-    return (void *)-1;
-}
-#define mmap ida_mmap
 int open_dprotected_np(const char *, int, int, int, ...);
 int fileport_makeport(int fd, mach_port_t *port);
 int fileport_makefd(mach_port_t port);
@@ -196,16 +185,24 @@ extern double dyldVersionNumber;
 /* _os_alloc_once */
 extern _QWORD _os_alloc_once_table[];
 
-/* IOConnectTrap4/6 — marked unavailable on iOS in SDK but symbols exist.
-   Use syscall wrappers instead of the SDK declarations. */
-static inline kern_return_t _IOConnectTrap4(io_connect_t c, uint32_t i, uintptr_t p1, uintptr_t p2, uintptr_t p3, uintptr_t p4) {
-    return IOConnectCallScalarMethod(c, i, (const uint64_t[]){p1,p2,p3,p4}, 4, NULL, NULL);
-}
-static inline kern_return_t _IOConnectTrap6(io_connect_t c, uint32_t i, uintptr_t p1, uintptr_t p2, uintptr_t p3, uintptr_t p4, uintptr_t p5, uintptr_t p6) {
-    return IOConnectCallScalarMethod(c, i, (const uint64_t[]){p1,p2,p3,p4,p5,p6}, 6, NULL, NULL);
-}
-#define IOConnectTrap4 _IOConnectTrap4
-#define IOConnectTrap6 _IOConnectTrap6
+extern kern_return_t ida_import_IOConnectTrap4(
+    io_connect_t connect,
+    uint32_t index,
+    uintptr_t p1,
+    uintptr_t p2,
+    uintptr_t p3,
+    uintptr_t p4) __asm("_IOConnectTrap4");
+extern kern_return_t ida_import_IOConnectTrap6(
+    io_connect_t connect,
+    uint32_t index,
+    uintptr_t p1,
+    uintptr_t p2,
+    uintptr_t p3,
+    uintptr_t p4,
+    uintptr_t p5,
+    uintptr_t p6) __asm("_IOConnectTrap6");
+#define IOConnectTrap4 ida_import_IOConnectTrap4
+#define IOConnectTrap6 ida_import_IOConnectTrap6
 
 /* NEON union additions for i16/i32/i64/u32/u64 access */
 typedef union { int8_t i8[16]; uint8_t u8[16]; int16_t i16[8]; int32_t i32[4]; int64_t i64[2]; uint32_t u32[4]; uint64_t u64[2]; uint64_t q; __int128 o; int8x16_t v; int64x2_t v64; } ida_int8x16_t;

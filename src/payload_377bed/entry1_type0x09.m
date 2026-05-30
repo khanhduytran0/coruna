@@ -35,7 +35,7 @@ __int64 __fastcall sub_6BBC(_QWORD *a1, __int64 a2);
 __int64 __fastcall sub_6DC0(_QWORD *a1, unsigned __int64 a2, _DWORD *a3);
 void *__fastcall sub_6E30(_QWORD *a1, unsigned __int64 a2, void *a3, size_t a4);
 __int64 __fastcall sub_6EB8(_QWORD *a1, const void *a2, unsigned __int64 a3, size_t a4);
-unsigned __int64 sub_6F68();
+unsigned __int64 __fastcall sub_6F68(_QWORD *a1, unsigned __int64 a2);
 _QWORD *__fastcall sub_70A4(_QWORD *result, __int16 a2, char *a3, unsigned __int64 a4);
 _QWORD *__fastcall sub_7128(_QWORD *result, char *a2, __int16 a3, unsigned __int64 a4);
 __int64 __fastcall find_mem_region(__int64 result);
@@ -180,7 +180,7 @@ __int64 sub_15CA4();
 void __fastcall sub_15CC8(__int64 a1);
 __int64 __fastcall sub_15D1C(__int64 a1, __int64 a2, int a3);
 __int64 __fastcall sub_15EC4(__int64 a1);
-unsigned __int64 sub_18B14();
+unsigned __int64 __fastcall sub_18B14(struct_krwCtx *a1, unsigned __int64 a2);
 char *__fastcall sub_18D68(__int64, _DWORD *, _DWORD *, unsigned __int64);
 __int64 __fastcall sub_18DF0(__int64 a1, unsigned __int64 a2, _QWORD *a3);
 unsigned __int64 __fastcall sub_18EA4(__int64 a1, unsigned __int64 a2, __int64 *a3, char a4);
@@ -240,7 +240,7 @@ unsigned __int64 __fastcall sub_1CF1C(struct_krwCtx *a1);
 __int64 __fastcall sub_1D1B0(__int64 a1);
 unsigned int *__fastcall sub_1D4A0(__int64 a1);
 __int64 __fastcall sub_1D70C(__int64 a1, _DWORD *a2);
-mach_vm_address_t sub_1D970();
+mach_vm_address_t __fastcall sub_1D970(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, _QWORD *a7);
 __int64 __fastcall kernel_pattern_scan(__int64 a1, char *__s1, int a3);
 __int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, int a5);
 __int64 __fastcall sub_1E0C8(__int128 *a1, char *__s, int a3, char a4);
@@ -468,7 +468,7 @@ __int64 __fastcall sub_2EC1C(struct_krwCtx *a1, unsigned int a2, unsigned __int6
 __int64 __fastcall sub_2ED14(__int64 a1, unsigned int a2, unsigned __int64 a3, mach_vm_size_t a4, vm_prot_t a5, int a6, int a7);
 bool __fastcall sub_2F194(struct_krwCtx *a1, unsigned int a2, int a3, int a4);
 __int64 __fastcall sub_2F294(struct_krwCtx *a1, unsigned int a2);
-unsigned __int64 sub_2F2C8();
+unsigned __int64 __fastcall sub_2F2C8(struct_krwCtx *a1, unsigned int a2, __int64 a3);
 __int64 __fastcall sub_2F7BC(struct_krwCtx *a1, int a2);
 unsigned __int64 __fastcall sub_2F898(struct_krwCtx *a1, unsigned int a2, __int64 a3);
 __int64 __fastcall sub_2F92C(__int64 result, int a2, int a3);
@@ -658,6 +658,7 @@ __int64 __fastcall sub_40FB0(__int64 a1, __int64 a2, __int64 a3);
 __int64 __fastcall sub_40FDC(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5);
 __int64 __fastcall sub_4100C(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6);
 __int64 j___get_cpu_capabilities(void); // weak
+__int64 _get_cpu_capabilities(void);
 unsigned __int64 sub_41040();
 #if 0
 int __cdecl CC_SHA1_Final(unsigned __int8 *md, CC_SHA1_CTX *c);
@@ -2187,10 +2188,8 @@ __int64 __fastcall sub_6EB8(_QWORD *a1, const void *a2, unsigned __int64 a3, siz
 // 6F58: variable 'vars8' is possibly undefined
 
 //----- (0000000000006F68) ----------------------------------------------------
-unsigned __int64 sub_6F68()
+unsigned __int64 __fastcall sub_6F68(_QWORD *a1, unsigned __int64 a2)
 {
-  __int64 v0; // x0
-  unsigned __int64 v1; // x1
   unsigned __int64 v2; // x19
   _QWORD *v3; // x20
   unsigned __int64 v4; // x21
@@ -2200,10 +2199,9 @@ unsigned __int64 sub_6F68()
   __int64 v8; // x8
   _QWORD v10[2048]; // [xsp+8h] [xbp-4058h] BYREF
 
-  v0 = ((__int64 (*)(void))__chkstk_darwin)();
-  v2 = v1;
-  v3 = (_QWORD *)v0;
-  v4 = *(_QWORD *)(v0 + 1312);
+  v2 = a2;
+  v3 = a1;
+  v4 = a1[164];
   bzero(v10, 0x4000u);
   v5 = 0;
   while ( 1 )
@@ -2247,7 +2245,7 @@ _QWORD *__fastcall sub_70A4(_QWORD *result, __int16 a2, char *a3, unsigned __int
         v8 = 0x4000LL - (a2 & 0x3FFF);
       else
         v8 = v4;
-      v9 = sub_6F68();
+      v9 = sub_6F68(v7, a2);
       result = sub_6E30(v7, v9, a3, v8);
       a2 += v8;
       a3 += v8;
@@ -2276,7 +2274,7 @@ _QWORD *__fastcall sub_7128(_QWORD *result, char *a2, __int16 a3, unsigned __int
         v8 = 0x4000LL - (a3 & 0x3FFF);
       else
         v8 = v4;
-      v9 = sub_6F68();
+      v9 = sub_6F68(v7, a3);
       result = (_QWORD *)sub_6EB8(v7, a2, v9, v8);
       a2 += v8;
       a3 += v8;
@@ -3552,7 +3550,7 @@ void __fastcall sub_8DDC(_QWORD *a1, __int64 a2, unsigned __int64 *a3, unsigned 
   {
     while ( 1 )
     {
-      v10 = sub_6F68();
+      v10 = sub_6F68(a1, v9);
       if ( v10 )
         break;
 LABEL_6:
@@ -3716,11 +3714,11 @@ void *__fastcall sub_9018(_QWORD *a1)
   v10 = 0;
   sub_8DDC(a1, v3, &v10, &v9);
   v8 = 0;
-  v4 = sub_6F68();
+  v4 = sub_6F68(a1, v10);
   sub_6E30(a1, v4, &v8, 8u);
   a1[167] = v8;
   v7 = 0;
-  v5 = sub_6F68();
+  v5 = sub_6F68(a1, v9);
   result = sub_6E30(a1, v5, &v7, 8u);
   a1[168] = v7;
   return result;
@@ -6405,10 +6403,9 @@ __int64 __fastcall sub_CB98(uint64_t x0, uint32_t w1, uint64_t x2)
   pthread_t thread; // [xsp+6670h] [xbp-80h] BYREF
   pthread_attr_t attr; // [xsp+6678h] [xbp-78h] BYREF
 
-  v3 = __chkstk_darwin(x0, *(_QWORD *)&w1);
-  v5 = v4;
-  v7 = v6;
-  v8 = v3;
+  v5 = (_DWORD *)x2;
+  v7 = w1;
+  v8 = x0;
   bzero(v25, 0x6650u);
   v25[0] = v7;
   v9 = pthread_attr_init(&attr);
@@ -6875,9 +6872,8 @@ __int64 __fastcall sub_CEB8(uint64_t x0, uint64_t x1)
   __int128 v334; // [xsp+250h] [xbp-F00h]
   __int128 v335; // [xsp+260h] [xbp-EF0h]
 
-  v2 = __chkstk_darwin(x0, x1);
-  v4 = v3;
-  v5 = v2;
+  v4 = x1;
+  v5 = x0;
   v6 = 708625;
   address = 0;
   object_handle = 0;
@@ -13985,7 +13981,7 @@ LABEL_67:
   v45 = v44 & v42;
   sub_38BCC(a1, (__int64)inputStruct);
   *((_QWORD *)v4 + 33) = v45;
-  v46 = sub_18B14();
+  v46 = sub_18B14((struct_krwCtx *)a1, v45);
   *((_QWORD *)v4 + 31) = v46;
   v47 = 163855;
   if ( !v46 )
@@ -14073,11 +14069,11 @@ LABEL_89:
     v60 += 8;
   }
   while ( v60 != 64 );
-  v70 = sub_18B14();
+  v70 = sub_18B14((struct_krwCtx *)a1, v64);
   *((_QWORD *)v4 + 32) = v70;
   if ( !v70 )
     goto LABEL_26;
-  v71 = sub_18B14();
+  v71 = sub_18B14((struct_krwCtx *)a1, v61);
   *((_QWORD *)v4 + 74) = v71;
   if ( !v71 )
     goto LABEL_26;
@@ -15057,9 +15053,9 @@ LABEL_431:
         v207 = v205[96],
         LODWORD(input[0]) = 0x4000,
         !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v206, 8, v316))
-    || (v208 = sub_18B14()) == 0
+    || (v208 = sub_18B14((struct_krwCtx *)a1, *(_QWORD *)v316 & 0xFFFFFFFFC000LL)) == 0
     || !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v208, 8, address)
-    || (v209 = sub_18B14()) == 0 )
+    || (v209 = sub_18B14((struct_krwCtx *)a1, address[0] & 0xFFFFFFFFC000LL)) == 0 )
   {
 LABEL_370:
     v1 = v47;
@@ -15324,10 +15320,8 @@ LABEL_27:
 // 43750: using guessed type __int128 xmmword_43750;
 
 //----- (0000000000018B14) ----------------------------------------------------
-unsigned __int64 sub_18B14()
+unsigned __int64 __fastcall sub_18B14(struct_krwCtx *a1, unsigned __int64 a2)
 {
-  __int64 v0; // x0
-  __int64 v1; // x1
   __int64 v2; // x20
   struct_krwCtx *v3; // x21
   unsigned __int64 v4; // x19
@@ -15351,11 +15345,10 @@ unsigned __int64 sub_18B14()
   __int64 v24; // [xsp+18h] [xbp-4068h] BYREF
   _QWORD v25[2048]; // [xsp+20h] [xbp-4060h] BYREF
 
-  v0 = ((__int64 (*)(void))__chkstk_darwin)();
-  v2 = v1;
-  v3 = (struct_krwCtx *)v0;
-  v4 = *(_QWORD *)(v0 + 6632);
-  v5 = *(_QWORD *)(v0 + 6640);
+  v2 = a2;
+  v3 = a1;
+  v4 = *(_QWORD *)((char *)a1 + 6632);
+  v5 = *(_QWORD *)((char *)a1 + 6640);
   v6 = number_of_cpus();
   if ( krw_ctx_has_flag(v3, 83886088) )
   {
@@ -15532,7 +15525,7 @@ unsigned __int64 __fastcall sub_18EA4(__int64 a1, unsigned __int64 a2, __int64 *
   }
   if ( (a4 & 1) != 0 )
   {
-    result = sub_18B14();
+    result = sub_18B14((struct_krwCtx *)a1, v12 & 0xFFFFFFFFC000LL);
     if ( !result )
       return result;
   }
@@ -15555,7 +15548,7 @@ LABEL_13:
     return result;
   }
   if ( (a4 & 1) != 0 )
-    result = sub_18B14();
+    result = sub_18B14((struct_krwCtx *)a1, v11 & 0xFFFFFFFFC000LL);
   else
     result = sub_386AC((struct_krwCtx *)a1, v11 & 0xFFFFFFFFC000LL);
   if ( result )
@@ -15678,7 +15671,7 @@ __int64 __fastcall sub_19128(__int64 a1, unsigned __int64 a2, __int64 a3)
       }
       else
       {
-        v15 = sub_18B14();
+        v15 = sub_18B14((struct_krwCtx *)a1, v22 & 0xFFFFFFFFC000LL);
         if ( !v15 )
           return v13;
       }
@@ -15726,7 +15719,7 @@ LABEL_29:
       }
       else
       {
-        v19 = sub_18B14();
+        v19 = sub_18B14((struct_krwCtx *)a1, size[1] & 0xFFFFFFFFC000LL);
         if ( !v19 )
           return v13;
       }
@@ -18883,20 +18876,13 @@ __int64 __fastcall sub_1D70C(__int64 a1, _DWORD *a2)
 }
 
 //----- (000000000001D970) ----------------------------------------------------
-mach_vm_address_t sub_1D970()
+mach_vm_address_t __fastcall sub_1D970(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, _QWORD *a7)
 {
-  __int64 v0; // x0
-  _QWORD *v1; // x6
   _QWORD *v2; // x21
-  uintptr_t v3; // x5
   uintptr_t v4; // x22
-  uintptr_t v5; // x4
   uintptr_t v6; // x23
-  uintptr_t v7; // x3
   uintptr_t v8; // x24
-  __int64 v9; // x2
   __int64 v10; // x25
-  __int64 v11; // x1
   __int64 v12; // x26
   __int64 v13; // x19
   unsigned int v14; // w8
@@ -18919,25 +18905,24 @@ mach_vm_address_t sub_1D970()
   __int128 v32; // [xsp+50h] [xbp-1060h] BYREF
   __int64 v33; // [xsp+60h] [xbp-1050h]
 
-  v0 = ((__int64 (*)(void))__chkstk_darwin)();
-  v2 = v1;
-  v4 = v3;
-  v6 = v5;
-  v8 = v7;
-  v10 = v9;
-  v12 = v11;
-  v13 = v0;
+  v2 = a7;
+  v4 = a6;
+  v6 = a5;
+  v8 = a4;
+  v10 = a3;
+  v12 = a2;
+  v13 = a1;
   connect = 0;
   *(_QWORD *)&size[1] = 0;
-  v14 = *(_DWORD *)(v0 + 384);
+  v14 = *(_DWORD *)(a1 + 384);
   v15 = 0x1000 % v14;
   v16 = v14 - 0x1000 % v14 + 4096;
   if ( !v15 )
     v16 = 4096;
   size[0] = v16;
-  if ( !*(_QWORD *)(v0 + 512) )
+  if ( !*(_QWORD *)(a1 + 512) )
   {
-    sub_19D10(*(_QWORD *)(v0 + 6648), &v32);
+    sub_19D10(*(_QWORD *)(a1 + 6648), &v32);
     v29 = v32;
     v30 = v33;
     v17 = kernel_pattern_scan((__int64)&v32, "00 00 01 91 C0 03 5F D6", 0);
@@ -33308,12 +33293,9 @@ __int64 __fastcall sub_2F294(struct_krwCtx *a1, unsigned int a2)
 }
 
 //----- (000000000002F2C8) ----------------------------------------------------
-unsigned __int64 sub_2F2C8()
+unsigned __int64 __fastcall sub_2F2C8(struct_krwCtx *a1, unsigned int a2, __int64 a3)
 {
-  struct_krwCtx *v0; // x0
-  __int64 v1; // x2
   __int64 v2; // x19
-  unsigned int v3; // w1
   unsigned int v4; // w21
   struct_krwCtx *v5; // x20
   unsigned __int64 result; // x0
@@ -33373,16 +33355,15 @@ unsigned __int64 sub_2F2C8()
   int v61; // [xsp+1ACh] [xbp-1054h]
   __int64 v62; // [xsp+1B8h] [xbp-1048h] BYREF
 
-  v0 = (struct_krwCtx *)((__int64 (*)(void))__chkstk_darwin)();
-  v2 = v1;
-  v4 = v3;
-  v5 = v0;
+  v2 = a3;
+  v4 = a2;
+  v5 = a1;
   v47 = 0;
   v48 = 0;
   v45 = 0;
   v46 = 0;
   address = 0;
-  result = sub_33E8C(v0, v3);
+  result = sub_33E8C(a1, a2);
   if ( result )
   {
     v7 = result;
@@ -35068,7 +35049,7 @@ LABEL_88:
       v45 = *(_QWORD *)(v2 + 344);
       if ( (*(_DWORD *)v2 & 0x5584001) != 0 && v45 <= 0x1F530F027FFFFFLL )
       {
-        if ( !(unsigned int)sub_2F2C8() )
+        if ( !(unsigned int)sub_2F2C8((struct_krwCtx *)v2, v3[17], *(_QWORD *)(v2 + 912)) )
           goto LABEL_451;
       }
       else
@@ -42384,7 +42365,10 @@ LABEL_10:
                   }
                   return 0;
                 }
-                if ( !sub_1EA70(a1, 0) || !(unsigned int)sub_1D970() || !(unsigned int)sub_1D970() )
+                v16 = sub_1EA70(a1, 0);
+                if ( !v16
+                  || !(unsigned int)sub_1D970(a1, v16, a2, 1, 0, 0, &v37)
+                  || !(unsigned int)sub_1D970(a1, v16, a3, -1, 0, 0, &v37) )
                   return 0;
               }
               return 1;
@@ -46919,7 +46903,6 @@ unsigned __int64 __fastcall sub_403E0(__int64 a1, const char *a2)
   v7 = *(_QWORD *)(a1 + 6560);
   if ( v7 )
     goto LABEL_9;
-  ((void (*)(void))__chkstk_darwin)();
   if ( *(_QWORD *)(a1 + 344) <= 0x1C1B19145FFFFFuLL )
     v15 = "28 69 68 78 09 11 80 52";
   else
@@ -47443,7 +47426,7 @@ __int64 __fastcall sub_4100C(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __i
 //----- (0000000000041040) ----------------------------------------------------
 unsigned __int64 sub_41040()
 {
-  return *(unsigned __int64 *)((char *)&j___get_cpu_capabilities + 12) & 0xFFFFFFFFFFFFFF00LL;
+  return *(unsigned __int64 *)((char *)&_get_cpu_capabilities + 12) & 0xFFFFFFFFFFFFFF00LL;
 }
 // 483C0: using guessed type __int64 j___get_cpu_capabilities(void);
 #if 0
@@ -49316,9 +49299,9 @@ __int64 __fastcall task_get_ipc_port_ptr(struct_krwCtx *a1, mach_port_name_t tas
 
 __int64 __fastcall nullsub_1(_QWORD a1) { return a1; }
 __int64 __fastcall nullsub_2(_QWORD a1) { return a1; }
-__int64 __fastcall sub_19B94(_QWORD a1, _QWORD a2) { return 0; }
+__int64 __fastcall sub_19B94(_QWORD a1, _QWORD a2) { return sub_19B30((__int64 *)a1, (__int64 *)a2); }
 
-__int64 j___get_cpu_capabilities(void) { return 0; }
+__int64 j___get_cpu_capabilities(void) { return _get_cpu_capabilities(); }
 __int64 __fastcall j__fileport_makeport(int a1, mach_port_t *a2) { return fileport_makeport(a1, a2); }
 int __fastcall j__fileport_makefd(mach_port_t port) { return fileport_makefd(port); }
 // nfuncs=894 queued=886 decompiled=886 lumina nreq=0 worse=0 better=0
