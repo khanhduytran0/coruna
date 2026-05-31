@@ -5465,29 +5465,26 @@ __int64 __fastcall sub_BBF4(__int64 a1)
 }
 
 //----- (000000000000BCB4) ----------------------------------------------------
+// DONE: this matches the orig asm
 __int64 __fastcall sub_BCB4(vm_address_t a1)
 {
-  mach_msg_type_number_t infoCnt; // [xsp+Ch] [xbp-64h] BYREF
-  int info[4]; // [xsp+10h] [xbp-60h] BYREF
-  __int128 v4; // [xsp+20h] [xbp-50h]
-  __int128 v5; // [xsp+30h] [xbp-40h]
-  natural_t v6[7]; // [xsp+40h] [xbp-30h] BYREF
-  natural_t nesting_depth; // [xsp+5Ch] [xbp-14h] BYREF
-  vm_size_t size; // [xsp+60h] [xbp-10h] BYREF
-  vm_address_t address; // [xsp+68h] [xbp-8h] BYREF
-
-  size = 0;
-  address = a1;
-  nesting_depth = 0;
-  v5 = 0u;
-  memset(v6, 0, sizeof(v6));
-  *(_OWORD *)info = 0u;
-  v4 = 0u;
-  infoCnt = 19;
-  if ( vm_region_recurse_64(mach_task_self_, &address, &size, &nesting_depth, info, &infoCnt) )
-    return 0;
-  else
-    return *(_QWORD *)&v6[5];
+    vm_address_t region_address = a1;
+    vm_size_t region_size = 0;
+    uint32_t depth = 0; // 0x13
+    vm_region_submap_info_data_64_t info = {0}; // 16+16+16+13 bytes zeroed
+    mach_msg_type_number_t count = 19; // 0x13
+    
+    kern_return_t kr = vm_region_recurse_64(mach_task_self(),   // w0: loaded from global
+                                            &region_address,    // x1: [x29 - 0x8]
+                                            &region_size,       // x2: [x29 - 0x10]
+                                            &depth,             // x3: [x29 - 0x14]
+                                            (vm_region_recurse_info_t)&info, // x4: [sp + 0x10]
+                                            &count              // x5: [sp + 0xc]
+                                            );
+    
+    // Return address from info struct at offset +0x44 (sp+0x54 = sp+0x10+0x44)
+    // which corresponds to vm_region_submap_info_64.share_mode or similar field
+    return (kr == KERN_SUCCESS) ? *(uint64_t *)&info.object_id_full : NULL;
 }
 
 //----- (000000000000BD20) ----------------------------------------------------
@@ -5667,7 +5664,7 @@ __int64 __fastcall sub_BED0(__int64 a1, __int64 a2, unsigned int a3, __int64 a4)
   vm_size_t v121; // [xsp+70h] [xbp-420h]
   mem_entry_name_port_t v122; // [xsp+78h] [xbp-418h] BYREF
   mach_msg_type_number_t v123; // [xsp+7Ch] [xbp-414h] BYREF
-  int info[4]; // [xsp+80h] [xbp-410h] BYREF
+  int info[19]; // [xsp+80h] [xbp-410h] BYREF
   __int128 v125; // [xsp+90h] [xbp-400h]
   __int128 v126; // [xsp+A0h] [xbp-3F0h]
   natural_t v127[7]; // [xsp+B0h] [xbp-3E0h] BYREF
@@ -5679,7 +5676,8 @@ __int64 __fastcall sub_BED0(__int64 a1, __int64 a2, unsigned int a3, __int64 a4)
   natural_t nesting_depth; // [xsp+ECh] [xbp-3A4h] BYREF
   vm_size_t v134; // [xsp+F0h] [xbp-3A0h] BYREF
   vm_address_t v135; // [xsp+F8h] [xbp-398h] BYREF
-  memory_object_size_t size[4]; // [xsp+100h] [xbp-390h] BYREF
+  vm_address_t free_region_address;
+  memory_object_size_t size[10]; // [xsp+100h] [xbp-390h] BYREF
   __int128 v137; // [xsp+120h] [xbp-370h]
   _BYTE v138[28]; // [xsp+130h] [xbp-360h] BYREF
   vm_address_t v139; // [xsp+150h] [xbp-340h] BYREF
@@ -5689,12 +5687,10 @@ __int64 __fastcall sub_BED0(__int64 a1, __int64 a2, unsigned int a3, __int64 a4)
   _QWORD v143[16]; // [xsp+170h] [xbp-320h] BYREF
   _BYTE v144[512]; // [xsp+1F0h] [xbp-2A0h] BYREF
   _BYTE v145[40]; // [xsp+3F0h] [xbp-A0h] BYREF
-  mach_port_t object_handle[2]; // [xsp+418h] [xbp-78h] BYREF
-  __int64 v147; // [xsp+420h] [xbp-70h]
+  mach_port_t object_handle[4]; // [xsp+418h] [xbp-78h] BYREF
 
   v7 = a1;
-  *(_QWORD *)object_handle = 0;
-  v147 = 0;
+  memset(object_handle, 0, sizeof(object_handle));
   memset(v145, 0, 32);
   v141 = 0;
   address = 0;
@@ -5745,16 +5741,14 @@ LABEL_9:
   {
     v115 = v8;
     v117 = v12;
-    *(_QWORD *)info = 0;
+    free_region_address = 0;
     v139 = 0;
     LODWORD(v135) = 1;
-    v137 = 0u;
-    memset(v138, 0, sizeof(v138));
-    memset(size, 0, sizeof(size));
+    memset(size, 0, 19 * sizeof(natural_t));
     LODWORD(v134) = 19;
     v42 = vm_region_recurse_64(
             mach_task_self_,
-            (vm_address_t *)info,
+            &free_region_address,
             &v139,
             (natural_t *)&v135,
             (vm_region_recurse_info_t)size,
@@ -5779,16 +5773,14 @@ LABEL_58:
         if ( v139 >= v45 && *(memory_object_size_t *)((char *)&size[1] + 4) == 0 )
           break;
       }
-      *(_QWORD *)info += v139;
+      free_region_address += v139;
       v139 = 0;
       LODWORD(v135) = 1;
-      v137 = 0u;
-      memset(v138, 0, sizeof(v138));
-      memset(size, 0, sizeof(size));
+      memset(size, 0, 19 * sizeof(natural_t));
       LODWORD(v134) = 19;
       v47 = vm_region_recurse_64(
               mach_task_self_,
-              (vm_address_t *)info,
+              &free_region_address,
               &v139,
               (natural_t *)&v135,
               (vm_region_recurse_info_t)size,
@@ -5800,9 +5792,9 @@ LABEL_58:
       }
     }
     v139 = v14 + 2 * vm_page_size;
-    *(_QWORD *)(a2 + 13864) = *(_QWORD *)info;
+    *(_QWORD *)(a2 + 13864) = free_region_address;
     atomic_store(v45, (unsigned __int64 *)(a2 + 13872));
-    *v13 = *(_QWORD *)info;
+    *v13 = free_region_address;
     v13[1] = v139;
     v8 = v115;
     v12 = v117;
@@ -5825,8 +5817,7 @@ LABEL_58:
       v111 = v18;
       atomic_store(0, v20);
       atomic_store(0, v21);
-      *(_QWORD *)object_handle = 0;
-      v147 = 0;
+      memset(object_handle, 0, sizeof(object_handle));
       if ( v11 )
         break;
       v112 = 0;
@@ -5856,9 +5847,7 @@ LABEL_169:
       }
       v134 = 0;
       v135 = v29;
-      v137 = 0u;
-      memset(v138, 0, sizeof(v138));
-      memset(size, 0, sizeof(size));
+      memset(size, 0, 19 * sizeof(natural_t));
       infoCnt = 19;
       nesting_depth = 0;
       memory_entry_64 = vm_region_recurse_64(
@@ -5871,7 +5860,7 @@ LABEL_169:
       v11 = v112;
       if ( (_DWORD)memory_entry_64 )
         goto LABEL_71;
-      v108 = DWORD2(v137);
+      v108 = *(_DWORD *)((char *)size + 0x28);
       if ( v112 )
       {
         v32 = (pthread_t *)v145;
@@ -5929,25 +5918,22 @@ LABEL_44:
       v129 = 0;
       v130 = v141;
       v128 = 0;
-      v126 = 0u;
-      memset(v127, 0, sizeof(v127));
-      *(_OWORD *)info = 0u;
-      v125 = 0u;
+      memset(info, 0, 19 * sizeof(natural_t));
       v123 = 19;
       v39 = vm_region_recurse_64(mach_task_self_, &v130, &v129, &v128, info, &v123);
       if ( (_DWORD)v39 )
         goto LABEL_167;
       v40 = (unsigned int)(v108 + 1);
-      v41 = DWORD2(v126);
+      v41 = *(_DWORD *)((char *)info + 0x28);
       v42 = 5;
-      if ( DWORD2(v126) < (unsigned int)v40 - v112 || DWORD2(v126) > (unsigned int)v40 )
+      if ( v41 < (unsigned int)v40 - v112 || v41 > (unsigned int)v40 )
         goto LABEL_168;
-      if ( DWORD2(v126) < (unsigned int)v40 )
+      if ( v41 < (unsigned int)v40 )
       {
         v122 = 0;
         v42 = 5;
-        v48 = v40 - DWORD2(v126);
-        if ( v40 != DWORD2(v126) && v48 <= v113 )
+        v48 = v40 - v41;
+        if ( v40 != v41 && v48 <= v113 )
         {
           v49 = v113 - v48;
           v118 = v49 + 1;
@@ -5969,12 +5955,12 @@ LABEL_83:
               }
               while ( v52 );
             }
-            v56 = *(_QWORD *)&v127[5];
+            v56 = *(_QWORD *)((char *)info + 0x44);
             if ( v119 <= 8791 )
             {
               v69 = 0;
               v70 = 0;
-              v71 = *(_QWORD *)&v127[5];
+              v71 = *(_QWORD *)((char *)info + 0x44);
               while ( 1 )
               {
                 v39 = vm_allocate(mach_task_self_, (vm_address_t *)&v144[v69], vm_page_size, 3);
@@ -6015,12 +6001,12 @@ LABEL_135:
                 }
                 if ( v70 >= 2 )
                 {
-                  v77 = *(_QWORD *)&v127[5];
-                  if ( v72 >= *(_QWORD *)&v127[5] )
-                    v78 = *(_QWORD *)&v127[5];
+                  v77 = *(_QWORD *)((char *)info + 0x44);
+                  if ( v72 >= *(_QWORD *)((char *)info + 0x44) )
+                    v78 = *(_QWORD *)((char *)info + 0x44);
                   else
                     v78 = v72;
-                  if ( v72 > *(_QWORD *)&v127[5] )
+                  if ( v72 > *(_QWORD *)((char *)info + 0x44) )
                     v77 = v72;
                   if ( v77 - v78 >= v73 )
                   {
@@ -6043,7 +6029,7 @@ LABEL_158:
                           v87 = sub_BCB4(v143[v86]);
                           if ( !v87 )
                             goto LABEL_146;
-                          if ( v87 == *(_QWORD *)&v127[5] )
+                          if ( v87 == *(_QWORD *)((char *)info + 0x44) )
                           {
                             v100 = (_QWORD *)v143[v86];
                             v143[v86] = 0;
@@ -6079,7 +6065,7 @@ LABEL_219:
                             if ( !(_DWORD)v42 )
                             {
                               v141 = 0;
-                              if ( !(unsigned int)sub_BD20(a2, v19, *(__int64 *)&v127[5], &v122) )
+                              if ( !(unsigned int)sub_BD20(a2, v19, *(_QWORD *)((char *)info + 0x44), &v122) )
                                 *(_DWORD *)(a4 + 36) = v122;
                               for ( i = 0; i != 16; ++i )
                               {
@@ -6132,7 +6118,7 @@ LABEL_146:
             {
               v57 = 0;
               v58 = 0;
-              v59 = *(_QWORD *)&v127[5];
+              v59 = *(_QWORD *)((char *)info + 0x44);
               while ( 1 )
               {
                 v39 = vm_allocate(mach_task_self_, (vm_address_t *)&v144[v57], vm_page_size, 3);
@@ -6173,12 +6159,12 @@ LABEL_105:
                 }
                 if ( v58 >= 2 )
                 {
-                  v65 = *(_QWORD *)&v127[5];
-                  if ( v60 >= *(_QWORD *)&v127[5] )
-                    v66 = *(_QWORD *)&v127[5];
+                  v65 = *(_QWORD *)((char *)info + 0x44);
+                  if ( v60 >= *(_QWORD *)((char *)info + 0x44) )
+                    v66 = *(_QWORD *)((char *)info + 0x44);
                   else
                     v66 = v60;
-                  if ( v60 > *(_QWORD *)&v127[5] )
+                  if ( v60 > *(_QWORD *)((char *)info + 0x44) )
                     v65 = v60;
                   if ( v65 - v66 >= v61 )
                   {
@@ -6204,7 +6190,7 @@ LABEL_147:
                     if ( !(_DWORD)v42 )
                     {
                       name = 0;
-                      if ( !(unsigned int)sub_BD20(a2, v19, *(__int64 *)&v127[5], &v122) )
+                      if ( !(unsigned int)sub_BD20(a2, v19, *(_QWORD *)((char *)info + 0x44), &v122) )
                         *(_DWORD *)(a4 + 36) = v122;
                       for ( k = 0; k != 512; k += 8 )
                       {
@@ -6228,7 +6214,7 @@ LABEL_147:
           }
           else
           {
-            v50 = v113 + DWORD2(v126) - v40 + 1;
+            v50 = v113 + v41 - v40 + 1;
             v51 = object_handle;
             while ( 1 )
             {
@@ -47530,12 +47516,13 @@ __int64 __fastcall sub_4100C(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __i
 //----- (0000000000041040) ----------------------------------------------------
 unsigned __int64 comm_page64_base_address()
 {
-  uintptr_t capabilitiesStub = (uintptr_t)&real_get_cpu_capabilities;
-#if defined(__arm64e__)
-  __asm__ volatile("paciza %0" : "+r"(capabilitiesStub));
-  __asm__ volatile("xpaci %0" : "+r"(capabilitiesStub));
-#endif
-  return *(unsigned __int64 *)(capabilitiesStub + 12) & 0xFFFFFFFFFFFFFF00LL;
+//  uintptr_t capabilitiesStub = (uintptr_t)&real_get_cpu_capabilities;
+//#if defined(__arm64e__)
+//  __asm__ volatile("paciza %0" : "+r"(capabilitiesStub));
+//  __asm__ volatile("xpaci %0" : "+r"(capabilitiesStub));
+//#endif
+//  return *(unsigned __int64 *)(capabilitiesStub + 12) & 0xFFFFFFFFFFFFFF00LL;
+    return 0xFFFFFC000;
 }
 // 483C0: using guessed type __int64 j___get_cpu_capabilities(void);
 #if 0

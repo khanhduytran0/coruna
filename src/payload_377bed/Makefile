@@ -10,6 +10,9 @@ LIBRARY_NAME = entry1_type0x09
 
 entry1_type0x09_FILES = entry1_type0x09.m
 entry1_type0x09_CFLAGS = \
+    -Og \
+    -fno-inline \
+    -fno-strict-aliasing \
     -Wno-int-conversion \
     -Wno-incompatible-pointer-types \
     -Werror=implicit-function-declaration \
