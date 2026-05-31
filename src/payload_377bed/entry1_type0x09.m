@@ -7042,7 +7042,7 @@ __int64 __fastcall sub_CEB8(uint64_t x0, uint64_t x1)
   if ( madvise(v16, v15, 3) )
   {
 LABEL_15:
-    v17 = *__error();
+    v17 = errno;
     if ( v17 < 0 )
       v17 = -v17;
     return v17 | 0x40000000u;
@@ -8670,8 +8670,8 @@ LABEL_532:
       v233 = socket(2, 2, 0);
       if ( v233 == -1 )
       {
-        v242 = *__error();
-        v243 = *__error();
+        v242 = errno;
+        v243 = errno;
         if ( v242 < 0 )
           v243 = -v243;
         v305 = v243 | 0x40000000;
@@ -8684,8 +8684,8 @@ LABEL_536:
       v234 = open("/private/etc/group", 0);
       if ( v234 == -1 )
       {
-        v244 = *__error();
-        v245 = *__error();
+        v244 = errno;
+        v245 = errno;
         if ( v244 < 0 )
           v245 = -v245;
         v305 = v245 | 0x40000000;
@@ -9194,7 +9194,7 @@ __int64 __fastcall sub_FE30(__int64 a1)
     return v4 | 0x80000000;
   if ( madvise((void *)address, v3, 3) )
   {
-    v5 = *__error();
+    v5 = errno;
     if ( v5 < 0 )
       v5 = -v5;
     v2 = v5 | 0x40000000u;
@@ -11784,7 +11784,7 @@ __int64 __fastcall check_rootfs_rw(__int64 ctx, int *outIsReadWrite)
     v3 = (char *)&v6;
   if ( statfs(v3, &v8) )
   {
-    if ( *__error() != 2 )
+    if ( errno != 2 )
       return 0;
   }
   else if ( !(*(_QWORD *)v8.f_mntfromname ^ 'sid/ved/' | *(_QWORD *)&v8.f_mntfromname[7] ^ '1s1s0ks')
@@ -12078,7 +12078,7 @@ LABEL_21:
   v22[5] = 0;
   if ( !memcmp(__s1, "/private/var/MobileSoftwareUpdate", 0x21u)
     && mkdir("/private/var/MobileSoftwareUpdate", 0x1FFu)
-    && *__error() != 17 )
+    && errno != 17 )
   {
     return 0;
   }
@@ -12090,7 +12090,7 @@ LABEL_21:
   v12 = mkdir(__s1, 0x1FFu);
   if ( v12 )
   {
-    if ( *__error() != 17 )
+    if ( errno != 17 )
       return 0;
   }
   if ( a1->xnuMajorVersion >= 6153 && chown(__s1, 0x1F5u, 0x1F5u) )
@@ -20013,8 +20013,8 @@ LABEL_8:
     strlcpy(a1, kernel_version, a2);
     return 0;
   }
-  v7 = *__error();
-  v8 = *__error();
+  v7 = errno;
+  v8 = errno;
   if ( v7 < 0 )
     v8 = -v8;
   return v8 | 0x40000000u;
@@ -20045,7 +20045,7 @@ int __fastcall kernel_version_parse(struct_xnuMajorVersion *xnuMajorVersion, int
         str[v9 - 1] = 0;
       if ( madvise(0, 0, 10) )
       {
-        if ( *__error() == 45 )
+        if ( errno == 45 )
         {
           v10 = strstr(str, "Libsyscall-");
           if ( v10 )
@@ -20359,8 +20359,8 @@ __int64 __fastcall fd_make_pipe(int a1[2])
 
   if ( pipe(a1) )
   {
-    v2 = *__error();
-    v3 = *__error();
+    v2 = errno;
+    v3 = errno;
     if ( v2 < 0 )
       v3 = -v3;
     return v3 | 0x40000000u;
@@ -20384,10 +20384,10 @@ __int64 __fastcall test_read_fd(int *fd)
 
   while ( read(*fd, outBuf, 0x100u) > 0 )
     ;
-  if ( *__error() == 35 )
+  if ( errno == 35 )
     return 0;
-  v3 = *__error();
-  v4 = *__error();
+  v3 = errno;
+  v4 = errno;
   if ( v3 < 0 )
     v4 = -v4;
   return v4 | 0x40000000u;
@@ -20432,8 +20432,8 @@ __int64 __fastcall setup_fd(int a1)
         return 0;
     }
   }
-  v5 = *__error();
-  v6 = *__error();
+  v5 = errno;
+  v6 = errno;
   if ( v5 < 0 )
     v6 = -v6;
   return v6 | 0x40000000u;
@@ -20449,8 +20449,8 @@ __int64 __fastcall sub_1F714(__int64 a1, const void *a2, size_t a3)
   v4 = write(*(_DWORD *)(a1 + 4), a2, a3);
   if ( v4 < 0 )
   {
-    v6 = *__error();
-    v7 = *__error();
+    v6 = errno;
+    v7 = errno;
     if ( v6 < 0 )
       v7 = -v7;
     return v7 | 0x40000000u;
@@ -20475,8 +20475,8 @@ __int64 __fastcall sub_1F770(int *a1, void *a2, size_t a3)
   v4 = read(*a1, a2, a3);
   if ( v4 < 0 )
   {
-    v6 = *__error();
-    v7 = *__error();
+    v6 = errno;
+    v7 = errno;
     if ( v6 < 0 )
       v7 = -v7;
     return v7 | 0x40000000u;
@@ -20502,7 +20502,7 @@ int *__fastcall sub_1F7CC(__int64 a1)
   result = (int *)sub_14F5C(*(_QWORD *)(a1 + 8), *(const char **)a1, 0);
   if ( (_DWORD)result )
   {
-    v3 = *__error();
+    v3 = errno;
     result = __error();
     v4 = *result;
     if ( v3 < 0 )
@@ -20528,7 +20528,7 @@ int *__fastcall sub_1F828(int *a1)
   result = (int *)mkdir("/private/var/factory_mount", 0x1FFu);
   if ( (_DWORD)result && (result = __error(), *result != 17) )
   {
-    v4 = *__error();
+    v4 = errno;
     result = __error();
     v5 = *result;
     if ( v4 < 0 )
@@ -20560,7 +20560,7 @@ int *__fastcall sub_1F894(__int64 a1)
                     *(_QWORD *)(a1 + 32));
   if ( result == (int *)-1LL )
   {
-    v4 = *__error();
+    v4 = errno;
     result = __error();
     v5 = *result;
     if ( v4 < 0 )
@@ -20611,7 +20611,7 @@ int *__fastcall sub_1F964(int *a1)
   bzero(v7, 0x401u);
   if ( fcntl(v2, 50, v7) || unlink(v7) || (result = (int *)close(v2), (_DWORD)result) )
   {
-    v4 = *__error();
+    v4 = errno;
     result = __error();
     v5 = *result;
     if ( v4 < 0 )
@@ -20692,7 +20692,7 @@ __int64 __fastcall sub_1FADC(__int64 a1)
     v7 = mktemp(__str);
     if ( !v7 || (v8 = v7, v9 = open_dprotected_np(v7, 1538, 4, 0, 493), v9 < 0) )
     {
-      v14 = *__error();
+      v14 = errno;
       result = (__int64)__error();
       v15 = *(_DWORD *)result;
       if ( v14 < 0 )
@@ -20708,7 +20708,7 @@ __int64 __fastcall sub_1FADC(__int64 a1)
         v12 = write(v10, v2, v3);
         if ( v12 != -1 )
           break;
-        if ( *__error() == 4 && v11++ < 0x64 )
+        if ( errno == 4 && v11++ < 0x64 )
           continue;
         v6 = 110597;
         goto LABEL_20;
@@ -20724,8 +20724,8 @@ __int64 __fastcall sub_1FADC(__int64 a1)
           v6 = 0;
           goto LABEL_21;
         }
-        v17 = *__error();
-        v18 = *__error();
+        v17 = errno;
+        v18 = errno;
         if ( v17 < 0 )
           v18 = -v18;
         v6 = v18 | 0x40000000;
@@ -20791,10 +20791,10 @@ __int64 __fastcall sub_1FD98(struct statfs *a1)
   v2 = 708625;
   if ( statfs("/private/var/factory_mount", a1) )
   {
-    if ( *__error() != 2 )
+    if ( errno != 2 )
     {
-      v3 = *__error();
-      v4 = *__error();
+      v3 = errno;
+      v4 = errno;
       if ( v3 < 0 )
         v4 = -v4;
       return v4 | 0x40000000u;
@@ -21134,7 +21134,7 @@ int *__fastcall sub_20490(__int64 a1)
       v3 = 0;
       goto LABEL_11;
     }
-    v5 = *__error();
+    v5 = errno;
     result = __error();
     v6 = *result;
     if ( v5 < 0 )
@@ -21188,7 +21188,7 @@ int *__fastcall sub_20524(__int64 a1)
   if ( v5 < 0 )
   {
 LABEL_10:
-    v9 = *__error();
+    v9 = errno;
     result = __error();
     v10 = *result;
     if ( v9 < 0 )
@@ -21199,8 +21199,8 @@ LABEL_10:
   v6 = v5;
   if ( ioctl(v5, 0x20006415u, 0) )
   {
-    v7 = *__error();
-    v8 = *__error();
+    v7 = errno;
+    v8 = errno;
     if ( v7 < 0 )
       v8 = -v8;
     v4 = v8 | 0x40000000;
@@ -21471,7 +21471,7 @@ __int64 __fastcall sub_20A14(__int64 a1, int a2, char a3)
     v8 = write(*(_DWORD *)(a1 + 24), *(const void **)a1, *(unsigned int *)(a1 + 16));
     if ( v8 != -1 )
       break;
-    if ( *__error() == 4 )
+    if ( errno == 4 )
     {
       v9 = v6++ >= 0x64;
       if ( !v9 )
@@ -21485,7 +21485,7 @@ __int64 __fastcall sub_20A14(__int64 a1, int a2, char a3)
     if ( v10 == -1 )
     {
       v11 = 0;
-      while ( *__error() == 4 && v11 <= 0x63 )
+      while ( errno == 4 && v11 <= 0x63 )
       {
         ++v11;
         v10 = read(*(_DWORD *)(a1 + 20), *(void **)a1, *(unsigned int *)(a1 + 16));
@@ -21512,7 +21512,7 @@ LABEL_19:
         v15 = write(*(_DWORD *)(a1 + 56), *(const void **)(a1 + 32), *(unsigned int *)(a1 + 48));
         if ( v15 != -1 )
           break;
-        if ( *__error() == 4 )
+        if ( errno == 4 )
         {
           v9 = v14++ >= 0x64;
           if ( !v9 )
@@ -21526,7 +21526,7 @@ LABEL_19:
         if ( v16 == -1 )
         {
           v17 = 0;
-          while ( *__error() == 4 && v17 <= 0x63 )
+          while ( errno == 4 && v17 <= 0x63 )
           {
             ++v17;
             v16 = read(*(_DWORD *)(a1 + 52), *(void **)(a1 + 32), *(unsigned int *)(a1 + 48));
@@ -23013,7 +23013,7 @@ __int64 sub_226D4()
 
   result = sub_4100C(255, 0, 0, 0, 0, 0);
   if ( (_DWORD)result )
-    return *__error() != 1;
+    return errno != 1;
   return result;
 }
 
@@ -25197,8 +25197,8 @@ __int64 __fastcall sub_25294(int a1)
   result = close(a1);
   if ( (_DWORD)result )
   {
-    v2 = *__error();
-    v3 = *__error();
+    v2 = errno;
+    v3 = errno;
     if ( v2 < 0 )
       v3 = -v3;
     return v3 | 0x40000000u;
@@ -25218,8 +25218,8 @@ __int64 __fastcall open_dev_null(int *fdOut)
   fd = open("/dev/null", 0x20);
   if ( fd < 0 )
   {
-    v5 = *__error();
-    v6 = *__error();
+    v5 = errno;
+    v6 = errno;
     if ( v5 < 0 )
       v6 = -v6;
     return v6 | 0x40000000u;
@@ -25611,8 +25611,8 @@ LABEL_42:
       v7 = v6;
       if ( (unsigned int)necp_client_action() == -1 )
       {
-        v19 = *__error();
-        v20 = *__error();
+        v19 = errno;
+        v20 = errno;
         if ( v19 < 0 )
           v20 = -v20;
         v8 = v20 | 0x40000000u;
@@ -25669,8 +25669,8 @@ LABEL_42:
       close(v7);
       return v8;
     }
-    v17 = *__error();
-    v18 = *__error();
+    v17 = errno;
+    v18 = errno;
     if ( v17 < 0 )
       v18 = -v18;
     return v18 | 0x40000000u;
@@ -25906,12 +25906,12 @@ LABEL_54:
     v23 = sub_266D0(a1, v15 - v20);
     if ( (_DWORD)v23 )
       goto LABEL_63;
-    *__error() = 0;
+    errno = 0;
     __s1[0] = fcntl(*(_DWORD *)(a1 + 6464), 5);
-    if ( __s1[0] == -1 && *__error() )
+    if ( __s1[0] == -1 && errno )
     {
-      v28 = *__error();
-      v29 = *__error();
+      v28 = errno;
+      v29 = errno;
       if ( v28 < 0 )
         v29 = -v29;
       test = v29 | 0x40000000u;
@@ -25945,8 +25945,8 @@ LABEL_63:
   {
     if ( ioctl(*(_DWORD *)(a1 + 6464), 0x40087367u, __s1) )
     {
-      v24 = *__error();
-      v25 = *__error();
+      v24 = errno;
+      v25 = errno;
       if ( v24 < 0 )
         v25 = -v25;
       test = v25 | 0x40000000u;
@@ -26060,8 +26060,8 @@ __int64 __fastcall sub_26204(__int64 a1, __int64 a2, char *a3, mach_msg_type_num
                 }
                 else
                 {
-                  v39 = *__error();
-                  v40 = *__error();
+                  v39 = errno;
+                  v40 = errno;
                   if ( v39 < 0 )
                     v40 = -v40;
                   LODWORD(v8) = v40 | 0x40000000;
@@ -26424,8 +26424,8 @@ LABEL_26:
   if ( !fcntl(v18, 6, v22) )
     goto LABEL_26;
 LABEL_29:
-  v19 = *__error();
-  v20 = *__error();
+  v19 = errno;
+  v20 = errno;
   if ( v19 < 0 )
     v20 = -v20;
   test = v20 | 0x40000000u;
@@ -28665,7 +28665,7 @@ LABEL_82:
               v48 = *(_QWORD *)(v31 + 64);
               if ( (unsigned int)__ulock_wake() )
               {
-                v49 = *__error();
+                v49 = errno;
                 if ( v49 < 0 )
                   v49 = -v49;
                 v5 = v49 | 0x40000000u;
@@ -29891,8 +29891,8 @@ __int64 __fastcall sub_2AB18(__int64 a1)
     || (v14 = (struct sockaddr){0}, v15 = 0u, *(_DWORD *)&v14.sa_data[2] = 2, connect(v3, &v14, 0x20u))
     || (unsigned int)((__int64 (__cdecl *)())j__fileport_makeport)() )
   {
-    v5 = *__error();
-    v6 = *__error();
+    v5 = errno;
+    v6 = errno;
     if ( v5 < 0 )
       v6 = -v6;
     v7 = v6 | 0x40000000;
@@ -29965,8 +29965,8 @@ LABEL_26:
     v9 = 163856;
     goto LABEL_38;
   }
-  v12 = *__error();
-  v13 = *__error();
+  v12 = errno;
+  v13 = errno;
   if ( v12 < 0 )
     v13 = -v13;
   v9 = v13 | 0x40000000;
@@ -30130,9 +30130,9 @@ __int64 __fastcall sub_2B03C(__int64 a1)
       ++*(_QWORD *)(a1 + 64);
       goto LABEL_10;
     }
-    if ( v3 == -1 && *__error() == 4 && v2++ < 0x64 )
+    if ( v3 == -1 && errno == 4 && v2++ < 0x64 )
       continue;
-    if ( *__error() != 14 )
+    if ( errno != 14 )
       return 0;
 LABEL_10:
     v2 = 0;
@@ -30475,7 +30475,7 @@ __int64 __fastcall sub_2B788(const char **a1)
             __error();
           }
         }
-        while ( *__error() == 4 );
+        while ( errno == 4 );
         if ( (_DWORD)v3 )
           goto LABEL_14;
 LABEL_26:
@@ -34386,7 +34386,7 @@ LABEL_111:
         }
         goto LABEL_33;
       }
-      if ( *__error() != 7 )
+      if ( errno != 7 )
         goto LABEL_349;
       v46 = *(_QWORD *)(v2 + 344);
       if ( v46 <= 0x1F530F027FFFFFLL )
@@ -34525,7 +34525,7 @@ LABEL_39:
     goto LABEL_59;
   }
   bufa = v32;
-  if ( *__error() != 7 )
+  if ( errno != 7 )
     goto LABEL_451;
   v36 = *(_QWORD *)(v2 + 344);
   if ( v36 <= 0x1F530F027FFFFFLL )
@@ -34725,8 +34725,8 @@ LABEL_433:
         BYTE1(name[0]) = 1;
         if ( v136 < 0 )
         {
-          v138 = *__error();
-          v110 = *__error();
+          v138 = errno;
+          v110 = errno;
           if ( v138 < 0 )
             v110 = -v110;
           goto LABEL_440;
@@ -35033,8 +35033,8 @@ LABEL_361:
     BYTE1(v216) = 1;
     if ( (v94 & 0x80000000) == 0 )
       break;
-    v95 = *__error();
-    v96 = *__error();
+    v95 = errno;
+    v96 = errno;
     if ( v95 >= 0 )
       v97 = v96;
     else
@@ -35878,8 +35878,8 @@ __int64 __fastcall sub_321C0(__int64 a1)
   v1 = open("/usr/lib/dyld", 0);
   if ( v1 < 0 )
   {
-    v4 = *__error();
-    v5 = *__error();
+    v4 = errno;
+    v5 = errno;
     if ( v4 < 0 )
       v5 = -v5;
     return v5 | 0x40000000u;
@@ -35887,7 +35887,7 @@ __int64 __fastcall sub_321C0(__int64 a1)
   else
   {
     v2 = v1;
-    if ( fcntl(v1, 59, v8) && *__error() == 85 )
+    if ( fcntl(v1, 59, v8) && errno == 85 )
       v3 = 0;
     else
       v3 = 4097;
@@ -35942,7 +35942,7 @@ __int64 __fastcall sub_322D8(__int64 a1, int *a2)
   v13[0] = (unsigned int)(0x20000000 - *(_DWORD *)(a1 + 384));
   v13[1] = &v4;
   v13[2] = 112;
-  if ( fcntl(v2, 59, v13) && *__error() == 1 )
+  if ( fcntl(v2, 59, v13) && errno == 1 )
     __error();
   return 0;
 }
@@ -36181,7 +36181,7 @@ __int64 __fastcall sub_3272C(int __fd, __int64 a2, unsigned __int64 a3, __int64 
         v10 = pread(__fd, (void *)(a2 + v8), a3 - v8, v8 + a4);
         if ( v10 != -1 )
           break;
-        if ( *__error() == 4 )
+        if ( errno == 4 )
         {
           v11 = v9++ >= 0x64;
           if ( !v11 )
@@ -36193,8 +36193,8 @@ __int64 __fastcall sub_3272C(int __fd, __int64 a2, unsigned __int64 a3, __int64 
       if ( v10 < 0 )
       {
 LABEL_15:
-        v14 = *__error();
-        v15 = *__error();
+        v14 = errno;
+        v15 = errno;
         if ( v14 < 0 )
           v15 = -v15;
         return v15 | 0x40000000u;
@@ -39248,8 +39248,8 @@ __int64 __fastcall create_mach_port_with_a2(__int64 krwCtx, unsigned int a2)
   }
   else
   {
-    v6 = *__error();
-    v7 = *__error();
+    v6 = errno;
+    v7 = errno;
     if ( v6 < 0 )
       v7 = -v7;
     return v7 | 0x40000000u;
@@ -39314,8 +39314,8 @@ __int64 __fastcall sub_363E4(__int64 a1, unsigned int a2)
   }
   else
   {
-    v6 = *__error();
-    v7 = *__error();
+    v6 = errno;
+    v7 = errno;
     if ( v6 < 0 )
       v7 = -v7;
     return v7 | 0x40000000u;
@@ -41719,8 +41719,8 @@ LABEL_62:
                     goto LABEL_71;
                   }
                 }
-                v36 = *__error();
-                v37 = *__error();
+                v36 = errno;
+                v37 = errno;
                 if ( v36 < 0 )
                   v37 = -v37;
                 v18 = v37 | 0x40000000;
@@ -41855,8 +41855,8 @@ LABEL_113:
                     if ( v49 == 48 )
                       goto LABEL_20;
                   }
-                  v53 = *__error();
-                  v54 = *__error();
+                  v53 = errno;
+                  v54 = errno;
                   if ( v53 < 0 )
                     v54 = -v54;
                   v12 = v54 | 0x40000000;
@@ -44723,7 +44723,7 @@ LABEL_69:
     v103 = 32;
     if ( sysctlbyname("hw.model", &v104, &v103, 0, 0) )
     {
-      v33 = *__error();
+      v33 = errno;
       if ( v33 < 0 )
         v33 = -v33;
       return v33 | 0x40000000u;
@@ -45995,9 +45995,9 @@ LABEL_84:
             v21 = open((const char *)v3, 0, v50);
             if ( v21 == -1 )
             {
-              v27 = *__error();
+              v27 = errno;
               v14 = 0;
-              v28 = *__error();
+              v28 = errno;
               if ( v27 < 0 )
                 v28 = -v28;
               LODWORD(v6) = v28 | 0x40000000;
