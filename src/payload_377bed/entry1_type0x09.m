@@ -5490,39 +5490,75 @@ __int64 __fastcall sub_BCB4(vm_address_t a1)
 //----- (000000000000BD20) ----------------------------------------------------
 __int64 __fastcall sub_BD20(__int64 a1, vm_size_t size, __int64 a3, mem_entry_name_port_t *a4)
 {
-  _DWORD *v8; // x25
-  __int64 v9; // x26
-  __int64 v10; // x24
-  vm_address_t *v11; // x23
-  __int64 result; // x0
-  __int64 v13; // x0
-  vm_size_t sizea; // [xsp+8h] [xbp-58h] BYREF
-
-  v8 = (_DWORD *)(a1 + 26184);
-  v9 = 256;
-  while ( 1 )
-  {
-    v10 = (unsigned int)*v8;
-    if ( (unsigned int)v10 > 0x3FF )
-      return 3;
-    v11 = (vm_address_t *)(a1 + 8 * v10 + 17992);
-    result = vm_allocate(mach_task_self_, v11, size, 3);
-    if ( (_DWORD)result )
-      return result;
-    ++*v8;
-    v13 = sub_BCB4(*v11);
-    if ( !v13 )
-      return 5;
-    if ( v13 == a3 )
-      break;
-    if ( !--v9 )
-      return 3;
-  }
-  sizea = size;
-  result = mach_make_memory_entry(mach_task_self_, &sizea, *v11, 3, a4, 0);
-  if ( !(_DWORD)result )
-    *(_DWORD *)(a1 + 4 * v10 + 13892) = *a4;
-  return result;
+    // x25 = a1 + 0x6648  (pointer to slot count)
+    uint32_t *x25 = (uint32_t *)((uint8_t *)a1 + 0x6648);
+    
+    // w26 = retry counter = 256
+    uint32_t w26 = 0x100;
+    
+    // x27 = mach_task_self_ global
+    // w28 = 0x4648 (slot array base offset)
+    uint32_t w28 = 0x4648;
+    
+    do {
+        // +76: ldr w24, [x25]
+        uint32_t w24 = *x25;
+        
+        // +80: cmp w24, #0x3ff
+        // +84: b.hi → return 3
+        if (w24 > 0x3ff)
+            return 3;
+        
+        // x23 = a1 + w24*8 + 0x4648  (pointer to slot entry)
+        uint64_t x23 = a1 + ((uint64_t)w24 << 3) + w28;
+        
+        // +112: vm_allocate(mach_task_self(), x23, size, 3)
+        kern_return_t w0 = vm_allocate(mach_task_self(), (vm_address_t *)x23, size, 3);
+        
+        // +116: cbnz w0 → return error
+        if (w0 != KERN_SUCCESS)
+            return w0;
+        
+        // +120..128: (*x25)++
+        *x25 = w24 + 1;
+        
+        // +132..136: sub_BCB4(*(uint64_t*)x23)
+        uint64_t x0 = sub_BCB4(*(uint64_t *)x23);
+        
+        // +140: cbz x0 → return 5
+        if (x0 == 0)
+            return 5;
+        
+        // +144: cmp x0, a3
+        // +148: b.eq → mach_make_memory_entry path
+        if (x0 == a3) {
+            vm_size_t entry_size = size;  // str x21, [sp, #0x8]
+            w0 = mach_make_memory_entry(
+                                        mach_task_self(),
+                                        &entry_size,              // add x1, sp, #0x8
+                                        *(uint64_t *)x23,         // ldr x2, [x23]
+                                        VM_PROT_READ | VM_PROT_WRITE,  // 3
+                                        a4,                       // x19
+                                        0);
+            
+            // +208: cbnz w0 → return error
+            if (w0 != KERN_SUCCESS)
+                return w0;
+            
+            // +212..220: entry_array[w24] = *a4
+            // x9 = a1 + w24*4,  then str at x9+0x3644
+            uint32_t *entry_array = (uint32_t *)((uint8_t *)a1 + 0x3644);
+            entry_array[w24] = (uint32_t)*a4;
+            
+            return KERN_SUCCESS;
+        }
+        
+        // +152: subs w26, w26, #1
+        // +156: b.ne → back to ldr w24, [x25]  (+76)
+        w26--;
+    } while (w26 != 0);
+    
+    return 3;  // exhausted retries (falls through to +160 path)
 }
 
 //----- (000000000000BE20) ----------------------------------------------------
@@ -6638,7 +6674,7 @@ __int64 __fastcall sub_CEB8(uint64_t x0, uint64_t x1)
   _QWORD *v48; // x25
   __int64 v49; // x8
   unsigned int v50; // w23
-  CFMutableDictionaryRef v51; // x22
+  uintptr_t v51; // x22
   char *v52; // x21
   unsigned int v53; // w8
   bool v54; // zf
@@ -6871,7 +6907,7 @@ __int64 __fastcall sub_CEB8(uint64_t x0, uint64_t x1)
   __int64 v283; // [xsp+90h] [xbp-10C0h]
   unsigned __int64 v284; // [xsp+90h] [xbp-10C0h]
   __int64 v285; // [xsp+90h] [xbp-10C0h]
-  CFMutableDictionaryRef theDict; // [xsp+98h] [xbp-10B8h]
+  uintptr_t theDict; // [xsp+98h] [xbp-10B8h]
   CFMutableDictionaryRef theDicta; // [xsp+98h] [xbp-10B8h]
   CFMutableDictionaryRef theDictb; // [xsp+98h] [xbp-10B8h]
   CFMutableDictionaryRef theDictc; // [xsp+98h] [xbp-10B8h]
@@ -7061,12 +7097,12 @@ LABEL_15:
   if ( v22 > 0x27120080CFFFFFLL || v22 >= 0x225C23801AF00ELL && *(int *)(v5 + 320) < 10002 )
   {
 LABEL_36:
-    theDict = (CFMutableDictionaryRef)(&stru_68 + 68);
+    theDict = 68;
     v262 = 184;
     v27 = 88;
     goto LABEL_40;
   }
-  theDict = (CFMutableDictionaryRef)(&stru_68 + 60);
+  theDict = 60;
   v262 = 176;
   v27 = 80;
 LABEL_40:
@@ -7264,7 +7300,7 @@ LABEL_87:
       }
       if ( *(_DWORD *)v52 && *(_DWORD *)v52 == *((_DWORD *)v52 + 1) )
       {
-        v54 = *((unsigned __int8 *)v51 + (_QWORD)v52) != 128 && v53 == 1;
+        v54 = *((unsigned __int8 *)v52 + v51) != 128 && v53 == 1;
         if ( v54 && *((_QWORD *)v52 + 3) == *(_QWORD *)&name.msgh_bits )
           break;
       }
@@ -8870,7 +8906,7 @@ __int64 __fastcall sub_F860(__int64 a1, __int64 a2, __int64 a3, unsigned int a4)
   __int64 v28; // [xsp+38h] [xbp-B8h]
   mach_port_t object_name; // [xsp+40h] [xbp-B0h] BYREF
   mach_msg_type_number_t infoCnt; // [xsp+44h] [xbp-ACh] BYREF
-  int info[8]; // [xsp+48h] [xbp-A8h] BYREF
+  int info[9]; // [xsp+48h] [xbp-A8h] BYREF
   __int16 v32; // [xsp+68h] [xbp-88h]
   vm_size_t size; // [xsp+70h] [xbp-80h] BYREF
   vm_address_t address; // [xsp+78h] [xbp-78h] BYREF
@@ -8941,7 +8977,7 @@ __int64 __fastcall sub_F860(__int64 a1, __int64 a2, __int64 a3, unsigned int a4)
           v19 = 2;
         else
           v19 = v10;
-        LOWORD(__src[0]) = v32;
+        LOWORD(__src[0]) = *(_WORD *)&info[8];
       }
       memcpy((void *)(a3 + v9), __src, v19);
       v9 += v19;
@@ -28730,15 +28766,15 @@ LABEL_100:
 //----- (00000000000295B4) ----------------------------------------------------
 bool __fastcall sub_295B4(__int64 krwCtx, unsigned __int64 vaddr, void *outBuf)
 {
-  __int64 (*v3)(void); // x8
+  __int64 (__fastcall *v3)(__int64, unsigned __int64, void *, unsigned int, __int64); // x8
   int v4; // w0
   int v5; // w0
   __int64 v7; // [xsp+8h] [xbp-8h] BYREF
 
-  v3 = *(__int64 (**)(void))(krwCtx + 48);
+  v3 = *(__int64 (__fastcall **)(__int64, unsigned __int64, void *, unsigned int, __int64))(krwCtx + 48);
   if ( v3 )
   {
-    v4 = v3();
+    v4 = v3(krwCtx, vaddr, outBuf, 4, 1);
     goto LABEL_3;
   }
   if ( (unsigned int)(*(_DWORD *)(krwCtx + 172) + 1) >= 2 && *(_QWORD *)(krwCtx + 216) )
@@ -29454,14 +29490,14 @@ unsigned __int64 __fastcall sub_2A200(struct_krwCtx *a1, unsigned __int64 a2, _D
 //----- (000000000002A360) ----------------------------------------------------
 bool __fastcall kreadbuf(struct_krwCtx *krwCtx, unsigned __int64 vaddr, mach_vm_size_t size, void *outBuf, __int64 a5)
 {
-  __int64 (*v5)(void); // x9
+  __int64 (__fastcall *v5)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64); // x9
   int v6; // w0
   int v7; // w0
 
-  v5 = *(__int64 (**)(void))&krwCtx->gap4[44];
+  v5 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64))&krwCtx->gap4[44];
   if ( v5 )
   {
-    v6 = v5();
+    v6 = v5(krwCtx, vaddr, outBuf, size, a5);
     goto LABEL_3;
   }
   if ( krwCtx->threadForKernelRead + 1 >= 2 && *(_QWORD *)&krwCtx->gap42[40] )
@@ -29508,14 +29544,14 @@ bool __fastcall kreadbuf_0(__int64 ctx, unsigned __int64 addr, mach_vm_size_t si
 //----- (000000000002A488) ----------------------------------------------------
 bool __fastcall sub_2A488(__int64 a1, unsigned __int64 a2, const void *a3, mach_vm_size_t a4, int a5)
 {
-  __int64 (*v5)(void); // x8
+  __int64 (__fastcall *v5)(__int64, unsigned __int64, const void *, mach_vm_size_t, int); // x8
   int v6; // w0
   int v7; // w0
 
-  v5 = *(__int64 (**)(void))(a1 + 64);
+  v5 = *(__int64 (__fastcall **)(__int64, unsigned __int64, const void *, mach_vm_size_t, int))(a1 + 64);
   if ( v5 )
   {
-    v6 = v5();
+    v6 = v5(a1, a2, a3, a4, a5);
     goto LABEL_3;
   }
   if ( (unsigned int)(*(_DWORD *)(a1 + 172) + 1) >= 2 && *(_QWORD *)(a1 + 216) )

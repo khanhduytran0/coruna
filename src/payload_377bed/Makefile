@@ -8,9 +8,16 @@ include $(THEOS)/makefiles/common.mk
 
 LIBRARY_NAME = entry1_type0x09
 
+RECOMP_DEBUG_LOCALS ?= 0
+ifeq ($(RECOMP_DEBUG_LOCALS),1)
+entry1_type0x09_OPTFLAGS = -O0 -fno-omit-frame-pointer
+else
+entry1_type0x09_OPTFLAGS = -Og
+endif
+
 entry1_type0x09_FILES = entry1_type0x09.m
 entry1_type0x09_CFLAGS = \
-    -Og \
+    $(entry1_type0x09_OPTFLAGS) \
     -fno-inline \
     -fno-strict-aliasing \
     -Wno-int-conversion \
