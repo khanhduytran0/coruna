@@ -259,15 +259,15 @@ unsigned __int64 __fastcall sub_1E99C(__int64 a1, unsigned __int64 *a2, unsigned
 __int64 __fastcall sub_1EA70(__int64 a1, int a2);
 char *__fastcall sub_1EB2C(__int64 *a1, __int64 *a2, int a3);
 __int64 __fastcall sub_1ED50(char *a1, size_t a2);
-__n128 __fastcall kernel_version_parse(struct_xnuMajorVersion *xnuMajorVersion, int *a2, int *a3);
+int __fastcall kernel_version_parse(struct_xnuMajorVersion *xnuMajorVersion, int *a2, int *a3);
 __int64 __fastcall sub_1F07C(vm_map_read_t a1, mach_vm_address_t a2, _QWORD *a3);
 __int64 number_of_cpus();
-unsigned __int64 sub_1F0F4();
+unsigned __int64 comm_page_memory_size();
 __int64 sub_1F114();
 __int64 __fastcall sub_1F148(task_name_t a1);
 __int64 sub_1F190();
 __int64 __fastcall sub_1F1C8(task_name_t a1, _QWORD *a2, _QWORD *a3);
-unsigned __int64 __fastcall sub_1F240(_DWORD *a1);
+unsigned __int64 __fastcall comm_page_get_cpu_family(_DWORD *cpuFamily);
 __int64 __fastcall sub_1F274(unsigned int a1, _QWORD *a2);
 __int64 __fastcall sub_1F308(__int64 *a1, int a2, size_t __n, _QWORD *__src);
 __int64 __fastcall sub_1F418(__int64 a1, _QWORD *a2, _DWORD *a3);
@@ -659,7 +659,34 @@ __int64 __fastcall sub_40FDC(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __i
 __int64 __fastcall sub_4100C(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6);
 __int64 j___get_cpu_capabilities(void); // weak
 __int64 _get_cpu_capabilities(void);
-unsigned __int64 sub_41040();
+extern __int64 real_get_cpu_capabilities(void) __asm("__get_cpu_capabilities");
+unsigned __int64 comm_page64_base_address();
+enum
+{
+  COMM_PAGE_CPU_CAPABILITIES64_OFFSET = 0x10,
+  COMM_PAGE_CACHE_LINESIZE_OFFSET = 0x26,
+  COMM_PAGE_MEMORY_SIZE_OFFSET = 0x38,
+  COMM_PAGE_CPUFAMILY_OFFSET = 0x80,
+};
+void *__memcpy_chk(void *dst, const void *src, size_t len, size_t dstlen);
+void *__memset_chk(void *dst, int val, size_t len, size_t dstlen);
+size_t __strlcpy_chk(char *dst, const char *src, size_t len, size_t dstlen);
+extern const char ___kernelVersionString[];
+int sandbox_check(pid_t pid, const char *operation, int flags, ...);
+void *_os_alloc_once(void *slot, size_t size, void *init);
+void *__os_alloc_once(void *slot, size_t size, void *init);
+mach_port_t mach_reply_port(void);
+CFDataRef IOCFSerialize(CFTypeRef object, CFOptionFlags options);
+kern_return_t host_get_io_master(host_t host, io_master_t *io_master);
+int uuid_is_null(const unsigned char uu[16]);
+__int64 _IOServiceSetAuthorizationID(void);
+__int64 __semwait_signal(void);
+__int64 __ulock_wait(void);
+__int64 __ulock_wake(void);
+__int64 necp_open(void);
+__int64 necp_client_action(void);
+int proc_pidinfo(int pid, int flavor, uint64_t arg, void *buffer, int buffersize);
+char *_CFProcessPath(void);
 #if 0
 int __cdecl CC_SHA1_Final(unsigned __int8 *md, CC_SHA1_CTX *c);
 int __cdecl CC_SHA1_Init(CC_SHA1_CTX *c);
@@ -734,14 +761,15 @@ kern_return_t __cdecl IOServiceWaitQuiet(io_service_t service, mach_timespec_t *
 __int64 _CFProcessPath();
 __int64 _IOServiceSetAuthorizationID();
 int *__error(void);
-__int64 __memcpy_chk();
-__int64 __memset_chk();
+void *__memcpy_chk(void *dst, const void *src, size_t len, size_t dstlen);
+void *__memset_chk(void *dst, int val, size_t len, size_t dstlen);
 __int64 __semwait_signal();
-__int64 __strlcpy_chk();
+size_t __strlcpy_chk(char *dst, const char *src, size_t len, size_t dstlen);
 __int64 __ulock_wait();
 __int64 __ulock_wake();
 __int64 _get_cpu_capabilities();
-__int64 _os_alloc_once();
+void *_os_alloc_once(void *slot, size_t size, void *init);
+void *__os_alloc_once(void *slot, size_t size, void *init);
 void __cdecl arc4random_buf(void *__buf, size_t __nbytes);
 void __cdecl bzero(void *, size_t);
 void *__cdecl calloc(size_t __count, size_t __size);
@@ -765,6 +793,7 @@ kern_return_t __cdecl host_create_mach_voucher(host_t host, mach_voucher_attr_ra
 kern_return_t __cdecl host_get_io_master(host_t host, io_master_t *io_master);
 kern_return_t __cdecl host_get_special_port(host_priv_t host_priv, int node, int which, mach_port_t *port);
 kern_return_t __cdecl host_kernel_version(host_t host, kernel_version_t kernel_version);
+extern const char ___kernelVersionString[];
 kern_return_t __cdecl host_page_size(host_t, vm_size_t *);
 kern_return_t __cdecl host_processors(host_priv_t host_priv, processor_array_t *out_processor_list, mach_msg_type_number_t *out_processor_listCnt);
 kern_return_t __cdecl host_security_set_task_token(host_security_t host_security, task_t target_task, security_token_t sec_token, audit_token_t *__struct_ptr audit_token, host_t host);
@@ -843,7 +872,7 @@ void __cdecl qsort(void *__base, size_t __nel, size_t __width, int (__cdecl *__c
 ssize_t __cdecl read(int, void *, size_t);
 void *__cdecl realloc(void *__ptr, size_t __size);
 int __cdecl rmdir(const char *);
-__int64 __fastcall sandbox_check(int pid);
+int sandbox_check(pid_t pid, const char *operation, int flags, ...);
 int sched_yield(void);
 kern_return_t __cdecl semaphore_create(task_t task, semaphore_t *semaphore, int policy, int value);
 kern_return_t __cdecl semaphore_destroy(task_t task, semaphore_t semaphore);
@@ -984,7 +1013,7 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte);
 // __int64 ___ulock_wait(void); weak
 // __int64 ___ulock_wake(void); weak
 // __int64 j___get_cpu_capabilities(void); weak
-// __int64 __os_alloc_once(void); weak
+// void *__os_alloc_once(void *slot, size_t size, void *init); weak
 // void __cdecl _arc4random_buf(void *__buf, size_t __nbytes);
 // void __cdecl _bzero(void *, size_t);
 // void *__cdecl _calloc(size_t __count, size_t __size);
@@ -4476,7 +4505,7 @@ __int64 __fastcall sub_A614(__int64 a1)
   if ( _os_alloc_once_table[162] == -1 )
     v7 = (_QWORD *)_os_alloc_once_table[163];
   else
-    v7 = (_QWORD *)_os_alloc_once();
+    v7 = (_QWORD *)_os_alloc_once(&_os_alloc_once_table[162], 0x10u, 0);
   if ( *v7 )
     v6[2] = *v7;
   *(_OWORD *)(v6 + 179) = v11;
@@ -5702,7 +5731,7 @@ LABEL_9:
   else
   {
     v67 = v12;
-    v68 = _os_alloc_once();
+    v68 = (__int64)_os_alloc_once(&_os_alloc_once_table[160], 0x10u, 0);
     v12 = v67;
     v13 = (_QWORD *)v68;
   }
@@ -6384,29 +6413,49 @@ __int64 __fastcall sub_CB98(uint64_t x0, uint32_t w1, uint64_t x2)
   unsigned int v21; // w8
   unsigned __int64 v22; // x21
   mach_port_name_t v23; // w1
-  _DWORD v25[2824]; // [xsp+8h] [xbp-66E8h] BYREF
-  vm_address_t address; // [xsp+2C28h] [xbp-3AC8h]
-  vm_size_t size; // [xsp+2C30h] [xbp-3AC0h]
-  vm_address_t v28; // [xsp+2C38h] [xbp-3AB8h]
-  vm_size_t v29; // [xsp+2C40h] [xbp-3AB0h]
-  _BYTE v30[2096]; // [xsp+2C48h] [xbp-3AA8h]
-  mach_port_name_t name; // [xsp+3478h] [xbp-3278h]
-  void *v32; // [xsp+3480h] [xbp-3270h]
-  unsigned int v33; // [xsp+3488h] [xbp-3268h]
-  vm_address_t v34; // [xsp+3490h] [xbp-3260h]
-  vm_size_t v35; // [xsp+3498h] [xbp-3258h]
-  vm_address_t v36; // [xsp+34A0h] [xbp-3250h]
-  vm_size_t v37; // [xsp+34A8h] [xbp-3248h]
-  _BYTE v38[72]; // [xsp+34B0h] [xbp-3240h]
-  mach_port_name_t v39; // [xsp+34F8h] [xbp-31F8h]
+  struct
+  {
+    _DWORD v25[2824]; // [xsp+8h] [xbp-66E8h] BYREF
+    vm_address_t address; // [xsp+2C28h] [xbp-3AC8h]
+    vm_size_t size; // [xsp+2C30h] [xbp-3AC0h]
+    vm_address_t v28; // [xsp+2C38h] [xbp-3AB8h]
+    vm_size_t v29; // [xsp+2C40h] [xbp-3AB0h]
+    _BYTE v30[2096]; // [xsp+2C48h] [xbp-3AA8h]
+    mach_port_name_t name; // [xsp+3478h] [xbp-3278h]
+    void *v32; // [xsp+3480h] [xbp-3270h]
+    unsigned int v33; // [xsp+3488h] [xbp-3268h]
+    vm_address_t v34; // [xsp+3490h] [xbp-3260h]
+    vm_size_t v35; // [xsp+3498h] [xbp-3258h]
+    vm_address_t v36; // [xsp+34A0h] [xbp-3250h]
+    vm_size_t v37; // [xsp+34A8h] [xbp-3248h]
+    _BYTE v38[72]; // [xsp+34B0h] [xbp-3240h]
+    mach_port_name_t v39; // [xsp+34F8h] [xbp-31F8h]
+    _BYTE padding[0x315C];
+  } locals;
   uint64_t args[3]; // [xsp+6658h] [xbp-98h] BYREF
   pthread_t thread; // [xsp+6670h] [xbp-80h] BYREF
   pthread_attr_t attr; // [xsp+6678h] [xbp-78h] BYREF
+#define v25 locals.v25
+#define address locals.address
+#define size locals.size
+#define v28 locals.v28
+#define v29 locals.v29
+#define v30 locals.v30
+#define name locals.name
+#define v32 locals.v32
+#define v33 locals.v33
+#define v34 locals.v34
+#define v35 locals.v35
+#define v36 locals.v36
+#define v37 locals.v37
+#define v38 locals.v38
+#define v39 locals.v39
 
   v5 = (_DWORD *)x2;
   v7 = w1;
   v8 = x0;
-  bzero(v25, 0x6650u);
+  _Static_assert(sizeof(locals) == 0x6650, "sub_CB98 local frame size mismatch");
+  bzero(&locals, sizeof(locals));
   v25[0] = v7;
   v9 = pthread_attr_init(&attr);
   if ( v9 )
@@ -6518,6 +6567,21 @@ __int64 __fastcall sub_CB98(uint64_t x0, uint32_t w1, uint64_t x2)
     }
     free(v20);
   }
+#undef v25
+#undef address
+#undef size
+#undef v28
+#undef v29
+#undef v30
+#undef name
+#undef v32
+#undef v33
+#undef v34
+#undef v35
+#undef v36
+#undef v37
+#undef v38
+#undef v39
   return v11;
 }
 // CB98: variables would overlap: w1.4 and x1.8
@@ -6857,28 +6921,47 @@ __int64 __fastcall sub_CEB8(uint64_t x0, uint64_t x1)
   mem_entry_name_port_t v319[2]; // [xsp+148h] [xbp-1008h] BYREF
   integer_t a1[4]; // [xsp+150h] [xbp-1000h] BYREF
   __int128 v321; // [xsp+160h] [xbp-FF0h]
-  mach_msg_header_t outputStruct[2]; // [xsp+170h] [xbp-FE0h] BYREF
-  __int128 v323; // [xsp+1A0h] [xbp-FB0h]
-  __int128 v324; // [xsp+1B0h] [xbp-FA0h]
-  __int128 v325; // [xsp+1C0h] [xbp-F90h]
-  __int128 v326; // [xsp+1D0h] [xbp-F80h]
-  __int128 v327; // [xsp+1E0h] [xbp-F70h]
-  __int128 v328; // [xsp+1F0h] [xbp-F60h]
-  __int128 v329; // [xsp+200h] [xbp-F50h]
-  __int128 v330; // [xsp+210h] [xbp-F40h]
-  __int128 v331; // [xsp+220h] [xbp-F30h]
-  __int128 v332; // [xsp+230h] [xbp-F20h]
-  __int128 v333; // [xsp+240h] [xbp-F10h]
-  __int128 v334; // [xsp+250h] [xbp-F00h]
-  __int128 v335; // [xsp+260h] [xbp-EF0h]
+  struct
+  {
+    mach_msg_header_t outputStruct[2]; // [xsp+170h] [xbp-FE0h] BYREF
+    __int128 v323; // [xsp+1A0h] [xbp-FB0h]
+    __int128 v324; // [xsp+1B0h] [xbp-FA0h]
+    __int128 v325; // [xsp+1C0h] [xbp-F90h]
+    __int128 v326; // [xsp+1D0h] [xbp-F80h]
+    __int128 v327; // [xsp+1E0h] [xbp-F70h]
+    __int128 v328; // [xsp+1F0h] [xbp-F60h]
+    __int128 v329; // [xsp+200h] [xbp-F50h]
+    __int128 v330; // [xsp+210h] [xbp-F40h]
+    __int128 v331; // [xsp+220h] [xbp-F30h]
+    __int128 v332; // [xsp+230h] [xbp-F20h]
+    __int128 v333; // [xsp+240h] [xbp-F10h]
+    __int128 v334; // [xsp+250h] [xbp-F00h]
+    __int128 v335; // [xsp+260h] [xbp-EF0h]
+    _BYTE padding[0xE60];
+  } outputScratch;
+#define outputStruct outputScratch.outputStruct
+#define v323 outputScratch.v323
+#define v324 outputScratch.v324
+#define v325 outputScratch.v325
+#define v326 outputScratch.v326
+#define v327 outputScratch.v327
+#define v328 outputScratch.v328
+#define v329 outputScratch.v329
+#define v330 outputScratch.v330
+#define v331 outputScratch.v331
+#define v332 outputScratch.v332
+#define v333 outputScratch.v333
+#define v334 outputScratch.v334
+#define v335 outputScratch.v335
 
   v4 = x1;
   v5 = x0;
   v6 = 708625;
+  _Static_assert(sizeof(outputScratch) == 0xF60, "sub_CEB8 output scratch size mismatch");
   address = 0;
   object_handle = 0;
   size = vm_page_size;
-  v7 = sub_1F0F4();
+  v7 = comm_page_memory_size();
   *(_QWORD *)(v4 + 8) = v7;
   *(_QWORD *)(v4 + 0x34E8) = 0x10000000800LL;
   if ( v7 > 0x400000000LL )
@@ -8749,6 +8832,20 @@ LABEL_547:
       *(_QWORD *)(v5 + 272) = 0;
     }
   }
+#undef outputStruct
+#undef v323
+#undef v324
+#undef v325
+#undef v326
+#undef v327
+#undef v328
+#undef v329
+#undef v330
+#undef v331
+#undef v332
+#undef v333
+#undef v334
+#undef v335
   return v10;
 }
 // D7C4: conditional instruction was optimized away because w22.4==0
@@ -11630,6 +11727,7 @@ void __fastcall sub_13D9C(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3)
 __int64 __fastcall kwrite_something(struct_krwCtx *a1, mach_vm_address_t a2, __int64 a3, __int64 a4, int a5)
 {
   __int64 result; // x0
+  __int64 v6; // [xsp+8h] [xbp-18h] BYREF
 
   if ( !a5 || a1->int168 != (_DWORD)a4 )
   {
@@ -11638,8 +11736,9 @@ __int64 __fastcall kwrite_something(struct_krwCtx *a1, mach_vm_address_t a2, __i
       return result;
     return 1;
   }
-  __memcpy_chk();
-  result = kwrite64(a1, a2, 0);
+  v6 = 0;
+  __memcpy_chk(&v6, (const void *)a3, (unsigned int)a4, 8);
+  result = kwrite64(a1, a2, v6);
   if ( (_DWORD)result )
     return 1;
   return result;
@@ -19900,22 +19999,23 @@ LABEL_8:
 }
 
 //----- (000000000001EE6C) ----------------------------------------------------
-__n128 __fastcall kernel_version_parse(struct_xnuMajorVersion *xnuMajorVersion, int *a2, int *a3)
+int __fastcall kernel_version_parse(struct_xnuMajorVersion *xnuMajorVersion, int *a2, int *a3)
 {
-  __n128 result; // q0
+  int result; // w0
   char *v7; // x0
   int v8; // w0
   size_t v9; // x0
   char *v10; // x0
-  __int32 v11[4]; // [xsp+40h] [xbp-250h]
-  __int8 v12[8]; // [xsp+50h] [xbp-240h]
+  __int32 v11[8]; // [xsp+40h] [xbp-250h]
+  unsigned __int64 v12; // [xsp+58h] [xbp-238h]
   char str[512]; // [xsp+58h] [xbp-238h] BYREF
 
-  *(_QWORD *)v12 = 0;
-  v11[0] = 0;
+  result = 0;
+  memset(v11, 0, sizeof(v11));
+  v12 = 0;
   if ( dyldVersionNumber >= 1000.0 )
   {
-    __strlcpy_chk();
+    __strlcpy_chk(str, ___kernelVersionString, 0x200u, 0x200u);
     v9 = strlen(str);
     if ( v9 )
     {
@@ -19928,19 +20028,23 @@ __n128 __fastcall kernel_version_parse(struct_xnuMajorVersion *xnuMajorVersion, 
           v10 = strstr(str, "Libsyscall-");
           if ( v10 )
           {
-            v8 = sscanf(v10, "Libsyscall-%d.%d.%d.%d.%d%*s");
+            v8 = sscanf(v10, "Libsyscall-%d.%d.%d.%d.%d%*s", &v11[0], &v11[1], &v11[2], &v11[3], &v11[4]);
 LABEL_13:
             if ( v8 >= 3 )
             {
               *a2 = 1;
               *a3 = 1;
-              v11[1] = 0;
-              *(_QWORD *)&v11[2] = 0;
-              v12[0] = 1;
-              result = (__n128){0};
-              xnuMajorVersion->qword20 = *(_QWORD *)v12;
-              xnuMajorVersion->majorVersion = 0u;
-              xnuMajorVersion->oword10 = *(_OWORD *)v11;
+              v11[5] = (v11[0] << 18) | ((v11[1] & 0x1FF) << 9) | (v11[2] & 0x1FF);
+              *(_QWORD *)&v11[6] = ((((unsigned __int64)(v11[0] & 0x7FFF) << 20)
+                                    | ((unsigned __int64)(v11[1] & 0x3FF) << 10)
+                                    | (unsigned int)(v11[2] & 0x3FF)) << 20)
+                                  | (((unsigned __int64)(unsigned int)v11[3] << 10) & 0xFFC00)
+                                  | (unsigned int)(v11[4] & 0x3FF);
+              v12 = 1;
+              xnuMajorVersion->qword20 = v12;
+              xnuMajorVersion->majorVersion = *(_OWORD *)v11;
+              xnuMajorVersion->oword10 = *(_OWORD *)&v11[4];
+              result = 1;
             }
           }
         }
@@ -19954,7 +20058,7 @@ LABEL_13:
       v7 = strstr(str, "xnu-");
       if ( v7 )
       {
-        v8 = sscanf(v7, "xnu-%d.%d.%d.%d.%d%*s");
+        v8 = sscanf(v7, "xnu-%d.%d.%d.%d.%d%*s", &v11[0], &v11[1], &v11[2], &v11[3], &v11[4]);
         goto LABEL_13;
       }
     }
@@ -19986,13 +20090,13 @@ __int64 number_of_cpus()
 // 4103C: using guessed type __int64 j___get_cpu_capabilities(void);
 
 //----- (000000000001F0F4) ----------------------------------------------------
-unsigned __int64 sub_1F0F4()
+unsigned __int64 comm_page_memory_size()
 {
   unsigned __int64 result; // x0
 
-  result = sub_41040();
+  result = comm_page64_base_address();
   if ( result )
-    return *(_QWORD *)(result + 56);
+    return *(_QWORD *)(result + COMM_PAGE_MEMORY_SIZE_OFFSET);
   return result;
 }
 
@@ -20071,14 +20175,14 @@ __int64 __fastcall sub_1F1C8(task_name_t a1, _QWORD *a2, _QWORD *a3)
 }
 
 //----- (000000000001F240) ----------------------------------------------------
-unsigned __int64 __fastcall sub_1F240(_DWORD *a1)
+unsigned __int64 __fastcall comm_page_get_cpu_family(_DWORD *cpuFamily)
 {
   unsigned __int64 result; // x0
 
-  result = sub_41040();
+  result = comm_page64_base_address();
   if ( result )
   {
-    *a1 = *(_DWORD *)(result + 128);
+    *cpuFamily = *(_DWORD *)(result + COMM_PAGE_CPUFAMILY_OFFSET);
     return 1;
   }
   return result;
@@ -24181,18 +24285,18 @@ __int64 __fastcall sub_240CC(int a1)
   bool v4; // zf
   int v5; // w0
 
-  result = sandbox_check(getpid());
+  result = sandbox_check(getpid(), 0, 0);
   if ( (_DWORD)result )
   {
-    if ( (unsigned int)sandbox_check(getpid()) )
+    if ( (unsigned int)sandbox_check(getpid(), "mach-lookup", SANDBOX_CHECK_NO_REPORT | 2, "com.apple.system.notification_center") )
       return 0;
-    v3 = sandbox_check(getpid());
+    v3 = sandbox_check(getpid(), "mach-lookup", SANDBOX_CHECK_NO_REPORT | 2, "com.apple.lsd.mapdb");
     v4 = v3 == 0;
     result = v3 != 0;
     v4 = v4 || a1 == 0;
     if ( !v4 )
     {
-      result = sandbox_check(getpid());
+      result = sandbox_check(getpid(), "syscall-unix", SANDBOX_CHECK_NO_REPORT, 0x61);
       if ( (_DWORD)result != 1 )
       {
         v5 = socket(2, 2, 0);
@@ -24214,7 +24318,7 @@ __int64 __fastcall another_sandbox_check(__int64 a1)
   int v2; // w8
   __int64 result; // x0
 
-  v2 = sandbox_check(getpid());
+  v2 = sandbox_check(getpid(), 0, 0);
   if ( !v2 || (result = 0, v2 == 1) )
   {
     *(_BYTE *)(a1 + 10) = v2;
@@ -24886,7 +24990,7 @@ __int64 __fastcall sub_24DA8(
     *(_QWORD *)&v24[1].msgh_voucher_port = __PAIR64__(a5, a4);
     DWORD1(v25) = 1310720;
     *((NDR_record_t *)&v25 + 1) = NDR_record;
-    v15 = __strlcpy_chk();
+    v15 = __strlcpy_chk((char *)&v26 + 8, (const char *)a2, 0x80u, 0x80u);
     v16 = v15 + 1;
     v17 = 8 - ((v15 + 1) & 7);
     if ( ((v15 + 1) & 7) == 0 )
@@ -34162,13 +34266,13 @@ LABEL_121:
                   if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)v2, *((_QWORD *)v3 + 1), size, &v216) )
                     goto LABEL_349;
                   v207 = 0;
-                  __memcpy_chk();
+                  __memcpy_chk(&v216, &v207, *(int *)(v2 + 360), 0x100u);
                   *(_QWORD *)&v181 = 0x20000000;
                   *((_QWORD *)&v217 + 1) = 0x20000000;
                   *(_QWORD *)&v220 = v50;
                   *(_QWORD *)&v219 = bufSize_4;
                   v210 = (pthread_t)((char *)v50 + v163);
-                  __memcpy_chk();
+                  __memcpy_chk((char *)&v216 + 0x78, &v210, *(int *)(v2 + 360), 0x88u);
                   v98 = *(_QWORD *)(v2 + 344);
                   v99 = 144;
                   if ( v98 > 0x1C1B19145FFFFFLL )
@@ -34193,7 +34297,7 @@ LABEL_121:
                   if ( *((_QWORD *)&v224 + 1) )
                   {
                     v209 = (unsigned __int64)v50 + *((_QWORD *)&v224 + 1) - *((_QWORD *)v3 + 3);
-                    __memcpy_chk();
+                    __memcpy_chk((char *)&v216 + 0x88, &v209, *(int *)(v2 + 360), 0x78u);
                   }
                   if ( *(_QWORD *)(v2 + 344) > 0x1F52FFFFFFFFFFuLL )
                   {
@@ -34201,14 +34305,14 @@ LABEL_121:
                     if ( *((_QWORD *)&v225 + 1) )
                     {
                       v208 = (unsigned __int64)v50 + *((_QWORD *)&v225 + 1) - *((_QWORD *)v3 + 3);
-                      __memcpy_chk();
+                      __memcpy_chk((char *)&v216 + 0x98, &v208, *(int *)(v2 + 360), 0x68u);
                     }
                   }
                   if ( size_4 )
                   {
                     *(_QWORD *)name = 0;
                     v121 = (char *)&v216 + size - *(_DWORD *)(v2 + 360);
-                    __memcpy_chk();
+                    __memcpy_chk(name, v121, *(int *)(v2 + 360), 8u);
                     if ( *(_QWORD *)name && !validate_addr(v2, *(__int64 *)name) )
                       goto LABEL_349;
                     *(_QWORD *)name = 0;
@@ -39432,7 +39536,7 @@ LABEL_72:
           {
             __buf = 0;
             v28 = address + name[1] * v27;
-            __memcpy_chk();
+            __memcpy_chk(&__buf, (const void *)v28, a1->int168, 8u);
             if ( __buf )
             {
               __buf = krw_xpac_vaddr_2(a1, __buf);
@@ -41898,7 +42002,7 @@ unsigned __int64 __fastcall sub_39B14(_QWORD *a1)
   result = sub_1E99C(a1[831], &v4, &v3);
   if ( (_DWORD)result )
   {
-    result = sub_1F0F4();
+    result = comm_page_memory_size();
     if ( result )
     {
       a1[782] = v4;
@@ -44003,7 +44107,7 @@ LABEL_47:
       return v8;
     if ( (unsigned int)(v32 - 17) > 0x1DF )
       return 163857;
-    __memset_chk();
+    __memset_chk(&newBytes, 0xFF, (unsigned int)(v32 - 16), 0x200u);
     if ( !(unsigned int)kwritebuf_last_1(a1, address, (__int64)&newBytes, (unsigned int)(v32 - 16)) )
       return 163856;
   }
@@ -44100,7 +44204,7 @@ LABEL_74:
     return v8;
   if ( (unsigned int)(v32 - 17) > 0x1DF )
     return 163857;
-  __memset_chk();
+  __memset_chk(&newBytes, 0xFF, (unsigned int)(v32 - 16), 0x200u);
   if ( !(unsigned int)kwritebuf_last_1(a1, address, (__int64)&newBytes, (unsigned int)(v32 - 16)) )
     return 163856;
 LABEL_85:
@@ -44292,8 +44396,8 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   CFTypeID TypeID; // x26
   const struct __CFString *v19; // x24
   int HasPrefix; // w26
-  unsigned __int64 v21; // x0
-  unsigned __int64 v22; // x22
+  unsigned __int64 commPageBaseRaw; // x0
+  unsigned __int64 commPageBase; // x22
   int *p_xnuMajorVersion; // x22
   int xnuMajorVersion; // w8
   int xnuMajorVersionGroup; // w9
@@ -44390,7 +44494,7 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   v4 = semaphore_create(mach_task_self_, &krwCtx->semaphore, 0, 0);
   if ( v4 )
     return v4 | 0x80000000;
-  kernel_version_parse(&xnuVersion, krwCtx->gap16C, &krwCtx->gap16C[1]);
+  v7 = kernel_version_parse(&xnuVersion, krwCtx->gap16C, &krwCtx->gap16C[1]);
   if ( !v7 )
     return 708629;
   v8 = 163858;
@@ -44407,7 +44511,7 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   if ( !stat("/usr/libexec/corelliumd", &v104) )
     return 0x28022;
   v11 = getpid();
-  if ( (int)sandbox_check(v11) <= 0 )
+  if ( (int)sandbox_check(v11, "iokit-get-properties", SANDBOX_CHECK_NO_REPORT, "IOPlatformSerialNumber") <= 0 )
   {
     v12 = IORegistryEntryFromPath(kIOMasterPortDefault, "IODeviceTree:/");
     if ( v12 )
@@ -44441,20 +44545,20 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
     }
   }
 LABEL_17:
-  v21 = sub_41040();
-  if ( !v21 )
+  commPageBaseRaw = comm_page64_base_address();
+  if ( !commPageBaseRaw )
     return 0x28012;
-  v22 = v21;
-  LODWORD(v103) = 0;
-  if ( !(unsigned int)sub_1F240(&v103) )
+  commPageBase = commPageBaseRaw;
+  cpuFamily = 0;
+  if ( !(unsigned int)comm_page_get_cpu_family((_DWORD *)&cpuFamily) )
     return 0x28022;
-  if ( (_DWORD)v103 == 0x92FB37C8 || (_DWORD)v103 == 0x37A09642 || (_DWORD)v103 == 0x2C91A47E )
+  if ( (_DWORD)cpuFamily == 0x92FB37C8 || (_DWORD)cpuFamily == 0x37A09642 || (_DWORD)cpuFamily == 0x2C91A47E )
   {
-    if ( (*(_QWORD *)(v22 + 16) & 0x4000000) == 0 )
+    if ( (*(_QWORD *)(commPageBase + COMM_PAGE_CPU_CAPABILITIES64_OFFSET) & 0x4000000) == 0 )
       goto LABEL_23;
     return 0x28022;
   }
-  if ( *(_WORD *)(v22 + 38) != 128 )
+  if ( *(_WORD *)(commPageBase + COMM_PAGE_CACHE_LINESIZE_OFFSET) != 128 )
     return 0x28022;
 LABEL_23:
   p_xnuMajorVersion = &krwCtx->xnuMajorVersion;
@@ -44476,7 +44580,7 @@ LABEL_23:
 LABEL_33:
   if ( xnuMajorVersion >= 7195 )
     krwCtx->gap4[7] = check_sandboxed(krwCtx->someLargeNumber >> 43 > 0x44A);
-  if ( !(unsigned int)sub_1F240(&cpuFamily) )
+  if ( !(unsigned int)comm_page_get_cpu_family((_DWORD *)&cpuFamily) )
     return 163858;
   if ( (int)cpuFamily <= 0x2876F5B4 )
   {
@@ -44602,7 +44706,7 @@ LABEL_69:
         v33 = -v33;
       return v33 | 0x40000000u;
     }
-    if ( (v104.st_dev & 0xDF) == 0x4A && !((sub_1F0F4() - 1073741825) >> 30) )
+    if ( (v104.st_dev & 0xDF) == 0x4A && !((comm_page_memory_size() - 1073741825) >> 30) )
       krw_ctx_set_flag(krwCtx, 0x10000000);
     v32 = krwCtx->someLargeNumber;
   }
@@ -47424,9 +47528,14 @@ __int64 __fastcall sub_4100C(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __i
 }
 
 //----- (0000000000041040) ----------------------------------------------------
-unsigned __int64 sub_41040()
+unsigned __int64 comm_page64_base_address()
 {
-  return *(unsigned __int64 *)((char *)&_get_cpu_capabilities + 12) & 0xFFFFFFFFFFFFFF00LL;
+  uintptr_t capabilitiesStub = (uintptr_t)&real_get_cpu_capabilities;
+#if defined(__arm64e__)
+  __asm__ volatile("paciza %0" : "+r"(capabilitiesStub));
+  __asm__ volatile("xpaci %0" : "+r"(capabilitiesStub));
+#endif
+  return *(unsigned __int64 *)(capabilitiesStub + 12) & 0xFFFFFFFFFFFFFF00LL;
 }
 // 483C0: using guessed type __int64 j___get_cpu_capabilities(void);
 #if 0
@@ -47972,33 +48081,12 @@ int *__error(void)
   return ___error();
 }
 
-//----- (00000000000414FC) ----------------------------------------------------
-__int64 __memcpy_chk()
-{
-  return ___memcpy_chk();
-}
-// 48388: using guessed type __int64 ___memcpy_chk(void);
-
-//----- (000000000004150C) ----------------------------------------------------
-__int64 __memset_chk()
-{
-  return ___memset_chk();
-}
-// 48390: using guessed type __int64 ___memset_chk(void);
-
 //----- (000000000004151C) ----------------------------------------------------
 __int64 __semwait_signal()
 {
   return ___semwait_signal();
 }
 // 48398: using guessed type __int64 ___semwait_signal(void);
-
-//----- (000000000004153C) ----------------------------------------------------
-__int64 __strlcpy_chk()
-{
-  return ___strlcpy_chk();
-}
-// 483A8: using guessed type __int64 ___strlcpy_chk(void);
 
 //----- (000000000004154C) ----------------------------------------------------
 __int64 __ulock_wait()
@@ -48022,11 +48110,11 @@ __int64 _get_cpu_capabilities()
 // 483C0: using guessed type __int64 j___get_cpu_capabilities(void);
 
 //----- (000000000004157C) ----------------------------------------------------
-__int64 _os_alloc_once()
+void *_os_alloc_once(void *slot, size_t size, void *init)
 {
-  return __os_alloc_once();
+  return __os_alloc_once(slot, size, init);
 }
-// 483C8: using guessed type __int64 __os_alloc_once(void);
+// 483C8: using guessed type void *__os_alloc_once(void *slot, size_t size, void *init);
 
 //----- (000000000004158C) ----------------------------------------------------
 void __cdecl arc4random_buf(void *__buf, size_t __nbytes)
@@ -48747,12 +48835,6 @@ int __cdecl rmdir(const char *a1)
   return _rmdir(a1);
 }
 
-//----- (0000000000041BEC) ----------------------------------------------------
-__int64 __fastcall sandbox_check(int pid)
-{
-  return _sandbox_check(pid);
-}
-
 //----- (0000000000041BFC) ----------------------------------------------------
 int sched_yield(void)
 {
@@ -48811,12 +48893,6 @@ int snprintf(char *__str, size_t __size, const char *__format, ...)
 int __cdecl socket(int a1, int a2, int a3)
 {
   return _socket(a1, a2, a3);
-}
-
-//----- (0000000000041C9C) ----------------------------------------------------
-int sscanf(const char *a1, const char *a2, ...)
-{
-  return _sscanf(a1, a2);
 }
 
 //----- (0000000000041CAC) ----------------------------------------------------

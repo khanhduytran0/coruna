@@ -12,8 +12,8 @@ entry1_type0x09_FILES = entry1_type0x09.m
 entry1_type0x09_CFLAGS = \
     -Wno-int-conversion \
     -Wno-incompatible-pointer-types \
-    -Wno-implicit-function-declaration \
-    -Wno-deprecated-non-prototype \
+    -Werror=implicit-function-declaration \
+    -Werror=deprecated-non-prototype \
     -Wno-incompatible-library-redeclaration \
     -Wno-implicit-int \
     -fno-builtin \
@@ -21,4 +21,9 @@ entry1_type0x09_CFLAGS = \
 entry1_type0x09_FRAMEWORKS = CoreFoundation IOKit Security
 entry1_type0x09_INSTALL_PATH = /usr/local/lib
 
+TOOL_NAME = entry1_type0x09_test
+entry1_type0x09_test_FILES = test.m
+entry1_type0x09_INSTALL_PATH = /usr/local/bin
+
 include $(THEOS_MAKE_PATH)/library.mk
+include $(THEOS_MAKE_PATH)/tool.mk
