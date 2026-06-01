@@ -197,7 +197,7 @@ typedef struct sub_197A8_result
   unsigned __int64 addr;
   unsigned __int64 size;
 } sub_197A8_result;
-sub_197A8_result __fastcall sub_197A8(__int64 **);
+sub_197A8_result __fastcall sub_197A8(__int64 **, int);
 __int64 sub_1984C();
 __int64 __fastcall sub_19854(__int64 a1);
 __int64 __fastcall sub_198FC(__int64 a1, unsigned __int64 a2, unsigned __int64 a3, unsigned __int64 a4, char a5);
@@ -16065,7 +16065,7 @@ unsigned __int64 __fastcall validate_addr_maybe2(struct_krwCtx *krwCtx, unsigned
 }
 
 //----- (00000000000197A8) ----------------------------------------------------
-sub_197A8_result __fastcall sub_197A8(__int64 **a1)
+sub_197A8_result __fastcall sub_197A8(__int64 **a1, int a2)
 {
   __int64 *v1; // x8
   __int64 *v2; // x9
@@ -16077,6 +16077,7 @@ sub_197A8_result __fastcall sub_197A8(__int64 **a1)
   unsigned __int64 v8; // x8
   unsigned __int64 v9; // x10
 
+  __asm__ volatile("" : : "r"(a2));
   v2 = *a1;
   v1 = a1[1];
   v3 = **a1;
@@ -16221,7 +16222,7 @@ unsigned int *__fastcall sub_19ACC(__int64 *a1, __int64 *a2)
   v5[0] = a1;
   v5[1] = a2;
   v5[2] = (_QWORD *)&dword_4;
-  v6 = sub_197A8(v5);
+  v6 = sub_197A8(v5, 1);
   result = (unsigned int *)v6.addr;
   if ( result )
   {
@@ -16244,7 +16245,7 @@ unsigned __int64 __fastcall sub_19B30(__int64 *a1, __int64 *a2)
   v5[0] = a1;
   v5[1] = a2;
   v5[2] = (_QWORD *)&dword_8;
-  v6 = sub_197A8(v5);
+  v6 = sub_197A8(v5, 1);
   result = v6.addr;
   if ( result )
   {
@@ -19205,182 +19206,120 @@ LABEL_16:
 //----- (000000000001DE40) ----------------------------------------------------
 __int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, int a5, __int64 a6)
 {
-  __int64 v5; // x22
-  unsigned int v9; // w9
-  __int64 v10; // x11
-  int v11; // w10
-  __int64 v12; // x12
-  unsigned int v13; // w13
-  __int64 v14; // x23
-  __int64 v15; // x23
-  __int64 v16; // t1
-  __int64 v17; // x1
-  unsigned __int64 v18; // x8
-  __int64 result; // x0
-  unsigned __int64 v20; // x9
-  __int64 v21; // x25
-  unsigned __int64 v22; // x26
-  __int64 v23; // x27
-  __int64 v24; // x28
-  unsigned __int64 v25; // x22
-  __int64 v26; // x8
-  __int64 v27; // x8
-  int v28; // w10
-  __int64 v29; // x8
-  __int64 v30; // [xsp+8h] [xbp-188h]
+  int len; // w22
+  int last; // w22
+  int i; // w10
+  int fallback_shift; // w26
+  unsigned __int64 page_mask; // x28
+  unsigned int align_mask; // w8
+  unsigned __int64 mapped; // x8
+  unsigned __int64 mapped_size; // x1
+  unsigned __int64 mapped_end; // x26
+  unsigned __int64 cursor; // x22
+  unsigned __int64 initial_cursor; // x25
+  unsigned __int64 last_prefetched; // x9
+  unsigned __int64 vm_addr; // x8
+  unsigned __int64 candidate; // x10
+  __int16 *pattern; // x23
+  __int16 pat_byte; // w10
+  unsigned char shift[256]; // [xsp+30h] [xbp-160h]
   __int64 scan_range[3]; // [xsp+10h] [xbp-180h] BYREF
   sub_197A8_result v31; // x0,x1
-  int8x16_t v33; // [xsp+30h] [xbp-160h]
-  int8x16_t v34; // [xsp+40h] [xbp-150h]
-  int8x16_t v35; // [xsp+50h] [xbp-140h]
-  int8x16_t v36; // [xsp+60h] [xbp-130h]
-  int8x16_t v37; // [xsp+70h] [xbp-120h]
-  int8x16_t v38; // [xsp+80h] [xbp-110h]
-  int8x16_t v39; // [xsp+90h] [xbp-100h]
-  int8x16_t v40; // [xsp+A0h] [xbp-F0h]
-  int8x16_t v41; // [xsp+B0h] [xbp-E0h]
-  int8x16_t v42; // [xsp+C0h] [xbp-D0h]
-  int8x16_t v43; // [xsp+D0h] [xbp-C0h]
-  int8x16_t v44; // [xsp+E0h] [xbp-B0h]
-  int8x16_t v45; // [xsp+F0h] [xbp-A0h]
-  int8x16_t v46; // [xsp+100h] [xbp-90h]
-  int8x16_t v47; // [xsp+110h] [xbp-80h]
-  int8x16_t v48; // [xsp+120h] [xbp-70h]
 
-  v5 = a3;
-  if ( a3 != (char)a3 || !a1[2] || !a1[1] )
+#if defined(__arm64e__)
+  __asm__ volatile("xpaci %0" : "+r"(a2));
+#endif
+  __asm__ volatile("" : : "r"(a6));
+  len = (int)a3;
+  pattern = (__int16 *)a2;
+  if ( a3 != (char)a3 || len <= 0 || !a1[2] || !a1[1] )
     return 0;
-  v9 = a3 - 1;
-  if ( (int)a3 >= 1 )
+
+  last = len - 1;
+  while ( last >= 0 && pattern[last] == -1 )
+    --last;
+  if ( last < 0 )
   {
-    v10 = (unsigned int)a3 + 1LL;
-    while ( *(__int16 *)(a2 + 2LL * v9) == -1 )
+    vm_addr = a1[1];
+    if ( !a5 || (vm_addr & (unsigned int)(a5 - 1)) == 0 )
+      return vm_addr ? vm_addr + a4 : 0;
+    return 0;
+  }
+
+  memset(shift, (unsigned char)len, sizeof(shift));
+  for ( i = 0; i < len - 1; ++i )
+  {
+    int distance = len - 1 - i;
+    pat_byte = pattern[i];
+    if ( pat_byte == -1 )
     {
-      --v5;
-      --v10;
-      --v9;
-      if ( v10 <= 1 )
-      {
-        v5 = ((unsigned int)-(int)a3 | 0xFFFFFFFF00000000LL) + a3;
-        break;
-      }
+      memset(shift, (unsigned char)distance, sizeof(shift));
+    }
+    else
+    {
+      shift[(unsigned char)pat_byte] = (unsigned char)distance;
     }
   }
-  v47 = vdupq_n_s8((char)a3);
-  v48 = v47;
-  v45 = v47;
-  v46 = v47;
-  v43 = v47;
-  v44 = v47;
-  v41 = v47;
-  v42 = v47;
-  v39 = v47;
-  v40 = v47;
-  v37 = v47;
-  v38 = v47;
-  v35 = v47;
-  v36 = v47;
-  v33 = v47;
-  v34 = v47;
-  if ( (char)a3 > 1 )
-  {
-    v11 = 0;
-    do
-    {
-      v12 = *(__int16 *)(a2 + 2LL * (char)v11);
-      v13 = ~v11 + (char)a3;
-      if ( v12 == -1 )
-      {
-        v47 = vdupq_n_s8(v13);
-        v48 = v47;
-        v45 = v47;
-        v46 = v47;
-        v43 = v47;
-        v44 = v47;
-        v41 = v47;
-        v42 = v47;
-        v39 = v47;
-        v40 = v47;
-        v37 = v47;
-        v38 = v47;
-        v35 = v47;
-        v36 = v47;
-        v33 = v47;
-        v34 = v47;
-      }
-      else
-      {
-        v33.i8[v12] = v13;
-      }
-      ++v11;
-    }
-    while ( (char)a3 - 1 > (char)v11 );
-  }
-  v14 = a2 + 2 * v5;
-  v16 = *(__int16 *)(v14 - 2);
-  v15 = v14 - 2;
-  v30 = v33.i8[v16];
-  if ( !v30 )
-    v30 = 1;
-  v33.i8[v16] = 0;
+  fallback_shift = (signed char)shift[(unsigned char)pattern[last]];
+  shift[(unsigned char)pattern[last]] = 0;
+
   scan_range[0] = a1[0];
   scan_range[1] = a1[1];
   scan_range[2] = a1[2];
-  v31 = sub_197A8((__int64 **)scan_range);
-  v18 = v31.addr;
-  v17 = v31.size;
-  result = 0;
-  if ( v18 && v17 )
+  v31 = sub_197A8((__int64 **)scan_range, 1);
+  mapped = v31.addr;
+  mapped_size = v31.size;
+  if ( !mapped || !mapped_size )
+    return 0;
+
+  initial_cursor = mapped + last;
+  mapped_end = mapped + mapped_size;
+  if ( initial_cursor >= mapped_end )
+    return 0;
+
+  page_mask = (unsigned __int64)-(int)*(_DWORD *)(*a1 + 56);
+  align_mask = a5 ? (unsigned int)(a5 - 1) : 0;
+  last_prefetched = 0;
+  cursor = initial_cursor;
+  while ( cursor < mapped_end )
   {
-    v20 = 0;
-    v21 = v18 + v5 - 1;
-    v22 = v18 + v17;
-    v23 = -*(_DWORD *)(*a1 + 56);
-    v24 = 1 - v5;
-    v25 = v21;
-    while ( 1 )
+    unsigned int step;
+
+    if ( ((last_prefetched ^ cursor) & page_mask) != 0 )
     {
-      if ( ((v20 ^ v25) & v23) != 0 )
+      sub_19AC4(*a1, cursor, 1u, mapped_end - cursor);
+      last_prefetched = cursor;
+    }
+
+    step = shift[*(unsigned __int8 *)cursor];
+    cursor += step;
+    if ( cursor >= mapped_end )
+      return 0;
+    if ( step )
+      continue;
+
+    for ( i = last; ; --i )
+    {
+      pat_byte = pattern[i];
+      if ( pat_byte != -1 && *(unsigned __int8 *)(cursor - (last - i)) != (unsigned __int8)pat_byte )
+        break;
+      if ( i == 0 )
       {
-        sub_19AC4(*a1, v25, 1u, v22 - v25);
-        v20 = v25;
-      }
-      v26 = v33.u8[*(unsigned __int8 *)v25];
-      v25 += v26;
-      if ( v25 >= v22 )
-        return 0;
-      if ( !(_DWORD)v26 )
-      {
-        if ( v24 > 0 )
+        candidate = cursor - last;
+        vm_addr = a1[1] + candidate - mapped;
+        if ( !align_mask || (vm_addr & align_mask) == 0 )
         {
-LABEL_27:
-          v29 = a1[1] + v25 - v21;
-          if ( !a5 || (v29 & (a5 - 1)) == 0 )
-          {
-            if ( !v29 )
-              return 0;
-            return v29 + a4;
-          }
+          if ( !vm_addr )
+            return 0;
+          return vm_addr + a4;
         }
-        else
-        {
-          v27 = 0;
-          while ( 1 )
-          {
-            v28 = *(__int16 *)(v15 + 2 * v27);
-            if ( v28 != -1 && *(unsigned __int8 *)(v25 + v27) != v28 )
-              break;
-            if ( v24 > --v27 )
-              goto LABEL_27;
-          }
-        }
-        v25 += v30;
+        break;
       }
     }
+    cursor += fallback_shift;
   }
-  return result;
+  return 0;
 }
-// 1DFA4: variable 'v17' is possibly undefined
 
 //----- (000000000001E0C8) ----------------------------------------------------
 __int64 __fastcall sub_1E0C8(__int128 *a1, char *__s, int a3, char a4)
@@ -19445,7 +19384,7 @@ unsigned __int64 __fastcall sub_1E1B8(__int64 *a1, __int64 a2, int a3)
   scan_range[1] = a1[1];
   scan_range[2] = a1[2];
   __s2 = a2;
-  v13 = sub_197A8((__int64 **)scan_range);
+  v13 = sub_197A8((__int64 **)scan_range, 1);
   v6 = v13.addr;
   v5 = v13.size;
   result = 0;
@@ -19501,7 +19440,7 @@ char *__fastcall sub_1E2BC(__int64 *a1, _DWORD *a2, _DWORD *a3, unsigned __int64
   scan_range[0] = a1[0];
   scan_range[1] = a1[1];
   scan_range[2] = a1[2];
-  v14 = sub_197A8((__int64 **)scan_range);
+  v14 = sub_197A8((__int64 **)scan_range, 1);
   v9 = v14.addr;
   v8 = v14.size;
   result = 0;
@@ -47074,7 +47013,7 @@ LABEL_9:
         scan_range[0] = *(__int64 **)(a1 + 6648);
         scan_range[1] = (__int64 *)v8;
         scan_range[2] = (__int64 *)v5;
-        v19 = sub_197A8(scan_range);
+        v19 = sub_197A8(scan_range, 1);
         v10 = v19.addr;
         if ( !v10 )
           break;
@@ -47086,7 +47025,7 @@ LABEL_9:
           scan_range[0] = *(__int64 **)(a1 + 6648);
           scan_range[1] = (__int64 *)v12;
           scan_range[2] = (__int64 *)80;
-          v19 = sub_197A8(scan_range);
+          v19 = sub_197A8(scan_range, 0);
           v13 = v19.addr;
           if ( v13 )
           {
