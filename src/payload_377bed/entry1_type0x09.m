@@ -16806,7 +16806,7 @@ LABEL_27:
       {
 LABEL_54:
         if ( !strcmp(&v27->i8[8], "__KLD") )
-          v31 = 1;
+          v31 = KRW_CTX_FLAG_CPU_A12;
       }
       if ( v32 != 384 )
       {
@@ -23767,16 +23767,11 @@ LABEL_33:
 // DONE: this matches the orig asm
 bool __fastcall dmaFail_map_dbgwrap(struct_krwCtx *a1, __int64 a2, _OWORD *a3)
 {
-  int v5; // w21
-
-  a3[2] = 0u;
-  a3[3] = 0u;
-  *a3 = 0u;
-  a3[1] = 0u;
-  v5 = physmap_map_cached(a1, a2 + DMAFAIL_DBGWRAP_MAP_OFFSET, (__int64)a3);
-  if ( v5 )
-    physmap_unmap_cached((__int64)a1, (__int64)a3);
-  return v5 == 0;
+    bzero(a3, 64);
+    int v5 = physmap_map_cached(a1, a2 + DMAFAIL_DBGWRAP_MAP_OFFSET, (__int64)a3);
+    if ( v5 )
+        physmap_unmap_cached((__int64)a1, (__int64)a3);
+    return v5 == 0;
 }
 
 //----- (0000000000023700) ----------------------------------------------------
@@ -44537,7 +44532,7 @@ LABEL_17:
   cpuFamily = 0;
   if ( !(unsigned int)comm_page_get_cpu_family((_DWORD *)&cpuFamily) )
     return 0x28022;
-  if ( (_DWORD)cpuFamily == 0x92FB37C8 || (_DWORD)cpuFamily == 0x37A09642 || (_DWORD)cpuFamily == 0x2C91A47E )
+  if ( (_DWORD)cpuFamily == CPUFamily_A9 || (_DWORD)cpuFamily == CPUFamily_ARM_CYCLONE || (_DWORD)cpuFamily == CPUFamily_A8 )
   {
     if ( (*(_QWORD *)(commPageBase + COMM_PAGE_CPU_CAPABILITIES64_OFFSET) & 0x4000000) == 0 )
       goto LABEL_23;
@@ -44575,7 +44570,7 @@ LABEL_33:
       {
         if ( (_DWORD)cpuFamily == CPUFamily_A12 )
         {
-          v31 = 1;
+          v31 = KRW_CTX_FLAG_CPU_A12;
         }
         else
         {
@@ -44583,16 +44578,16 @@ LABEL_33:
             goto LABEL_69;
           if ( (int)number_of_cpus() >= 8 && krwCtx->someLargeNumber >= 0x22580A06C00000LL )
             krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
-          v31 = 0x80000;
+          v31 = KRW_CTX_FLAG_CPU_A14;
         }
         goto LABEL_68;
       }
       if ( (_DWORD)cpuFamily != CPUFamily_A11 )
       {
-        v26 = -97304226;
+        v26 = CPUFamily_ARM_IBIZA;
         goto LABEL_64;
       }
-      v31 = 512;
+      v31 = KRW_CTX_FLAG_CPU_A11;
 LABEL_68:
       krw_ctx_set_flag(krwCtx, v31);
       goto LABEL_69;
@@ -44602,12 +44597,12 @@ LABEL_68:
 LABEL_65:
       if ( krwCtx->someLargeNumber > 0x2711FFFFFFFFFFLL )
         krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
-      v31 = 0x1000000;
+      v31 = KRW_CTX_FLAG_CPU_A16;
       goto LABEL_68;
     }
     if ( (_DWORD)cpuFamily == CPUFamily_A9 )
     {
-      v31 = 0x2000;
+      v31 = KRW_CTX_FLAG_CPU_A9;
       goto LABEL_68;
     }
     if ( (_DWORD)cpuFamily != CPUFamily_A15 )
@@ -44618,17 +44613,17 @@ LABEL_65:
     {
       if ( someLargeNumber > 0x2711FFFFFFFFFFLL )
       {
-        v30 = 32;
+        v30 = KRW_CTX_FLAG_PAC_KERNEL_LAYOUT;
         goto LABEL_118;
       }
     }
     else if ( someLargeNumber >> 43 > 0x44A )
     {
-      v30 = 8;
+      v30 = KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER;
 LABEL_118:
       krw_ctx_set_flag(krwCtx, v30);
     }
-    v31 = 0x100000;
+    v31 = KRW_CTX_FLAG_CPU_A15;
     goto LABEL_68;
   }
   if ( (int)cpuFamily <= 0x573B5EEB )
@@ -44637,13 +44632,13 @@ LABEL_118:
     {
       case CPUFamily_A17:
         krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
-        v31 = 0x4000000;
+        v31 = KRW_CTX_FLAG_CPU_A17;
         break;
       case CPUFamily_A8:
-        v31 = 0x8000;
+        v31 = KRW_CTX_FLAG_CPU_A8;
         break;
       case CPUFamily_A13:
-        v31 = 0x4000;
+        v31 = KRW_CTX_FLAG_CPU_A13;
         break;
       default:
         goto LABEL_69;
@@ -44654,18 +44649,18 @@ LABEL_118:
   {
     if ( (_DWORD)cpuFamily == CPUFamily_A10 )
     {
-      v31 = 64;
+      v31 = KRW_CTX_FLAG_CPU_A10;
       goto LABEL_68;
     }
-    v26 = 1912690738;
+    v26 = CPUFamily_ARM_PALMA;
 LABEL_64:
     if ( (_DWORD)cpuFamily != v26 )
       goto LABEL_69;
     goto LABEL_65;
   }
-  if ( (_DWORD)cpuFamily != 1463508716 )
+  if ( (_DWORD)cpuFamily != CPUFamily_ARM_UNKNOWN_573B5EEC )
   {
-    v26 = 1598941843;
+    v26 = CPUFamily_ARM_LOBOS;
     goto LABEL_64;
   }
   krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_CPU_A14);
