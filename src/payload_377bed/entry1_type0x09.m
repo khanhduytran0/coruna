@@ -687,8 +687,8 @@ kern_return_t host_get_io_master(host_t host, io_master_t *io_master);
 int uuid_is_null(const unsigned char uu[16]);
 __int64 _IOServiceSetAuthorizationID(void);
 __int64 __semwait_signal(void);
-__int64 __ulock_wait(void);
-__int64 __ulock_wake(void);
+int __ulock_wait(unsigned int operation, void *addr, unsigned __int64 value, unsigned int timeout);
+int __ulock_wake(unsigned int operation, void *addr, unsigned __int64 wake_value);
 __int64 necp_open(void);
 __int64 necp_client_action(void);
 int proc_pidinfo(int pid, int flavor, uint64_t arg, void *buffer, int buffersize);
@@ -771,8 +771,8 @@ void *__memcpy_chk(void *dst, const void *src, size_t len, size_t dstlen);
 void *__memset_chk(void *dst, int val, size_t len, size_t dstlen);
 __int64 __semwait_signal();
 size_t __strlcpy_chk(char *dst, const char *src, size_t len, size_t dstlen);
-__int64 __ulock_wait();
-__int64 __ulock_wake();
+int __ulock_wait(unsigned int operation, void *addr, unsigned __int64 value, unsigned int timeout);
+int __ulock_wake(unsigned int operation, void *addr, unsigned __int64 wake_value);
 __int64 _get_cpu_capabilities();
 void *_os_alloc_once(void *slot, size_t size, void *init);
 void *__os_alloc_once(void *slot, size_t size, void *init);
@@ -1016,8 +1016,8 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte);
 // __int64 ___memset_chk(void); weak
 // __int64 ___semwait_signal(void); weak
 // __int64 ___strlcpy_chk(void); weak
-// __int64 ___ulock_wait(void); weak
-// __int64 ___ulock_wake(void); weak
+// int ___ulock_wait(unsigned int, void *, unsigned __int64, unsigned int); weak
+// int ___ulock_wake(unsigned int, void *, unsigned __int64); weak
 // __int64 j___get_cpu_capabilities(void); weak
 // void *__os_alloc_once(void *slot, size_t size, void *init); weak
 // void __cdecl _arc4random_buf(void *__buf, size_t __nbytes);
@@ -28175,7 +28175,7 @@ LABEL_23:
     if ( *v17 && (unsigned int)(*(_DWORD *)(v18 + 48) + 1) >= 2 && *v16 )
     {
       *(_BYTE *)(v18 + 72) = 1;
-      __ulock_wake();
+      __ulock_wake(0x201u, (void *)(v18 + 52), *(unsigned int *)(v18 + 48));
       pthread_join(*v16, 0);
       *v16 = 0;
       free((void *)v18);
@@ -28249,18 +28249,19 @@ LABEL_47:
 unsigned __int64 __fastcall sub_28CE0(__int64 a1, unsigned __int64 a2, __int64 a3)
 {
   int v5; // w0
-  _OWORD v7[2]; // [xsp+0h] [xbp-40h] BYREF
-  __int64 v8; // [xsp+20h] [xbp-20h]
+  struct
+  {
+    _OWORD v7[2];
+    __int64 v8;
+  } out; // [xsp+0h] [xbp-50h] BYREF
 
-  v8 = 0;
-  memset(v7, 0, sizeof(v7));
-  sub_213D4(a1, a2, (__int64)v7, a3);
+  memset(&out, 0, sizeof(out));
+  v5 = sub_213D4(a1, a2, (__int64)&out, a3).n128_u64[0];
   if ( v5 )
-    return *(_QWORD *)(a1 + 392) & a2 | v8 & 0xFFFFFFFFC000LL;
+    return *(_QWORD *)(a1 + 392) & a2 | out.v8 & 0xFFFFFFFFC000LL;
   else
     return 0;
 }
-// 28D14: variable 'v5' is possibly undefined
 
 //----- (0000000000028D44) ----------------------------------------------------
 __int64 __fastcall sub_28D44(__int64 a1)
@@ -28281,7 +28282,7 @@ __int64 __fastcall sub_28D44(__int64 a1)
     {
       *(_QWORD *)(a1 + 7496) = 0;
       *((_BYTE *)v2 + 72) = 1;
-      __ulock_wake();
+      __ulock_wake(0x201u, (void *)((char *)v2 + 52), *((unsigned int *)v2 + 12));
       pthread_join((pthread_t)v2[5], 0);
       *(_OWORD *)v2 = 0u;
       *((_OWORD *)v2 + 1) = 0u;
@@ -28625,7 +28626,7 @@ LABEL_64:
             {
 LABEL_82:
               v48 = *(_QWORD *)(v31 + 64);
-              if ( (unsigned int)__ulock_wake() )
+              if ( (unsigned int)__ulock_wake(0x201u, (void *)(v31 + 52), *(unsigned int *)(v31 + 48)) )
               {
                 v49 = errno;
                 if ( v49 < 0 )
@@ -30086,7 +30087,7 @@ __int64 __fastcall sub_2B03C(__int64 a1)
   *(_BYTE *)(a1 + 73) = 1;
   while ( 1 )
   {
-    v3 = __ulock_wait();
+    v3 = __ulock_wait(0x10001u, (void *)(a1 + 52), 0, *(_DWORD *)(a1 + 52));
     if ( !v3 )
     {
       ++*(_QWORD *)(a1 + 64);
@@ -48074,18 +48075,18 @@ __int64 __semwait_signal()
 // 48398: using guessed type __int64 ___semwait_signal(void);
 
 //----- (000000000004154C) ----------------------------------------------------
-__int64 __ulock_wait()
+int __ulock_wait(unsigned int operation, void *addr, unsigned __int64 value, unsigned int timeout)
 {
-  return ___ulock_wait();
+  return ___ulock_wait(operation, addr, value, timeout);
 }
-// 483B0: using guessed type __int64 ___ulock_wait(void);
+// 483B0: using guessed type int ___ulock_wait(unsigned int, void *, unsigned __int64, unsigned int);
 
 //----- (000000000004155C) ----------------------------------------------------
-__int64 __ulock_wake()
+int __ulock_wake(unsigned int operation, void *addr, unsigned __int64 wake_value)
 {
-  return ___ulock_wake();
+  return ___ulock_wake(operation, addr, wake_value);
 }
-// 483B8: using guessed type __int64 ___ulock_wake(void);
+// 483B8: using guessed type int ___ulock_wake(unsigned int, void *, unsigned __int64);
 
 //----- (000000000004156C) ----------------------------------------------------
 __int64 _get_cpu_capabilities()
