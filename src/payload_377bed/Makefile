@@ -15,9 +15,12 @@ else
 entry1_type0x09_OPTFLAGS = -Og
 endif
 
+RECOMP_TRACE_DMAFAIL ?= 0
+
 entry1_type0x09_FILES = entry1_type0x09.m
 entry1_type0x09_CFLAGS = \
     $(entry1_type0x09_OPTFLAGS) \
+    -DRECOMP_TRACE_DMAFAIL=$(RECOMP_TRACE_DMAFAIL) \
     -fno-inline \
     -fno-strict-aliasing \
     -Wno-int-conversion \

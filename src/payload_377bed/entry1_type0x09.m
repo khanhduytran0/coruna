@@ -6,6 +6,16 @@
 
 #include <defs.h>
 
+#ifndef RECOMP_TRACE_DMAFAIL
+#define RECOMP_TRACE_DMAFAIL 0
+#endif
+
+#if RECOMP_TRACE_DMAFAIL
+#define TRACE_DMAFAIL(...) printf(__VA_ARGS__)
+#else
+#define TRACE_DMAFAIL(...) do { } while (0)
+#endif
+
 
 //-------------------------------------------------------------------------
 // Function declarations
@@ -706,8 +716,11 @@ enum
   DMAFAIL_DMA_HASH2_SHIFT = 50,
   DMAFAIL_DMA_HASH1_INDEX_LEGACY = 40, // Dopamine gDMAIndex on A12-A14
   DMAFAIL_DMA_HASH1_INDEX_A15_A16 = 8, // Dopamine gDMAIndex on A15/A16
-  DMAFAIL_DMA_MASK_A15_A16 = 0x7FFFFFF, // Dopamine gDMAMask on A15/A16
-  DMAFAIL_DMA_MASK_LEGACY = 0x3FFFFF, // Dopamine gDMAMask on A12-A14
+  DMAFAIL_DMA_REG_BASE_LEGACY = 0x206000000ULL,
+  DMAFAIL_DMA_REG_BASE_ALT = 0x406000000ULL,
+  DMAFAIL_DMA_MASK_A16 = 0x7FFFFFF, // Dopamine gDMAMask on A16
+  DMAFAIL_DMA_MASK_ALT = 0x3FFFFFF, // Dopamine gDMAMask on A14/A15 alt path
+  DMAFAIL_DMA_MASK_LEGACY = 0x3FFFFF, // Dopamine gDMAMask on A12-A14 legacy path
   DMAFAIL_DMA_CTRL_BUSY_BITS = 0x8000000000000001ULL,
   DMAFAIL_DMA_CTRL_RESTORE_MASK = 0x8000000000000000ULL,
   DMAFAIL_DMA_ENABLE_BIT = 0x1000000000000000ULL,
@@ -21906,6 +21919,8 @@ __n128 __fastcall sub_213D4(__int64 a1, unsigned __int64 a2, __int64 a3, __int64
   unsigned __int64 v40; // [xsp+0h] [xbp-50h] BYREF
   unsigned __int64 v41; // [xsp+8h] [xbp-48h] BYREF
 
+  result.n128_u64[0] = 0;
+  result.n128_u64[1] = 0;
   if ( !a3 )
     return result;
   v8 = 0;
@@ -21936,22 +21951,27 @@ __n128 __fastcall sub_213D4(__int64 a1, unsigned __int64 a2, __int64 a3, __int64
   while ( v8 != 640 );
   if ( !*(_QWORD *)(a1 + 1488) )
   {
-    v24 = sub_21388((struct_krwCtx *)a1);
-    if ( !v24 )
-      return result;
-    v25 = v24;
-    if ( !kread64_outptr((struct_krwCtx *)a1, v24, &v41)
-      || !kread64_outptr((struct_krwCtx *)a1, v25 + *(int *)(a1 + 360), &v40) )
+    v27 = *(_QWORD *)(a1 + 0x18A8);
+    v28 = *(_QWORD *)(a1 + 0x18B0);
+    if ( !v27 || !v28 )
     {
-      return result;
+      v24 = sub_21388((struct_krwCtx *)a1);
+      if ( !v24 )
+        return result;
+      v25 = v24;
+      if ( !kread64_outptr((struct_krwCtx *)a1, v24, &v41)
+        || !kread64_outptr((struct_krwCtx *)a1, v25 + *(int *)(a1 + 360), &v40) )
+      {
+        return result;
+      }
+      v28 = v40;
+      v27 = v41;
     }
     if ( *(_DWORD *)(a1 + 384) == 4096 )
       v26 = 512;
     else
       v26 = 2048;
-    v28 = v40;
-    v27 = v41;
-    *(_QWORD *)(a1 + 1488) = v41;
+    *(_QWORD *)(a1 + 1488) = v27;
     *(_QWORD *)(a1 + 1496) = v28;
     *(_DWORD *)(a1 + 1504) = v26;
     sub_385F4((struct_krwCtx *)a1, v27);
@@ -22036,6 +22056,15 @@ LABEL_57:
     if ( !has_flag )
       v33 = 7;
     v16 = kreadbuf((struct_krwCtx *)a1, v30 + 8 * ((unsigned __int64)(unsigned int)v33 & (a2 >> 36)), 8u, &v41, a4);
+    TRACE_DMAFAIL("sub_213D4 16k L0 va=%llx root=%llx delta=%llx idx=%llx read=%llx ok=%d desc=%llx high=%d\n",
+                  (unsigned long long)a2,
+                  (unsigned long long)v30,
+                  (unsigned long long)v31,
+                  (unsigned long long)((unsigned __int64)(unsigned int)v33 & (a2 >> 36)),
+                  (unsigned long long)(v30 + 8 * ((unsigned __int64)(unsigned int)v33 & (a2 >> 36))),
+                  v16,
+                  (unsigned long long)v41,
+                  has_flag);
     if ( !v16 )
       goto LABEL_58;
     v34 = v41;
@@ -22045,6 +22074,13 @@ LABEL_57:
       *(_DWORD *)(a3 + 20) |= 0x100u;
     v35 = sub_38378(a1, v30, v31, v34 & 0xFFFFFFFFC000LL) + ((a2 >> 22) & 0x3FF8);
     v16 = kreadbuf((struct_krwCtx *)a1, v35, 8u, &v41, a4);
+    TRACE_DMAFAIL("sub_213D4 16k L1 va=%llx table=%llx idx=%llx read=%llx ok=%d desc=%llx\n",
+                  (unsigned long long)a2,
+                  (unsigned long long)(v34 & 0xFFFFFFFFC000LL),
+                  (unsigned long long)((a2 >> 22) & 0x3FF8),
+                  (unsigned long long)v35,
+                  v16,
+                  (unsigned long long)v41);
     if ( v16 )
     {
       v17 = v41;
@@ -22062,6 +22098,13 @@ LABEL_57:
           *(_DWORD *)(a3 + 20) |= 0x100u;
         v35 = sub_38378(a1, v30, v31, v17 & 0xFFFFFFFFC000LL) + ((a2 >> 11) & 0x3FF8);
         v16 = kreadbuf((struct_krwCtx *)a1, v35, 8u, &v41, a4);
+        TRACE_DMAFAIL("sub_213D4 16k L2 va=%llx table=%llx idx=%llx read=%llx ok=%d desc=%llx\n",
+                      (unsigned long long)a2,
+                      (unsigned long long)(v17 & 0xFFFFFFFFC000LL),
+                      (unsigned long long)((a2 >> 11) & 0x3FF8),
+                      (unsigned long long)v35,
+                      v16,
+                      (unsigned long long)v41);
         if ( !v16 )
           goto LABEL_58;
         v17 = v41;
@@ -22079,6 +22122,7 @@ LABEL_57:
 LABEL_58:
   if ( v16 )
   {
+    result = *(__n128 *)a3;
     v37 = 0;
     while ( *(_QWORD *)(a1 + 1512 + v37) )
     {
@@ -23380,7 +23424,7 @@ __int64 __fastcall dmaFail_physwrite32(struct_krwCtx *a1, __int64 a2, int a3)
   unsigned int v36; // w10
   int v37; // w21
   __int64 v39; // [xsp+18h] [xbp-228h]
-  _QWORD *v40; // [xsp+20h] [xbp-220h]
+  volatile _QWORD *v40; // [xsp+20h] [xbp-220h]
   __int64 v41; // [xsp+28h] [xbp-218h]
   __int64 v42; // [xsp+30h] [xbp-210h]
   __int64 v43; // [xsp+40h] [xbp-200h]
@@ -23398,12 +23442,25 @@ __int64 __fastcall dmaFail_physwrite32(struct_krwCtx *a1, __int64 a2, int a3)
   _OWORD v55[2]; // [xsp+160h] [xbp-E0h] BYREF
   _OWORD v56[2]; // [xsp+180h] [xbp-C0h]
   _OWORD __s1[4]; // [xsp+1A0h] [xbp-A0h] BYREF
+  _QWORD currentLine[8];
+  _QWORD previousLine[8];
+  _QWORD desiredLine[8];
 
-  v6 = DMAFAIL_REG_BASE;
-  v7 = DMAFAIL_PHYS_PAGE_SHIFT;
-  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_A15_DMA_ALT_MASK) )
+    v6 = DMAFAIL_DMA_REG_BASE_ALT;
+  else
+    v6 = DMAFAIL_DMA_REG_BASE_LEGACY;
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_A15_DMA_ALT_MASK) )
+    v7 = 15;
+  else
+    v7 = DMAFAIL_PHYS_PAGE_SHIFT;
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16) )
   {
-    v8 = DMAFAIL_DMA_MASK_A15_A16;
+    v8 = DMAFAIL_DMA_MASK_A16;
+  }
+  else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_A15_DMA_ALT_MASK) )
+  {
+    v8 = DMAFAIL_DMA_MASK_ALT;
   }
   else
   {
@@ -23441,14 +23498,14 @@ LABEL_83:
     }
     v12 = v49[0];
     v13 = v50[0];
-    v42 = *(_QWORD *)(v49[0] + DMAFAIL_DMA_CTRL_STATUS_OFFSET);
-    v14 = 0;
-    v15 = 0;
+    v42 = *(volatile _QWORD *)(v49[0] + DMAFAIL_DMA_CTRL_STATUS_OFFSET);
+    v14 = *(volatile _QWORD *)(v50[0] + DMAFAIL_DMA_ADDR_OFFSET);
+    v15 = *(volatile _QWORD *)(v50[0] + DMAFAIL_DMA_DATA_OFFSET);
     if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
     {
-      v39 = *(_QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET);
-      v40 = (_QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET);
-      *(_QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET) = 1;
+      v39 = *(volatile _QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET);
+      v40 = (volatile _QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET);
+      *(volatile _QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET) = 1;
     }
     else
     {
@@ -23469,7 +23526,7 @@ LABEL_83:
       v44 = v17;
       while ( 1 )
       {
-        if ( !(unsigned int)kreadbuf_last_1(a1, a2 & ~(uint64_t)DMAFAIL_CACHE_LINE_MASK, DMAFAIL_CACHE_LINE_SIZE, &__s2) )
+        if ( !(unsigned int)kreadbuf_last_1(a1, a2 & ~(uint64_t)DMAFAIL_CACHE_LINE_MASK, DMAFAIL_CACHE_LINE_SIZE, currentLine) )
         {
 LABEL_72:
           v37 = 0;
@@ -23477,39 +23534,33 @@ LABEL_72:
         }
         if ( v19 )
         {
-          if ( !memcmp(__s1, &__s2, DMAFAIL_CACHE_LINE_SIZE) )
+          if ( !memcmp(previousLine, currentLine, DMAFAIL_CACHE_LINE_SIZE) )
             goto LABEL_30;
-          if ( !memcmp(&__s2, v55, DMAFAIL_CACHE_LINE_SIZE) || *(_DWORD *)((char *)&__s2 + v21) == a3 )
+          if ( !memcmp(currentLine, desiredLine, DMAFAIL_CACHE_LINE_SIZE) || *(_DWORD *)((char *)currentLine + v21) == a3 )
           {
             v37 = 0;
             v9 = 0;
             goto LABEL_76;
           }
         }
-        __s1[0] = __s2;
-        __s1[1] = v52;
-        __s1[2] = v53;
-        __s1[3] = v54;
-        v55[0] = __s2;
-        v55[1] = v52;
-        v56[0] = v53;
-        v56[1] = v54;
-        *(_DWORD *)((char *)v55 + v21) = a3;
+        memcpy(previousLine, currentLine, DMAFAIL_CACHE_LINE_SIZE);
+        memcpy(desiredLine, currentLine, DMAFAIL_CACHE_LINE_SIZE);
+        *(_DWORD *)((char *)desiredLine + v21) = a3;
 LABEL_30:
         if ( !(unsigned int)dmaFail_dbgwrap_halt_cpu(a1, (__int64)v48) )
           goto LABEL_72;
-        *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) |= DMAFAIL_DMA_CTRL_BUSY_BITS;
-        while ( (~*(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
+        *(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) |= DMAFAIL_DMA_CTRL_BUSY_BITS;
+        while ( (~*(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
           sub_2AABC((__int64)a1, 0x64u);
-        *(_QWORD *)(v12 + DMAFAIL_DMA_ENABLE_OFFSET) &= ~DMAFAIL_DMA_ENABLE_BIT;
-        *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) &= v47;
-        while ( (*(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
+        *(volatile _QWORD *)(v12 + DMAFAIL_DMA_ENABLE_OFFSET) &= ~DMAFAIL_DMA_ENABLE_BIT;
+        *(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) &= v47;
+        while ( (*(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
           sub_2AABC((__int64)a1, 0x64u);
         v22 = 0;
-        *(_QWORD *)(v13 + DMAFAIL_DMA_ADDR_OFFSET) = v44;
+        *(volatile _QWORD *)(v13 + DMAFAIL_DMA_ADDR_OFFSET) = v44;
         do
         {
-          *(_QWORD *)(v13 + DMAFAIL_DMA_DATA_OFFSET) = *(_QWORD *)((char *)v55 + v22);
+          *(volatile _QWORD *)(v13 + DMAFAIL_DMA_DATA_OFFSET) = *(_QWORD *)((char *)desiredLine + v22);
           v22 += 8;
         }
         while ( v22 != DMAFAIL_CACHE_LINE_SIZE );
@@ -23520,7 +23571,7 @@ LABEL_30:
         {
           for ( i = 0; i != 32; ++i )
           {
-            if ( ((*((_DWORD *)v55 + v23) >> i) & 1) != 0 )
+            if ( ((((_DWORD *)desiredLine)[v23] >> i) & 1) != 0 )
               v24 ^= v25[i];
           }
           ++v23;
@@ -23535,7 +23586,7 @@ LABEL_30:
         {
           for ( j = 0; j != 32; ++j )
           {
-            if ( ((*((_DWORD *)v56 + v27) >> j) & 1) != 0 )
+            if ( ((((_DWORD *)desiredLine)[v27 + 8] >> j) & 1) != 0 )
               v28 ^= v29[j];
           }
           ++v27;
@@ -23565,26 +23616,26 @@ LABEL_30:
         v33 = DMAFAIL_DMA_HASH1_INDEX_LEGACY;
         if ( !v32 )
           v33 = DMAFAIL_DMA_HASH1_INDEX_A15_A16;
-        *(_QWORD *)(v13 + DMAFAIL_DMA_DATA_OFFSET) = v43 & DMAFAIL_DMA_TARGET_UPPER_MASK
+        *(volatile _QWORD *)(v13 + DMAFAIL_DMA_DATA_OFFSET) = v43 & DMAFAIL_DMA_TARGET_UPPER_MASK
                               | ((unsigned __int64)v28 << DMAFAIL_DMA_HASH2_SHIFT)
                               | ((unsigned __int64)(unsigned __int16)v31 << v33)
                               | 0x1F;
-        *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) |= DMAFAIL_DMA_CTRL_BUSY_BITS;
-        while ( (~*(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
+        *(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) |= DMAFAIL_DMA_CTRL_BUSY_BITS;
+        while ( (~*(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
           sub_2AABC((__int64)a1, 0x64u);
-        *(_QWORD *)(v12 + DMAFAIL_DMA_ENABLE_OFFSET) |= DMAFAIL_DMA_ENABLE_BIT;
+        *(volatile _QWORD *)(v12 + DMAFAIL_DMA_ENABLE_OFFSET) |= DMAFAIL_DMA_ENABLE_BIT;
         v21 = a2 & DMAFAIL_CACHE_LINE_MASK;
-        if ( !(unsigned int)kreadbuf_last_1(a1, a2, 4, (char *)&__s2 + v21) )
+        if ( !(unsigned int)kreadbuf_last_1(a1, a2, 4, (char *)currentLine + v21) )
           goto LABEL_74;
-        if ( *(_DWORD *)((char *)&__s2 + (a2 & DMAFAIL_CACHE_LINE_MASK)) == a3 )
+        if ( *(_DWORD *)((char *)currentLine + (a2 & DMAFAIL_CACHE_LINE_MASK)) == a3 )
         {
           v9 = 0;
 LABEL_74:
           v37 = 1;
           goto LABEL_76;
         }
-        *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) &= v47;
-        while ( (*(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
+        *(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) &= v47;
+        while ( (*(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) & DMAFAIL_DMA_CTRL_BUSY_BITS) != 0 )
           sub_2AABC((__int64)a1, 0x64u);
         if ( (dmaFail_dbgwrap_unhalt_cpu(a1, (__int64)v48) & 1) == 0 )
           goto LABEL_74;
@@ -23595,8 +23646,10 @@ LABEL_74:
     }
     v37 = 0;
 LABEL_76:
-    if ( v42 && *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) != v42 )
-      *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) &= v42 | DMAFAIL_DMA_CTRL_RESTORE_MASK;
+    if ( v42 && *(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) != v42 )
+      *(volatile _QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) &= v42 | DMAFAIL_DMA_CTRL_RESTORE_MASK;
+    *(volatile _QWORD *)(v13 + DMAFAIL_DMA_ADDR_OFFSET) = v14;
+    *(volatile _QWORD *)(v13 + DMAFAIL_DMA_DATA_OFFSET) = v15;
     if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
     {
       *v40 = v39;
@@ -23782,12 +23835,66 @@ __int64 __fastcall dmaFail_phystokv_cached(__int64 a1, __int64 a2)
         uint64_t unused[4];
         volatile __int64 physmapKva;
     } out;
-    
+    uint64_t translationBase;
+    uint64_t translationDelta;
+    uint64_t fallbackPa;
+    uint64_t rangedPa;
+#if RECOMP_TRACE_DMAFAIL
+    uint64_t leafMask = *(_QWORD *)(a1 + 392);
+    uint64_t maskedPhys = a2 & ~leafMask;
+    int ok = sub_2183C(a1, maskedPhys, &out);
+
+    TRACE_DMAFAIL("dmaFail_phystokv_cached ctx=%llx pa=%llx masked=%llx leaf=%llx ok=%d out={%llx,%llx,%llx,%llx,%llx} roots={%llx,%llx} global={%llx,%llx} page=%x flags=%x\n",
+                  (unsigned long long)a1,
+                  (unsigned long long)a2,
+                  (unsigned long long)maskedPhys,
+                  (unsigned long long)leafMask,
+                  ok,
+                  (unsigned long long)out.unused[0],
+                  (unsigned long long)out.unused[1],
+                  (unsigned long long)out.unused[2],
+                  (unsigned long long)out.unused[3],
+                  (unsigned long long)out.physmapKva,
+                  (unsigned long long)*(_QWORD *)(a1 + 1488),
+                  (unsigned long long)*(_QWORD *)(a1 + 1496),
+                  (unsigned long long)*(_QWORD *)(a1 + 0x18A8),
+                  (unsigned long long)*(_QWORD *)(a1 + 0x18B0),
+                  *(_DWORD *)(a1 + 384),
+                  *(_DWORD *)a1);
+
+    if ( ok ) {
+        asm volatile("" ::: "memory");
+        uint64_t physmapKva = out.physmapKva;
+        if (!physmapKva) return 0;
+        return (physmapKva & 0xFFFFFFFFC000LL) + (leafMask & a2);
+    }
+#else
     if ( sub_2183C(a1, a2 & ~*(_QWORD *)(a1 + 392), &out)) {
         asm volatile("" ::: "memory");
         uint64_t physmapKva = out.physmapKva;
         if (!physmapKva) return 0;
         return (physmapKva & 0xFFFFFFFFC000LL) + (*(_QWORD *)(a1 + 392) & a2);
+    }
+#endif
+    translationBase = *(_QWORD *)(a1 + 1488);
+    translationDelta = *(_QWORD *)(a1 + 1496);
+    if ( !translationBase || !translationDelta )
+    {
+        translationBase = *(_QWORD *)(a1 + 0x18A8);
+        translationDelta = *(_QWORD *)(a1 + 0x18B0);
+    }
+    if ( translationBase && translationDelta )
+    {
+        fallbackPa = translationDelta - translationBase + a2;
+        rangedPa = sub_38544(a1, translationBase, translationDelta, a2);
+        TRACE_DMAFAIL("dmaFail_phystokv_cached fallback pa=%llx base=%llx delta=%llx direct=%llx ranged=%llx\n",
+                      (unsigned long long)a2,
+                      (unsigned long long)translationBase,
+                      (unsigned long long)translationDelta,
+                      (unsigned long long)fallbackPa,
+                      (unsigned long long)rangedPa);
+        if ( fallbackPa )
+            return fallbackPa;
     }
     return 0;
 }
@@ -23801,12 +23908,12 @@ __int64 __fastcall dmaFail_dbgwrap_halt_cpu(struct_krwCtx *a1, __int64 a2)
   uint64_t v8; // x21
   struct mach_timebase_info info; // [xsp+8h] [xbp-38h] BYREF
 
-  v4 = **(_QWORD **)a2;
+  v4 = **(volatile _QWORD **)a2;
   if ( (v4 & 0x90000000) == 0 )
   {
     if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
       sub_2AABC((__int64)a1, 0x3E8u);
-    **(_QWORD **)a2 = v4 | 0x80000000LL;
+    **(volatile _QWORD **)a2 = v4 | 0x80000000LL;
     *(_BYTE *)(a2 + 56) = 1;
     memset(&info, 0, sizeof(info));
     mach_timebase_info(&info);
@@ -23815,7 +23922,7 @@ __int64 __fastcall dmaFail_dbgwrap_halt_cpu(struct_krwCtx *a1, __int64 a2)
     v8 = (unsigned __int64)((double)v6 / (double)v7 * 1000000.0 * 1000.0 + (double)mach_absolute_time());
     while ( mach_absolute_time() < v8 )
     {
-      if ( (**(_QWORD **)a2 & 0x10000000) != 0 )
+      if ( (**(volatile _QWORD **)a2 & 0x10000000) != 0 )
         return 1;
     }
   }
@@ -23837,10 +23944,10 @@ uint32_t __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2)
 
   if ( !*(_BYTE *)(a2 + 56) )
     return 1;
-  v4 = **(_QWORD **)a2 & 0xFFFFFFFF2FFFFFFFLL | 0x40000000;
+  v4 = **(volatile _QWORD **)a2 & 0xFFFFFFFF2FFFFFFFLL | 0x40000000;
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
     sub_2AABC((__int64)a1, 0x3E8u);
-  **(_QWORD **)a2 = v4;
+  **(volatile _QWORD **)a2 = v4;
   memset(&info, 0, sizeof(info));
   mach_timebase_info(&info);
   LODWORD(v5) = info.denom;
@@ -23848,7 +23955,7 @@ uint32_t __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2)
   v7 = (unsigned __int64)((double)v5 / (double)v6 * 1000000.0 * 1000.0 + (double)mach_absolute_time());
   while ( mach_absolute_time() < v7 )
   {
-    if ( (**(_QWORD **)a2 & 0x10000000) == 0 )
+    if ( (**(volatile _QWORD **)a2 & 0x10000000) == 0 )
     {
       *(_BYTE *)(a2 + 56) = 0;
       return 1;
