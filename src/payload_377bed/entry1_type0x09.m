@@ -340,7 +340,7 @@ __int64 __fastcall dmaFail_gfx_power_init(struct_krwCtx *a1);
 bool __fastcall dmaFail_map_dbgwrap(struct_krwCtx *a1, __int64 a2, _OWORD *a3);
 __int64 __fastcall dmaFail_phystokv_cached(__int64 a1, __int64 a2);
 __int64 __fastcall dmaFail_dbgwrap_halt_cpu(struct_krwCtx *a1, __int64 a2);
-__int64 __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2);
+uint32_t __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_23940(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_239D8(struct_krwCtx *a1, _QWORD *a2, _DWORD *a3, _QWORD *a4, _DWORD *a5, int a6);
 void __fastcall sub_23D30(__int64 a1, char a2);
@@ -591,7 +591,7 @@ unsigned __int64 __fastcall sub_38544(__int64 a1, __int64 a2, __int64 a3, unsign
 __int64 __fastcall sub_385F4(struct_krwCtx *a1, unsigned __int64 a2);
 __int64 __fastcall sub_386AC(struct_krwCtx *a1, unsigned __int64 a2);
 __int64 __fastcall sub_38764(__int64 a1);
-__int64 __fastcall physmap_map_cached(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 a3);
+uint32_t __fastcall physmap_map_cached(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 a3);
 double __fastcall physmap_unmap_cached(__int64 a1, __int64 a2);
 __int64 __fastcall sub_38C8C(__int64 a1, __int64 a2, __int64 a3);
 void __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned int a4, int a5);
@@ -23763,6 +23763,7 @@ LABEL_33:
 }
 
 //----- (00000000000236A4) ----------------------------------------------------
+// DONE: this matches the orig asm
 bool __fastcall dmaFail_map_dbgwrap(struct_krwCtx *a1, __int64 a2, _OWORD *a3)
 {
   int v5; // w21
@@ -23829,7 +23830,7 @@ __int64 __fastcall dmaFail_dbgwrap_halt_cpu(struct_krwCtx *a1, __int64 a2)
 // 2380C: variable 'v7' is possibly undefined
 
 //----- (000000000002385C) ----------------------------------------------------
-__int64 __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2)
+uint32_t __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2)
 {
   unsigned __int64 v4; // x21
   unsigned __int64 v5; // d0
@@ -41080,7 +41081,7 @@ __int64 __fastcall sub_38764(__int64 a1)
 }
 
 //----- (0000000000038870) ----------------------------------------------------
-__int64 __fastcall physmap_map_cached(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 a3)
+uint32_t __fastcall physmap_map_cached(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 a3)
 {
   struct physmap_map_desc
   {
