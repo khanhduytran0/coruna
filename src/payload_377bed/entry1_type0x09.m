@@ -4554,9 +4554,9 @@ __int64 __fastcall sub_A614(__int64 a1)
   __int128 v11; // [xsp+10h] [xbp-30h]
 
   v2 = 708616;
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 32) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     return v2;
-  v3 = *(_DWORD *)a1 & 0x518E241;
+  v3 = *(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A8_TO_A17_MASK;
   if ( v3 == 0x100000 )
   {
     v10 = xmmword_42D80;
@@ -7197,7 +7197,7 @@ LABEL_40:
   if ( !v29 )
     return 708609;
   madvise((void *)(v29 + v28 - vm_page_size), vm_page_size, 3);
-  if ( krw_ctx_has_flag((struct_krwCtx *)v5, 85475329) && !krw_ctx_has_flag((struct_krwCtx *)v5, 32) )
+  if ( krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && !krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     v57 = 0;
     v334 = 0u;
@@ -7860,7 +7860,7 @@ LABEL_247:
     goto LABEL_372;
   }
   if ( v120 > 0x225C1E804FFFFFLL
-    || v120 >= 0x225C1980500000LL && ((*(_DWORD *)v5 & 0x5584001) == 0 || (*(_DWORD *)v5 & 1) != 0) )
+    || v120 >= 0x225C1980500000LL && ((*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (*(_DWORD *)v5 & 1) != 0) )
   {
 LABEL_372:
     v319[0] = 0;
@@ -8355,10 +8355,10 @@ LABEL_370:
               *(_DWORD *)(v284 + v293) = 0;
           }
         }
-        if ( !krw_ctx_has_flag((struct_krwCtx *)v5, 85475329) )
+        if ( !krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
         {
           outputStructCnt = 0;
-          has_flag = krw_ctx_has_flag((struct_krwCtx *)v5, 0x8000);
+          has_flag = krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A8);
           if ( has_flag )
           {
             v265 = 0xFFFFFFFFF000LL;
@@ -8434,7 +8434,7 @@ LABEL_499:
               {
                 *(_QWORD *)&outputStruct[0].msgh_bits = 0;
                 *(_QWORD *)&name.msgh_bits = 0;
-                v159 = krw_ctx_has_flag((struct_krwCtx *)v5, 0x8000);
+                v159 = krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A8);
                 v160 = 0xFFFFFFFFF000LL;
                 if ( !v159 )
                   v160 = 0xFFFFFFFFC000LL;
@@ -8458,7 +8458,7 @@ LABEL_499:
                 }
                 else
                 {
-                  v165 = krw_ctx_has_flag((struct_krwCtx *)v5, 83886088);
+                  v165 = krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A16_A17_MASK | KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
                   v163 = 2047;
                   if ( !v165 )
                     v163 = 7;
@@ -8642,7 +8642,7 @@ LABEL_500:
   v225 = *(_QWORD *)(v5 + 344);
   if ( v225 <= 0x1F530F027FFFFFLL )
   {
-    if ( v225 >= 0x1C1B0A80100000LL && ((*(_DWORD *)v5 & 0x5584001) != 0 || v225 >= 0x1F530000000000LL) )
+    if ( v225 >= 0x1C1B0A80100000LL && ((*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v225 >= 0x1F530000000000LL) )
       goto LABEL_532;
     *(_QWORD *)v319 = -1;
     *(_QWORD *)a1 = -1;
@@ -8728,7 +8728,7 @@ LABEL_531:
     *(_QWORD *)(v5 + 6448) = -1;
     goto LABEL_531;
   }
-  v226 = (*(_DWORD *)v5 & 0x5584001) != 0 || v225 > 0x1F5418FFFFFFFFLL;
+  v226 = (*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v225 > 0x1F5418FFFFFFFFLL;
   if ( !v226 )
   {
 LABEL_532:
@@ -9478,7 +9478,7 @@ __int64 __fastcall sub_10214(__int64 a1, __int64 a2, unsigned __int64 a3)
     if ( (~(_BYTE)v19 & 3) != 0 )
       return 708628;
     v6 = v19 & 0xFFFFFFFFFFFCLL;
-    has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, 0x8000);
+    has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A8);
     v8 = 32;
     if ( !has_flag )
       v8 = 8;
@@ -10512,7 +10512,7 @@ LABEL_68:
     }
     v55 = *(struct_krwCtx **)(*v2 + 32);
     v56 = v55->xnuMajorVersion;
-    v57 = krw_ctx_has_flag(v55, 89670145);
+    v57 = krw_ctx_has_flag(v55, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
     if ( v56 >= 8796 )
     {
       v58 = 184;
@@ -11182,20 +11182,20 @@ void __fastcall sub_12EF8(struct_krwCtx *a1)
   unsigned __int64 v5; // x8
   __int64 vars8; // [xsp+18h] [xbp+8h]
 
-  if ( krw_ctx_has_flag(a1, 0x5184000)
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
     && ((v2 = a1->someLargeNumber, v2 > 0x2712000C6FFFFFLL) || v2 > 0x225C23800FFFFFLL && a1->xnuMajorVersion < 10002)
-    || krw_ctx_has_flag(a1, 84934656)
+    || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
     && ((v3 = a1->someLargeNumber, v3 > 0x271200073FFFFFLL) || v3 > 0x225C1E804FFFFFLL && a1->xnuMajorVersion <= 10001) )
   {
     if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
       __break(0xC471u);
     sub_15CC8((__int64)a1);
   }
-  else if ( !krw_ctx_has_flag(a1, 85475328)
+  else if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
          || (v4 = a1->someLargeNumber, v4 <= 0x2712000C6FFFFFLL)
          && (v4 <= 0x225C23800FFFFFLL || a1->xnuMajorVersion >= 10002) )
   {
-    if ( !krw_ctx_has_flag(a1, 84934656)
+    if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
       || (v5 = a1->someLargeNumber, v5 <= 0x271200073FFFFFLL)
       && (v5 <= 0x225C1E804FFFFFLL || a1->xnuMajorVersion >= 10002) )
     {
@@ -11211,7 +11211,7 @@ void __fastcall sub_12EF8(struct_krwCtx *a1)
 //----- (000000000001308C) ----------------------------------------------------
 bool __fastcall sub_1308C(struct_krwCtx *a1)
 {
-  return krw_ctx_has_flag(a1, 85475329);
+  return krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK);
 }
 
 //----- (00000000000130B4) ----------------------------------------------------
@@ -11237,7 +11237,7 @@ bool __fastcall sub_130B4(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned 
     v230=0; v231=0;
     v24 = 0;
     v25 = 0;
-    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 85475329)) return 0;
+    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK)) return 0;
     if (!a2 || !a3 || !a4 ) return 0;
     if ( *(_QWORD *)(a1 + 344) >= 0x1F530000000000uLL ) {
         return !!sub_13304((struct_krwCtx *)a1, a2, a3, a4, 0);
@@ -11600,7 +11600,7 @@ bool __fastcall sub_13844(struct_krwCtx *a1, unsigned __int64 a2, int a3)
     v8 = a3;
     v7 = 0;
     v6 = 0;
-    if ( !krw_ctx_has_flag(a1, 85475329) ) return 0;
+    if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) ) return 0;
     if ( a1->someLargeNumber >= (uint64_t)0x1F530000000000 )
         return sub_13924(a1, a2, a3);
     if ( !sub_1353C((__int64)a1, (__int64 *)&v7, (int *)&v6) )
@@ -11619,16 +11619,16 @@ bool __fastcall sub_13924(struct_krwCtx *a1, unsigned __int64 a2, int a3)
   int v8; // w0
   unsigned __int64 v10; // x8
 
-  if ( krw_ctx_has_flag(a1, 85475328)
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
     && ((someLargeNumber = a1->someLargeNumber, someLargeNumber > 0x2712000C6FFFFFLL)
      || someLargeNumber > 0x225C23800FFFFFLL && a1->xnuMajorVersion < 10002)
-    || krw_ctx_has_flag(a1, 84934656)
+    || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
     && ((v7 = a1->someLargeNumber, v7 > 0x271200073FFFFFLL) || v7 > 0x225C1E804FFFFFLL && a1->xnuMajorVersion <= 10001) )
   {
     v8 = sub_15D1C((__int64)a1, a2, a3);
     return v8 == 0;
   }
-  if ( krw_ctx_has_flag(a1, 85475328) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
   {
     v10 = a1->someLargeNumber;
     if ( v10 > 0x2712000C6FFFFFLL )
@@ -11636,7 +11636,7 @@ bool __fastcall sub_13924(struct_krwCtx *a1, unsigned __int64 a2, int a3)
     if ( v10 > 0x225C23800FFFFFLL && a1->xnuMajorVersion < 10002 )
       goto LABEL_21;
   }
-  if ( !krw_ctx_has_flag(a1, 84934656) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK) )
   {
 LABEL_22:
     v8 = dmaFail_physwrite32(a1, a2, a3);
@@ -11792,7 +11792,7 @@ void __fastcall sub_13D9C(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3)
   __int64 v8; // [xsp+8h] [xbp-28h] BYREF
 
   v8 = a3;
-  if ( krw_ctx_has_flag(a1, 85475329) && kread64_outptr(a1, a2, &v7) && v7 != a3 )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && kread64_outptr(a1, a2, &v7) && v7 != a3 )
   {
     v6 = kaddr_need_ppl_bypass((__int64)a1, a2);
     ppl_kwritebuf_nocheck((__int64)a1, a2, (__int64)&v8, (unsigned int)a1->int168, v6, 1);
@@ -12050,7 +12050,7 @@ __int64 __fastcall sub_14524(struct_krwCtx *a1, int a2)
   v19 = 0;
   strcpy(__s1, "/private/var/MobileSoftwareUpdate/mnt1");
   strcpy(v18, "/");
-  krw_ctx_set_flag(a1, 1024);
+  krw_ctx_set_flag(a1, KRW_CTX_FLAG_SNAPSHOT_MOUNTED);
   if ( !(unsigned int)sub_154D0(
                         (__int64)a1,
                         mach_task_self_,
@@ -12629,7 +12629,7 @@ LABEL_12:
             v8 = 0;
             goto LABEL_15;
           }
-          if ( krwCtx->someLargeNumber >= 0x1C1B0A80100000LL && (krwCtx->flags & 0x5584001) != 0 )
+          if ( krwCtx->someLargeNumber >= 0x1C1B0A80100000LL && (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
           {
             address = (__int64)krwCtx;
             v26 = v4;
@@ -12810,7 +12810,7 @@ __int64 __fastcall sub_155A0(__int64 a1)
   else
   {
     v6 = (unsigned int)sub_24D64("AppleKeyStore");
-    result = krw_ctx_has_flag((struct_krwCtx *)v2, 4);
+    result = krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
     if ( !(_DWORD)result )
     {
       v7 = *(_QWORD *)(v2 + 936);
@@ -13619,7 +13619,7 @@ __int64 __fastcall sub_15EC4(__int64 a1)
   __int64 v345; // [xsp+6A0h] [xbp-70h]
 
   v1 = 708616;
-  if ( *(_QWORD *)(a1 + 344) < 0x225C23801AF00DuLL || !krw_ctx_has_flag((struct_krwCtx *)a1, 85475328) )
+  if ( *(_QWORD *)(a1 + 344) < 0x225C23801AF00DuLL || !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
     return v1;
   if ( *(_QWORD *)(a1 + 7512) )
     return 0;
@@ -14136,7 +14136,7 @@ LABEL_44:
 LABEL_66:
   *(_BYTE *)v28 = 1;
 LABEL_67:
-  has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000000);
+  has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
   if ( has_flag )
     v40 = 0x292050000LL;
   else
@@ -14149,7 +14149,7 @@ LABEL_67:
   if ( (_DWORD)v1 )
     goto LABEL_27;
   v42 = **(_QWORD **)inputStruct;
-  v43 = krw_ctx_has_flag((struct_krwCtx *)a1, 83886080);
+  v43 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A16_A17_MASK);
   v44 = -2;
   if ( !v43 )
     v44 = 0xFFFFFFFFELL;
@@ -14347,7 +14347,7 @@ LABEL_213:
     goto LABEL_26;
   }
   v99 = v98;
-  v100 = krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000000);
+  v100 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
   if ( v100 )
     v101 = 0xFFFFFC200008C000LL;
   else
@@ -14434,10 +14434,10 @@ LABEL_191:
   else
     v128 = v126;
   v129 = (unsigned __int64)&v124[v122 - v121 + v128];
-  if ( !(unsigned int)sub_18DF0(a1, v129, (_QWORD *)v4 + 52) && krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000) )
+  if ( !(unsigned int)sub_18DF0(a1, v129, (_QWORD *)v4 + 52) && krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
     v119[56] = v129;
   *((_QWORD *)v4 + 51) = v123;
-  if ( !v123 || !*((_QWORD *)v4 + 52) || krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000) && !*((_QWORD *)v4 + 56) )
+  if ( !v123 || !*((_QWORD *)v4 + 52) || krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) && !*((_QWORD *)v4 + 56) )
     goto LABEL_26;
   *(_QWORD *)inputStruct = 0xD5033FDFD5033F9FLL;
   *(_DWORD *)&inputStruct[8] = -698416192;
@@ -14477,7 +14477,7 @@ LABEL_249:
   *((_QWORD *)v4 + 54) = v133;
   if ( !v133 )
     goto LABEL_26;
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 540672) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
     goto LABEL_221;
   v343 = xmmword_430A0;
   *(_QWORD *)v316 = -1;
@@ -14493,7 +14493,7 @@ LABEL_249:
   if ( !v138 )
     goto LABEL_26;
 LABEL_221:
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
     goto LABEL_269;
   *(_OWORD *)inputStruct = xmmword_430B0;
   *(_QWORD *)&inputStruct[16] = 3573563583LL;
@@ -14654,7 +14654,7 @@ LABEL_230:
   *(_OWORD *)(v4 + 142) = xmmword_43160;
   *((_QWORD *)v4 + 73) = 0xFFFFFFF002018000LL;
 LABEL_269:
-  v175 = krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000000);
+  v175 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
   v176 = 0xFFFFFC2000000000LL;
   if ( !v175 )
     v176 = 0xFFFFFFA000000000LL;
@@ -14691,7 +14691,7 @@ LABEL_318:
     v1 = v182;
     goto LABEL_27;
   }
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000) )
+  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
     v185 = sub_3796C(a1, size);
   else
     v185 = sub_37210(a1, (unsigned int *)size);
@@ -14770,12 +14770,12 @@ LABEL_315:
     v182 = 163856;
     goto LABEL_315;
   }
-  v193 = krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000000);
+  v193 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
   v194 = 0xFFFFFC7000000000LL;
   if ( !v193 )
     v194 = 0xFFFFFFF000000000LL;
   v286 = v194;
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x80000) )
+  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14) )
   {
     v195 = sub_3796C(a1, size);
     if ( v195 )
@@ -14844,10 +14844,10 @@ LABEL_320:
   v179[101] = v201;
   v179[162] = ((v290 >> 11) & 0x3FF8) + v300;
   v179[163] = v290;
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
   {
 LABEL_382:
-    v232 = krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000);
+    v232 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13);
     v233 = *(_QWORD *)(a1 + 7512);
     v234 = *(_QWORD **)(v233 + 600);
     v235 = *(_QWORD *)(v233 + 608);
@@ -15151,7 +15151,7 @@ LABEL_425:
     *(_OWORD *)(v265 + 264) = xmmword_431D0;
     *(_QWORD *)(v265 + 280) = 16;
     v266 = v265 + v251;
-    if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x80000) )
+    if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14) )
     {
       *(_QWORD *)v266 = *(_QWORD *)(v233 + 816);
       *(_QWORD *)(v266 + 8) = *(_QWORD *)(v233 + 824);
@@ -15525,13 +15525,13 @@ unsigned __int64 __fastcall sub_18B14(struct_krwCtx *a1, unsigned __int64 a2)
   v4 = *(_QWORD *)((char *)a1 + 6632);
   v5 = *(_QWORD *)((char *)a1 + 6640);
   v6 = number_of_cpus();
-  if ( krw_ctx_has_flag(v3, 83886088) )
+  if ( krw_ctx_has_flag(v3, KRW_CTX_FLAG_CPU_A16_A17_MASK | KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) )
   {
     v7 = 2047;
   }
   else
   {
-    has_flag = krw_ctx_has_flag(v3, 1572864);
+    has_flag = krw_ctx_has_flag(v3, KRW_CTX_FLAG_CPU_A14 | KRW_CTX_FLAG_CPU_A15);
     if ( v6 <= 7 || !has_flag )
       v7 = 7;
     else
@@ -17976,7 +17976,7 @@ __int64 __fastcall sub_1C0C8(__int64 a1, int *a2)
   v23 = -1;
   nullFd = -1;
   v4 = *(_QWORD *)(a1 + 344);
-  if ( v4 > 0x1C1B0A800FFFFFLL && (*(_DWORD *)a1 & 0x5584001) != 0 )
+  if ( v4 > 0x1C1B0A800FFFFFLL && (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
   {
     v5 = 3;
   }
@@ -18033,7 +18033,7 @@ LABEL_13:
     *(_DWORD *)(a1 + 6448) = v22[0];
     *(_DWORD *)(a1 + 6452) = v13;
     v14 = *(_QWORD *)(a1 + 344);
-    if ( v14 > 0x1C1B0A800FFFFFLL && ((*(_DWORD *)a1 & 0x5584001) != 0 || v14 > 0x1F52FFFFFFFFFFLL) )
+    if ( v14 > 0x1C1B0A800FFFFFLL && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v14 > 0x1F52FFFFFFFFFFLL) )
       *(_DWORD *)(a1 + 6464) = v23;
     else
       *(_QWORD *)(a1 + 6456) = v23;
@@ -18043,7 +18043,7 @@ LABEL_13:
       if ( validate_addr(a1, v20.st_atimespec.tv_sec) )
         *(_QWORD *)(a1 + 6608) = tv_sec;
       v16 = *(_QWORD *)(a1 + 344);
-      if ( v16 > 0x1C1B0A800FFFFFLL && ((*(_DWORD *)a1 & 0x5584001) != 0 || v16 > 0x1F52FFFFFFFFFFLL) )
+      if ( v16 > 0x1C1B0A800FFFFFLL && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v16 > 0x1F52FFFFFFFFFFLL) )
       {
         v17 = v20.st_atimespec.tv_nsec | 0xFFFFFF0000000000LL;
         if ( validate_addr(a1, v20.st_atimespec.tv_nsec | 0xFFFFFF0000000000LL) )
@@ -18648,7 +18648,7 @@ LABEL_13:
                       return 0;
                     sub_288A4((__int64)a1, v14 + 280, a1->gap19210);
                     v11 = a1->someLargeNumber;
-                    if ( v11 >= 0x1C1B0A80100000LL && ((a1->flags & 0x5584001) != 0 || v11 >= 0x1F530000000000LL) )
+                    if ( v11 >= 0x1C1B0A80100000LL && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v11 >= 0x1F530000000000LL) )
                     {
                       v13 = a1->gap190u & 0xFFFFFFFFFFLL
                           | ((unsigned __int64)(unsigned int)(a1->slideMaybe / (unsigned int)a1->pageSizeOrSomething) << 40);
@@ -19528,7 +19528,7 @@ char *__fastcall sub_1E45C(__int64 a1)
   _QWORD v10[3]; // [xsp+20h] [xbp-40h] BYREF
   _QWORD v11[3]; // [xsp+38h] [xbp-28h] BYREF
 
-  if ( krw_ctx_has_flag(*(struct_krwCtx **)(a1 + 280), 8) )
+  if ( krw_ctx_has_flag(*(struct_krwCtx **)(a1 + 280), KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) )
   {
     sub_19D10(a1, v11);
     result = (char *)kernel_pattern_scan((__int64)v11, "08 FD 64 D3 1F 21 00 F1 .. 00 00 54", 0);
@@ -19537,7 +19537,7 @@ char *__fastcall sub_1E45C(__int64 a1)
     v3 = (unsigned __int64)(result + 12);
     return sub_1EB2C((__int64 *)a1, (__int64 *)(v3 & 0xFFFFFFFFFFFFFFFCLL), 1);
   }
-  if ( *(_QWORD *)(a1 + 136) >= 0x22581401900000uLL && !krw_ctx_has_flag(*(struct_krwCtx **)(a1 + 280), 0x2000) )
+  if ( *(_QWORD *)(a1 + 136) >= 0x22581401900000uLL && !krw_ctx_has_flag(*(struct_krwCtx **)(a1 + 280), KRW_CTX_FLAG_CPU_A9) )
   {
     sub_19D10(a1, v10);
     result = (char *)kernel_pattern_scan((__int64)v10, ".. FD .. D3 .. 00 00 B5", 0);
@@ -19727,7 +19727,7 @@ unsigned __int64 __fastcall sub_1E85C(__int64 *a1, int *a2)
   unsigned __int64 text_range[3]; // [xsp+20h] [xbp-40h] BYREF
 
   v4 = a1[35];
-  if ( krw_ctx_has_flag((struct_krwCtx *)v4, 32) )
+  if ( krw_ctx_has_flag((struct_krwCtx *)v4, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     sub_19D10(*(_QWORD *)(v4 + 6648), text_range);
     scan_range[0] = text_range[0];
@@ -21956,7 +21956,7 @@ __n128 __fastcall sub_213D4(__int64 a1, unsigned __int64 a2, __int64 a3, __int64
     *(_DWORD *)(a1 + 1504) = v26;
     sub_385F4((struct_krwCtx *)a1, v27);
   }
-  if ( *(_DWORD *)(a1 + 384) == 4096 || krw_ctx_has_flag((struct_krwCtx *)a1, 0x8000) )
+  if ( *(_DWORD *)(a1 + 384) == 4096 || krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A8) )
   {
     v12 = *(_QWORD *)(a1 + 1488);
     v13 = *(_QWORD *)(a1 + 1496);
@@ -22031,7 +22031,7 @@ LABEL_57:
       return result;
     v30 = *(_QWORD *)(a1 + 1488);
     v31 = *(_QWORD *)(a1 + 1496);
-    has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, 83886088);
+    has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A16_A17_MASK | KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
     v33 = 2047;
     if ( !has_flag )
       v33 = 7;
@@ -22323,7 +22323,7 @@ LABEL_108:
           {
             if ( (unsigned int)kwritebuf_last_1(a1, v35, v42, v30) )
             {
-              if ( krw_ctx_has_flag((struct_krwCtx *)a1, 85475329) )
+              if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
               {
                 sub_13D9C((struct_krwCtx *)a1, v16, v35);
                 if ( (_DWORD)v8 )
@@ -22480,7 +22480,7 @@ LABEL_111:
     else
     {
       sub_19D10(v8, v46);
-      if ( krw_ctx_has_flag((struct_krwCtx *)a1, 32) )
+      if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
       {
         v18 = *(_QWORD *)(a1 + 7480);
         if ( v18 )
@@ -22517,7 +22517,7 @@ LABEL_115:
         }
         else
         {
-          LODWORD(v8) = krw_ctx_has_flag((struct_krwCtx *)a1, 32);
+          LODWORD(v8) = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
           if ( (_DWORD)v8 )
           {
             v37 = *(_QWORD *)(*(_QWORD *)(a1 + 280) + 328LL);
@@ -23401,7 +23401,7 @@ __int64 __fastcall dmaFail_physwrite32(struct_krwCtx *a1, __int64 a2, int a3)
 
   v6 = DMAFAIL_REG_BASE;
   v7 = DMAFAIL_PHYS_PAGE_SHIFT;
-  if ( krw_ctx_has_flag(a1, 0x1000000) || krw_ctx_has_flag(a1, 0x100000) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
   {
     v8 = DMAFAIL_DMA_MASK_A15_A16;
   }
@@ -23444,7 +23444,7 @@ LABEL_83:
     v42 = *(_QWORD *)(v49[0] + DMAFAIL_DMA_CTRL_STATUS_OFFSET);
     v14 = 0;
     v15 = 0;
-    if ( krw_ctx_has_flag(a1, 17825792) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
     {
       v39 = *(_QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET);
       v40 = (_QWORD *)(v50[0] + DMAFAIL_DMA_A15_A16_BACKUP_OFFSET);
@@ -23542,8 +23542,8 @@ LABEL_30:
           v29 += 32;
         }
         while ( v27 != 8 );
-        has_flag = krw_ctx_has_flag(a1, 540673);
-        if ( krw_ctx_has_flag(a1, 35651584) && (v31 = v41 | v24 & DMAFAIL_DMA_HASH1_A15_A16_KEEP_MASK, v31 != v24) )
+        has_flag = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_MASK);
+        if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_A15_DMA_ALT_MASK) && (v31 = v41 | v24 & DMAFAIL_DMA_HASH1_A15_A16_KEEP_MASK, v31 != v24) )
         {
           v34 = 10;
           v32 = has_flag;
@@ -23597,7 +23597,7 @@ LABEL_74:
 LABEL_76:
     if ( v42 && *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) != v42 )
       *(_QWORD *)(v12 + DMAFAIL_DMA_CTRL_STATUS_OFFSET) &= v42 | DMAFAIL_DMA_CTRL_RESTORE_MASK;
-    if ( krw_ctx_has_flag(a1, 17825792) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
     {
       *v40 = v39;
       if ( (v37 & 1) == 0 )
@@ -23677,19 +23677,19 @@ __int64 __fastcall dmaFail_gfx_power_init(struct_krwCtx *a1)
   start = mach_absolute_time();
 
   paddr = 0x23B080000LL;
-  if ( krw_ctx_has_flag(a1, 0x1000000) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16) )
   {
     paddr = 0x23B700000LL;
   }
-  else if ( krw_ctx_has_flag(a1, 0x100000) )
+  else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
   {
-    paddr = krw_ctx_has_flag(a1, 0x2000000) ? 0x404E80000LL : 0x23B700000LL;
+    paddr = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_DMA_ALT) ? 0x404E80000LL : 0x23B700000LL;
   }
-  else if ( krw_ctx_has_flag(a1, 0x80000) )
+  else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14) )
   {
-    paddr = krw_ctx_has_flag(a1, 0x200000) ? 0x28E580000LL : 0x23B700000LL;
+    paddr = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_DMA_ALT) ? 0x28E580000LL : 0x23B700000LL;
   }
-  else if ( !krw_ctx_has_flag(a1, 0x4000) && !krw_ctx_has_flag(a1, 1) )
+  else if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13) && !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
   {
     return 708642;
   }
@@ -23709,37 +23709,37 @@ __int64 __fastcall dmaFail_gfx_power_init(struct_krwCtx *a1)
     return 708642;
 
   command = 0x1F0023FF;
-  if ( !krw_ctx_has_flag(a1, 0x1000000) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16) )
   {
-    if ( krw_ctx_has_flag(a1, 0x100000) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
     {
       if ( (int)number_of_cpus() < 8 )
       {
         regOffset = 0x3C8LL;
         goto LABEL_33;
       }
-      regOffset = krw_ctx_has_flag(a1, 0x2000000) ? 0x108LL : 0x430LL;
+      regOffset = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_DMA_ALT) ? 0x108LL : 0x430LL;
     }
     else
     {
-      if ( krw_ctx_has_flag(a1, 0x80000) )
+      if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14) )
       {
         if ( (int)number_of_cpus() < 8 )
         {
           regOffset = 0x3D0LL;
           goto LABEL_33;
         }
-        regOffset = krw_ctx_has_flag(a1, 0x200000) ? 0x3C0LL : 0x3F8LL;
+        regOffset = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_DMA_ALT) ? 0x3C0LL : 0x3F8LL;
       }
       else
       {
         command = 0x1F0003FF;
-        if ( krw_ctx_has_flag(a1, 0x4000) )
+        if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13) )
         {
           regOffset = 0x390LL;
           goto LABEL_33;
         }
-        if ( !krw_ctx_has_flag(a1, 1) )
+        if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
         {
           physmap_unmap_cached((__int64)a1, (__int64)v16);
           return 708642;
@@ -23809,7 +23809,7 @@ __int64 __fastcall dmaFail_dbgwrap_halt_cpu(struct_krwCtx *a1, __int64 a2)
   v4 = **(_QWORD **)a2;
   if ( (v4 & 0x90000000) == 0 )
   {
-    if ( krw_ctx_has_flag(a1, 17825792) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
       sub_2AABC((__int64)a1, 0x3E8u);
     **(_QWORD **)a2 = v4 | 0x80000000LL;
     *(_BYTE *)(a2 + 56) = 1;
@@ -23843,7 +23843,7 @@ uint32_t __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2)
   if ( !*(_BYTE *)(a2 + 56) )
     return 1;
   v4 = **(_QWORD **)a2 & 0xFFFFFFFF2FFFFFFFLL | 0x40000000;
-  if ( krw_ctx_has_flag(a1, 17825792) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
     sub_2AABC((__int64)a1, 0x3E8u);
   **(_QWORD **)a2 = v4;
   memset(&info, 0, sizeof(info));
@@ -24106,7 +24106,7 @@ void __fastcall sub_23D30(__int64 a1, char a2)
     {
       if ( validate_addr(a1, *(_QWORD *)(a1 + 920)) )
       {
-        if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 4) )
+        if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
         {
           sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), 0);
           if ( v4 )
@@ -24158,12 +24158,12 @@ void __fastcall sub_23D30(__int64 a1, char a2)
             }
             sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), *(_QWORD *)(a1 + 936));
             if ( !v6 )
-              krw_ctx_set_flag((_DWORD *)a1, 4);
+              krw_ctx_set_flag((_DWORD *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
           }
         }
       }
     }
-    else if ( krw_ctx_has_flag((struct_krwCtx *)a1, 4) )
+    else if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
     {
       v7 = sub_33FFC((struct_krwCtx *)a1, mach_task_self_);
       if ( v7 )
@@ -24334,7 +24334,7 @@ LABEL_6:
       }
     }
   }
-  has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, 4096);
+  has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_HAS_AUXKC_INFO);
   v5 = 6648;
   if ( !has_flag )
     v5 = 7448;
@@ -25462,17 +25462,17 @@ __int64 __fastcall sub_25804(__int64 a1)
             if ( v26 )
             {
               v27 = v26;
-              if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000000) )
+              if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17) )
               {
                 v28 = 264;
               }
-              else if ( krw_ctx_has_flag((struct_krwCtx *)a1, 89669633) )
+              else if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
               {
                 v28 = 184;
               }
               else
               {
-                v29 = krw_ctx_has_flag((struct_krwCtx *)a1, 512);
+                v29 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11);
                 v28 = 184;
                 if ( !v29 )
                   v28 = 256;
@@ -27170,16 +27170,16 @@ __int64 __fastcall sub_27808(__int64 a1, char a2)
   {
     return v6;
   }
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000000) )
+  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17) )
   {
     v10 = 264;
   }
   else
   {
     v10 = 184;
-    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 89669633) )
+    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
     {
-      if ( krw_ctx_has_flag((struct_krwCtx *)a1, 512) )
+      if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11) )
         v10 = 184;
       else
         v10 = 256;
@@ -27271,7 +27271,7 @@ LABEL_158:
     switch ( v12 )
     {
       case 8792:
-        v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, 89670145);
+        v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
         v15 = 9952;
         v16 = 9936;
         break;
@@ -27281,7 +27281,7 @@ LABEL_158:
         goto LABEL_66;
       case 10002:
         v13 = *(_QWORD *)(a1 + 344);
-        v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, 32);
+        v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
         if ( v13 < 0x27120A80800000LL )
         {
           v15 = 17904;
@@ -27920,17 +27920,17 @@ LABEL_46:
   v24 = a1->xnuMajorVersion;
   if ( v24 != 8792 && v24 != 10002 && v24 != 8796 )
     goto LABEL_65;
-  if ( krw_ctx_has_flag(a1, 84934656) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK) )
   {
     v25 = 984;
     goto LABEL_60;
   }
-  if ( krw_ctx_has_flag(a1, 540673) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_MASK) )
   {
     v25 = 960;
     goto LABEL_60;
   }
-  if ( !krw_ctx_has_flag(a1, 8768) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A10_A11_A9_MASK) )
   {
 LABEL_65:
     v3 = 163884;
@@ -28002,7 +28002,7 @@ bool __fastcall kread64(struct_krwCtx *a1, unsigned __int64 vaddr, unsigned __in
   if ( v5 )
   {
     v6 = *out;
-    if ( (a1->flags & 0x5584001) != 0 )
+    if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
       v6 = krw_xpac_vaddr(a1, v6);
     *out = v6;
   }
@@ -28214,9 +28214,9 @@ LABEL_29:
           if ( (unsigned int)(v25 - 1) >= 0xBFF )
             return 163857;
           *((_DWORD *)v6 + 14) = v25;
-          if ( a1->someLargeNumber < 0x27120F04B00003LL || (a1->flags & 0x20) == 0 )
+          if ( a1->someLargeNumber < 0x27120F04B00003LL || (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0 )
           {
-            if ( krw_ctx_has_flag(a1, 89670145) )
+            if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
             {
               v26 = sub_38034((int *)a1, v6[4], 1, 1, 96);
 LABEL_47:
@@ -28513,11 +28513,11 @@ LABEL_25:
     v70 = v24;
     address = 0;
     v29 = vm_page_size;
-    if ( krw_ctx_has_flag(a1, 0x4000000) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A17) )
     {
       v30 = 224;
     }
-    else if ( krw_ctx_has_flag(a1, 89670145) )
+    else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
     {
       v30 = 144;
     }
@@ -28548,7 +28548,7 @@ LABEL_25:
     {
       if ( v37 != 11 )
         thread_switch(*(_DWORD *)(v31 + 48), 2, 0xAu);
-      if ( a1->someLargeNumber > 0x27120F04B00002LL && (a1->flags & 0x20) != 0 )
+      if ( a1->someLargeNumber > 0x27120F04B00002LL && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
       {
         v68 = 0;
         sub_38D60((__int64)a1, v60, &v68, a1->int168, 0);
@@ -28584,7 +28584,7 @@ LABEL_64:
           goto LABEL_66;
         }
         v41 = paddr;
-        if ( a1->someLargeNumber > 0x27120F04B00002LL && (a1->flags & 0x20) != 0 )
+        if ( a1->someLargeNumber > 0x27120F04B00002LL && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
         {
           sub_38D60((__int64)a1, paddr + 52, &v65, 4u, 0);
           v5 = v45;
@@ -28889,7 +28889,7 @@ LABEL_69:
               v22 = v19 + vaddrPlusI;
               outBufWithOffAndOff = (void *)(v19 + outBufWithOff);
               v24 = *(_QWORD *)v18 - v19;
-              if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & 0x20) != 0 )
+              if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
               {
                 *(_QWORD *)old_stateCnt = 0;
                 v47 = 132;
@@ -29103,7 +29103,7 @@ unsigned __int64 __fastcall sub_29CB0(struct_krwCtx *a1, __int64 a2)
 {
   __int64 vars8; // [xsp+28h] [xbp+8h]
 
-  if ( !krw_ctx_has_flag(a1, 89669633) || (a1->flags & 0x5584001) == 0 )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) || (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return a2;
   if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
     __break(0xC471u);
@@ -29116,7 +29116,7 @@ unsigned __int64 __fastcall sub_29D2C(struct_krwCtx *a1, __int64 a2)
 {
   __int64 vars8; // [xsp+18h] [xbp+8h]
 
-  if ( !krw_ctx_has_flag(a1, 89669633) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
     return a2;
   if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
     __break(0xC471u);
@@ -29132,7 +29132,7 @@ unsigned __int64 __fastcall sub_29D88(struct_krwCtx *a1, __int64 a2)
   v2 = a2;
   if ( a2 && (a2 & 0x80000000000000LL) != 0 )
   {
-    if ( krw_ctx_has_flag(a1, 8) || krw_ctx_has_flag(a1, 0x5000000) && a1->someLargeNumber >= 0x22580A06C00000LL )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16_A17_MASK) && a1->someLargeNumber >= 0x22580A06C00000LL )
       return v2 | 0xFFFF800000000000LL;
     else
       return v2 | 0xFFFFFF8000000000LL;
@@ -29367,9 +29367,9 @@ unsigned __int64 __fastcall sub_2A200(struct_krwCtx *a1, unsigned __int64 a2, _D
   __int64 v16; // x9
   unsigned __int64 v17; // x8
 
-  if ( krw_ctx_has_flag(a1, 89669633) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
   {
-    if ( krw_ctx_has_flag(a1, 8) || krw_ctx_has_flag(a1, 83886080) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16_A17_MASK) )
     {
       v6 = a1->someLargeNumber > 0x225814018FFFFFLL;
       v7 = v6;
@@ -29566,7 +29566,7 @@ LABEL_8:
       __break(0xC471u);
     return noppl_kwrite32((__int64)a1, a2, a3);
   }
-  if ( krw_ctx_has_flag(a1, 0x5184001) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     return ppl_kwritebuf((__int64)v5, v4, &newBytes, 4);
   result = sub_39090(v5, v4);
   if ( result )
@@ -29595,7 +29595,7 @@ void __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 
   }
   else
   {
-    if ( krw_ctx_has_flag(a1, 85475329) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
       if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
         __break(0xC471u);
@@ -29631,7 +29631,7 @@ unsigned __int64 __fastcall kwritebuf_universal(
   ctx_ = (struct_krwCtx *)a1;
   if ( a1[43] >= 0x1F530F02800000uLL )
   {
-    if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x5184001) )
+    if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
       if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
         __break(0xC471u);
@@ -30199,7 +30199,7 @@ __int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __in
     v27 = paddr_2 + 104;
   }
   v32 = 0;
-  if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & 0x20) != 0 )
+  if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     physwritebuf_direct_mapped(krwCtx, paddr_1, &v32, 4u, 0);
   else
     v23 = dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr_1, &v32, 4u);
@@ -30239,7 +30239,7 @@ void __fastcall physwrite64_maybe(struct_krwCtx *krwCtx, unsigned __int64 paddr,
   __int64 value; // [xsp+8h] [xbp-8h] BYREF
 
   value = value_1;
-  if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & 0x20) != 0 )
+  if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     physwritebuf_direct_mapped(krwCtx, paddr, &value, 8u, 0);
   else
     dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr, &value, 8u);
@@ -30866,7 +30866,7 @@ bool __fastcall sub_2C0F8(struct_krwCtx *a1, unsigned int a2, const char *a3)
 
   if ( (unsigned int)sub_2C2F8(a1, a2, (__int64)v20) )
   {
-    v5 = (a1->flags & 0x5584001) != 0 || a1->someLargeNumber > 0x1F52FFFFFFFFFFLL;
+    v5 = (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || a1->someLargeNumber > 0x1F52FFFFFFFFFFLL;
     v7 = sub_2C9B0((__int64)v20, 0, -86111230);
     if ( !v7 )
       goto LABEL_23;
@@ -31004,7 +31004,7 @@ __int64 __fastcall sub_2C2F8(struct_krwCtx *a1, unsigned int a2, __int64 a3)
     || (result = sub_2E5C0(a1, a2, 0, 0, (__int64)&v46), (_DWORD)result) )
   {
     someLargeNumber = a1->someLargeNumber;
-    if ( someLargeNumber >= 0x1C1B1914600000LL && ((a1->flags & 0x5584001) != 0 || someLargeNumber > 0x1F52FFFFFFFFFFLL) )
+    if ( someLargeNumber >= 0x1C1B1914600000LL && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || someLargeNumber > 0x1F52FFFFFFFFFFLL) )
       LOBYTE(v52) = 1;
     if ( *((_QWORD *)&v48 + 1) >> 29 )
     {
@@ -31037,7 +31037,7 @@ __int64 __fastcall sub_2C2F8(struct_krwCtx *a1, unsigned int a2, __int64 a3)
     if ( v9[10] )
       goto LABEL_82;
     v9[10] = 128;
-    if ( (a1->flags & 0x5584001) == 0 && someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+    if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && someLargeNumber <= 0x1F52FFFFFFFFFFLL )
     {
 LABEL_15:
       v11 = sub_2CA80(a1, (__int64)&v46);
@@ -31356,12 +31356,12 @@ __int64 __fastcall sub_2CA80(struct_krwCtx *a1, __int64 a2)
   v4[0] = a1;
   v4[1] = a2;
   v5 = 0;
-  if ( a1->someLargeNumber < 0x1C1B1914600000LL || krw_ctx_has_flag(a1, 4) )
+  if ( a1->someLargeNumber < 0x1C1B1914600000LL || krw_ctx_has_flag(a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
   {
     sub_2FA24((__int64)v4);
     return v5;
   }
-  if ( krw_ctx_has_flag(a1, 89669633) && a1->someLargeNumber <= 0x1C1B1E025FFFFFLL )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) && a1->someLargeNumber <= 0x1C1B1E025FFFFFLL )
   {
     result = sub_23F78((__int64)a1, sub_2FA24, (__int64)v4);
     if ( (_DWORD)result )
@@ -31438,7 +31438,7 @@ __int64 __fastcall sub_2CBA4(struct_krwCtx *a1, __int64 task, char *entitlementX
   if ( !(_DWORD)result )
     return result;
   v9 = a1->someLargeNumber;
-  if ( v9 < 0x1C1B1914600000LL || ((a1->flags & 0x5584001) == 0 ? (v10 = v9 > 0x1F52FFFFFFFFFFLL) : (v10 = 1), !v10) )
+  if ( v9 < 0x1C1B1914600000LL || ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 ? (v10 = v9 > 0x1F52FFFFFFFFFFLL) : (v10 = 1), !v10) )
   {
     v12 = 0;
     v11 = (a4 & 1) == 0;
@@ -31446,7 +31446,7 @@ LABEL_12:
     v13 = sub_2C9B0((__int64)v36, 5, -86085263);
     if ( !v13 )
     {
-      if ( (a1->flags & 0x5584001) == 0 )
+      if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
       {
         v19 = strlen(entitlementXml);
         if ( v12 )
@@ -31493,7 +31493,7 @@ LABEL_18:
       if ( v33 )
         goto LABEL_18;
 LABEL_25:
-      if ( !v38 && (a1->flags & 0x5584001) != 0 )
+      if ( !v38 && (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
       {
         v26 = sub_2C9B0((__int64)v36, v37, -86111230);
         if ( v26 )
@@ -32023,22 +32023,22 @@ __int64 __fastcall sub_2D934(struct_krwCtx *a1, unsigned int a2)
   char v27; // [xsp+Fh] [xbp-31h] BYREF
 
   v27 = 0;
-  if ( !krw_ctx_has_flag(a1, 85475841) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_A12_A13_A14_A15_A16_A17_MASK) )
     return 1;
   result = sub_349C8(a1, a2);
   if ( !result )
     return result;
   v5 = result;
-  if ( krw_ctx_has_flag(a1, 32) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     v6 = v5 + 146;
 LABEL_5:
     v7 = (__int64)a1;
     goto LABEL_6;
   }
-  if ( !krw_ctx_has_flag(a1, 85475329) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
   {
-    result = krw_ctx_has_flag(a1, 512);
+    result = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11);
     if ( !(_DWORD)result )
       return result;
     xnuMajorVersion = a1->xnuMajorVersion;
@@ -32098,7 +32098,7 @@ LABEL_50:
   }
   if ( v8 >= 8792 )
   {
-    v19 = krw_ctx_has_flag(a1, 18350080);
+    v19 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_A15_A16_MASK);
     v12 = !v19;
     if ( v19 )
       v13 = 193;
@@ -32121,7 +32121,7 @@ LABEL_50:
   someLargeNumber = a1->someLargeNumber;
   if ( someLargeNumber >= 0x1C1B0A80100000LL )
   {
-    v21 = krw_ctx_has_flag(a1, 0x80000);
+    v21 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14);
     v12 = !v21;
     if ( v21 )
       v13 = 265;
@@ -32140,7 +32140,7 @@ LABEL_46:
   }
   if ( v8 >= 7195 )
   {
-    v24 = krw_ctx_has_flag(a1, 0x80000);
+    v24 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14);
     v12 = !v24;
     if ( v24 )
       v13 = 264;
@@ -32214,13 +32214,13 @@ __int64 __fastcall sub_2DC40(struct_krwCtx *a1, unsigned int a2)
   unsigned __int8 v22; // [xsp+1Fh] [xbp-21h] BYREF
 
   v22 = 0;
-  if ( !krw_ctx_has_flag(a1, 85475329) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     return 1;
   result = sub_349C8(a1, a2);
   if ( !result )
     return result;
   v5 = result;
-  if ( krw_ctx_has_flag(a1, 32) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     result = kread64_outptr(a1, v5 + 176, (unsigned __int64 *)&v21);
     if ( (_DWORD)result )
@@ -32260,7 +32260,7 @@ LABEL_17:
   }
   if ( xnuMajorVersion >= 8792 )
   {
-    v15 = krw_ctx_has_flag(a1, 18350080);
+    v15 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_A15_A16_MASK);
     v11 = !v15;
     v12 = 193;
     if ( !v15 )
@@ -32278,7 +32278,7 @@ LABEL_17:
   someLargeNumber = a1->someLargeNumber;
   if ( someLargeNumber >= 0x1C1B0A80100000LL )
   {
-    v18 = krw_ctx_has_flag(a1, 0x80000);
+    v18 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14);
     v11 = !v18;
     v12 = 265;
     if ( !v18 )
@@ -32289,7 +32289,7 @@ LABEL_17:
   }
   if ( xnuMajorVersion >= 7195 )
   {
-    v19 = krw_ctx_has_flag(a1, 0x80000);
+    v19 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14);
     v11 = !v19;
     v12 = 264;
     if ( !v19 )
@@ -32455,7 +32455,7 @@ void __fastcall sub_2E00C(__int64 a1, unsigned int a2)
         if ( v7 )
         {
           v8 = *(_QWORD *)(a1 + 344);
-          if ( v8 >= 0x1C1B1914600000LL && ((*(_DWORD *)a1 & 0x5584001) != 0 || v8 >= 0x1F530000000000LL) )
+          if ( v8 >= 0x1C1B1914600000LL && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v8 >= 0x1F530000000000LL) )
           {
             if ( v24 )
             {
@@ -32795,7 +32795,7 @@ __int64 __fastcall sub_2E5C0(struct_krwCtx *a1, unsigned int a2, __int64 *a3, un
         *(_DWORD *)(a5 + 80) = v24;
         if ( (_DWORD)v24 )
         {
-          if ( v20 <= v24 && ((a1->flags & 0x5584001) != 0 || a1->someLargeNumber > 0x1F52FFFFFFFFFFLL) )
+          if ( v20 <= v24 && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || a1->someLargeNumber > 0x1F52FFFFFFFFFFLL) )
             goto LABEL_110;
         }
         v25 = v59 ? (unsigned int)(v59 - v21) : 0LL;
@@ -34036,7 +34036,7 @@ void __fastcall sub_2FA24(__int64 a1)
   v2 = *(_QWORD *)a1;
   v3 = *(int **)(a1 + 8);
   v4 = *(_QWORD *)(*(_QWORD *)a1 + 344LL);
-  v5 = (**(_DWORD **)a1 & 0x5584001) != 0 || v4 > 0x1F52FFFFFFFFFFLL;
+  v5 = (**(_DWORD **)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v4 > 0x1F52FFFFFFFFFFLL;
   if ( !v5 )
   {
     v204 = 0;
@@ -34048,9 +34048,9 @@ void __fastcall sub_2FA24(__int64 a1)
     v188 = 0;
     v189 = 0;
     v187 = 0;
-    v11 = krw_ctx_has_flag((struct_krwCtx *)v2, 85475329);
+    v11 = krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK);
     v12 = 0;
-    if ( (*(_DWORD *)v2 & 0x5584001) != 0 )
+    if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
       goto LABEL_466;
     v13 = v11;
     if ( (unsigned int)sub_31914(
@@ -34174,7 +34174,7 @@ LABEL_349:
         v219 = 0u;
         v216 = 0u;
         v217 = 0u;
-        size_4 = krw_ctx_has_flag((struct_krwCtx *)v2, 85475329);
+        size_4 = krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK);
         if ( v24 )
         {
           if ( kread64_outptr((struct_krwCtx *)v2, v24, &v213) )
@@ -34522,7 +34522,7 @@ LABEL_143:
     v53 = *(_QWORD *)(v2 + 344);
     goto LABEL_144;
   }
-  if ( (*(_DWORD *)v2 & 0x5584001) == 0 || (v53 = *(_QWORD *)(v2 + 344), v53 > 0x1F530F027FFFFFLL) )
+  if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (v53 = *(_QWORD *)(v2 + 344), v53 > 0x1F530F027FFFFFLL) )
   {
     LODWORD(v216) = v171 | 1;
     bufSize_4a = 1;
@@ -34566,7 +34566,7 @@ LABEL_144:
     v176 = 0u;
     *(_OWORD *)name = 0u;
     if ( v55 )
-      v56 = (*(_DWORD *)v2 & 0x5584001) != 0 && v53 < 0x1F530F02800000LL;
+      v56 = (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && v53 < 0x1F530F02800000LL;
     if ( v52 )
     {
       v52 = 0;
@@ -34576,7 +34576,7 @@ LABEL_144:
     else
     {
       v58 = 4097;
-      if ( (*(_DWORD *)v2 & 0x5584001) != 0 )
+      if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
       {
         v59 = 0;
         if ( v53 < 0x1F530F02800000LL )
@@ -35083,7 +35083,7 @@ LABEL_59:
         }
         v5 = v70 > 0x1F530F027FFFFFLL;
         v33 = v69;
-        if ( v5 || (*(_DWORD *)v2 & 0x5584001) == 0 || !v74 )
+        if ( v5 || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || !v74 )
         {
           sub_2A63C((struct_krwCtx *)v2, v196 + bufc, v74);
           if ( !v103 )
@@ -35102,7 +35102,7 @@ LABEL_51:
     if ( (unsigned __int64)v205 > *((_QWORD *)v3 + 2) )
       goto LABEL_451;
     v170 = v9;
-    v29 = krw_ctx_has_flag((struct_krwCtx *)v2, 85475329);
+    v29 = krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK);
     v30 = *((_QWORD *)v3 + 3);
     if ( v29 )
     {
@@ -35127,7 +35127,7 @@ LABEL_88:
       if ( !(unsigned int)sub_34D14(v2, v3[17]) )
         goto LABEL_451;
       v45 = *(_QWORD *)(v2 + 344);
-      if ( (*(_DWORD *)v2 & 0x5584001) != 0 && v45 <= 0x1F530F027FFFFFLL )
+      if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && v45 <= 0x1F530F027FFFFFLL )
       {
         if ( !(unsigned int)sub_2F2C8((struct_krwCtx *)v2, v3[17], *(_QWORD *)(v2 + 912)) )
           goto LABEL_451;
@@ -35157,7 +35157,7 @@ LABEL_88:
     }
     v41 = *(_QWORD *)(v2 + 344);
 LABEL_90:
-    if ( v41 <= 0x1F52FFFFFFFFFFLL || (*(_DWORD *)v2 & 0x5184001) == 0 )
+    if ( v41 <= 0x1F52FFFFFFFFFFLL || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) == 0 )
       goto LABEL_335;
     v42 = v3[17];
     v43 = *((_QWORD *)v3 + 1);
@@ -35187,7 +35187,7 @@ LABEL_90:
     if ( !v65 )
       goto LABEL_451;
     v66 = v65;
-    if ( krw_ctx_has_flag((struct_krwCtx *)v2, 32) )
+    if ( krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     {
       v210 = 0;
       if ( !kread64_outptr((struct_krwCtx *)v2, v66 + 176, (unsigned __int64 *)&v210)
@@ -35201,13 +35201,13 @@ LABEL_90:
     }
     else
     {
-      if ( krw_ctx_has_flag((struct_krwCtx *)v2, 18350080) )
+      if ( krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_CPU_A14_A15_A16_MASK) )
       {
         v116 = 144;
       }
       else
       {
-        if ( !krw_ctx_has_flag((struct_krwCtx *)v2, 16385) )
+        if ( !krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_CPU_A12_A13_MASK) )
           goto LABEL_451;
         v116 = 136;
       }
@@ -35236,7 +35236,7 @@ LABEL_335:
     v210 = 0;
     newBytes = 0xFFFFFFFFLL;
     v208 = 0;
-    if ( krw_ctx_has_flag((struct_krwCtx *)v2, 32) )
+    if ( krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     {
       v124 = 20;
       goto LABEL_373;
@@ -35263,7 +35263,7 @@ LABEL_373:
       sub_13D9C((struct_krwCtx *)v2, *(_QWORD *)name + v67, v181);
       if ( !v125 )
         goto LABEL_451;
-      if ( !krw_ctx_has_flag((struct_krwCtx *)v2, 32) )
+      if ( !krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
       {
         __src[0] = v181;
         v126 = sub_33E8C((struct_krwCtx *)v2, v42);
@@ -35296,7 +35296,7 @@ LABEL_373:
           if ( (_QWORD)v181 == __src[0] )
           {
             v186 = 0;
-            if ( *(_QWORD *)(v2 + 344) <= 0x1F52FFFFFFFFFFuLL || (*(_DWORD *)v2 & 0x5184001) == 0 )
+            if ( *(_QWORD *)(v2 + 344) <= 0x1F52FFFFFFFFFFuLL || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) == 0 )
               break;
             v129 = *(int *)(v2 + 320) <= 8791 ? 80LL : 400LL;
             v130 = v129 + v181;
@@ -35769,7 +35769,7 @@ __int64 __fastcall sub_320EC(struct_krwCtx *a1)
   unsigned int v8; // w11
   unsigned int v9; // w10
 
-  has_flag = krw_ctx_has_flag(a1, 85475329);
+  has_flag = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK);
   xnuMajorVersion = a1->xnuMajorVersion;
   if ( (unsigned int)(xnuMajorVersion - 8019) < 2 )
   {
@@ -36005,7 +36005,7 @@ _QWORD *__fastcall sub_32538(struct_krwCtx *a1, unsigned int *a2)
   _QWORD *result; // x0
   __int64 vars8; // [xsp+28h] [xbp+8h]
 
-  if ( krw_ctx_has_flag(a1, 85475329) && (v4 = *a2, *a2 >= 0x1FF9) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && (v4 = *a2, *a2 >= 0x1FF9) )
   {
     v5 = a1->pageSizeOrSomething;
     v6 = v4 % v5;
@@ -36610,7 +36610,7 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
     {
       if ( xnuMajorVersion == 6153 )
       {
-        if ( krw_ctx_has_flag(a1, 89669633) )
+        if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
           return 904;
         else
           return 896;
@@ -36618,7 +36618,7 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
       else if ( xnuMajorVersion == 7195 )
       {
         someLargeNumber = a1->someLargeNumber;
-        has_flag = krw_ctx_has_flag(a1, 89669633);
+        has_flag = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
         if ( has_flag )
           v6 = 928;
         else
@@ -36634,9 +36634,9 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
       }
       return result;
     }
-    if ( !krw_ctx_has_flag(a1, 0x100000) )
+    if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
     {
-      v12 = krw_ctx_has_flag(a1, 89669633);
+      v12 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
       v13 = a1->someLargeNumber;
       v14 = v13 > 0x1F530F027FFFFFLL;
       if ( v13 <= 0x1F530F027FFFFFLL )
@@ -36697,11 +36697,11 @@ __int64 __fastcall sub_33098(struct_krwCtx *a1)
   if ( xnuMajorVersion == 8796 || xnuMajorVersion == 10002 )
   {
 LABEL_11:
-    if ( krw_ctx_has_flag(a1, 84934656) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK) )
     {
       return 928;
     }
-    else if ( krw_ctx_has_flag(a1, 89669633) )
+    else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
     {
       return 904;
     }
@@ -37327,7 +37327,7 @@ unsigned __int64 __fastcall sub_33D38(__int64 krwCtx, unsigned int port, unsigne
   _QWORD v15[2]; // [xsp+0h] [xbp-30h] BYREF
   __int64 vars8; // [xsp+38h] [xbp+8h]
 
-  if ( !krw_ctx_has_flag((struct_krwCtx *)krwCtx, 0x800000) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)krwCtx, KRW_CTX_FLAG_SELF_TASK_PORT_CLEARED) )
   {
     v13 = sub_33B98((struct_krwCtx *)krwCtx, port, a3);
     if ( v13 && (unsigned int)kreadbuf_last_1((struct_krwCtx *)krwCtx, v13 + 56, 16, v15) )
@@ -37546,20 +37546,20 @@ unsigned __int64 __fastcall sub_3412C(struct_krwCtx *a1, unsigned int a2)
     {
       if ( xnuMajorVersion != 6153 )
         return 0;
-      v8 = !krw_ctx_has_flag(a1, 89670145);
+      v8 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
       v7 = 960;
       v9 = 984;
       goto LABEL_13;
     }
     if ( a1->someLargeNumber < 0x1C1B1914600000LL )
     {
-      v8 = !krw_ctx_has_flag(a1, 89670145);
+      v8 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
       v7 = 1048;
       v9 = 1120;
     }
     else
     {
-      if ( krw_ctx_has_flag(a1, 0x100000) )
+      if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
       {
         v7 = 1264;
 LABEL_15:
@@ -37580,17 +37580,17 @@ LABEL_19:
         }
         return 0;
       }
-      if ( krw_ctx_has_flag(a1, 540672) )
+      if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
       {
         v7 = 1256;
         goto LABEL_15;
       }
-      if ( krw_ctx_has_flag(a1, 1) )
+      if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
       {
         v7 = 1248;
         goto LABEL_15;
       }
-      v8 = !krw_ctx_has_flag(a1, 512);
+      v8 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11);
       v7 = 1232;
       v9 = 1296;
     }
@@ -37683,19 +37683,19 @@ __int64 __fastcall sub_343E0(struct_krwCtx *a1)
     {
       if ( xnuMajorVersion != 10002 )
         return result;
-      if ( krw_ctx_has_flag(a1, 0x4000000) )
+      if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A17) )
       {
         v4 = 960;
       }
-      else if ( krw_ctx_has_flag(a1, 17825792) )
+      else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
       {
         v4 = 880;
       }
-      else if ( krw_ctx_has_flag(a1, 540672) )
+      else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
       {
         v4 = 872;
       }
-      else if ( krw_ctx_has_flag(a1, 1) )
+      else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
       {
         v4 = 856;
       }
@@ -37719,19 +37719,19 @@ LABEL_37:
     {
       if ( a1->someLargeNumber < 0x1F530F02800000LL )
         return 0;
-      if ( krw_ctx_has_flag(a1, 0x100000) )
+      if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
       {
         v4 = 928;
       }
-      else if ( krw_ctx_has_flag(a1, 540672) )
+      else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
       {
         v4 = 920;
       }
-      else if ( krw_ctx_has_flag(a1, 1) )
+      else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
       {
         v4 = 912;
       }
-      else if ( krw_ctx_has_flag(a1, 512) )
+      else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11) )
       {
         v4 = 896;
       }
@@ -37747,13 +37747,13 @@ LABEL_37:
     if ( xnuMajorVersion != 8792 )
       return result;
   }
-  if ( krw_ctx_has_flag(a1, 17825792) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
     return 888;
-  if ( krw_ctx_has_flag(a1, 540672) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
     return 880;
-  if ( krw_ctx_has_flag(a1, 1) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
     return 864;
-  if ( krw_ctx_has_flag(a1, 512) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11) )
     return 848;
   return 912;
 }
@@ -38044,7 +38044,7 @@ LABEL_12:
     v8 = *(_QWORD *)(a1 + 344);
     if ( v8 <= 0x1F52FFFFFFFFFFLL )
       return 0;
-    if ( (*(_DWORD *)a1 & 0x5584001) != 0 && (v12 & 0x7FFFFFFFFFLL) == 0 )
+    if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && (v12 & 0x7FFFFFFFFFLL) == 0 )
     {
       v12 = 0;
     }
@@ -38053,7 +38053,7 @@ LABEL_12:
       return 0;
     }
   }
-  if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL && (*(_DWORD *)a1 & 0x5584001) != 0 )
+  if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL && (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
   {
     result = kread64_internal((struct_krwCtx *)a1, v11 + *(unsigned int *)(a1 + 360), &v10);
     if ( !(_DWORD)result )
@@ -38076,7 +38076,7 @@ LABEL_12:
     v9 = *(_QWORD *)(a1 + 344);
     if ( v9 > 0x1F52FFFFFFFFFFLL )
     {
-      if ( (*(_DWORD *)a1 & 0x5584001) != 0 && (v13 & 0x7FFFFFFFFFLL) == 0 )
+      if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && (v13 & 0x7FFFFFFFFFLL) == 0 )
       {
         v13 = 0;
       }
@@ -38085,7 +38085,7 @@ LABEL_12:
         return 0;
       }
 LABEL_23:
-      if ( *(_QWORD *)(a1 + 344) > 0x1F530F027FFFFFuLL || (*(_DWORD *)a1 & 0x5584001) == 0 )
+      if ( *(_QWORD *)(a1 + 344) > 0x1F530F027FFFFFuLL || (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
       {
         v7 = v13;
         *(_QWORD *)(a1 + 936) = v13;
@@ -38184,14 +38184,14 @@ LABEL_20:
   {
     if ( (unsigned int)(v9 - 8019) < 2 )
     {
-      if ( krw_ctx_has_flag(a1, 0x100000) )
+      if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
       {
         v14 = 1052;
         if ( a1->someLargeNumber > 0x1F530F027FFFFFLL )
           v14 = 1004;
         return v14 + v8;
       }
-      has_flag = krw_ctx_has_flag(a1, 89669633);
+      has_flag = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
       someLargeNumber = a1->someLargeNumber;
       v16 = 1000;
       if ( someLargeNumber > 0x1F530F027FFFFFLL )
@@ -38209,7 +38209,7 @@ LABEL_20:
         if ( v9 != 7195 )
           return result;
         v10 = a1->someLargeNumber;
-        v11 = krw_ctx_has_flag(a1, 89669633);
+        v11 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
         v12 = 1012;
         if ( !v11 )
           v12 = 984;
@@ -38222,7 +38222,7 @@ LABEL_20:
           v14 = v12;
         return v14 + v8;
       }
-      v15 = !krw_ctx_has_flag(a1, 89669633);
+      v15 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
       v14 = 960;
       v16 = 952;
     }
@@ -38230,12 +38230,12 @@ LABEL_20:
   }
   if ( v9 == 8792 || v9 == 8796 || v9 == 10002 )
   {
-    if ( krw_ctx_has_flag(a1, 84934656) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK) )
     {
       v14 = 976;
       return v14 + v8;
     }
-    v15 = !krw_ctx_has_flag(a1, 89669633);
+    v15 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
     v14 = 952;
     v16 = 928;
 LABEL_38:
@@ -38333,7 +38333,7 @@ __int64 __fastcall sub_35004(__int64 a1, int a2, __int64 a3, unsigned int *a4)
   if ( (unsigned int)(v9 - 8019) < 2 )
   {
 LABEL_17:
-    if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x4000000) )
+    if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17) )
       v12 = 15676;
     else
       v12 = 2220;
@@ -38822,14 +38822,14 @@ unsigned __int64 __fastcall sub_35A50(struct_krwCtx *a1, int a2, _DWORD *a3)
 
   if ( a2 )
     return 0;
-  if ( krw_ctx_has_flag(a1, 8) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) )
   {
     v3 = 0xFFFFFE0000000000LL;
   }
   else
   {
     v3 = 0xFFFFFFE000000000LL;
-    if ( a1->someLargeNumber >= 0x22581401900000LL && !krw_ctx_has_flag(a1, 0x2000) )
+    if ( a1->someLargeNumber >= 0x22581401900000LL && !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A9) )
       v3 = 0xFFFFFFDC00000000LL;
   }
   *a3 = 6;
@@ -38875,11 +38875,11 @@ void __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
   }
   if ( a3 )
   {
-    if ( (a1->flags & 0x5584001) != 0 && krw_xpac_vaddr_2(a1, a3) == a3 )
+    if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && krw_xpac_vaddr_2(a1, a3) == a3 )
       return;
     goto LABEL_18;
   }
-  if ( v6 < 0x1F530000000000LL || (a1->flags & 0x5584001) == 0 )
+  if ( v6 < 0x1F530000000000LL || (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
   {
 LABEL_18:
     v11 = *(_QWORD *)(v5 + 6384) + *(_DWORD *)(v5 + 360) * (a2 + 1);
@@ -40373,7 +40373,7 @@ __int64 __fastcall sub_37A50(struct_krwCtx *a1, unsigned int a2, int a3, int a4,
   v25 = a5;
   v23 = 0;
   v24 = 0;
-  if ( (a1->flags & 0x5584201) == 0 )
+  if ( (a1->flags & KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return 708616;
   v9 = sub_37C50((int *)a1, (int *)&v22, (int *)&v21, (int *)&v20, (int *)&v19);
   if ( !(_DWORD)v9 )
@@ -40474,8 +40474,8 @@ __int64 __fastcall sub_37C50(int *a1, int *a2, int *a3, int *a4, int *a5)
       {
         if ( v10 != 7195 )
           return result;
-        v11 = (v9 & 0x84000) == 0;
-        if ( (v9 & 0x84000) != 0 )
+        v11 = (v9 & KRW_CTX_FLAG_CPU_A13_A14_MASK) == 0;
+        if ( (v9 & KRW_CTX_FLAG_CPU_A13_A14_MASK) != 0 )
           v12 = 648;
         else
           v12 = 640;
@@ -40574,8 +40574,8 @@ LABEL_93:
       v28 = 444;
     else
       v28 = 556;
-    v29 = (v9 & 0x84000) == 0;
-    if ( (v9 & 0x84000) != 0 )
+    v29 = (v9 & KRW_CTX_FLAG_CPU_A13_A14_MASK) == 0;
+    if ( (v9 & KRW_CTX_FLAG_CPU_A13_A14_MASK) != 0 )
     {
       v18 = v27;
     }
@@ -40602,8 +40602,8 @@ LABEL_111:
   }
   if ( v10 == 8792 || v10 == 8796 )
   {
-    v30 = v9 & 0x518E241;
-    if ( (v9 & 0x518E241u) >= 0x80000 )
+    v30 = v9 & KRW_CTX_FLAG_CPU_A8_TO_A17_MASK;
+    if ( (v9 & KRW_CTX_FLAG_CPU_A8_TO_A17_MASK) >= 0x80000 )
     {
       if ( v30 != 0x80000 )
       {
@@ -40638,8 +40638,8 @@ LABEL_107:
   }
   if ( v10 != 10002 )
     return result;
-  v21 = v9 & 0x518E241;
-  if ( (v9 & 0x518E241u) >= 0x100000 )
+  v21 = v9 & KRW_CTX_FLAG_CPU_A8_TO_A17_MASK;
+  if ( (v9 & KRW_CTX_FLAG_CPU_A8_TO_A17_MASK) >= 0x100000 )
   {
     if ( v21 == 0x100000 || v21 == 0x1000000 )
     {
@@ -40712,7 +40712,7 @@ __int64 __fastcall sub_38034(int *a1, __int64 a2, int a3, int a4, __int16 a5)
   __int64 v19; // [xsp+18h] [xbp-38h] BYREF
 
   v19 = 0;
-  if ( (*a1 & 0x5584201) == 0 )
+  if ( (*a1 & KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return 708616;
   v10 = sub_37C50(a1, (int *)&v18, (int *)&v17, (int *)&v16, (int *)&v15);
   if ( !(_DWORD)v10 )
@@ -40774,7 +40774,7 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
   v30 = a5;
   address = 0;
   v29 = 0;
-  if ( (a1->flags & 0x5584201) == 0 )
+  if ( (a1->flags & KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return 708616;
   v9 = sub_37C50((int *)a1, (int *)&v27, (int *)&v26, (int *)&v25, (int *)&v24);
   if ( !(_DWORD)v9 )
@@ -40919,7 +40919,7 @@ __int64 __fastcall sub_38428(__int64 a1)
       break;
     v9 = record[1];
     v10 = record[2];
-    if ( (*(_DWORD *)a1 & 0x20) == 0 )
+    if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0 )
       v10 = record[2] << 14;
     v11 = (_QWORD *)(a1 + v7);
     v11[833] = record[0];
@@ -41340,7 +41340,7 @@ void __fastcall physwritebuf_direct_mapped(
     v9();
   }
   else if ( something
-         && (krwCtx->someLargeNumber < 0x27120F04B00003LL || (krwCtx->flags & 0x20) == 0)
+         && (krwCtx->someLargeNumber < 0x27120F04B00003LL || (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0)
          && !(unsigned int)physmap_map_cached(krwCtx, paddr, (__int64)v10) )
   {
     memcpy((void *)((krwCtx->qword188 & paddr) + v10[0]), buf, size);
@@ -42015,9 +42015,9 @@ void sub_39B70(_QWORD *a1, struct_krwCtx *a2)
   *a1 = 0;
   a1[1] = 0;
   a1[2] = 0;
-  if ( krw_ctx_has_flag(a2, 32) )
+  if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     goto LABEL_2;
-  if ( krw_ctx_has_flag(a2, 85475329) )
+  if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
   {
     sub_19B98("__PPLTEXT", &v11, a2->gap1921[2]);
     goto LABEL_5;
@@ -42331,7 +42331,7 @@ __int64 __fastcall sub_3A150(__int64 a1, int a2, int a3, int a4)
         return 1;
       if ( a4 )
         goto LABEL_10;
-      if ( krw_ctx_has_flag((struct_krwCtx *)a1, 4) )
+      if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
         return 0;
       result = *(_QWORD *)(a1 + 6368);
       if ( !result )
@@ -42398,7 +42398,7 @@ LABEL_10:
               }
               else
               {
-                if ( krw_ctx_has_flag((struct_krwCtx *)a1, 89669633) )
+                if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
                 {
                   v14 = *(_QWORD *)(a1 + 6544);
                   if ( !v14 )
@@ -42506,7 +42506,7 @@ __int64 __fastcall sub_3A5F0(__int64 a1, task_name_t a2)
     if ( v2 <= 0x225C1E804FFFFFLL )
     {
       if ( v2 < 0x225C1980500000LL
-        || ((*(_DWORD *)a1 & 0x5584001) != 0 ? (v6 = (*(_DWORD *)a1 & 1) == 0) : (v6 = 0), v6) )
+        || ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 ? (v6 = (*(_DWORD *)a1 & 1) == 0) : (v6 = 0), v6) )
       {
         v4 = 4;
         v5 = 15;
@@ -42547,7 +42547,7 @@ unsigned __int64 __fastcall sub_3A72C(__int64 a1)
       return port;
     v4 = *(_QWORD *)(a1 + 344);
     if ( v4 >= 0x1F530000000000LL
-      && ((*(_DWORD *)a1 & 0x5584001) != 0
+      && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0
        || v4 > 0x22580A06BFFFFFLL
        || v4 >= 0x1F543C40800000LL && *(int *)(a1 + 320) <= 8791) )
     {
@@ -42612,7 +42612,7 @@ __int64 __fastcall sub_3A8DC(__int64 a1, unsigned int a2)
   unsigned __int64 v13; // [xsp+20h] [xbp-20h] BYREF
   __int64 v14; // [xsp+28h] [xbp-18h] BYREF
 
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 32) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     return 1;
   result = sub_349C8((struct_krwCtx *)a1, a2);
   if ( result )
@@ -42696,7 +42696,7 @@ void __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3)
     return;
   if ( !a3 )
   {
-    if ( krw_ctx_has_flag((struct_krwCtx *)a1, 32) )
+    if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     {
       v7 = sub_349C8((struct_krwCtx *)a1, a2);
       if ( !v7 )
@@ -42717,7 +42717,7 @@ void __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3)
       }
       goto LABEL_3;
     }
-    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 85475329) )
+    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
       goto LABEL_3;
     v22 = 0;
     v10 = *(_DWORD *)(a1 + 320);
@@ -42752,20 +42752,20 @@ LABEL_38:
           }
           goto LABEL_3;
         }
-        v11 = !krw_ctx_has_flag((struct_krwCtx *)a1, 0x80000);
+        v11 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14);
         v12 = 224;
         v13 = 216;
       }
       else
       {
-        v11 = !krw_ctx_has_flag((struct_krwCtx *)a1, 18350080);
+        v11 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14_A15_A16_MASK);
         v12 = 160;
         v13 = 152;
       }
     }
     else
     {
-      v11 = !krw_ctx_has_flag((struct_krwCtx *)a1, 18350080);
+      v11 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14_A15_A16_MASK);
       v12 = 168;
       v13 = 160;
     }
@@ -42948,11 +42948,11 @@ void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5)
   if ( !v10 )
     return;
   v11 = v10;
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 32) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
-    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 85475329) )
+    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
-      if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 512) )
+      if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11) )
         return;
       v26 = *(_DWORD *)(a1 + 320);
       if ( v26 <= 8791 )
@@ -43048,13 +43048,13 @@ LABEL_34:
         }
         return;
       }
-      v23 = !krw_ctx_has_flag((struct_krwCtx *)a1, 0x80000);
+      v23 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14);
       v24 = 263;
       v25 = 255;
     }
     else
     {
-      v23 = !krw_ctx_has_flag((struct_krwCtx *)a1, 18350080);
+      v23 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14_A15_A16_MASK);
       v24 = 191;
       v25 = 183;
     }
@@ -43246,7 +43246,7 @@ unsigned __int64 __fastcall sub_3B524(struct_krwCtx *a1, unsigned int a2, bool *
   v9 = sub_349C8(a1, a2);
   if ( v9 )
   {
-    if ( krw_ctx_has_flag(a1, 32) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     {
       if ( kread64_outptr(a1, v9 + 176, (unsigned __int64 *)&v24) )
       {
@@ -43264,9 +43264,9 @@ unsigned __int64 __fastcall sub_3B524(struct_krwCtx *a1, unsigned int a2, bool *
       }
       return 0;
     }
-    if ( !krw_ctx_has_flag(a1, 85475329) )
+    if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
-      if ( !krw_ctx_has_flag(a1, 512) )
+      if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11) )
         return 0;
       v16 = a1->xnuMajorVersion;
       if ( v16 <= 8791 )
@@ -43328,13 +43328,13 @@ LABEL_10:
           v14 = 263;
         goto LABEL_18;
       }
-      v13 = !krw_ctx_has_flag(a1, 0x80000);
+      v13 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14);
       v14 = 263;
       v15 = 255;
     }
     else
     {
-      v13 = !krw_ctx_has_flag(a1, 18350080);
+      v13 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14_A15_A16_MASK);
       v14 = 191;
       v15 = 183;
     }
@@ -43396,7 +43396,7 @@ void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
 
   if ( task_get_special_port(task, 2, &special_port) || special_port == a3 )
     return;
-  if ( (*(_DWORD *)a1 & 0x5584001) != 0 )
+  if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
   {
     if ( *(_QWORD *)(a1 + 344) <= 0x1F52FFFFFFFFFFuLL )
     {
@@ -43669,7 +43669,7 @@ bool __fastcall sub_3BE3C(
   int v33; // [xsp+1Ch] [xbp-54h] BYREF
 
   if ( a1->someLargeNumber < 0x1C1B0002E00000LL
-    || ((a1->flags & 0x5584001) != 0 ? (v11 = mach_task_self_ == a2) : (v11 = 1), v11) )
+    || ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 ? (v11 = mach_task_self_ == a2) : (v11 = 1), v11) )
   {
     v12 = sub_3C25C(a1, a3, a4, a5, a6);
     return v12 == 0;
@@ -43685,16 +43685,16 @@ bool __fastcall sub_3BE3C(
   {
     if ( xnuMajorVersion != 7195 )
       return 0;
-    if ( krw_ctx_has_flag(a1, 0x80000) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14) )
     {
       v15 = a1->someLargeNumber > 0x1C1B19145FFFFFLL;
       v16 = 1304;
     }
     else
     {
-      if ( !krw_ctx_has_flag(a1, 0x4000) )
+      if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13) )
       {
-        if ( !krw_ctx_has_flag(a1, 1) )
+        if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
         {
           v17 = 0;
 LABEL_42:
@@ -43719,19 +43719,19 @@ LABEL_26:
     v18 = 360;
     goto LABEL_26;
   }
-  if ( krw_ctx_has_flag(a1, 0x4000000) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A17) )
   {
     v17 = 448;
   }
-  else if ( krw_ctx_has_flag(a1, 17825792) )
+  else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_MASK) )
   {
     v17 = 368;
   }
-  else if ( krw_ctx_has_flag(a1, 540672) )
+  else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
   {
     v17 = 360;
   }
-  else if ( krw_ctx_has_flag(a1, 1) )
+  else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
   {
     v17 = 352;
   }
@@ -43742,7 +43742,7 @@ LABEL_26:
   if ( a1->xnuMajorVersion < 8792 )
     goto LABEL_42;
   v17 -= 8;
-  if ( krw_ctx_has_flag(a1, 1) )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12) )
   {
     v19 = 4;
     v20 = 2;
@@ -43750,7 +43750,7 @@ LABEL_26:
   }
   else
   {
-    if ( krw_ctx_has_flag(a1, 0x4000000) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A17) )
       v21 = 316;
     else
       v21 = 236;
@@ -43829,11 +43829,11 @@ __int64 __fastcall sub_3C25C(
   }
   else
   {
-    if ( krw_ctx_has_flag(a1, 0x4000000) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A17) )
     {
       v11 = 192;
     }
-    else if ( krw_ctx_has_flag(a1, 89670145) )
+    else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
     {
       v11 = 112;
     }
@@ -43970,11 +43970,11 @@ __int64 __fastcall sub_3C450(__int64 a1, unsigned int a2, int a3, _BYTE *a4)
   {
     if ( v12 == 8019 )
     {
-      if ( krw_ctx_has_flag((struct_krwCtx *)a1, 0x100000) )
+      if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A15) )
       {
         v19 = 1016;
       }
-      else if ( krw_ctx_has_flag((struct_krwCtx *)a1, 89669633) )
+      else if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
       {
         v19 = 1000;
       }
@@ -43987,7 +43987,7 @@ __int64 __fastcall sub_3C450(__int64 a1, unsigned int a2, int a3, _BYTE *a4)
     {
       if ( v12 != 7195 )
         return 163847;
-      has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, 89669633);
+      has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
       if ( has_flag )
         v21 = 976;
       else
@@ -44194,7 +44194,7 @@ LABEL_74:
     return 163856;
 LABEL_85:
   if ( mach_task_self_ == a2 && (!a4 || !*a4) )
-    krw_ctx_set_flag((_DWORD *)a1, 0x800000);
+    krw_ctx_set_flag((_DWORD *)a1, KRW_CTX_FLAG_SELF_TASK_PORT_CLEARED);
   return 0;
 }
 // 3C6D0: variable 'v24' is possibly undefined
@@ -44280,7 +44280,7 @@ LABEL_37:
     if ( !(unsigned int)sub_1BC78(a2) )
       return 163843;
     if ( mach_task_self_ == a2 )
-      krw_ctx_set_flag(a1, 0x8000000);
+      krw_ctx_set_flag(a1, KRW_CTX_FLAG_SELF_TASK_IPC_SPACE_CLEARED);
     return 0;
   }
   if ( !validate_addr_maybe2(a1, vaddr) )
@@ -44582,7 +44582,7 @@ LABEL_33:
           if ( (_DWORD)cpuFamily != CPUFamily_A14 )
             goto LABEL_69;
           if ( (int)number_of_cpus() >= 8 && krwCtx->someLargeNumber >= 0x22580A06C00000LL )
-            krw_ctx_set_flag(krwCtx, 8);
+            krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
           v31 = 0x80000;
         }
         goto LABEL_68;
@@ -44601,7 +44601,7 @@ LABEL_68:
     {
 LABEL_65:
       if ( krwCtx->someLargeNumber > 0x2711FFFFFFFFFFLL )
-        krw_ctx_set_flag(krwCtx, 32);
+        krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
       v31 = 0x1000000;
       goto LABEL_68;
     }
@@ -44636,7 +44636,7 @@ LABEL_118:
     switch ( (_DWORD)cpuFamily )
     {
       case CPUFamily_A17:
-        krw_ctx_set_flag(krwCtx, 32);
+        krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
         v31 = 0x4000000;
         break;
       case CPUFamily_A8:
@@ -44668,7 +44668,7 @@ LABEL_64:
     v26 = 1598941843;
     goto LABEL_64;
   }
-  krw_ctx_set_flag(krwCtx, 0x80000);
+  krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_CPU_A14);
   v40 = krwCtx->someLargeNumber;
   if ( v40 - 0x1C1B1914600000LL <= 0x641056BEFFFFFLL )
   {
@@ -44692,14 +44692,14 @@ LABEL_69:
       return v33 | 0x40000000u;
     }
     if ( (v104.st_dev & 0xDF) == 0x4A && !((comm_page_memory_size() - 1073741825) >> 30) )
-      krw_ctx_set_flag(krwCtx, 0x10000000);
+      krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_LOW_MEMORY_DEVICE);
     v32 = krwCtx->someLargeNumber;
   }
   if ( v32 <= 0x225C23801AF00CLL )
   {
     if ( v32 > 0x225C19804FFFFFLL )
     {
-      if ( (krwCtx->flags & 0x5584001) == 0 || (krwCtx->flags & 1) != 0 )
+      if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12) != 0 )
         goto LABEL_87;
       goto LABEL_86;
     }
@@ -44710,7 +44710,7 @@ LABEL_86:
         return mach_port_with_a2;
       goto LABEL_87;
     }
-    if ( v32 <= 0x1F530F027FFFFFLL || *p_xnuMajorVersion > 8791 || ((krwCtx->flags >> 28) & 1) == 0 )
+    if ( v32 <= 0x1F530F027FFFFFLL || *p_xnuMajorVersion > 8791 || ((krwCtx->flags & KRW_CTX_FLAG_LOW_MEMORY_DEVICE) != 0) == 0 )
       return mach_port_with_a2;
   }
 LABEL_87:
@@ -44752,13 +44752,13 @@ LABEL_96:
       {
         if ( v38 <= 0x225C19804FFFFFLL )
         {
-          if ( v38 <= 0x1F530F027FFFFFLL || (krwCtx->flags & 0x5584001) == 0 && v38 <= 0x1F5418FFFFFFFFLL )
+          if ( v38 <= 0x1F530F027FFFFFLL || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v38 <= 0x1F5418FFFFFFFFLL )
           {
             v39 = sub_1C0C8((__int64)krwCtx, &v96);
             goto LABEL_122;
           }
         }
-        else if ( (krwCtx->flags & 0x5584001) == 0 || (krwCtx->flags & 1) != 0 )
+        else if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12) != 0 )
         {
           goto LABEL_121;
         }
@@ -44766,7 +44766,7 @@ LABEL_96:
         goto LABEL_122;
       }
     }
-    else if ( (krwCtx->flags & 0x20) != 0 )
+    else if ( (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     {
       v39 = sub_B460((__int64)krwCtx, &v96) == 0;
 LABEL_122:
@@ -44782,7 +44782,7 @@ LABEL_122:
          && (krwCtx->gap1915 != -1 && krwCtx->gap190u || krwCtx->gap1913 != -1 && krwCtx->gap1914 != -1)
          || (unsigned int)(LODWORD(krwCtx->gap191[693]) + 1) >= 2) )
       {
-        krw_ctx_set_flag(krwCtx, 0x10000);
+        krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_KRW_METHODS_READY);
       }
       goto LABEL_148;
     }
@@ -44913,7 +44913,7 @@ LABEL_200:
     if ( (v95 & 1) != 0 )
       goto LABEL_211;
 LABEL_210:
-    krw_ctx_set_flag(krwCtx, 256);
+    krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_KERNEL_PORT_READY);
     goto LABEL_211;
   }
   if ( !v97 && v94 <= 0x1F530F027FFFFFLL )
@@ -45018,7 +45018,7 @@ LABEL_259:
   *(_QWORD *)(*(_QWORD *)&krwCtx->gap42[104] + 256LL) = v61;
 LABEL_260:
   if ( *(_BYTE *)(v52 + 156) )
-    krw_ctx_set_flag(krwCtx, 4096);
+    krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_HAS_AUXKC_INFO);
   if ( v41 > 0x2257FFFFFFFFFFLL && *(_QWORD *)(v52 + 160) )
   {
     v67 = (struct_a1 *)calloc(0x128u, 1u);
@@ -45042,7 +45042,7 @@ LABEL_260:
     return 708617;
   }
 LABEL_267:
-  if ( !krw_ctx_has_flag(krwCtx, 4096) )
+  if ( !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_HAS_AUXKC_INFO) )
   {
     if ( !(unsigned int)get_kext_base_addr((__int64)krwCtx, "com.apple.security.sandbox", &v98) )
       return 163864;
@@ -45179,7 +45179,7 @@ LABEL_280:
           v73 = v72;
           if ( v72 + 1 < 2 )
             return mach_port_with_a2;
-          if ( (krwCtx->flags & 0x5584001) != 0 )
+          if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
           {
             if ( krwCtx->someLargeNumber <= 0x1F52FFFFFFFFFFLL )
             {
@@ -45193,7 +45193,7 @@ LABEL_293:
             sub_3B7E0((__int64)krwCtx, mach_task_self_, v73);
             if ( !v75 )
               return 163848;
-            krw_ctx_set_flag(krwCtx, 16);
+            krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_HOST_PORT_READY);
           }
           else
           {
@@ -45227,13 +45227,13 @@ LABEL_291:
             {
               if ( v91 <= 0x225C19804FFFFFLL )
               {
-                if ( v91 <= 0x1F530F027FFFFFLL || (krwCtx->flags & 0x5584001) == 0 && v91 <= 0x1F5418FFFFFFFFLL )
+                if ( v91 <= 0x1F530F027FFFFFLL || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v91 <= 0x1F5418FFFFFFFFLL )
                 {
                   v92 = sub_1CF1C((__int64)krwCtx);
                   goto LABEL_350;
                 }
               }
-              else if ( (krwCtx->flags & 0x5584001) == 0 || (krwCtx->flags & 1) != 0 )
+              else if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12) != 0 )
               {
                 goto LABEL_349;
               }
@@ -45241,7 +45241,7 @@ LABEL_291:
               goto LABEL_350;
             }
           }
-          else if ( (krwCtx->flags & 0x20) != 0 )
+          else if ( (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
           {
             v92 = sub_AC50((__int64)krwCtx) == 0;
 LABEL_350:
@@ -45774,9 +45774,9 @@ LABEL_146:
                 switch ( cmd )
                 {
                   case 0xC000001B:
-                    if ( krw_ctx_has_flag(a1, 85475329) )
+                    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
                       goto LABEL_48;
-                    v8[0] = krw_ctx_has_flag(a1, 512);
+                    v8[0] = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11);
                     if ( !v8[0] )
                       goto LABEL_216;
                     if ( a1->xnuMajorVersion < 6153 )
@@ -45833,7 +45833,7 @@ LABEL_153:
               v8[0] = sub_39CC0(v18, v17, v19, v20, v34);
               goto LABEL_215;
             case 1073741851:
-              if ( krw_ctx_has_flag(a1, 85475329) )
+              if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
               {
                 if ( sub_1308C(a1) )
                 {
@@ -45862,7 +45862,7 @@ LABEL_216:
               }
               else
               {
-                v8[0] = krw_ctx_has_flag(a1, 512);
+                v8[0] = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11);
                 if ( !v8[0] )
                   goto LABEL_216;
                 if ( a1->xnuMajorVersion >= 6153 )
@@ -46006,19 +46006,19 @@ LABEL_84:
           v24 = (*(_DWORD *)v3 & 1) != 0 && a1->someLargeNumber > 0x1F52FFFFFFFFFFLL && a1->xnuMajorVersion < 8792;
           if ( (v23 & 4) != 0 )
           {
-            if ( krw_ctx_has_flag(a1, 85475329) )
+            if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
             {
               if ( sub_1308C(a1) )
                 v24 |= 4u;
             }
-            else if ( krw_ctx_has_flag(a1, 512) && a1->xnuMajorVersion > 6152 )
+            else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11) && a1->xnuMajorVersion > 6152 )
             {
               v24 |= 4u;
             }
           }
           if ( (v23 & 2) != 0 )
           {
-            if ( krw_ctx_has_flag(a1, 85475329) )
+            if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
             {
               if ( sub_1308C(a1) )
                 v24 |= 2u;
@@ -46105,7 +46105,7 @@ __int64 __fastcall sub_3F2E0(__int64 a1)
   if ( (_DWORD)v2 )
     return v2;
   v2 = 163871;
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, 1024) )
+  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_SNAPSHOT_MOUNTED) )
   {
     v10 = 0;
     if ( !(unsigned int)check_rootfs_rw(a1, &v10) )
@@ -46125,7 +46125,7 @@ __int64 __fastcall sub_3F2E0(__int64 a1)
     }
   }
 LABEL_11:
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 4) || (sub_23D30(a1, 0), v5) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) || (sub_23D30(a1, 0), v5) )
   {
     if ( !*(_QWORD *)(a1 + 6400)
       || (unsigned int)sub_39CC0((struct_krwCtx *)a1, mach_task_self_, 2, (const void *)(a1 + 6408), 8) )
@@ -46138,7 +46138,7 @@ LABEL_11:
         if ( !*(_QWORD *)(a1 + 6416) || (unsigned int)sub_3A150(a1, *(_DWORD *)(a1 + 6416), *(_DWORD *)(a1 + 6420), 0) )
         {
           if ( mach_host_self() == *(_DWORD *)(a1 + 6440)
-            || krw_ctx_has_flag((struct_krwCtx *)a1, 16)
+            || krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_HOST_PORT_READY)
             || (sub_3B7E0(a1, mach_task_self_, *(_DWORD *)(a1 + 6440)), v9) )
           {
             sub_3E4D0((_QWORD *)a1);
@@ -46234,7 +46234,7 @@ __int64 __fastcall sub_3F4BC(char *a1)
   }
   if ( *((_QWORD *)a1 + 5) )
     sub_26B00((__int64)a1, 1);
-  if ( *((_QWORD *)a1 + 43) >= 0x27120F04B00003uLL && (*a1 & 0x20) != 0 )
+  if ( *((_QWORD *)a1 + 43) >= 0x27120F04B00003uLL && (*a1 & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     sub_A9CC((__int64)a1);
   if ( *((_QWORD *)a1 + 937) )
   {
@@ -46435,7 +46435,7 @@ __int64 __fastcall sub_3F9A0(struct_krwCtx *a1, bool *a2)
   result = sub_3FB84((__int64)a1, &address, &v6);
   if ( (_DWORD)result )
   {
-    krw_ctx_has_flag(a1, 85475329);
+    krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK);
     if ( (unsigned int)kreadbuf_last_1(a1, address, 1, &v5) && v5 <= 1u )
     {
       *a2 = v5 != 0;
@@ -46467,7 +46467,7 @@ __int64 __fastcall sub_3FA2C(struct_krwCtx *a1, int a2)
   result = sub_3FB84((__int64)a1, (__int64 *)&v11, (__int64 *)&v12);
   if ( (_DWORD)result )
   {
-    if ( krw_ctx_has_flag(a1, 0x5184001) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
       v5 = v12;
       if ( !(unsigned int)kreadbuf_last_1(a1, v12, 1, &v10) )
@@ -46536,13 +46536,13 @@ __int64 __fastcall sub_3FB84(__int64 a1, __int64 *a2, __int64 *a3)
   {
     v7 = *(_QWORD *)(v6 + 328);
     v19 = v7;
-    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, 85475329) && v7 )
+    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && v7 )
     {
       *a2 = v7;
       return 1;
     }
     v8 = *(_QWORD *)(*(_QWORD *)(a1 + 280) + 320LL);
-    if ( krw_ctx_has_flag((struct_krwCtx *)a1, 85475329) && v7 && v8 != 0 )
+    if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && v7 && v8 != 0 )
     {
       *a2 = v7;
       *a3 = v8;
@@ -46553,7 +46553,7 @@ __int64 __fastcall sub_3FB84(__int64 a1, __int64 *a2, __int64 *a3)
   {
     v8 = 0;
   }
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, 32) )
+  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     macho_getsectbyname("__TEXT_EXEC", *(_QWORD *)(a1 + 6648), "__text", &v16);
     result = 0;
@@ -46580,7 +46580,7 @@ __int64 __fastcall sub_3FB84(__int64 a1, __int64 *a2, __int64 *a3)
       }
     }
   }
-  else if ( krw_ctx_has_flag((struct_krwCtx *)a1, 85475329) )
+  else if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
   {
     v11 = *(_DWORD *)(a1 + 320);
     sub_39B70(&v16, (struct_krwCtx *)a1);
