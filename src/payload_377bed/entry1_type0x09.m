@@ -16221,7 +16221,7 @@ unsigned int *__fastcall sub_19ACC(__int64 *a1, __int64 *a2)
 
   v5[0] = a1;
   v5[1] = a2;
-  v5[2] = (_QWORD *)&dword_4;
+  v5[2] = (_QWORD *)4;
   v6 = sub_197A8(v5, 1);
   result = (unsigned int *)v6.addr;
   if ( result )
@@ -16244,7 +16244,7 @@ unsigned __int64 __fastcall sub_19B30(__int64 *a1, __int64 *a2)
 
   v5[0] = a1;
   v5[1] = a2;
-  v5[2] = (_QWORD *)&dword_8;
+  v5[2] = (_QWORD *)8;
   v6 = sub_197A8(v5, 1);
   result = v6.addr;
   if ( result )
@@ -19681,19 +19681,18 @@ char *__fastcall sub_1E728(__int64 *a1)
 //----- (000000000001E800) ----------------------------------------------------
 char *__fastcall sub_1E800(__int64 *a1, __int64 *a2)
 {
-  unsigned int v3; // w0
-  unsigned __int64 v4; // x8
+  unsigned int insn; // w0
+  __int64 imm26; // x8
 
-  v3 = (unsigned int)sub_19ACC(a1, a2);
-  if ( (v3 & 0x7C000000) != 0x14000000 )
+  insn = (unsigned int)sub_19ACC(a1, a2);
+  if ( (insn & 0x7C000000) != 0x14000000 )
     return 0;
-  v4 = *(_QWORD *)&v3 | 0xFFFFFFFFFE000000LL;
-  if ( (v3 & 0x2000000) == 0 )
-    v4 = v3 & 0x1FFFFFF;
-  if ( v4 )
-    return (char *)a2 + 4 * v4;
-  else
+  imm26 = insn & 0x1FFFFFF;
+  if ( (insn & 0x2000000) != 0 )
+    imm26 |= 0xFFFFFFFFFE000000LL;
+  if ( !imm26 )
     return 0;
+  return (char *)a2 + 4 * imm26;
 }
 
 //----- (000000000001E854) ----------------------------------------------------
@@ -22099,14 +22098,16 @@ double __fastcall sub_2183C(__int64 a1, unsigned __int64 a2, __int64 a3)
 unsigned __int64 __fastcall sub_21844(__int64 a1, unsigned __int64 a2)
 {
   int v4; // w0
-  _OWORD v6[2]; // [xsp+0h] [xbp-40h] BYREF
-  volatile __int64 v7; // [xsp+20h] [xbp-20h]
+  struct
+  {
+    _OWORD v6[2];
+    volatile __int64 v7;
+  } out; // [xsp+0h] [xbp-40h] BYREF
 
-  v7 = 0;
-  memset(v6, 0, sizeof(v6));
-  v4 = (int)sub_213D4(a1, a2, (__int64)v6, 1).n128_u64[0];
+  memset(&out, 0, sizeof(out));
+  v4 = (int)sub_213D4(a1, a2, (__int64)&out, 1).n128_u64[0];
   if ( v4 )
-    return *(_QWORD *)(a1 + 392) & a2 | v7 & 0xFFFFFFFFC000LL;
+    return *(_QWORD *)(a1 + 392) & a2 | out.v7 & 0xFFFFFFFFC000LL;
   else
     return 0;
 }
@@ -22116,14 +22117,16 @@ unsigned __int64 __fastcall sub_21844(__int64 a1, unsigned __int64 a2)
 unsigned __int64 __fastcall sub_218A8(__int64 a1, unsigned __int64 a2, __int64 a3)
 {
   int v5; // w0
-  _OWORD v7[2]; // [xsp+0h] [xbp-40h] BYREF
-  volatile __int64 v8; // [xsp+20h] [xbp-20h]
+  struct
+  {
+    _OWORD v7[2];
+    volatile __int64 v8;
+  } out; // [xsp+0h] [xbp-40h] BYREF
 
-  v8 = 0;
-  memset(v7, 0, sizeof(v7));
-  v5 = (int)sub_213D4(a1, a2, (__int64)v7, a3).n128_u64[0];
+  memset(&out, 0, sizeof(out));
+  v5 = (int)sub_213D4(a1, a2, (__int64)&out, a3).n128_u64[0];
   if ( v5 )
-    return *(_QWORD *)(a1 + 392) & a2 | v8 & 0xFFFFFFFFC000LL;
+    return *(_QWORD *)(a1 + 392) & a2 | out.v8 & 0xFFFFFFFFC000LL;
   else
     return 0;
 }
