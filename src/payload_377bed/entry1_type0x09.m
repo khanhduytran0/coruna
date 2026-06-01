@@ -192,7 +192,12 @@ __int64 __fastcall sub_193C0(__int64 a1, __int64 a2, int a3);
 __int64 __fastcall nullsub_1(_QWORD); // weak
 __int64 __fastcall validate_addr(__int64, __int64);
 unsigned __int64 __fastcall validate_addr_maybe2(struct_krwCtx *krwCtx, unsigned __int64 vaddr);
-unsigned __int64 __fastcall sub_197A8(__int64 **);
+typedef struct sub_197A8_result
+{
+  unsigned __int64 addr;
+  unsigned __int64 size;
+} sub_197A8_result;
+sub_197A8_result __fastcall sub_197A8(__int64 **);
 __int64 sub_1984C();
 __int64 __fastcall sub_19854(__int64 a1);
 __int64 __fastcall sub_198FC(__int64 a1, unsigned __int64 a2, unsigned __int64 a3, unsigned __int64 a4, char a5);
@@ -241,8 +246,9 @@ __int64 __fastcall sub_1D1B0(__int64 a1);
 unsigned int *__fastcall sub_1D4A0(__int64 a1);
 __int64 __fastcall sub_1D70C(__int64 a1, _DWORD *a2);
 mach_vm_address_t __fastcall sub_1D970(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, _QWORD *a7);
-__int64 __fastcall kernel_pattern_scan(__int64 a1, char *__s1, int a3);
-__int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, int a5);
+__int64 __fastcall kernel_pattern_scan4(__int64 a1, char *__s1, int a3, __int64 a4);
+#define kernel_pattern_scan(a1, __s1, a3) kernel_pattern_scan4((a1), (__s1), (a3), 0)
+__int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, int a5, __int64 a6);
 __int64 __fastcall sub_1E0C8(__int128 *a1, char *__s, int a3, char a4);
 unsigned __int64 __fastcall sub_1E1B8(__int64 *a1, __int64 a2, int a3);
 char *__fastcall sub_1E2BC(__int64 *a1, _DWORD *a2, _DWORD *a3, unsigned __int64 a4);
@@ -16059,7 +16065,7 @@ unsigned __int64 __fastcall validate_addr_maybe2(struct_krwCtx *krwCtx, unsigned
 }
 
 //----- (00000000000197A8) ----------------------------------------------------
-unsigned __int64 __fastcall sub_197A8(__int64 **a1)
+sub_197A8_result __fastcall sub_197A8(__int64 **a1)
 {
   __int64 *v1; // x8
   __int64 *v2; // x9
@@ -16079,12 +16085,12 @@ unsigned __int64 __fastcall sub_197A8(__int64 **a1)
   {
     v5 = *((unsigned int *)v2 + 2);
     if ( !(_DWORD)v5 )
-      return 0LL;
+      return (sub_197A8_result){0, 0};
     v6 = 0LL;
     for ( i = (_QWORD *)(v3 + 40); (unsigned __int64)v1 - *(i - 1) >= *i; i += 7 )
     {
       if ( v5 == ++v6 )
-        return 0LL;
+        return (sub_197A8_result){0, 0};
     }
     *((_DWORD *)v2 + 50) = v6;
   }
@@ -16093,8 +16099,8 @@ unsigned __int64 __fastcall sub_197A8(__int64 **a1)
   v8 = (unsigned __int64)v1 - v2[30];
   v9 = v2[22];
   if ( v9 > v8 || (unsigned __int64)a1[2] > v9 + v2[23] - v8 )
-    return 0LL;
-  return v8;
+    return (sub_197A8_result){0, 0};
+  return (sub_197A8_result){v8, (unsigned __int64)a1[2]};
 }
 
 //----- (000000000001984C) ----------------------------------------------------
@@ -16210,11 +16216,13 @@ unsigned int *__fastcall sub_19ACC(__int64 *a1, __int64 *a2)
   unsigned int *result; // x0
   unsigned int *v4; // x20
   __int64 *v5[3]; // [xsp+8h] [xbp-28h] BYREF
+  sub_197A8_result v6; // x0,x1
 
   v5[0] = a1;
   v5[1] = a2;
   v5[2] = (_QWORD *)&dword_4;
-  result = (unsigned int *)sub_197A8(v5);
+  v6 = sub_197A8(v5);
+  result = (unsigned int *)v6.addr;
   if ( result )
   {
     v4 = result;
@@ -16231,11 +16239,13 @@ unsigned __int64 __fastcall sub_19B30(__int64 *a1, __int64 *a2)
   unsigned __int64 result; // x0
   unsigned __int64 v4; // x20
   __int64 *v5[3]; // [xsp+8h] [xbp-28h] BYREF
+  sub_197A8_result v6; // x0,x1
 
   v5[0] = a1;
   v5[1] = a2;
   v5[2] = (_QWORD *)&dword_8;
-  result = sub_197A8(v5);
+  v6 = sub_197A8(v5);
+  result = v6.addr;
   if ( result )
   {
     v4 = result;
@@ -19129,7 +19139,7 @@ LABEL_22:
 // 48940: using guessed type __int64 __fastcall __chkstk_darwin(_QWORD, _QWORD);
 
 //----- (000000000001DCA8) ----------------------------------------------------
-__int64 __fastcall kernel_pattern_scan(__int64 a1, char *__s1, int a3)
+__int64 __fastcall kernel_pattern_scan4(__int64 a1, char *__s1, int a3, __int64 a4)
 {
   char *v5; // x0
   char *v6; // x24
@@ -19137,7 +19147,7 @@ __int64 __fastcall kernel_pattern_scan(__int64 a1, char *__s1, int a3)
   __int64 v8; // x23
   char *v9; // x19
   char *__stringp[2]; // [xsp+10h] [xbp-180h] BYREF
-  __int64 v12; // [xsp+20h] [xbp-170h]
+  __int64 scan_range[3]; // [xsp+10h] [xbp-180h] BYREF
   char *__endptr; // [xsp+28h] [xbp-168h] BYREF
   _WORD v14[128]; // [xsp+30h] [xbp-160h] BYREF
 
@@ -19161,9 +19171,10 @@ LABEL_14:
     if ( !__stringp[0] )
     {
       free(v6);
-      *(_OWORD *)__stringp = *(_OWORD *)a1;
-      v12 = *(_QWORD *)(a1 + 16);
-      return sub_1DE40((__int64 *)__stringp, (__int64)v14, v7, v8, a3);
+      scan_range[0] = *(_QWORD *)a1;
+      scan_range[1] = *(_QWORD *)(a1 + 8);
+      scan_range[2] = *(_QWORD *)(a1 + 16);
+      return sub_1DE40(scan_range, (__int64)v14, v7, v8, a3, a4);
     }
   }
   if ( !strcmp(v9, "+") )
@@ -19192,7 +19203,7 @@ LABEL_16:
 }
 
 //----- (000000000001DE40) ----------------------------------------------------
-__int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, int a5)
+__int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, int a5, __int64 a6)
 {
   __int64 v5; // x22
   unsigned int v9; // w9
@@ -19217,8 +19228,8 @@ __int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, in
   int v28; // w10
   __int64 v29; // x8
   __int64 v30; // [xsp+8h] [xbp-188h]
-  __int128 v31; // [xsp+10h] [xbp-180h] BYREF
-  __int64 v32; // [xsp+20h] [xbp-170h]
+  __int64 scan_range[3]; // [xsp+10h] [xbp-180h] BYREF
+  sub_197A8_result v31; // x0,x1
   int8x16_t v33; // [xsp+30h] [xbp-160h]
   int8x16_t v34; // [xsp+40h] [xbp-150h]
   int8x16_t v35; // [xsp+50h] [xbp-140h]
@@ -19309,10 +19320,15 @@ __int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, in
   v16 = *(__int16 *)(v14 - 2);
   v15 = v14 - 2;
   v30 = v33.i8[v16];
+  if ( !v30 )
+    v30 = 1;
   v33.i8[v16] = 0;
-  v31 = *(_OWORD *)a1;
-  v32 = a1[2];
-  v18 = sub_197A8((__int64 **)&v31);
+  scan_range[0] = a1[0];
+  scan_range[1] = a1[1];
+  scan_range[2] = a1[2];
+  v31 = sub_197A8((__int64 **)scan_range);
+  v18 = v31.addr;
+  v17 = v31.size;
   result = 0;
   if ( v18 && v17 )
   {
@@ -19377,8 +19393,7 @@ __int64 __fastcall sub_1E0C8(__int128 *a1, char *__s, int a3, char a4)
   __int16 v13; // w12
   __int64 v15; // x2
   __int64 v16; // x19
-  __int128 v18; // [xsp+0h] [xbp-60h] BYREF
-  __int64 v19; // [xsp+10h] [xbp-50h]
+  __int64 scan_range[3]; // [xsp+0h] [xbp-60h] BYREF
 
   v8 = strlen(__s);
   v9 = malloc(2 * (v8 + 2));
@@ -19403,9 +19418,10 @@ __int64 __fastcall sub_1E0C8(__int128 *a1, char *__s, int a3, char a4)
     v15 = v8 + 2;
   else
     v15 = v8 + 1;
-  v18 = *a1;
-  v19 = *((_QWORD *)a1 + 2);
-  v16 = sub_1DE40((__int64 *)&v18, (__int64)&v9[((unsigned __int8)(a4 & 0x20) >> 5) ^ 1], v15, (a4 & 0x20) != 0, a3);
+  scan_range[0] = *(_QWORD *)a1;
+  scan_range[1] = *((_QWORD *)a1 + 1);
+  scan_range[2] = *((_QWORD *)a1 + 2);
+  v16 = sub_1DE40(scan_range, (__int64)&v9[((unsigned __int8)(a4 & 0x20) >> 5) ^ 1], v15, (a4 & 0x20) != 0, a3, a4);
   free(v10);
   return v16;
 }
@@ -19421,14 +19437,17 @@ unsigned __int64 __fastcall sub_1E1B8(__int64 *a1, __int64 a2, int a3)
   unsigned __int64 v10; // x23
   unsigned __int64 v11; // x27
   char *v12; // x24
-  __int128 v13; // [xsp+0h] [xbp-70h] BYREF
-  __int64 v14; // [xsp+10h] [xbp-60h]
+  __int64 scan_range[3]; // [xsp+0h] [xbp-70h] BYREF
   __int64 __s2; // [xsp+18h] [xbp-58h] BYREF
+  sub_197A8_result v13; // x0,x1
 
-  v13 = *(_OWORD *)a1;
-  v14 = a1[2];
+  scan_range[0] = a1[0];
+  scan_range[1] = a1[1];
+  scan_range[2] = a1[2];
   __s2 = a2;
-  v6 = sub_197A8((__int64 **)&v13);
+  v13 = sub_197A8((__int64 **)scan_range);
+  v6 = v13.addr;
+  v5 = v13.size;
   result = 0;
   if ( v6 )
   {
@@ -19476,12 +19495,15 @@ char *__fastcall sub_1E2BC(__int64 *a1, _DWORD *a2, _DWORD *a3, unsigned __int64
   unsigned __int64 v11; // x24
   _DWORD *v12; // x10
   __int64 v13; // x12
-  __int128 v14; // [xsp+0h] [xbp-50h] BYREF
-  __int64 v15; // [xsp+10h] [xbp-40h]
+  __int64 scan_range[3]; // [xsp+0h] [xbp-50h] BYREF
+  sub_197A8_result v14; // x0,x1
 
-  v14 = *(_OWORD *)a1;
-  v15 = a1[2];
-  v9 = sub_197A8((__int64 **)&v14);
+  scan_range[0] = a1[0];
+  scan_range[1] = a1[1];
+  scan_range[2] = a1[2];
+  v14 = sub_197A8((__int64 **)scan_range);
+  v9 = v14.addr;
+  v8 = v14.size;
   result = 0;
   if ( v9 && v8 )
   {
@@ -19696,7 +19718,7 @@ char *__fastcall sub_1E728(__int64 *a1)
   _QWORD v5[3]; // [xsp+8h] [xbp-48h] BYREF
 
   sub_19D10((__int64)a1, v5);
-  result = (char *)kernel_pattern_scan((__int64)v5, "E0 03 15 AA .. .. .. .. FE 03 13 AA", 0);
+  result = (char *)kernel_pattern_scan4((__int64)v5, "E0 03 15 AA .. .. .. .. FE 03 13 AA", 0, 1);
   if ( result )
   {
     result = sub_1E800(a1, (__int64 *)(result + 4));
@@ -19751,20 +19773,18 @@ unsigned __int64 __fastcall sub_1E85C(__int64 *a1, int *a2)
   __int64 v8; // x23
   unsigned __int64 v9; // x21
   int v10; // w8
-  __int128 v12; // [xsp+0h] [xbp-60h] BYREF
-  __int64 v13; // [xsp+10h] [xbp-50h]
-  __int128 v14; // [xsp+18h] [xbp-48h] BYREF
-  __int64 v15; // [xsp+28h] [xbp-38h]
+  unsigned int v12; // [xsp+0h] [xbp-60h] BYREF
+  unsigned __int64 scan_range[3]; // [xsp+8h] [xbp-58h] BYREF
+  unsigned __int64 text_range[3]; // [xsp+20h] [xbp-40h] BYREF
 
   v4 = a1[35];
   if ( krw_ctx_has_flag((struct_krwCtx *)v4, 32) )
   {
-    sub_19D10(*(_QWORD *)(v4 + 6648), &v14);
-    *((_QWORD *)&v14 + 1) = *((_QWORD *)&v14 + 1) + v15 - 0x20000;
-    v15 = 0x20000;
-    v12 = v14;
-    v13 = 0x20000;
-    v5 = kernel_pattern_scan((__int64)&v12, "2B 09 40 B9 4B 39 0B 8B", 0);
+    sub_19D10(*(_QWORD *)(v4 + 6648), text_range);
+    scan_range[0] = text_range[0];
+    scan_range[1] = text_range[1] + text_range[2] - 0x20000;
+    scan_range[2] = 0x20000;
+    v5 = kernel_pattern_scan((__int64)scan_range, "2B 09 40 B9 4B 39 0B 8B", 0);
     if ( v5 )
     {
       v6 = (unsigned __int64)sub_1EB2C(a1, (__int64 *)(v5 - 40), 1);
@@ -19774,7 +19794,7 @@ unsigned __int64 __fastcall sub_1E85C(__int64 *a1, int *a2)
         v8 = sub_19B94(a1, v6 - 8);
         if ( validate_addr(v4, v8) )
         {
-          if ( kread32_outptr(v4, v8, &v12) && (unsigned int)(v12 - 1) <= 0x1F )
+          if ( kread32_outptr(v4, v8, &v12) && v12 - 1 <= 0x1F )
           {
             v9 = sub_19B94(a1, v7);
             if ( validate_addr(v4, v9) )
@@ -22066,7 +22086,7 @@ LABEL_57:
     v33 = 2047;
     if ( !has_flag )
       v33 = 7;
-    v16 = kreadbuf((struct_krwCtx *)a1, v30 + 8 * (*(_QWORD *)&v33 & (a2 >> 36)), 8u, &v41, a4);
+    v16 = kreadbuf((struct_krwCtx *)a1, v30 + 8 * ((unsigned __int64)(unsigned int)v33 & (a2 >> 36)), 8u, &v41, a4);
     if ( !v16 )
       goto LABEL_58;
     v34 = v41;
@@ -22141,11 +22161,11 @@ unsigned __int64 __fastcall sub_21844(__int64 a1, unsigned __int64 a2)
 {
   int v4; // w0
   _OWORD v6[2]; // [xsp+0h] [xbp-40h] BYREF
-  __int64 v7; // [xsp+20h] [xbp-20h]
+  volatile __int64 v7; // [xsp+20h] [xbp-20h]
 
   v7 = 0;
   memset(v6, 0, sizeof(v6));
-  sub_213D4(a1, a2, (__int64)v6, 1);
+  v4 = (int)sub_213D4(a1, a2, (__int64)v6, 1).n128_u64[0];
   if ( v4 )
     return *(_QWORD *)(a1 + 392) & a2 | v7 & 0xFFFFFFFFC000LL;
   else
@@ -22158,11 +22178,11 @@ unsigned __int64 __fastcall sub_218A8(__int64 a1, unsigned __int64 a2, __int64 a
 {
   int v5; // w0
   _OWORD v7[2]; // [xsp+0h] [xbp-40h] BYREF
-  __int64 v8; // [xsp+20h] [xbp-20h]
+  volatile __int64 v8; // [xsp+20h] [xbp-20h]
 
   v8 = 0;
   memset(v7, 0, sizeof(v7));
-  sub_213D4(a1, a2, (__int64)v7, a3);
+  v5 = (int)sub_213D4(a1, a2, (__int64)v7, a3).n128_u64[0];
   if ( v5 )
     return *(_QWORD *)(a1 + 392) & a2 | v8 & 0xFFFFFFFFC000LL;
   else
@@ -40882,7 +40902,7 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
 // 38348: variable 'v21' is possibly undefined
 
 //----- (0000000000038378) ----------------------------------------------------
-unsigned __int64 __fastcall sub_38378(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 a4)
+unsigned __int64 __fastcall sub_38378_real(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 a4)
 {
   __int64 v8; // x8
   _QWORD *i; // x9
@@ -40905,6 +40925,16 @@ unsigned __int64 __fastcall sub_38378(__int64 a1, __int64 a2, __int64 a3, unsign
   }
   return a4 - v10 + *(i - 1);
 }
+// NOTE: temporary wrapper for debugging.
+unsigned __int64 __fastcall sub_38378(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 a4)
+{
+    uint64_t result = sub_38378_real(a1, a2, a3, a4);
+    if (result < 0xffffffff) {
+        printf("%s returned address too low, spin...\n", __FUNCTION__);
+        sleep(INT_MAX);
+    }
+    return result;
+}
 
 //----- (0000000000038428) ----------------------------------------------------
 __int64 __fastcall sub_38428(__int64 a1)
@@ -40919,8 +40949,7 @@ __int64 __fastcall sub_38428(__int64 a1)
   __int64 v10; // x10
   _QWORD *v11; // x11
   __int64 v12; // [xsp+0h] [xbp-40h] BYREF
-  __int64 v13; // [xsp+8h] [xbp-38h]
-  __int64 v14; // [xsp+10h] [xbp-30h]
+  __int64 record[3]; // [xsp+8h] [xbp-38h] BYREF
 
   v2 = *(_QWORD *)(a1 + 6296);
   if ( v2 )
@@ -40947,17 +40976,17 @@ __int64 __fastcall sub_38428(__int64 a1)
   v8 = 0;
   while ( 1 )
   {
-    v12 = 0;
-    v13 = 0;
-    v14 = 0;
-    if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v2 + v7, 24, &v12) )
+    record[0] = 0;
+    record[1] = 0;
+    record[2] = 0;
+    if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v2 + v7, 24, record) )
       break;
-    v9 = v13;
-    v10 = v14;
-    if ( (*(_DWORD *)a1 & 0x20) != 0 )
-      v10 = v14 << 14;
+    v9 = record[1];
+    v10 = record[2];
+    if ( (*(_DWORD *)a1 & 0x20) == 0 )
+      v10 = record[2] << 14;
     v11 = (_QWORD *)(a1 + v7);
-    v11[833] = v12;
+    v11[833] = record[0];
     v11[834] = v9;
     v11[835] = v10;
     ++v8;
@@ -40996,22 +41025,16 @@ unsigned __int64 __fastcall sub_38544(__int64 a1, __int64 a2, __int64 a3, unsign
 //----- (00000000000385F4) ----------------------------------------------------
 __int64 __fastcall sub_385F4(struct_krwCtx *a1, unsigned __int64 a2)
 {
-  __int64 v4; // x1
-  __int64 v5; // x2
   __int64 result; // x0
   __int64 v7; // x21
-  __int64 v8; // [xsp+0h] [xbp-30h] BYREF
-  uint64_t v9; // [xsp+8h] [xbp-28h] BYREF
+  unsigned __int64 translation_base; // [xsp+0h] [xbp-30h] BYREF
+  unsigned __int64 translation_delta; // [xsp+8h] [xbp-28h] BYREF
 
-  v8 = 0;
-  v9 = 0;
-  v4 = a1->gap191[679];
-  if ( v4 )
+  translation_base = a1->gap191[679];
+  translation_delta = a1->gap191[680];
+  if ( translation_base )
   {
-    v5 = a1->gap191[680];
-    v8 = v5;
-    v9 = v4;
-    return sub_38544((__int64)a1, v4, v5, a2);
+    return sub_38544((__int64)a1, translation_base, translation_delta, a2);
   }
   result = sub_32D24((__int64)a1);
   if ( result )
@@ -41020,13 +41043,14 @@ __int64 __fastcall sub_385F4(struct_krwCtx *a1, unsigned __int64 a2)
     if ( result )
     {
       v7 = result;
-      if ( !kread64_outptr(a1, result, &v9) || !kread64_outptr(a1, v7 + a1->int168, (unsigned __int64 *)&v8) )
+      if ( !kread64_outptr(a1, result, &translation_base)
+        || !kread64_outptr(a1, v7 + a1->int168, &translation_delta) )
+      {
         return 0;
-      v5 = v8;
-      v4 = v9;
-      a1->gap191[679] = v9;
-      a1->gap191[680] = v5;
-      return sub_38544((__int64)a1, v4, v5, a2);
+      }
+      a1->gap191[679] = translation_base;
+      a1->gap191[680] = translation_delta;
+      return sub_38544((__int64)a1, translation_base, translation_delta, a2);
     }
   }
   return result;
@@ -41035,22 +41059,16 @@ __int64 __fastcall sub_385F4(struct_krwCtx *a1, unsigned __int64 a2)
 //----- (00000000000386AC) ----------------------------------------------------
 __int64 __fastcall sub_386AC(struct_krwCtx *a1, unsigned __int64 a2)
 {
-  __int64 v4; // x1
-  __int64 v5; // x2
   __int64 result; // x0
   __int64 v7; // x21
-  __int64 v8; // [xsp+0h] [xbp-30h] BYREF
-  uint64_t v9; // [xsp+8h] [xbp-28h] BYREF
+  unsigned __int64 translation_base; // [xsp+0h] [xbp-30h] BYREF
+  unsigned __int64 translation_delta; // [xsp+8h] [xbp-28h] BYREF
 
-  v8 = 0;
-  v9 = 0;
-  v4 = a1->gap191[679];
-  if ( v4 )
+  translation_base = a1->gap191[679];
+  translation_delta = a1->gap191[680];
+  if ( translation_base )
   {
-    v5 = a1->gap191[680];
-    v8 = v5;
-    v9 = v4;
-    return sub_38378((__int64)a1, v4, v5, a2);
+    return sub_38378((__int64)a1, translation_base, translation_delta, a2);
   }
   result = sub_32D24((__int64)a1);
   if ( result )
@@ -41059,13 +41077,14 @@ __int64 __fastcall sub_386AC(struct_krwCtx *a1, unsigned __int64 a2)
     if ( result )
     {
       v7 = result;
-      if ( !kread64_outptr(a1, result, &v9) || !kread64_outptr(a1, v7 + a1->int168, (unsigned __int64 *)&v8) )
+      if ( !kread64_outptr(a1, result, &translation_base)
+        || !kread64_outptr(a1, v7 + a1->int168, &translation_delta) )
+      {
         return 0;
-      v5 = v8;
-      v4 = v9;
-      a1->gap191[679] = v9;
-      a1->gap191[680] = v5;
-      return sub_38378((__int64)a1, v4, v5, a2);
+      }
+      a1->gap191[679] = translation_base;
+      a1->gap191[680] = translation_delta;
+      return sub_38378((__int64)a1, translation_base, translation_delta, a2);
     }
   }
   return result;
@@ -47003,10 +47022,9 @@ unsigned __int64 __fastcall sub_403E0(__int64 a1, const char *a2)
   char v16; // w26
   __int64 v17; // x27
   __int64 v18; // x0
+  sub_197A8_result v19; // x0,x1
   _QWORD v20[3]; // [xsp-10h] [xbp-F0h]
-  __int64 *v21; // [xsp+8h] [xbp-D8h] BYREF
-  unsigned __int64 v22; // [xsp+10h] [xbp-D0h]
-  __int64 v23; // [xsp+18h] [xbp-C8h]
+  __int64 *scan_range[3]; // [xsp+8h] [xbp-D8h] BYREF
   _QWORD v24[3]; // [xsp+20h] [xbp-C0h] BYREF
   _BYTE v25[80]; // [xsp+38h] [xbp-A8h] BYREF
 
@@ -47053,10 +47071,11 @@ LABEL_9:
       v9 = v6 - 1;
       do
       {
-        v21 = *(__int64 **)(a1 + 6648);
-        v22 = v8;
-        v23 = v5;
-        v10 = sub_197A8(&v21);
+        scan_range[0] = *(__int64 **)(a1 + 6648);
+        scan_range[1] = (__int64 *)v8;
+        scan_range[2] = (__int64 *)v5;
+        v19 = sub_197A8(scan_range);
+        v10 = v19.addr;
         if ( !v10 )
           break;
         v11 = v10;
@@ -47064,10 +47083,11 @@ LABEL_9:
         v12 = *(_QWORD *)(v11 + 16);
         if ( v12 )
         {
-          v21 = *(__int64 **)(a1 + 6648);
-          v22 = v12;
-          v23 = 80;
-          v13 = sub_197A8(&v21);
+          scan_range[0] = *(__int64 **)(a1 + 6648);
+          scan_range[1] = (__int64 *)v12;
+          scan_range[2] = (__int64 *)80;
+          v19 = sub_197A8(scan_range);
+          v13 = v19.addr;
           if ( v13 )
           {
             v14 = (const char *)v13;
