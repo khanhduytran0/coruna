@@ -23778,18 +23778,20 @@ bool __fastcall dmaFail_map_dbgwrap(struct_krwCtx *a1, __int64 a2, _OWORD *a3)
 }
 
 //----- (0000000000023700) ----------------------------------------------------
+// DONE: this matches the orig asm
 __int64 __fastcall dmaFail_phystokv_cached(__int64 a1, __int64 a2)
 {
-  struct
-  {
-    _OWORD unused[2];
-    volatile __int64 physmapKva;
-  } out; // [xsp+8h] [xbp-38h] BYREF
-
-  memset(&out, 0, sizeof(out));
-  if ( sub_2183C(a1, a2 & ~*(_QWORD *)(a1 + 392), &out) && out.physmapKva )
-    return (*(_QWORD *)(a1 + 392) & a2) + (out.physmapKva & 0xFFFFFFFFC000LL);
-  return 0;
+    struct {
+        uint64_t unused[4];
+        volatile __int64 physmapKva;
+    } out;
+    
+    if ( sub_2183C(a1, a2 & ~*(_QWORD *)(a1 + 392), &out)) {
+        uint64_t physmapKva = out.physmapKva;
+        if (!physmapKva) return 0;
+        return (physmapKva & 0xFFFFFFFFC000LL) + (*(_QWORD *)(a1 + 392) & a2);
+    }
+    return 0;
 }
 
 //----- (0000000000023760) ----------------------------------------------------
