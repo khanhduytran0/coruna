@@ -45265,6 +45265,7 @@ LABEL_280:
             }
 LABEL_293:
             sub_3B7E0((__int64)krwCtx, mach_task_self_, v73);
+            v75 = !task_get_special_port(mach_task_self_, 2, (mach_port_t *)&v96) && v96 == v73;
             if ( !v75 )
               return 163848;
             krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_HOST_PORT_READY);
