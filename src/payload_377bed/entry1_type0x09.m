@@ -10,6 +10,10 @@
 #define RECOMP_TRACE_DMAFAIL 0
 #endif
 
+#ifndef RECOMP_ENABLE_STOCK_CLOSE_RESTORE
+#define RECOMP_ENABLE_STOCK_CLOSE_RESTORE 0
+#endif
+
 #if RECOMP_TRACE_DMAFAIL
 #define TRACE_DMAFAIL(...) printf(__VA_ARGS__)
 #else
@@ -36337,103 +36341,47 @@ unsigned __int64 __fastcall sub_328A4(struct_krwCtx *a1, unsigned __int64 ipc_po
 //----- (00000000000329B8) ----------------------------------------------------
 __int64 __fastcall sub_329B8(__int64 a1, __int64 a2)
 {
-  __int64 result; // x0
-  int v4; // w9
-  bool v5; // zf
-  int v6; // w8
-  __int64 v7; // x8
-  bool v9; // cc
-
-  result = 0LL;
-  v4 = *(_DWORD *)(a1 + 320);
-  if ( v4 <= 8019 )
-  {
-    switch ( v4 )
-    {
-      case 6153:
-        v9 = *(_QWORD *)(a1 + 344) > 0x18090A095FFFFFuLL;
-        v7 = 152LL;
-        if ( v9 )
-          v7 = 144LL;
-        break;
-      case 7195:
-        v7 = 144LL;
-        break;
-      case 8019:
-        v7 = 128LL;
-        break;
-      default:
-        return result;
+    switch ( *(int *)(a1 + 320) ) {
+        case 6153:
+            if ( *(_QWORD *)(a1 + 344) <= 0x18090A095FFFFFuLL )
+                return a2 + 152;
+            else
+                return a2 + 144;
+        case 7195:
+            return a2 + 144;
+        case 8019:
+            return a2 + 128;
+        case 8020:
+        case 8792:
+        case 8796:
+        case 10002:
+            return a2 + 112;
+        default:
+            return 0;
     }
-    return v7 + a2;
-  }
-  if ( v4 > 8795 )
-  {
-    v5 = v4 == 8796;
-    v6 = 10002;
-  }
-  else
-  {
-    v5 = v4 == 8020;
-    v6 = 8792;
-  }
-  if ( v5 || v4 == v6 )
-  {
-    v7 = 112LL;
-    return v7 + a2;
-  }
-  return result;
 }
 
 //----- (0000000000032A64) ----------------------------------------------------
 __int64 __fastcall sub_32A64(__int64 a1, __int64 a2)
 {
-  __int64 result; // x0
-  int v4; // w9
-  bool v5; // zf
-  int v6; // w8
-  __int64 v7; // x8
-  bool v9; // cc
-
-  result = 0LL;
-  v4 = *(_DWORD *)(a1 + 320);
-  if ( v4 <= 8019 )
-  {
-    switch ( v4 )
-    {
-      case 6153:
-        v9 = *(_QWORD *)(a1 + 344) > 0x18090A095FFFFFuLL;
-        v7 = 168LL;
-        if ( v9 )
-          v7 = 160LL;
-        break;
-      case 7195:
-        v7 = 160LL;
-        break;
-      case 8019:
-        v7 = 144LL;
-        break;
-      default:
-        return result;
+    switch ( *(int *)(a1 + 0x140) ) {
+        case 6153:
+            if ( *(_QWORD *)(a1 + 344) <= 0x18090A095FFFFFuLL )
+                return a2 + 168;
+            else
+                return a2 + 160;
+        case 7195:
+                return a2 + 160;
+        case 8019:
+            return a2 + 144;
+        case 8020:
+        case 8792:
+        case 8796:
+        case 10002:
+            return a2 + 128;
+        default:
+            return 0;
     }
-    return v7 + a2;
-  }
-  if ( v4 > 8795 )
-  {
-    v5 = v4 == 8796;
-    v6 = 10002;
-  }
-  else
-  {
-    v5 = v4 == 8020;
-    v6 = 8792;
-  }
-  if ( v5 || v4 == v6 )
-  {
-    v7 = 128LL;
-    return v7 + a2;
-  }
-  return result;
 }
 
 //----- (0000000000032B10) ----------------------------------------------------
@@ -40033,6 +39981,98 @@ LABEL_26:
 }
 // 36F80: variable 'v17' is possibly undefined
 
+static __int64 cleanup_restore_record_metadata_only(__int64 a1, __int64 a2, __int64 size)
+{
+  int lock_result;
+  _QWORD *node;
+  _QWORD *prev;
+  _QWORD *link;
+  __int64 saved_a2_qword;
+  __int64 saved_task_qword;
+  __int64 task_port;
+  __int64 task_port_object;
+  __int64 task_port_restore_addr;
+  unsigned __int64 version;
+  __int64 a2_restore_offset;
+  mach_port_name_t receive_right;
+  __int64 result;
+
+  lock_result = pthread_mutex_lock((pthread_mutex_t *)(a1 + 816));
+  if ( lock_result )
+    return (lock_result < 0 ? -lock_result : lock_result) | 0x40000000u;
+
+  node = *(_QWORD **)(a1 + 880);
+  prev = 0;
+  link = (_QWORD *)(a1 + 880);
+  while ( node )
+  {
+    if ( node[1] == a2 && *((_DWORD *)node + 6) == (_DWORD)size )
+      break;
+    prev = node;
+    node = (_QWORD *)*node;
+  }
+
+  if ( node )
+  {
+    if ( prev )
+      link = prev;
+    *link = *node;
+  }
+
+  lock_result = pthread_mutex_unlock((pthread_mutex_t *)(a1 + 816));
+  if ( lock_result )
+    return (lock_result < 0 ? -lock_result : lock_result) | 0x40000000u;
+
+  if ( !node )
+    return 0;
+
+  saved_a2_qword = node[4];
+  saved_task_qword = node[2];
+  receive_right = *((_DWORD *)node + 7);
+  free(node);
+
+  result = 163856;
+  task_port = task_self_get_ipc_port((struct_krwCtx *)a1, receive_right);
+  if ( !task_port )
+  {
+    result = 163854;
+    goto out_release_right;
+  }
+
+  task_port_object = sub_32820((struct_krwCtx *)a1, task_port);
+  if ( !task_port_object )
+  {
+    result = 163878;
+    goto out_release_right;
+  }
+
+  task_port_restore_addr = task_port_object + 3LL * *(int *)(a1 + 360);
+  if ( !task_port_restore_addr )
+  {
+    result = 163878;
+    goto out_release_right;
+  }
+
+  version = *(_QWORD *)(a1 + 344);
+  if ( version <= 0x22580A06BFFFFFLL )
+  {
+    if ( version < 0x1F543C40800000LL || *(int *)(a1 + 320) >= 8792 )
+      a2_restore_offset = *(unsigned int *)(a1 + 360);
+    else
+      a2_restore_offset = 0;
+    if ( !kwrite64(a1, a2 + a2_restore_offset, saved_a2_qword) )
+      goto out_release_right;
+  }
+
+  if ( kwrite64(a1, task_port_restore_addr, saved_task_qword) )
+    result = 0;
+
+out_release_right:
+  if ( receive_right + 1 >= 2 )
+    mach_port_mod_refs(mach_task_self_, receive_right, MACH_PORT_RIGHT_RECEIVE, -1);
+  return result;
+}
+
 //----- (0000000000037210) ----------------------------------------------------
 unsigned __int64 __fastcall sub_37210(__int64 a1, unsigned int *a2)
 {
@@ -41144,7 +41184,11 @@ __int64 __fastcall sub_38764(__int64 a1)
         v9 = DWORD2(v10[v7]);
         if ( (_DWORD)v9 )
         {
+#if RECOMP_ENABLE_STOCK_CLOSE_RESTORE
           result = sub_36E4C(a1, v8, v9);
+#else
+          result = cleanup_restore_record_metadata_only(a1, v8, v9);
+#endif
           if ( (_DWORD)result )
             break;
         }
@@ -49389,7 +49433,7 @@ unsigned __int64 __fastcall maybe_ipc_port_get_kobject(struct_krwCtx *a1, unsign
 __int64 __fastcall kreadptr(struct_krwCtx *krwCtx, __int64 addr) { return sub_32D80(krwCtx, addr); }
 __int64 __fastcall task_self_get_ipc_port_ptr(__int64 a1, unsigned int a2)
 {
-  return task_self_get_ipc_port((struct_krwCtx *)a1, a2);
+  return task_get_ipc_port_ptr((struct_krwCtx *)a1, mach_task_self_, a2);
 }
 
 __int64 __fastcall check_sandboxed(int a1) { return sub_240CC(a1); }
