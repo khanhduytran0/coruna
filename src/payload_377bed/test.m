@@ -28,9 +28,9 @@ typedef struct struct_krwCtx // sizeof=0x1D50
     uint8_t gap144[20];
     uint64_t someLargeNumber;
     uint8_t gap160[8];
-    int int168;
+    int stride168;
     int gap16C[7];
-    uint64_t qword188;
+    uint64_t pageMask;
     uint8_t gap190[136];
     uint64_t gap190u;
     uint8_t gap190_[56];
@@ -56,7 +56,7 @@ typedef struct struct_krwCtx // sizeof=0x1D50
     uint64_t gap19211;
     uint64_t slideMaybe;
     uint64_t gap1921[108];
-    uint64_t qword1D48;
+    uint64_t IOKitConnInfo;
 } krw_ctx_t;
 
 typedef struct module_vtable module_vtable_t;

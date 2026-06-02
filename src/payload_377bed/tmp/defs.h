@@ -25,9 +25,9 @@
      _BYTE gap144[20];
      _QWORD someLargeNumber;
      _BYTE gap160[8];
-     int int168;
+     int stride168;
      int gap16C[7];
-     _QWORD qword188;
+     _QWORD pageMask;
      _BYTE gap190[200];
      int isRW;
      struct mach_timebase_info timebase;
@@ -36,10 +36,10 @@
      uint32_t someInt1;
      uint32_t someInt2;
      uint64_t gap191[851];
-     _QWORD qword1D48;
+     _QWORD IOKitConnInfo;
  } struct_krwCtx;
 
- typedef struct __attribute__((packed)) __attribute__((aligned(4))) struct_qword1D48 // sizeof=0x74
+ typedef struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo // sizeof=0x74
  {
      _BYTE gap0[80];
      _QWORD qword50;
@@ -47,7 +47,7 @@
      _QWORD qword60;
      _QWORD qword68;
      _DWORD dword70;
- } struct_qword1D48;
+ } struct_IOKitConnInfo;
 
  typedef struct __attribute__((packed)) __attribute__((aligned(8))) struct_xnuMajorVersion // sizeof=0x28
  {                                       // XREF: driver_init2_1/r

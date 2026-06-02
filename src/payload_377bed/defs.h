@@ -62,11 +62,11 @@ struct struct_krwCtx
   uint8_t gap144[20];
   uint64_t xnuVersionPacked;
   uint8_t gap160[8];
-  int int168;
+  int stride168;
   int gap16C[5];
   int pageSizeOrSomething;
   int gap16C2;
-  uint64_t qword188;
+  uint64_t pageMask;
   uint8_t gap190[136];
   uint64_t gap190u;
   uint8_t gap190_[56];
@@ -92,21 +92,21 @@ struct struct_krwCtx
   uint64_t gap19211;
   uint64_t slideMaybe;
   uint64_t gap1921[108];
-  uint64_t qword1D48;
+  uint64_t IOKitConnInfo;
 };
 typedef struct struct_krwCtx struct_krwCtx;
 
 /* 165 */
-struct __attribute__((packed)) __attribute__((aligned(4))) struct_qword1D48
+struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo
 {
   _BYTE gap0[80];
   _QWORD qword50;
   _QWORD qword58;
   _QWORD qword60;
   _QWORD qword68;
-  _DWORD dword70;
+  _DWORD ioPort;
 };
-typedef struct __attribute__((packed)) __attribute__((aligned(4))) struct_qword1D48 struct_qword1D48;
+typedef struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo struct_IOKitConnInfo;
 
 /* 166 */
 struct __attribute__((packed)) __attribute__((aligned(8))) struct_xnuMajorVersion
