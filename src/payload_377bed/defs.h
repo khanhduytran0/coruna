@@ -183,6 +183,8 @@ enum krw_ctx_flags
   // These two bits are queried by dmaFail, but no ctx setter has been found in this dylib.
   // The same numeric values also appear as 2 MiB / 32 MiB translation block sizes.
   KRW_CTX_FLAG_CPU_A14_DMA_ALT_UNSET = 0x00200000,
+  // Included in the original binary's broader A12+ guard mask, but no setter has been found yet.
+  KRW_CTX_FLAG_CPU_A12_TO_A17_UNKNOWN = 0x00400000,
   KRW_CTX_FLAG_SELF_TASK_PORT_CLEARED = 0x00800000,
   KRW_CTX_FLAG_CPU_A16 = 0x01000000,
   KRW_CTX_FLAG_CPU_A15_DMA_ALT_UNSET = 0x02000000,
@@ -214,8 +216,12 @@ enum krw_ctx_flags
   KRW_CTX_FLAG_CPU_A8_TO_A17_MASK =
       KRW_CTX_FLAG_CPU_A8 | KRW_CTX_FLAG_CPU_A9 | KRW_CTX_FLAG_CPU_A10 | KRW_CTX_FLAG_CPU_A11 |
       KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK,
+  /*
+   * Historical decompiler names. The original binary uses CPU-only masks here
+   * (0x5584001 and 0x5584201); SELF_TASK_PORT_CLEARED is handled separately.
+   */
   KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK =
-      KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK | KRW_CTX_FLAG_SELF_TASK_PORT_CLEARED,
+      KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK | KRW_CTX_FLAG_CPU_A12_TO_A17_UNKNOWN,
   KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK =
-      KRW_CTX_FLAG_CPU_A11_A12_A13_A14_A15_A16_A17_MASK | KRW_CTX_FLAG_SELF_TASK_PORT_CLEARED,
+      KRW_CTX_FLAG_CPU_A11_A12_A13_A14_A15_A16_A17_MASK | KRW_CTX_FLAG_CPU_A12_TO_A17_UNKNOWN,
 };

@@ -5,6 +5,7 @@
 */
 
 #include <defs.h>
+@import Foundation;
 
 #ifndef RECOMP_TRACE_DMAFAIL
 #define RECOMP_TRACE_DMAFAIL 0
@@ -12,6 +13,10 @@
 
 #ifndef RECOMP_TRACE_PHYSMAP
 #define RECOMP_TRACE_PHYSMAP 0
+#endif
+
+#ifndef RECOMP_TRACE_PORTS
+#define RECOMP_TRACE_PORTS 0
 #endif
 
 #ifndef RECOMP_PHYSMAP_VALIDATE_CACHE
@@ -23,15 +28,21 @@
 #endif
 
 #if RECOMP_TRACE_DMAFAIL
-#define TRACE_DMAFAIL(...) printf(__VA_ARGS__)
+#define TRACE_DMAFAIL(...) NSLog(@__VA_ARGS__)
 #else
 #define TRACE_DMAFAIL(...) do { } while (0)
 #endif
 
 #if RECOMP_TRACE_PHYSMAP
-#define TRACE_PHYSMAP(...) printf(__VA_ARGS__)
+#define TRACE_PHYSMAP(...) NSLog(@__VA_ARGS__)
 #else
 #define TRACE_PHYSMAP(...) do { } while (0)
+#endif
+
+#if RECOMP_TRACE_PORTS
+#define TRACE_PORTS(...) NSLog(@__VA_ARGS__)
+#else
+#define TRACE_PORTS(...) do { } while (0)
 #endif
 
 
@@ -463,7 +474,7 @@ __int64 __fastcall sub_2AD98(semaphore_t a1);
 __int64 __fastcall sub_2ADB4(__int64 a1);
 __int64 __fastcall sub_2B03C(__int64 a1);
 __int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __int64 a3);
-void __fastcall physwrite64_maybe(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 value_1);
+__int64 __fastcall physwrite64_maybe(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 value_1);
 __int64 __fastcall dmaFail_physwritebuf_ppl(__int64 a1, __int64 paddr, _QWORD *data, unsigned int size);
 __int64 __fastcall sub_2B5BC(__int64 a1, __int64 a2);
 __int64 __fastcall sub_2B788(const char **a1);
@@ -603,7 +614,7 @@ bool __fastcall voucher_create_mach_voucher(__int64 a1, __int64 a2, ipc_voucher_
 __int64 __fastcall create_mach_port_with_a2(__int64 krwCtx, unsigned int a2);
 __int64 __fastcall create_mach_port(int a1);
 __int64 __fastcall sub_363E4(__int64 a1, unsigned int a2);
-__int64 __fastcall sub_36480(struct_krwCtx *a1, unsigned __int64 a2, mach_port_name_t *a3);
+uint32_t __fastcall sub_36480(struct_krwCtx *a1, unsigned __int64 a2, mach_port_name_t *a3);
 _QWORD *__fastcall sub_36C10(struct_krwCtx *a1, unsigned int a2);
 __int64 __fastcall sub_36E4C(__int64 a1, __int64 a2, __int64 size);
 unsigned __int64 __fastcall sub_37210(__int64 a1, unsigned int *a2);
@@ -620,10 +631,10 @@ __int64 __fastcall sub_385F4(struct_krwCtx *a1, unsigned __int64 a2);
 __int64 __fastcall sub_386AC(struct_krwCtx *a1, unsigned __int64 a2);
 __int64 __fastcall sub_38764(__int64 a1);
 uint32_t __fastcall physmap_map_cached(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 a3);
-double __fastcall physmap_unmap_cached(__int64 a1, __int64 a2);
+__int64 __fastcall physmap_unmap_cached(__int64 a1, __int64 a2);
 __int64 __fastcall sub_38C8C(__int64 a1, __int64 a2, __int64 a3);
-void __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned int a4, int a5);
-void __fastcall physwritebuf_direct_mapped(struct_krwCtx *krwCtx, unsigned __int64 paddr, const void *buf, unsigned int size, int something);
+__int64 __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned int a4, int a5);
+__int64 __fastcall physwritebuf_direct_mapped(struct_krwCtx *krwCtx, unsigned __int64 paddr, const void *buf, unsigned int size, int something);
 __int64 __fastcall sub_38F38(struct_krwCtx *a1, __int64 a2, __int64 a3);
 __int64 __fastcall sub_38F6C(__int64 a1, __int64 a2, __int16 a3);
 __int64 __fastcall sub_38FAC(unsigned int);
@@ -639,7 +650,7 @@ __int64 __fastcall create_pthread_something(__int64 a1, pthread_t *a2, __int64 a
 void __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int a3);
 bool __fastcall pthread_create_and_join(__int64 a1, __int64 a2, void *a3);
 __int64 __fastcall sub_3A150(__int64 a1, int a2, int a3, int a4);
-bool __fastcall sub_3A57C(__int64 a1, unsigned __int64 a2, __int16 a3, int *a4);
+bool __fastcall sub_3A57C(__int64 a1, unsigned __int64 a2, int a3, int *a4);
 __int64 __fastcall sub_3A5F0(__int64 a1, task_name_t a2);
 unsigned __int64 __fastcall sub_3A72C(__int64 a1);
 unsigned __int64 __fastcall sub_3A878(__int64 a1);
@@ -28576,7 +28587,24 @@ __int64 __fastcall sub_28F90(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3,
   v5 = 708609;
   qword1D48 = a1->qword1D48;
   if ( !qword1D48 )
+  {
+    TRACE_PORTS("sub_28F90 no state ctx=%llx addr=%llx size=%u\n",
+                (unsigned long long)a1,
+                (unsigned long long)a2,
+                a4);
     return v5;
+  }
+  TRACE_PORTS("sub_28F90 enter ctx=%llx addr=%llx buf=%llx size=%u a5=%d state=%llx flags=%x byte4a=%u thread=%d ptr=%llx\n",
+              (unsigned long long)a1,
+              (unsigned long long)a2,
+              (unsigned long long)a3,
+              a4,
+              a5,
+              (unsigned long long)qword1D48,
+              a1->flags,
+              *(unsigned __int8 *)(qword1D48 + 74),
+              a1->threadForKernelRead,
+              (unsigned long long)*(_QWORD *)&a1->gap42[40]);
   v8 = a4;
   if ( ((a2 & 3) != 0 || a4 != 4) && *(_BYTE *)(qword1D48 + 74) )
   {
@@ -28600,7 +28628,13 @@ __int64 __fastcall sub_28F90(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3,
                 v15 = v13 - v14;
                 v16 = kreadbuf_via_dev_null_and_thread_state(a1, v13 - v14, (__int64)&v70, 8u, 0);
                 if ( (_DWORD)v16 )
+                {
+                  TRACE_PORTS("sub_28F90 unaligned read failed raw=%x aligned=%llx off=%llx\n",
+                              (unsigned int)v16,
+                              (unsigned long long)v15,
+                              (unsigned long long)v14);
                   break;
+                }
                 v17 = 8 - v14 >= (unsigned __int64)(v8 - v12) ? v8 - v12 : 8 - v14;
                 v18 = v70;
                 memcpy((void *)((unsigned __int64)&v70 | v14), (const void *)(a3 + v12), v17);
@@ -28608,7 +28642,13 @@ __int64 __fastcall sub_28F90(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3,
                 {
                   v16 = sub_2B0E8(a1, v15, v70);
                   if ( (_DWORD)v16 )
+                  {
+                    TRACE_PORTS("sub_28F90 unaligned write failed raw=%x aligned=%llx value=%llx\n",
+                                (unsigned int)v16,
+                                (unsigned long long)v15,
+                                (unsigned long long)v70);
                     break;
+                  }
                 }
                 v12 = v12 - v14 + 8;
                 if ( v12 >= v8 )
@@ -28630,7 +28670,10 @@ LABEL_19:
     return v5;
   }
   if ( !validate_addr_maybe2(a1, a2) )
+  {
+    TRACE_PORTS("sub_28F90 validate failed addr=%llx\n", (unsigned long long)a2);
     return v5;
+  }
   v64 = -1;
   if ( a5 )
   {
@@ -28675,6 +28718,13 @@ LABEL_25:
     v62 = v23;
     if ( v27 == v63 )
       goto LABEL_72;
+    TRACE_PORTS("sub_28F90 aligned chunk addr=%llx base=%llx old=%x new=%x off=%u left=%llu\n",
+                (unsigned long long)v21,
+                (unsigned long long)v24,
+                v27,
+                v63,
+                v23,
+                (unsigned long long)v20);
     v70 = v24;
     address = 0;
     v29 = vm_page_size;
@@ -28693,15 +28743,24 @@ LABEL_25:
     v31 = a1->qword1D48;
     v5 = 708609;
     if ( !v31 )
+    {
+      TRACE_PORTS("sub_28F90 missing qword1D48 during chunk\n");
       goto LABEL_66;
+    }
     v32 = *(_DWORD *)(v31 + 56);
     v5 = 708609;
     if ( !v32 )
+    {
+      TRACE_PORTS("sub_28F90 missing state[56]\n");
       goto LABEL_66;
+    }
     v33 = *(_QWORD *)(v31 + 8);
     v5 = 708609;
     if ( !v33 )
+    {
+      TRACE_PORTS("sub_28F90 missing state[8]\n");
       goto LABEL_66;
+    }
     v34 = (unsigned int)(v32 + 96);
     v35 = *(_QWORD *)(v31 + 32);
     v60 = v33 + v34;
@@ -28716,13 +28775,13 @@ LABEL_25:
       if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
       {
         v68 = 0;
-        sub_38D60((__int64)a1, v60, &v68, a1->int168, 0);
+        v39 = sub_38D60((__int64)a1, v60, &v68, a1->int168, 0);
         if ( (_DWORD)v39 )
           goto LABEL_64;
         if ( !validate_addr((__int64)a1, v68) )
           goto LABEL_55;
         v67 = 0;
-        sub_38D60((__int64)a1, v57, &v67, a1->int168, 0);
+        v39 = sub_38D60((__int64)a1, v57, &v67, a1->int168, 0);
         if ( (_DWORD)v39 )
         {
 LABEL_64:
@@ -28751,7 +28810,7 @@ LABEL_64:
         v41 = paddr;
         if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
         {
-          sub_38D60((__int64)a1, paddr + 52, &v65, 4u, 0);
+          v45 = sub_38D60((__int64)a1, paddr + 52, &v65, 4u, 0);
           v5 = v45;
           if ( (_DWORD)v45 )
             goto LABEL_66;
@@ -28761,7 +28820,7 @@ LABEL_64:
           if ( v28 )
           {
             v65 = v28 + 1;
-            physwritebuf_direct_mapped(a1, v41 + 52, &v65, 4u, 0);
+            v46 = physwritebuf_direct_mapped(a1, v41 + 52, &v65, 4u, 0);
             v5 = v46;
             if ( (_DWORD)v46 )
               goto LABEL_66;
@@ -28772,11 +28831,11 @@ LABEL_64:
             v47 = 2;
           }
           v66 = v47;
-          physwritebuf_direct_mapped(a1, v41 + 56, &v66, 4u, 0);
+          v52 = physwritebuf_direct_mapped(a1, v41 + 56, &v66, 4u, 0);
           v5 = v52;
           if ( !(_DWORD)v52 )
           {
-            physwritebuf_direct_mapped(a1, v60 + 24, &v70, a1->int168, 0);
+            v53 = physwritebuf_direct_mapped(a1, v60 + 24, &v70, a1->int168, 0);
             v5 = v53;
             if ( !(_DWORD)v53 )
             {
@@ -28838,6 +28897,10 @@ LABEL_82:
           }
         }
 LABEL_66:
+        TRACE_PORTS("sub_28F90 chunk cleanup err=%llx addr=%llx physmap=%llx\n",
+                    (unsigned long long)v5,
+                    (unsigned long long)v24,
+                    (unsigned long long)address);
         if ( address )
           v44 = v29 == 0;
         else
@@ -28869,11 +28932,16 @@ LABEL_65:
     }
   }
   v5 = v25;
+  TRACE_PORTS("sub_28F90 pre-read failed raw=%llx addr=%llx base=%llx\n",
+              (unsigned long long)v5,
+              (unsigned long long)v21,
+              (unsigned long long)v24);
 LABEL_99:
   v54 = v64;
 LABEL_100:
   if ( v54 != -1 )
     fd_close(v54);
+  TRACE_PORTS("sub_28F90 exit raw=%llx\n", (unsigned long long)v5);
   return v5;
 }
 // 292C0: variable 'v39' is possibly undefined
@@ -29068,7 +29136,7 @@ LABEL_69:
                   *(_QWORD *)old_stateCnt = *(_QWORD *)&krwCtx->gap42[48];
                   goto LABEL_45;
                 }
-                sub_38D60((__int64)krwCtx, *(_QWORD *)&krwCtx->gap42[40], old_stateCnt, 8u, 0);
+                v37 = sub_38D60((__int64)krwCtx, *(_QWORD *)&krwCtx->gap42[40], old_stateCnt, 8u, 0);
                 v5 = v37;
                 if ( !(_DWORD)v37 )
                 {
@@ -29077,7 +29145,7 @@ LABEL_45:
                   v33 = v32 + (v22 & ~qword188);
                   __dsb(0xBu);
                   v49 = v33 - 16;
-                  physwritebuf_direct_mapped(krwCtx, *(_QWORD *)&krwCtx->gap42[40], &v49, 8u, 0);
+                  v34 = physwritebuf_direct_mapped(krwCtx, *(_QWORD *)&krwCtx->gap42[40], &v49, 8u, 0);
                   v5 = v34;
                   if ( !(_DWORD)v34 )
                   {
@@ -29099,7 +29167,7 @@ LABEL_45:
                     {
                       v36 = 708642;
                     }
-                    physwritebuf_direct_mapped(krwCtx, *(_QWORD *)&krwCtx->gap42[40], old_stateCnt, 8u, 0);
+                    v38 = physwritebuf_direct_mapped(krwCtx, *(_QWORD *)&krwCtx->gap42[40], old_stateCnt, 8u, 0);
                     if ( v36 )
                       v39 = v36;
                     else
@@ -29667,19 +29735,42 @@ bool __fastcall sub_2A488(__int64 a1, unsigned __int64 a2, const void *a3, mach_
   int v6; // w0
   int v7; // w0
 
+  TRACE_PORTS("sub_2A488 enter ctx=%llx addr=%llx buf=%llx size=%llx a5=%d fn=%llx sptm_fd=%d sptm_ctx=%llx shm_port=%d shm_u=%llx shm_k=%llx necp_r=%d necp_w=%d pipe0=%d pipe1=%d iosurface_fd=%d necp=%llx tfp=%d chunk=%u\n",
+              (unsigned long long)a1,
+              (unsigned long long)a2,
+              (unsigned long long)a3,
+              (unsigned long long)a4,
+              a5,
+              (unsigned long long)*(_QWORD *)(a1 + 64),
+              *(_DWORD *)(a1 + 172),
+              (unsigned long long)*(_QWORD *)(a1 + 216),
+              *(_DWORD *)(a1 + 232),
+              (unsigned long long)*(_QWORD *)(a1 + 248),
+              (unsigned long long)*(_QWORD *)(a1 + 256),
+              *(_DWORD *)(a1 + 6448),
+              *(_DWORD *)(a1 + 6452),
+              *(_DWORD *)(a1 + 6456),
+              *(_DWORD *)(a1 + 6460),
+              *(_DWORD *)(a1 + 6464),
+              (unsigned long long)*(_QWORD *)(a1 + 536),
+              *(_DWORD *)(a1 + 6424),
+              *(_DWORD *)(a1 + 376));
   v5 = *(__int64 (__fastcall **)(__int64, unsigned __int64, const void *, mach_vm_size_t, int))(a1 + 64);
   if ( v5 )
   {
     v6 = v5(a1, a2, a3, a4, a5);
+    TRACE_PORTS("sub_2A488 backend=custom raw=%x\n", v6);
     goto LABEL_3;
   }
   if ( (unsigned int)(*(_DWORD *)(a1 + 172) + 1) >= 2 && *(_QWORD *)(a1 + 216) )
   {
     v6 = sub_28F90((struct_krwCtx *)a1, a2, (__int64)a3, a4, a5);
+    TRACE_PORTS("sub_2A488 backend=sptm raw=%x\n", v6);
   }
   else if ( (unsigned int)(*(_DWORD *)(a1 + 232) + 1) >= 2 && *(_QWORD *)(a1 + 248) && *(_QWORD *)(a1 + 256) )
   {
     v6 = sub_271B0(a1, a2, (__int64)a3, a4, a5);
+    TRACE_PORTS("sub_2A488 backend=ioconnect raw=%x\n", v6);
   }
   else
   {
@@ -29688,21 +29779,25 @@ bool __fastcall sub_2A488(__int64 a1, unsigned __int64 a2, const void *a3, mach_
     if ( *(_DWORD *)(a1 + 6464) != -1 && *(_QWORD *)(a1 + 536) )
     {
       v6 = sub_268F8(a1, a2, (__int64)a3, a4, a5);
+      TRACE_PORTS("sub_2A488 backend=necp raw=%x\n", v6);
       goto LABEL_3;
     }
     if ( *(_DWORD *)(a1 + 6456) == -1 || *(_DWORD *)(a1 + 6460) == -1 )
     {
 LABEL_22:
       v7 = sub_2A7F4(*(_DWORD *)(a1 + 6424), a2, (__int64)a3, a4, *(_DWORD *)(a1 + 376));
+      TRACE_PORTS("sub_2A488 backend=tfp raw=%x ok=%d\n", v7, v7 == 0);
       return v7 == 0;
     }
     v6 = sub_25498((struct_krwCtx *)a1, a2, a3, a4, a5);
+    TRACE_PORTS("sub_2A488 backend=pipe raw=%x\n", v6);
   }
 LABEL_3:
   if ( v6 )
     v7 = 5;
   else
     v7 = 0;
+  TRACE_PORTS("sub_2A488 exit raw=%x ok=%d\n", v6, v7 == 0);
   return v7 == 0;
 }
 
@@ -30365,7 +30460,7 @@ __int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __in
   }
   v32 = 0;
   if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
-    physwritebuf_direct_mapped(krwCtx, paddr_1, &v32, 4u, 0);
+    v23 = physwritebuf_direct_mapped(krwCtx, paddr_1, &v32, 4u, 0);
   else
     v23 = dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr_1, &v32, 4u);
   v9 = v23;
@@ -30373,17 +30468,17 @@ __int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __in
   {
     if ( kreadbuf(krwCtx, vaddr, 8u, &v28, 0) )
     {
-      physwrite64_maybe(krwCtx, v27, v28 - a3);
+      v24 = physwrite64_maybe(krwCtx, v27, v28 - a3);
       v9 = v24;
       if ( !(_DWORD)v24 )
       {
-        physwrite64_maybe(krwCtx, paddr, vaddr);
+        v25 = physwrite64_maybe(krwCtx, paddr, vaddr);
         v9 = v25;
         if ( !(_DWORD)v25 )
         {
           input = v19;
           IOConnectCallScalarMethod(v4, 0xAu, &input, 1u, 0, 0);
-          physwrite64_maybe(krwCtx, paddr, v5);
+          v26 = physwrite64_maybe(krwCtx, paddr, v5);
           return v26;
         }
       }
@@ -30399,15 +30494,15 @@ __int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __in
 // 2B450: variable 'v26' is possibly undefined
 
 //----- (000000000002B464) ----------------------------------------------------
-void __fastcall physwrite64_maybe(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 value_1)
+__int64 __fastcall physwrite64_maybe(struct_krwCtx *krwCtx, unsigned __int64 paddr, __int64 value_1)
 {
   __int64 value; // [xsp+8h] [xbp-8h] BYREF
 
   value = value_1;
   if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
-    physwritebuf_direct_mapped(krwCtx, paddr, &value, 8u, 0);
+    return physwritebuf_direct_mapped(krwCtx, paddr, &value, 8u, 0);
   else
-    dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr, &value, 8u);
+    return dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr, &value, 8u);
 }
 
 //----- (000000000002B4C8) ----------------------------------------------------
@@ -39275,13 +39370,15 @@ __int64 __fastcall sub_361DC(__int64 a1, unsigned int a2, __int64 a3)
 bool __fastcall voucher_create_mach_voucher(__int64 a1, __int64 a2, ipc_voucher_t *voucherOut)
 {
   host_t v4; // w0
-  __int128 recipes; // [xsp+0h] [xbp-30h] BYREF
-  __int64 v7; // [xsp+10h] [xbp-20h]
+  struct {
+    __int128 recipes; // [xsp+0h] [xbp-30h] BYREF
+    __int64 v7; // [xsp+10h] [xbp-20h]
+  } recipe;
 
-  recipes = xmmword_43710;
-  v7 = a2;
+  recipe.recipes = xmmword_43710;
+  recipe.v7 = a2;
   v4 = mach_host_self();
-  return host_create_mach_voucher(v4, (mach_voucher_attr_raw_recipe_array_t)&recipes, 0x18u, voucherOut) == 0;
+  return host_create_mach_voucher(v4, (mach_voucher_attr_raw_recipe_array_t)&recipe, 0x18u, voucherOut) == 0;
 }
 // 43710: using guessed type __int128 xmmword_43710;
 
@@ -39388,7 +39485,7 @@ __int64 __fastcall sub_363E4(__int64 a1, unsigned int a2)
 }
 
 //----- (0000000000036480) ----------------------------------------------------
-__int64 __fastcall sub_36480(struct_krwCtx *a1, unsigned __int64 a2, mach_port_name_t *a3)
+uint32_t __fastcall sub_36480(struct_krwCtx *a1, unsigned __int64 a2, mach_port_name_t *a3)
 {
   __int64 v6; // x25
   _BOOL4 v7; // w0
@@ -39681,12 +39778,40 @@ LABEL_54:
         v38 = a1->int168;
         if ( !kread32_outptr((__int64)a1, a2, &v48) )
           return 163855;
-        if ( (v48 & 0x400) != 0 && !noppl_kwrite32((__int64)a1, a2, v48 & 0xFFFFFBFF)
-          || !sub_288A4((__int64)a1, v35 + (unsigned int)(v37 - v35 + 2 * v38), a2) )
+        TRACE_PORTS("sub_36480 notif prep ctx=%llx target=%llx name=%x self_port=%llx off=%x ptr=%llx bits=%x int168=%d\n",
+                    (unsigned long long)a1,
+                    (unsigned long long)a2,
+                    name[0],
+                    (unsigned long long)v35,
+                    v37,
+                    (unsigned long long)(v35 + (unsigned int)(v37 - v35 + 2 * v38)),
+                    v48,
+                    v38);
+        if ( (v48 & 0x400) != 0 )
+        {
+          v12 = noppl_kwrite32((__int64)a1, a2, v48 & 0xFFFFFBFF);
+          TRACE_PORTS("sub_36480 clear bits ok=%d addr=%llx old=%x new=%x\n",
+                      (int)v12,
+                      (unsigned long long)a2,
+                      v48,
+                      v48 & 0xFFFFFBFF);
+          if ( !v12 )
+            return 163856;
+        }
+        v12 = sub_288A4((__int64)a1, v35 + (unsigned int)(v37 - v35 + 2 * v38), a2);
+        TRACE_PORTS("sub_36480 install fake ok=%d slot=%llx value=%llx\n",
+                    (int)v12,
+                    (unsigned long long)(v35 + (unsigned int)(v37 - v35 + 2 * v38)),
+                    (unsigned long long)a2);
+        if ( !v12 )
         {
           return 163856;
         }
         v30 = mach_port_request_notification(mach_task_self_, name[0], 70, 1u, 0, 0x15u, &previous[1]);
+        TRACE_PORTS("sub_36480 request_notification ret=%x name=%x previous=%x\n",
+                    (unsigned int)v30,
+                    name[0],
+                    previous[1]);
         if ( (_DWORD)v30 )
           return (unsigned int)v30 | 0x80000000;
         v9 = 163848;
@@ -40991,7 +41116,7 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
       }
       else
       {
-        sub_38D60((__int64)a1, a2 & ~a1->qword188, (void *)address, v10, 1);
+        v13 = sub_38D60((__int64)a1, a2 & ~a1->qword188, (void *)address, v10, 1);
         v9 = v13;
         if ( !(_DWORD)v13 )
         {
@@ -41004,7 +41129,7 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
           }
           else
           {
-            physwritebuf_direct_mapped(a1, v15 + a2, &v29, a1->int168, 1);
+            v17 = physwritebuf_direct_mapped(a1, v15 + a2, &v29, a1->int168, 1);
             v9 = v17;
             if ( !(_DWORD)v17 )
             {
@@ -41012,13 +41137,13 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
               if ( !a4
                 || *(_DWORD *)(v14 + v26) <= 3u
                 && (v18 = v25, *(_DWORD *)(v14 + v25) <= 0xB71B00u)
-                && (v23 = 1, physwritebuf_direct_mapped(a1, v26 + a2, &v23, 4u, 1), v9 = v19, !(_DWORD)v19)
-                && (v22 = 12000000, physwritebuf_direct_mapped(a1, v18 + a2, &v22, 4u, 1), v9 = v20, !(_DWORD)v20) )
+                && (v23 = 1, v19 = physwritebuf_direct_mapped(a1, v26 + a2, &v23, 4u, 1), v9 = v19, !(_DWORD)v19)
+                && (v22 = 12000000, v20 = physwritebuf_direct_mapped(a1, v18 + a2, &v22, 4u, 1), v9 = v20, !(_DWORD)v20) )
               {
                 v9 = 163857;
                 if ( *(unsigned __int16 *)(v14 + v24) <= 0x7Fu )
                 {
-                  physwritebuf_direct_mapped(a1, v24 + a2, &v30, 2u, 1);
+                  v21 = physwritebuf_direct_mapped(a1, v24 + a2, &v30, 2u, 1);
                   v9 = v21;
                 }
               }
@@ -41423,22 +41548,38 @@ LABEL_20:
 }
 
 //----- (0000000000038BCC) ----------------------------------------------------
-double __fastcall physmap_unmap_cached(__int64 a1, __int64 a2)
+__int64 __fastcall physmap_unmap_cached(__int64 a1, __int64 a2)
 {
   __int64 v4; // x8
-  double result; // d0
+  __int64 result; // x0
+  kern_return_t kr; // w0
 
+  result = 708609;
   v4 = *(_QWORD *)(a2 + 16);
-  if ( v4
-    && *(_QWORD *)a2
-    && noppl_kwrite32(a1, v4 + *(unsigned int *)(a2 + 48), -1)
-    && !vm_deallocate(mach_task_self_, *(_QWORD *)a2, *(_QWORD *)(a2 + 8) * *(unsigned int *)(a2 + 28))
-    && !mach_port_deallocate(mach_task_self_, *(_DWORD *)(a2 + 52)) )
+  if ( v4 && *(_QWORD *)a2 )
   {
-    sub_38C8C(a1, *(_QWORD *)(a2 + 16), *(unsigned int *)(a2 + 24));
+    if ( noppl_kwrite32(a1, v4 + *(unsigned int *)(a2 + 48), -1) )
+    {
+      kr = vm_deallocate(mach_task_self_, *(_QWORD *)a2, *(_QWORD *)(a2 + 8) * *(unsigned int *)(a2 + 28));
+      if ( kr )
+      {
+        result = kr | 0x80000000;
+      }
+      else
+      {
+        kr = mach_port_deallocate(mach_task_self_, *(_DWORD *)(a2 + 52));
+        if ( kr )
+          result = kr | 0x80000000;
+        else
+          result = sub_38C8C(a1, *(_QWORD *)(a2 + 16), *(unsigned int *)(a2 + 24));
+      }
+    }
+    else
+    {
+      result = 163856;
+    }
   }
   *(_QWORD *)(a2 + 48) = 0;
-  result = 0.0;
   *(_OWORD *)(a2 + 16) = 0u;
   *(_OWORD *)(a2 + 32) = 0u;
   *(_OWORD *)a2 = 0u;
@@ -41493,54 +41634,69 @@ LABEL_10:
 // 38D20: variable 'vars8' is possibly undefined
 
 //----- (0000000000038D60) ----------------------------------------------------
-void __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned int a4, int a5)
+__int64 __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned int a4, int a5)
 {
-  void (*v9)(void); // x5
+  __int64 (__fastcall *v9)(__int64, unsigned __int64, void *, unsigned int, int); // x5
+  __int64 result; // x0
   _QWORD v10[7]; // [xsp+8h] [xbp-58h] BYREF
   __int64 vars8; // [xsp+68h] [xbp+8h]
 
-  v9 = *(void (**)(void))(a1 + 56);
+  v9 = *(__int64 (__fastcall **)(__int64, unsigned __int64, void *, unsigned int, int))(a1 + 56);
   if ( v9 )
   {
     if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
       __break(0xC471u);
-    v9();
+    return v9(a1, a2, a3, a4, a5);
   }
-  else if ( a5
-         && (*(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) || (*(_BYTE *)a1 & 0x20) == 0)
-         && !(unsigned int)physmap_map_cached((struct_krwCtx *)a1, a2, (__int64)v10) )
+  result = 708609;
+  if ( !a5 )
+    return result;
+  if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (*(_BYTE *)a1 & 0x20) != 0 )
+    return result + 7;
+  result = physmap_map_cached((struct_krwCtx *)a1, a2, (__int64)v10);
+  if ( !(_DWORD)result )
   {
     memcpy(a3, (const void *)((*(_QWORD *)(a1 + 392) & a2) + v10[0]), a4);
-    physmap_unmap_cached(a1, (__int64)v10);
+    return physmap_unmap_cached(a1, (__int64)v10);
   }
+  return result;
 }
 
 //----- (0000000000038E4C) ----------------------------------------------------
-void __fastcall physwritebuf_direct_mapped(
+__int64 __fastcall physwritebuf_direct_mapped(
         struct_krwCtx *krwCtx,
         unsigned __int64 paddr,
         const void *buf,
         unsigned int size,
         int something)
 {
-  void (*v9)(void); // x5
+  __int64 (__fastcall *v9)(struct_krwCtx *, unsigned __int64, const void *, unsigned int, int); // x5
+  __int64 result; // x0
   _QWORD v10[7]; // [xsp+8h] [xbp-58h] BYREF
   __int64 vars8; // [xsp+68h] [xbp+8h]
 
-  v9 = *(void (**)(void))&krwCtx->gap4[68];
+  v9 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, const void *, unsigned int, int))&krwCtx->gap4[68];
   if ( v9 )
   {
     if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
       __break(0xC471u);
-    v9();
+    return v9(krwCtx, paddr, buf, size, something);
   }
-  else if ( something
-         && (krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) || (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0)
-         && !(unsigned int)physmap_map_cached(krwCtx, paddr, (__int64)v10) )
+  result = 708609;
+  if ( !something )
+    return result;
+  if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3)
+    && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+  {
+    return result + 7;
+  }
+  result = physmap_map_cached(krwCtx, paddr, (__int64)v10);
+  if ( !(_DWORD)result )
   {
     memcpy((void *)((krwCtx->qword188 & paddr) + v10[0]), buf, size);
-    physmap_unmap_cached((__int64)krwCtx, (__int64)v10);
+    return physmap_unmap_cached((__int64)krwCtx, (__int64)v10);
   }
+  return result;
 }
 
 //----- (0000000000038F38) ----------------------------------------------------
@@ -42668,7 +42824,7 @@ LABEL_10:
 // 3A150: too many cbuild loops
 
 //----- (000000000003A57C) ----------------------------------------------------
-bool __fastcall sub_3A57C(__int64 a1, unsigned __int64 a2, __int16 a3, int *a4)
+bool __fastcall sub_3A57C(__int64 a1, unsigned __int64 a2, int a3, int *a4)
 {
   _BOOL8 result; // x0
   int v9; // w2
@@ -42680,7 +42836,7 @@ bool __fastcall sub_3A57C(__int64 a1, unsigned __int64 a2, __int16 a3, int *a4)
     v9 = v10;
     if ( a4 )
       *a4 = v10 & 0x3FF;
-    return noppl_kwrite32(a1, a2, v9 & 0xFFFFFC00 | a3 & 0x3FF);
+    return noppl_kwrite32(a1, a2, v9 & 0xFFFFFC00 | a3 & 0x3FF) != 0;
   }
   return result;
 }
@@ -42731,15 +42887,17 @@ unsigned __int64 __fastcall sub_3A72C(__int64 a1)
   unsigned __int64 v4; // x8
   unsigned __int64 v5; // x21
   kern_return_t special_port; // w20
-  int v7; // [xsp+8h] [xbp-28h] BYREF
-  mach_port_t port; // [xsp+Ch] [xbp-24h] BYREF
+  struct {
+    int v7; // [xsp+8h] [xbp-28h] BYREF
+    mach_port_t port; // [xsp+Ch] [xbp-24h] BYREF
+  } locals;
 
   v2 = mach_host_self();
   result = *(unsigned int *)(a1 + 6432);
   if ( (unsigned int)(result + 1) <= 1 )
   {
-    if ( !host_get_special_port(v2, -1, 2, &port) )
-      return port;
+    if ( !host_get_special_port(v2, -1, 2, &locals.port) )
+      return locals.port;
     v4 = *(_QWORD *)(a1 + 344);
     if ( v4 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0)
       && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0
@@ -42749,22 +42907,22 @@ unsigned __int64 __fastcall sub_3A72C(__int64 a1)
       result = sub_35610(a1, 2);
       if ( !result )
         return result;
-      if ( !(unsigned int)sub_36480((struct_krwCtx *)a1, result, &port) )
-        return port;
+      if ( !(unsigned int)sub_36480((struct_krwCtx *)a1, result, &locals.port) )
+        return locals.port;
       return 0;
     }
     result = task_self_get_ipc_port((struct_krwCtx *)a1, v2);
     if ( result )
     {
       v5 = result;
-      result = sub_3A57C(a1, result, 4, &v7);
+      result = sub_3A57C(a1, result, 4, &locals.v7);
       if ( (_DWORD)result )
       {
-        special_port = host_get_special_port(v2, -1, 2, &port);
-        sub_3A57C(a1, v5, v7, 0);
+        special_port = host_get_special_port(v2, -1, 2, &locals.port);
+        sub_3A57C(a1, v5, locals.v7, 0);
         if ( special_port )
           return 0;
-        return port;
+        return locals.port;
       }
     }
   }

@@ -3,6 +3,7 @@ ARCHS = arm64 arm64e
 FINALPACKAGE = 1
 STRIP = 0
 GO_EASY_ON_ME = 1
+TARGET_CODESIGN = bash ./sign.sh ldid
 
 include $(THEOS)/makefiles/common.mk
 
@@ -17,6 +18,7 @@ endif
 
 RECOMP_TRACE_DMAFAIL ?= 0
 RECOMP_TRACE_PHYSMAP ?= 0
+RECOMP_TRACE_PORTS ?= 0
 RECOMP_PHYSMAP_VALIDATE_CACHE ?= 1
 
 entry1_type0x09_FILES = entry1_type0x09.m
@@ -24,6 +26,7 @@ entry1_type0x09_CFLAGS = \
     $(entry1_type0x09_OPTFLAGS) \
     -DRECOMP_TRACE_DMAFAIL=$(RECOMP_TRACE_DMAFAIL) \
     -DRECOMP_TRACE_PHYSMAP=$(RECOMP_TRACE_PHYSMAP) \
+    -DRECOMP_TRACE_PORTS=$(RECOMP_TRACE_PORTS) \
     -DRECOMP_PHYSMAP_VALIDATE_CACHE=$(RECOMP_PHYSMAP_VALIDATE_CACHE) \
     -fno-inline \
     -fno-strict-aliasing \

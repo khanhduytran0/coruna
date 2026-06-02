@@ -110,10 +110,10 @@ extern __int64 __chkstk_darwin();
 typedef unsigned int atomic_uint;
 typedef unsigned short atomic_ushort;
 typedef unsigned char atomic_uchar;
-#define atomic_load(p) (*(p))
-#define atomic_store(v, p) (*(p) = (v))
-#define atomic_fetch_add(p, v) (*(p) += (v))
-#define atomic_exchange(p, v) __extension__ ({ __typeof__(*(p)) _old = *(p); *(p) = (v); _old; })
+#define atomic_load(p) __atomic_load_n((p), __ATOMIC_SEQ_CST)
+#define atomic_store(v, p) __atomic_store_n((p), (__typeof__(*(p)))(v), __ATOMIC_RELEASE)
+#define atomic_fetch_add(p, v) __atomic_fetch_add((p), (__typeof__(*(p)))(v), __ATOMIC_ACQ_REL)
+#define atomic_exchange(p, v) __atomic_exchange_n((p), (__typeof__(*(p)))(v), __ATOMIC_ACQ_REL)
 
 /* ---- NEON vector unions (IDA uses .i8[n] / .u8[n] member access) ---- */
 
