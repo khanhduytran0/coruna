@@ -748,7 +748,7 @@ __int64 __semwait_signal(void);
 int __ulock_wait(unsigned int operation, void *addr, unsigned __int64 value, unsigned int timeout);
 int __ulock_wake(unsigned int operation, void *addr, unsigned __int64 wake_value);
 __int64 necp_open(void);
-__int64 necp_client_action(void);
+int necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size);
 int proc_pidinfo(int pid, int flavor, uint64_t arg, void *buffer, int buffersize);
 char *_CFProcessPath(void);
 #if 0
@@ -845,7 +845,7 @@ void *__cdecl dlopen(const char *__path, int __mode);
 void *__cdecl dlsym(void *__handle, const char *__symbol);
 int fcntl(int, int, ...);
 int __cdecl ffsctl(int, unsigned __int64, void *, unsigned int);
-__int64 fileport_makefd();
+int fileport_makefd(mach_port_t port);
 void __cdecl free(void *);
 int __cdecl fstat(int, stat *);
 int __cdecl getattrlist(const char *, void *, void *, size_t, unsigned int);
@@ -900,7 +900,7 @@ int __cdecl mkdir(const char *, mode_t);
 char *__cdecl mktemp(char *);
 // void *__cdecl mmap(void *, size_t, int, int, int, off_t);
 int __cdecl mount(const char *, const char *, int, void *);
-__int64 necp_client_action();
+int necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size);
 __int64 necp_open();
 int open(const char *, int, ...);
 int open_dprotected_np(const char *, int, int, int, ...);
@@ -1089,7 +1089,7 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte);
 // void *__cdecl _dlsym(void *__handle, const char *__symbol);
 // int _fcntl(int, int, ...);
 // int __cdecl _ffsctl(int, unsigned __int64, void *, unsigned int);
-// __int64 _fileport_makefd(void); weak
+// int _fileport_makefd(mach_port_t port); weak
 // __int64 __fastcall _fileport_makeport(_QWORD, _QWORD); weak
 // void __cdecl _free(void *);
 // int __cdecl _fstat(int, stat *);
@@ -1144,7 +1144,7 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte);
 // char *__cdecl _mktemp(char *);
 // void *__cdecl _mmap(void *, size_t, int, int, int, off_t);
 // int __cdecl _mount(const char *, const char *, int, void *);
-// __int64 _necp_client_action(void); weak
+// int _necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size); weak
 // __int64 _necp_open(void); weak
 // int _open(const char *, int, ...);
 // int _open_dprotected_np(const char *, int, int, int, ...);
@@ -5436,7 +5436,7 @@ __int64 __fastcall sub_B768(__int64 krwCtx, unsigned __int64 a2, int a3)
                 *(_QWORD *)(v24 + 344) = v9;
 LABEL_6:
               v7 = 163878;
-              sub_2183C(krwCtx, a2, (__int64)v34);
+              v10 = sub_2183C(krwCtx, a2, v34);
               if ( v10 )
               {
                 if ( v35 == 3 )
@@ -14097,13 +14097,13 @@ LABEL_44:
                                                v306 + *(unsigned int *)(v28 + 212),
                                                &v304) )
                                         {
-                                          sub_2183C(a1, v305 & ~*(_QWORD *)(a1 + 392), (__int64)&v343);
+                                          v87 = sub_2183C(a1, v305 & ~*(_QWORD *)(a1 + 392), &v343);
                                           if ( v87 )
                                           {
                                             v88 = v345 & 0xFFFFFFFFC000LL;
                                             if ( (v345 & 0xFFFFFFFFC000LL) != 0 )
                                             {
-                                              sub_2183C(a1, v304 & ~*(_QWORD *)(a1 + 392), (__int64)&v343);
+                                              v89 = sub_2183C(a1, v304 & ~*(_QWORD *)(a1 + 392), &v343);
                                               if ( v89 )
                                               {
                                                 v90 = v345 & 0xFFFFFFFFC000LL;
@@ -25648,7 +25648,7 @@ LABEL_42:
     if ( v6 != -1 )
     {
       v7 = v6;
-      if ( (unsigned int)necp_client_action() == -1 )
+      if ( necp_client_action(v7, 1, &v38, 0x10, &v37, 8) == -1 )
       {
         v19 = errno;
         v20 = errno;
@@ -26093,7 +26093,7 @@ __int64 __fastcall sub_26204(__int64 a1, __int64 a2, char *a3, mach_msg_type_num
               LODWORD(v8) = 163856;
               if ( noppl_kwritebuf(a1, v29, old_state, *(unsigned int *)(a1 + 360), 0) )
               {
-                if ( (unsigned int)necp_client_action() == a4 )
+                if ( (unsigned int)necp_client_action(*(_DWORD *)(a1 + 6468), 3, (const void *)(a1 + 6472), 0x10, (void *)a3, a4) == a4 )
                 {
                   LODWORD(v8) = 0;
                 }
@@ -34893,7 +34893,7 @@ LABEL_467:
     v217 = 0u;
     if ( !(unsigned int)kwritebuf_last_1(v2, v209, (__int64)&v216, bufSized) )
       goto LABEL_467;
-    sub_2183C(v2, (v209 + 16) & ~*(_QWORD *)(v2 + 392), (__int64)__src);
+    v107 = sub_2183C(v2, (v209 + 16) & ~*(_QWORD *)(v2 + 392), __src);
     if ( v107 )
     {
       size_4a = physmap_map_cached((struct_krwCtx *)v2, v180 & 0xFFFFFFFFC000LL, (__int64)&v181);
@@ -48287,11 +48287,11 @@ int __cdecl ffsctl(int a1, unsigned __int64 a2, void *a3, unsigned int a4)
 }
 
 //----- (000000000004163C) ----------------------------------------------------
-__int64 fileport_makefd()
+int fileport_makefd(mach_port_t port)
 {
-  return _fileport_makefd();
+  return _fileport_makefd(port);
 }
-// 48428: using guessed type __int64 _fileport_makefd(void);
+// 48428: using guessed type int _fileport_makefd(mach_port_t port);
 
 //----- (000000000004164C) ----------------------------------------------------
 // local variable allocation has failed, the output may be wrong!
@@ -48711,11 +48711,11 @@ int __cdecl mount(const char *a1, const char *a2, int a3, void *a4)
 }
 
 //----- (00000000000419AC) ----------------------------------------------------
-__int64 necp_client_action()
+int necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size)
 {
-  return _necp_client_action();
+  return _necp_client_action(fd, action, client_id, client_id_len, buffer, buffer_size);
 }
-// 485E0: using guessed type __int64 _necp_client_action(void);
+// 485E0: using guessed type int _necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size);
 
 //----- (00000000000419BC) ----------------------------------------------------
 __int64 necp_open()
