@@ -21951,26 +21951,41 @@ __n128 __fastcall sub_213D4(__int64 a1, unsigned __int64 a2, __int64 a3, __int64
   while ( v8 != 640 );
   if ( !*(_QWORD *)(a1 + 1488) )
   {
-    v27 = *(_QWORD *)(a1 + 0x18A8);
-    v28 = *(_QWORD *)(a1 + 0x18B0);
-    if ( !v27 || !v28 )
+    v24 = sub_21388((struct_krwCtx *)a1);
+    TRACE_DMAFAIL("sub_213D4 roots init ctx=%llx va=%llx ttbr0_pa_ptr=%llx off=%x page=%x flags=%x\n",
+                  (unsigned long long)a1,
+                  (unsigned long long)a2,
+                  (unsigned long long)v24,
+                  *(unsigned int *)(a1 + 360),
+                  *(unsigned int *)(a1 + 384),
+                  *(unsigned int *)a1);
+    if ( !v24 )
+      return result;
+    v25 = v24;
+    if ( !kread64_outptr((struct_krwCtx *)a1, v24, &v41) )
     {
-      v24 = sub_21388((struct_krwCtx *)a1);
-      if ( !v24 )
-        return result;
-      v25 = v24;
-      if ( !kread64_outptr((struct_krwCtx *)a1, v24, &v41)
-        || !kread64_outptr((struct_krwCtx *)a1, v25 + *(int *)(a1 + 360), &v40) )
-      {
-        return result;
-      }
-      v28 = v40;
-      v27 = v41;
+      TRACE_DMAFAIL("sub_213D4 roots init read0 failed ptr=%llx\n",
+                    (unsigned long long)v24);
+      return result;
+    }
+    if ( !kread64_outptr((struct_krwCtx *)a1, v25 + *(int *)(a1 + 360), &v40) )
+    {
+      TRACE_DMAFAIL("sub_213D4 roots init read1 failed ptr=%llx off=%x root0=%llx\n",
+                    (unsigned long long)(v25 + *(int *)(a1 + 360)),
+                    *(unsigned int *)(a1 + 360),
+                    (unsigned long long)v41);
+      return result;
     }
     if ( *(_DWORD *)(a1 + 384) == 4096 )
       v26 = 512;
     else
       v26 = 2048;
+    v28 = v40;
+    v27 = v41;
+    TRACE_DMAFAIL("sub_213D4 roots init root=%llx delta=%llx span=%x\n",
+                  (unsigned long long)v27,
+                  (unsigned long long)v28,
+                  v26);
     *(_QWORD *)(a1 + 1488) = v27;
     *(_QWORD *)(a1 + 1496) = v28;
     *(_DWORD *)(a1 + 1504) = v26;
@@ -23828,18 +23843,12 @@ bool __fastcall dmaFail_map_dbgwrap(struct_krwCtx *a1, __int64 a2, _OWORD *a3)
 }
 
 //----- (0000000000023700) ----------------------------------------------------
-// DONE: this matches the orig asm
 __int64 __fastcall dmaFail_phystokv_cached(__int64 a1, __int64 a2)
 {
     struct {
         uint64_t unused[4];
         volatile __int64 physmapKva;
     } out;
-    uint64_t translationBase;
-    uint64_t translationDelta;
-    uint64_t fallbackPa;
-    uint64_t rangedPa;
-#if RECOMP_TRACE_DMAFAIL
     uint64_t leafMask = *(_QWORD *)(a1 + 392);
     uint64_t maskedPhys = a2 & ~leafMask;
     int ok = sub_2183C(a1, maskedPhys, &out);
@@ -23862,39 +23871,12 @@ __int64 __fastcall dmaFail_phystokv_cached(__int64 a1, __int64 a2)
                   *(_DWORD *)(a1 + 384),
                   *(_DWORD *)a1);
 
-    if ( ok ) {
+    if ( ok )
+    {
         asm volatile("" ::: "memory");
         uint64_t physmapKva = out.physmapKva;
         if (!physmapKva) return 0;
         return (physmapKva & 0xFFFFFFFFC000LL) + (leafMask & a2);
-    }
-#else
-    if ( sub_2183C(a1, a2 & ~*(_QWORD *)(a1 + 392), &out)) {
-        asm volatile("" ::: "memory");
-        uint64_t physmapKva = out.physmapKva;
-        if (!physmapKva) return 0;
-        return (physmapKva & 0xFFFFFFFFC000LL) + (*(_QWORD *)(a1 + 392) & a2);
-    }
-#endif
-    translationBase = *(_QWORD *)(a1 + 1488);
-    translationDelta = *(_QWORD *)(a1 + 1496);
-    if ( !translationBase || !translationDelta )
-    {
-        translationBase = *(_QWORD *)(a1 + 0x18A8);
-        translationDelta = *(_QWORD *)(a1 + 0x18B0);
-    }
-    if ( translationBase && translationDelta )
-    {
-        fallbackPa = translationDelta - translationBase + a2;
-        rangedPa = sub_38544(a1, translationBase, translationDelta, a2);
-        TRACE_DMAFAIL("dmaFail_phystokv_cached fallback pa=%llx base=%llx delta=%llx direct=%llx ranged=%llx\n",
-                      (unsigned long long)a2,
-                      (unsigned long long)translationBase,
-                      (unsigned long long)translationDelta,
-                      (unsigned long long)fallbackPa,
-                      (unsigned long long)rangedPa);
-        if ( fallbackPa )
-            return fallbackPa;
     }
     return 0;
 }
@@ -40940,7 +40922,7 @@ __int64 __fastcall sub_38158(struct_krwCtx *a1, __int64 a2, int a3, int a4, __in
 // 38348: variable 'v21' is possibly undefined
 
 //----- (0000000000038378) ----------------------------------------------------
-unsigned __int64 __fastcall sub_38378_real(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 a4)
+unsigned __int64 __fastcall sub_38378(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 a4)
 {
   __int64 v8; // x8
   _QWORD *i; // x9
@@ -40962,16 +40944,6 @@ unsigned __int64 __fastcall sub_38378_real(__int64 a1, __int64 a2, __int64 a3, u
       return a2 - a3 + a4;
   }
   return a4 - v10 + *(i - 1);
-}
-// NOTE: temporary wrapper for debugging.
-unsigned __int64 __fastcall sub_38378(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 a4)
-{
-    uint64_t result = sub_38378_real(a1, a2, a3, a4);
-    if (result < 0xffffffff) {
-        printf("%s returned address too low, spin...\n", __FUNCTION__);
-        sleep(INT_MAX);
-    }
-    return result;
 }
 
 //----- (0000000000038428) ----------------------------------------------------
@@ -41021,7 +40993,7 @@ __int64 __fastcall sub_38428(__int64 a1)
       break;
     v9 = record[1];
     v10 = record[2];
-    if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0 )
+    if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
       v10 = record[2] << 14;
     v11 = (_QWORD *)(a1 + v7);
     v11[833] = record[0];
@@ -46627,9 +46599,7 @@ __int64 __fastcall sub_3FB84(__int64 a1, __int64 *a2, __int64 *a3)
   char *v12; // x1
   __int64 v13; // x23
   __int64 v15; // x8
-  __int64 v16; // [xsp+0h] [xbp-50h] BYREF
-  __int64 v17; // [xsp+8h] [xbp-48h]
-  __int64 v18; // [xsp+10h] [xbp-40h]
+  __int64 sect[3]; // [xsp+0h] [xbp-50h] BYREF
   __int64 v19; // [xsp+18h] [xbp-38h] BYREF
 
   v19 = 0;
@@ -46657,13 +46627,13 @@ __int64 __fastcall sub_3FB84(__int64 a1, __int64 *a2, __int64 *a3)
   }
   if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
-    macho_getsectbyname("__TEXT_EXEC", *(_QWORD *)(a1 + 6648), "__text", &v16);
+    macho_getsectbyname("__TEXT_EXEC", *(_QWORD *)(a1 + 6648), "__text", sect);
     result = 0;
-    if ( v17 )
+    if ( sect[1] )
     {
-      if ( v18 )
+      if ( sect[2] )
       {
-        result = kernel_pattern_scan((__int64)&v16, "08 01 40 39 08 01 00 12", 0);
+        result = kernel_pattern_scan((__int64)sect, "08 01 40 39 08 01 00 12", 0);
         if ( result )
         {
           result = sub_1E854(*(__int64 **)(a1 + 6648), (__int64 *)(result - 12));
@@ -46685,12 +46655,12 @@ __int64 __fastcall sub_3FB84(__int64 a1, __int64 *a2, __int64 *a3)
   else if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
   {
     v11 = *(_DWORD *)(a1 + 320);
-    sub_39B70(&v16, (struct_krwCtx *)a1);
+    sub_39B70((_QWORD *)sect, (struct_krwCtx *)a1);
     result = 0;
-    if ( v17 && v18 )
+    if ( sect[1] && sect[2] )
     {
       v12 = v11 <= 8795 ? "6A 00 00 37 40 00 00 34" : "6B 00 00 37 40 00 00 34";
-      result = kernel_pattern_scan((__int64)&v16, v12, 0);
+      result = kernel_pattern_scan((__int64)sect, v12, 0);
       if ( result )
       {
         v13 = result;
@@ -46723,20 +46693,20 @@ LABEL_40:
   }
   else
   {
-    sub_39B70(&v16, (struct_krwCtx *)a1);
+    sub_39B70((_QWORD *)sect, (struct_krwCtx *)a1);
     result = 0;
-    if ( v17 && v18 )
+    if ( sect[1] && sect[2] )
     {
       if ( *(_QWORD *)(a1 + 344) < 0x225C192D100000uLL )
       {
-        result = kernel_pattern_scan((__int64)&v16, "09 FD 9F 08 C0 03 5F D6", 0);
+        result = kernel_pattern_scan((__int64)sect, "09 FD 9F 08 C0 03 5F D6", 0);
         if ( !result )
           return result;
         result = sub_1E854(*(__int64 **)(a1 + 6648), (__int64 *)(result - 12));
       }
       else
       {
-        result = kernel_pattern_scan((__int64)&v16, "09 01 00 39 C0 03 5F D6", 0);
+        result = kernel_pattern_scan((__int64)sect, "09 01 00 39 C0 03 5F D6", 0);
         if ( !result )
           return result;
         result = sub_1E854(*(__int64 **)(a1 + 6648), (__int64 *)(result - 12));
