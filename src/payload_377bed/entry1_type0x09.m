@@ -187,14 +187,14 @@ void __fastcall sub_12EF8(struct_krwCtx *a1);
 bool __fastcall sub_1308C(struct_krwCtx *a1);
 bool __fastcall sub_130B4(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4);
 bool __fastcall sub_13304(struct_krwCtx *ctx, mach_vm_address_t vaddr, __int64 newBytes, __int64 size, int a5);
-unsigned int __fastcall sub_1353C(__int64 a1, __int64 *a2, int *a3);
+bool __fastcall sub_1353C(__int64 a1, __int64 *a2, int *a3);
 bool __fastcall sub_13750(struct_krwCtx *a1, unsigned __int64 a2, unsigned __int64 a3);
 bool __fastcall sub_13844(struct_krwCtx *a1, unsigned __int64 a2, int a3);
 bool __fastcall sub_13924(struct_krwCtx *a1, unsigned __int64 a2, int a3);
 __int64 __fastcall ppl_kwritebuf(__int64 ctx, unsigned __int64 vaddr, void *newBytes, int size);
 bool __fastcall kaddr_need_ppl_bypass(__int64 ctx, unsigned __int64 vaddr);
 bool __fastcall ppl_kwritebuf_nocheck(__int64 ctx, mach_vm_address_t vaddr, __int64 newBytes, __int64 size, char pplBypass, int);
-void __fastcall sub_13D9C(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3);
+bool __fastcall sub_13D9C(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3);
 __int64 __fastcall kwrite_something(struct_krwCtx *a1, mach_vm_address_t a2, __int64 a3, __int64 a4, int a5);
 __int64 __fastcall check_rootfs_rw(__int64 ctx, int *outIsReadWrite);
 bool __fastcall sub_13FF8(struct_krwCtx *a1, char *a2);
@@ -463,7 +463,7 @@ bool __fastcall kreadbuf_last_0(__int64 ctx, unsigned __int64 addr, mach_vm_size
 bool __fastcall noppl_kwritebuf(__int64 a1, unsigned __int64 a2, const void *a3, mach_vm_size_t a4, int a5);
 bool __fastcall kwritebuf_last_0(__int64 a1, unsigned __int64 a2, const void *a3, mach_vm_size_t a4);
 mach_vm_address_t __fastcall ppl_kwrite32(struct_krwCtx *a1, mach_vm_address_t a2, int a3);
-void __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 newValue);
+int __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 newValue);
 unsigned __int64 __fastcall kwritebuf_universal(_QWORD *a1, unsigned __int64 vaddr, const void *newBytes, mach_vm_size_t length);
 __int64 __fastcall sub_2A7F4(vm_map_t target_task, mach_vm_address_t address, __int64 a3, mach_vm_size_t size, unsigned int a5);
 __int64 __fastcall sub_2A8A4(struct_krwCtx *a1);
@@ -597,7 +597,7 @@ __int64 __fastcall sub_356C8(struct_krwCtx *a1, unsigned int a2, __int64 *a3);
 __int64 __fastcall sub_3579C(struct_krwCtx *a1, int a2, __int64 *a3);
 __int64 __fastcall sub_35938(struct_krwCtx *a1, int a2, __int64 *a3);
 unsigned __int64 __fastcall sub_35A50(struct_krwCtx *a1, int a2, _DWORD *a3);
-void __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3);
+int __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3);
 mach_vm_address_t __fastcall sub_35D94(__int64 a1, __int64 a2, int a3);
 __int64 __fastcall sub_35E18(struct_krwCtx *a1, __int64 a2, int a3);
 __int64 __fastcall sub_35E8C(struct_krwCtx *a1, __int64 a2);
@@ -647,7 +647,7 @@ unsigned __int64 __fastcall sub_39B14(_QWORD *a1);
 void sub_39B70(_QWORD *a1, struct_krwCtx *a2);
 __int64 __fastcall sub_39CC0(struct_krwCtx *a1, task_name_t target_task, int a3, const void *a4, mach_vm_size_t a5);
 __int64 __fastcall create_pthread_something(__int64 a1, pthread_t *a2, __int64 a3, void *a4);
-void __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int a3);
+bool __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int a3);
 bool __fastcall pthread_create_and_join(__int64 a1, __int64 a2, void *a3);
 __int64 __fastcall sub_3A150(__int64 a1, int a2, int a3, int a4);
 bool __fastcall sub_3A57C(__int64 a1, unsigned __int64 a2, int a3, int *a4);
@@ -655,12 +655,12 @@ __int64 __fastcall sub_3A5F0(__int64 a1, task_name_t a2);
 unsigned __int64 __fastcall sub_3A72C(__int64 a1);
 unsigned __int64 __fastcall sub_3A878(__int64 a1);
 __int64 __fastcall sub_3A8DC(__int64 a1, unsigned int a2);
-void __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3);
+int __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3);
 __int64 __fastcall sub_3AD2C(struct_krwCtx *a1, unsigned int a2);
 void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5);
 mach_vm_address_t __fastcall sub_3B49C(struct_krwCtx *a1, unsigned int a2, int a3);
 unsigned __int64 __fastcall sub_3B524(struct_krwCtx *a1, unsigned int a2, bool *a3, bool *a4, bool *a5);
-void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3);
+int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3);
 bool __fastcall krw_task_for_pid(__int64 a1, int a2, mach_port_name_t *a3);
 bool __fastcall krw_task_for_pid_or_name(__int64 a1, int victim_pid, const char *victim_process_name, mach_port_name_t *out_task);
 bool __fastcall sub_3BE3C(struct_krwCtx *a1, int a2, thread_act_t a3, thread_state_flavor_t a4, natural_t *a5, mach_msg_type_number_t a6);
@@ -680,7 +680,7 @@ __int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(__int64 a1, unsigne
 __int64 __fastcall sub_3F9A0(struct_krwCtx *a1, bool *a2);
 __int64 __fastcall sub_3FA2C(struct_krwCtx *a1, int a2);
 __int64 __fastcall sub_3FB84(__int64 a1, __int64 *a2, __int64 *a3);
-void __fastcall sub_3FE68(__int64 a1, task_inspect_t a2, host_t *a3);
+int __fastcall sub_3FE68(__int64 a1, task_inspect_t a2, host_t *a3);
 _QWORD *__fastcall sub_3FED4(__int64 a1, __int64 a2);
 __int64 __fastcall sub_3FF78(__int64, _QWORD *, __int64);
 unsigned __int64 __fastcall sub_3FF8C(_QWORD **a1, __int64 a2, __int64 a3, unsigned int a4);
@@ -11532,7 +11532,7 @@ LABEL_32:
   return v10 == 0;
 }
 //----- (000000000001353C) ----------------------------------------------------
-unsigned int __fastcall sub_1353C(__int64 a1, __int64 *a2, int *a3)
+bool __fastcall sub_1353C(__int64 a1, __int64 *a2, int *a3)
 {
   __int64 v6; // x22
   int v7; // w8
@@ -11890,18 +11890,21 @@ bool __fastcall ppl_kwritebuf_nocheck(
 }
 
 //----- (0000000000013D9C) ----------------------------------------------------
-void __fastcall sub_13D9C(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3)
+bool __fastcall sub_13D9C(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3)
 {
-  char v6; // w0
-  unsigned __int64 v7; // [xsp+0h] [xbp-30h] BYREF
-  __int64 v8; // [xsp+8h] [xbp-28h] BYREF
-
-  v8 = a3;
-  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && kread64_outptr(a1, a2, &v7) && v7 != a3 )
-  {
-    v6 = kaddr_need_ppl_bypass((__int64)a1, a2);
-    ppl_kwritebuf_nocheck((__int64)a1, a2, (__int64)&v8, (unsigned int)a1->stride168, v6, 1);
-  }
+    char v6; // w0
+    unsigned __int64 v7; // [xsp+0h] [xbp-30h] BYREF
+    __int64 v8; // [xsp+8h] [xbp-28h] BYREF
+    
+    v8 = a3;
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && kread64_outptr(a1, a2, &v7) )
+    {
+        if ( v7 == a3 )
+            return true;
+        v6 = kaddr_need_ppl_bypass((__int64)a1, a2);
+        return ppl_kwritebuf_nocheck((__int64)a1, a2, (__int64)&v8, (unsigned int)a1->stride168, v6, 1);
+    }
+    return false;
 }
 
 //----- (0000000000013E38) ----------------------------------------------------
@@ -12932,17 +12935,15 @@ LABEL_14:
   }
   if ( v7 )
   {
-    sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 892), 0);
-    if ( !v8 )
+    if ( !sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 892), 0) )
     {
 LABEL_19:
       v10 = 0;
       goto LABEL_20;
     }
     v9 = IOServiceOpen(v6, mach_task_self_, 0, &connect);
-    sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 892), v7);
     v10 = 0;
-    if ( !v11 || v9 )
+    if ( !sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 892), v7) || v9 )
       goto LABEL_20;
 LABEL_17:
     iterator[0] = 0;
@@ -13149,8 +13150,7 @@ LABEL_57:
             while ( v30 < suspend_token[1] );
           }
 LABEL_58:
-          sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), 0);
-          if ( v33 )
+          if ( sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), 0) )
           {
             v34 = sub_4087C(
                     (struct_krwCtx *)v2,
@@ -13182,8 +13182,7 @@ LABEL_63:
                   {
                     if ( noppl_kwrite32(v2, v36 + *(int *)(v2 + 360), 255) )
                     {
-                      sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), *(_QWORD *)(v2 + 928));
-                      if ( v37 )
+                      if ( sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), *(_QWORD *)(v2 + 928)) )
                         v23 = 0;
                       else
                         v23 = 163856;
@@ -22476,8 +22475,7 @@ LABEL_108:
             {
               if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
               {
-                sub_13D9C((struct_krwCtx *)a1, v16, v35);
-                if ( (_DWORD)v8 )
+                if ( (_DWORD)sub_13D9C((struct_krwCtx *)a1, v16, v35) )
                 {
 LABEL_86:
                   v36 = 0;
@@ -24284,8 +24282,7 @@ void __fastcall sub_23D30(__int64 a1, char a2)
       {
         if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
         {
-          sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), 0);
-          if ( v4 )
+          if ( sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), 0) )
           {
             v5 = *(_QWORD *)(a1 + 6368);
             if ( !v5 )
@@ -24332,8 +24329,7 @@ void __fastcall sub_23D30(__int64 a1, char a2)
               strcpy((char *)v15, "MobileBackup");
               v6 = sub_23940((struct_krwCtx *)a1, (__int64)v15);
             }
-            sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), *(_QWORD *)(a1 + 936));
-            if ( !v6 )
+            if ( !sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), *(_QWORD *)(a1 + 936)) )
               krw_ctx_set_flag((_DWORD *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
           }
         }
@@ -24347,8 +24343,7 @@ void __fastcall sub_23D30(__int64 a1, char a2)
         v8 = *(_QWORD *)(a1 + 6376);
         if ( v8 )
         {
-          sub_2A63C((struct_krwCtx *)a1, v7, v8);
-          if ( v9 )
+          if ( sub_2A63C((struct_krwCtx *)a1, v7, v8) )
             sub_36088((_DWORD *)a1, 4);
         }
       }
@@ -29839,7 +29834,7 @@ LABEL_8:
 }
 
 //----- (000000000002A63C) ----------------------------------------------------
-void __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 newValue)
+int __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 newValue)
 {
   mach_vm_address_t v4; // x21
   __int64 v5; // x20
@@ -29859,19 +29854,18 @@ void __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 
     {
       if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
         __break(0xC471u);
-      sub_13D9C((struct_krwCtx *)v5, v4, newValue);
-      return;
+      return sub_13D9C((struct_krwCtx *)v5, v4, newValue);
     }
     v7 = sub_39090((struct_krwCtx *)v5, v4);
     if ( !v7 )
-      return;
+      return 0;
     address = v7;
     v6 = *(unsigned __int8 *)(v5 + 12);
     a1 = (struct_krwCtx *)v5;
   }
   if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
     __break(0xC471u);
-  kwrite64_last_arg(a1, address, newValue, v6);
+  return kwrite64_last_arg(a1, address, newValue, v6);
 }
 // 2A6A4: variable 'vars8' is possibly undefined
 
@@ -30457,7 +30451,7 @@ kern_return_t sub_2B0E8(struct_krwCtx *krwCtx, uint64_t vaddr, uint64_t a3)
 
     // Write 0 to paddr1 (4 bytes) using appropriate physical write method
     uint32_t zero_val = 0;
-    uint64_t version_threshold = 0x0027120F04B00003ULL;
+    uint64_t version_threshold = XNU_VERSION_PACKED(10002, 60, 75, 0, 3);
     if (krwCtx->xnuVersionPacked >= version_threshold
         && (*(uint8_t *)krwCtx & 0x20)) {  // tbnz w8, #5 → bit 5 of krwCtx[0]
         kr = physwritebuf_direct_mapped(krwCtx, paddr1, &zero_val, 4, 0);
@@ -33759,8 +33753,7 @@ unsigned __int64 __fastcall sub_2F2C8(struct_krwCtx *a1, unsigned int a2, __int6
               {
                 if ( !validate_addr((__int64)v5, v41) )
                   break;
-                sub_2A63C(v5, address + v16, 0);
-                if ( !v17 )
+                if ( !sub_2A63C(v5, address + v16, 0) )
                   break;
                 if ( v5->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
                 {
@@ -33937,8 +33930,7 @@ __int64 __fastcall sub_2F7BC(struct_krwCtx *a1, int a2)
               result = validate_addr((__int64)a1, v9);
               if ( result )
               {
-                sub_2A63C(a1, v5, 0);
-                return v6 != 0;
+                return sub_2A63C(a1, v5, 0) != 0;
               }
             }
             else
@@ -35002,8 +34994,7 @@ LABEL_426:
         v58 = 0;
         goto LABEL_433;
       }
-      sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), 0);
-      if ( v134 )
+      if ( sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), 0) )
       {
         size_4a = sub_4087C(
                     (struct_krwCtx *)v2,
@@ -35343,8 +35334,7 @@ LABEL_59:
         v33 = v69;
         if ( v5 || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || !v74 )
         {
-          sub_2A63C((struct_krwCtx *)v2, v196 + bufc, v74);
-          if ( !v103 )
+          if ( !sub_2A63C((struct_krwCtx *)v2, v196 + bufc, v74) )
             goto LABEL_451;
         }
       }
@@ -35518,8 +35508,7 @@ LABEL_373:
       LODWORD(newBytes) = newBytes + 1;
       if ( !(unsigned int)ppl_kwritebuf(v2, v181 + v124, &newBytes, 4) )
         goto LABEL_451;
-      sub_13D9C((struct_krwCtx *)v2, *(_QWORD *)name + v67, v181);
-      if ( !v125 )
+      if ( !sub_13D9C((struct_krwCtx *)v2, *(_QWORD *)name + v67, v181) )
         goto LABEL_451;
       if ( !krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
       {
@@ -39039,100 +39028,117 @@ unsigned __int64 __fastcall sub_35A50(struct_krwCtx *a1, int a2, _DWORD *a3)
 }
 
 //----- (0000000000035AE0) ----------------------------------------------------
-void __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
+int __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
 {
-  __int64 v3; // x21
-  __int64 v5; // x19
-  unsigned __int64 v6; // x8
-  mach_vm_address_t v7; // x1
-  uint64_t v8; // x8
-  unsigned int v9; // w10
-  __int64 v10; // x2
-  mach_vm_address_t v11; // x1
-  unsigned __int64 v12; // x9
-  __int64 v13; // x10
-  __int64 v14; // x11
-  void *(__cdecl *v15)(void *); // x0
-  __int64 v16; // [xsp+0h] [xbp-80h] BYREF
-  unsigned int v17; // [xsp+8h] [xbp-78h]
-  int v18; // [xsp+Ch] [xbp-74h]
-  pthread_t v19; // [xsp+10h] [xbp-70h] BYREF
-  pthread_attr_t v20; // [xsp+18h] [xbp-68h] BYREF
-  __int64 vars8; // [xsp+88h] [xbp+8h]
+    __int64 v3; // x19
+    __int64 v7; // x19
+    unsigned __int64 v8; // x8
+    mach_vm_address_t v9; // x1
+    __int64 v10; // x8
+    unsigned int v11; // w10
+    __int64 v12; // x2
+    __int64 v13; // x1
+    unsigned __int64 v14; // x9
+    __int64 v15; // x10
+    __int64 v16; // x11
+    int v17; // w0
+    int v18; // w8
+    int v19; // w0
+    void *(__cdecl *v20)(void *); // x0
+    int v21; // w8
+    __int64 v22; // [xsp+0h] [xbp-80h] BYREF
+    unsigned int v23; // [xsp+8h] [xbp-78h]
+    unsigned int v24; // [xsp+Ch] [xbp-74h]
+    pthread_t v25; // [xsp+10h] [xbp-70h] BYREF
+    pthread_attr_t v26; // [xsp+18h] [xbp-68h] BYREF
+    __int64 vars8; // [xsp+88h] [xbp+8h]
 
-  if ( a2 > 6 )
-    return;
-  v3 = a3;
-  v5 = (__int64)a1;
-  v6 = a1->xnuVersionPacked;
-  if ( v6 >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
-  {
-    if ( !a3 )
-      a3 = -1;
-    v7 = a1->gap191[688] + a1->stride168 * (a2 + 1);
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
-    sub_2A63C(a1, v7, a3);
-    return;
-  }
-  if ( a3 )
-  {
-    if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && krw_xpac_vaddr_2(a1, a3) == a3 )
-      return;
-    goto LABEL_18;
-  }
-  if ( v6 < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) || (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
-  {
-LABEL_18:
-    v11 = *(_QWORD *)(v5 + 6384) + *(_DWORD *)(v5 + 360) * (a2 + 1);
-    a1 = (struct_krwCtx *)v5;
-    v10 = v3;
-LABEL_19:
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
-    kwrite64((__int64)a1, v11, v10);
-    return;
-  }
-  v8 = a1->gap191[688];
-  if ( a1->gap191[8] == v8 )
-  {
-    v9 = 0;
-LABEL_17:
-    v10 = a1->gap191[8 * (unsigned __int64)v9 + 9 + a2];
-    v11 = v8 + a1->stride168 * (a2 + 1);
-    goto LABEL_19;
-  }
-  v12 = -1;
-  v13 = 1008;
-  while ( v12 != 6 )
-  {
-    v14 = *(_QWORD *)((char *)&a1->flags + v13);
-    ++v12;
-    v13 += 64;
-    if ( v14 == v8 )
+    if ( a2 > 6 )
+      return 0LL;
+    v7 = a1;
+    v8 = *(_QWORD *)(a1 + 344);
+    if ( v8 >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
     {
-      if ( v12 < 7 )
+      v9 = a1->gap191[688] + a1->stride168 * (a2 + 1);
+      if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
+        __break(0xC471u);
+      return sub_2A63C(a1, v9, a3);
+    }
+    if ( a3 )
+    {
+      if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && krw_xpac_vaddr_2(a1, a3) == a3 )
+        return 0LL;
+    }
+    else if ( v8 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) && (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
+    {
+      v10 = *(_QWORD *)(a1 + 6384);
+      if ( *(_QWORD *)(a1 + 944) != v10 )
       {
-        v9 = v12 + 1;
-        goto LABEL_17;
+        v14 = -1LL;
+        v15 = 1008LL;
+        while ( v14 != 6 )
+        {
+          v16 = *(_QWORD *)(a1 + v15);
+          ++v14;
+          v15 += 64LL;
+          if ( v16 == v10 )
+          {
+            if ( v14 < 7 )
+            {
+              v11 = v14 + 1;
+              goto LABEL_16;
+            }
+            break;
+          }
+        }
+        v17 = pthread_attr_init(&v26);
+        if ( v17 )
+        {
+          if ( v17 >= 0 )
+            v18 = v17;
+          else
+            v18 = -v17;
+          return v18 | 0x40000000u;
+        }
+        else
+        {
+          v19 = pthread_attr_setdetachstate(&v26, 1);
+          if ( v19
+            || (v25 = 0LL,
+                v22 = v7,
+                v23 = a2,
+                v24 = 4097,
+                v20 = (void *(__cdecl *)(void *))nullsub_1(sub_39150),
+                (v19 = pthread_create(&v25, &v26, v20, &v22)) != 0)
+            || (v19 = pthread_join(v25, 0LL)) != 0 )
+          {
+            if ( v19 >= 0 )
+              v21 = v19;
+            else
+              v21 = -v19;
+            v3 = v21 | 0x40000000u;
+          }
+          else
+          {
+            v3 = v24;
+          }
+          pthread_attr_destroy(&v26);
+        }
+        return v3;
       }
-      break;
+      v11 = 0;
+  LABEL_16:
+      v12 = *(_QWORD *)(a1 + ((unsigned __int64)v11 << 6) + 8LL * a2 + 952);
+      v13 = v10 + *(_DWORD *)(a1 + 360) * (a2 + 1);
+      goto LABEL_18;
     }
-  }
-  if ( !pthread_attr_init(&v20) )
-  {
-    if ( !pthread_attr_setdetachstate(&v20, 1) )
-    {
-      v19 = 0;
-      v16 = v5;
-      v17 = a2;
-      v18 = 4097;
-      v15 = (void *(__cdecl *)(void *))nullsub_1(sub_39150);
-      if ( !pthread_create(&v19, &v20, v15, &v16) )
-        pthread_join(v19, 0);
-    }
-    pthread_attr_destroy(&v20);
-  }
+    v13 = *(_QWORD *)(v7 + 6384) + *(_DWORD *)(v7 + 360) * (a2 + 1);
+    a1 = v7;
+    v12 = a3;
+  LABEL_18:
+    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
+      __break(0xC471u);
+    return kwrite64(a1, v13, v12);
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(_QWORD);
 
@@ -42543,8 +42549,7 @@ __int64 __fastcall create_pthread_something(__int64 a1, pthread_t *a2, __int64 a
         v17 = *(_DWORD *)(a1 + 6428);
         if ( !v17 )
           v17 = *(_DWORD *)(a1 + 6424);
-        sub_39FDC((struct_krwCtx *)a1, v17, v15);
-        if ( v18 )
+        if ( sub_39FDC((struct_krwCtx *)a1, v17, v15) )
         {
           v19 = thread_resume(v16);
           if ( v19 )
@@ -42571,7 +42576,7 @@ __int64 __fastcall create_pthread_something(__int64 a1, pthread_t *a2, __int64 a
 // 19728: using guessed type __int64 __fastcall nullsub_1(_QWORD);
 
 //----- (0000000000039FDC) ----------------------------------------------------
-void __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int a3)
+bool __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int a3)
 {
   int v5; // w22
   __int64 v6; // x0
@@ -42601,9 +42606,9 @@ void __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int 
           {
             sub_35FD8(someCtx, newValue);
             if ( someCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
-              kwrite64((__int64)someCtx, address, newValue);
+              return kwrite64((__int64)someCtx, address, newValue);
             else
-              sub_2A63C(someCtx, address, newValue);
+              return sub_2A63C(someCtx, address, newValue);
           }
         }
       }
@@ -42613,8 +42618,9 @@ void __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int 
   {
     if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
       __break(0xC471u);
-    set_flags_something_INEEDTOLOOK_sub_3F8C0((__int64)someCtx, a3, v5, 0);
+    return set_flags_something_INEEDTOLOOK_sub_3F8C0((__int64)someCtx, a3, v5, 0);
   }
+    return 0;
 }
 
 //----- (000000000003A100) ----------------------------------------------------
@@ -43021,7 +43027,7 @@ __int64 __fastcall sub_3A8DC(__int64 a1, unsigned int a2)
 // 3AA0C: variable 'v8' is possibly undefined
 
 //----- (000000000003AA2C) ----------------------------------------------------
-void __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3)
+int __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3)
 {
   int v6; // w8
   unsigned __int64 v7; // x0
@@ -43044,27 +43050,27 @@ void __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3)
 
   v23 = 0;
   if ( !(unsigned int)sub_2D934((struct_krwCtx *)a1, a2) )
-    return;
+    return 0;
   if ( !a3 )
   {
     if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     {
       v7 = sub_349C8((struct_krwCtx *)a1, a2);
       if ( !v7 )
-        return;
+        return 0;
       if ( !kread64_outptr((struct_krwCtx *)a1, v7 + 176, (unsigned __int64 *)&v22) )
-        return;
+        return 0;
       if ( !validate_addr(a1, v22) )
-        return;
+        return 0;
       if ( !kread64_outptr((struct_krwCtx *)a1, v22 + 80, &v21) )
-        return;
+        return 0;
       if ( v21 )
       {
         *(_QWORD *)(a1 + 296) = v21;
         v21 = 0;
         sub_130B4(a1, v22 + 80, (__int64)&v21, *(unsigned int *)(a1 + 360));
         if ( !v8 )
-          return;
+          return 0;
       }
       goto LABEL_3;
     }
@@ -43085,21 +43091,21 @@ void __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3)
 LABEL_38:
           v17 = sub_349C8((struct_krwCtx *)a1, a2);
           if ( !v17 )
-            return;
+            return 0;
           v18 = v17 + v16;
           if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v18, 8, &v22) )
-            return;
+            return 0;
           if ( v22 )
           {
             v21 = 0;
             if ( (vm_page_mask & v22) != 0 )
-              return;
+              return 0;
             sub_130B4(a1, v18, (__int64)&v21, 8);
             if ( !v19 )
-              return;
+              return 0;
             sub_130B4(a1, v18 + 8, (__int64)&v21, 8);
             if ( !v20 )
-              return;
+              return 0;
           }
           goto LABEL_3;
         }
@@ -43134,7 +43140,7 @@ LABEL_3:
     if ( v6 != 6153 && v6 != 7195 )
     {
       if ( v6 != 8019 )
-        return;
+        return 0;
       v9 = 284;
     }
     goto LABEL_28;
@@ -43144,7 +43150,7 @@ LABEL_3:
     if ( v6 != 8796 )
     {
       if ( v6 != 10002 )
-        return;
+        return 0;
       v9 = 200;
       goto LABEL_28;
     }
@@ -43153,7 +43159,7 @@ LABEL_3:
   if ( v6 != 8020 )
   {
     if ( v6 != 8792 )
-      return;
+      return 0;
 LABEL_23:
     v9 = 180;
     goto LABEL_28;
@@ -43167,9 +43173,10 @@ LABEL_28:
     if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v14 + v9, 4, &v23) )
     {
       v23 = v23 & 0xFFFFFBFF | ((a3 != 0) << 10);
-      kwritebuf_last_1(a1, v15, (__int64)&v23, 4);
+      return kwritebuf_last_1(a1, v15, (__int64)&v23, 4);
     }
   }
+  return 0;
 }
 // 3AB20: variable 'v8' is possibly undefined
 // 3AD0C: variable 'v19' is possibly undefined
@@ -43716,185 +43723,250 @@ LABEL_18:
 }
 
 //----- (000000000003B7E0) ----------------------------------------------------
-void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
+int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3)
 {
-  unsigned __int64 v6; // x0
-  unsigned __int64 v7; // x23
-  unsigned __int64 v8; // x21
-  int v9; // w24
-  unsigned __int64 v10; // x8
-  int v11; // w9
-  bool v12; // w27
-  int v13; // w2
-  unsigned int v14; // w0
-  unsigned int v15; // w21
-  unsigned __int64 v16; // x0
-  mach_vm_address_t v17; // x20
-  __int64 v18; // x0
-  __int64 v19; // x21
-  host_security_t v20; // w19
-  security_token_t v21; // x2
-  int v22; // w0
-  int v23; // w0
-  int v24; // w0
-  mach_port_t special_port; // [xsp+Ch] [xbp-B4h] BYREF
-  audit_token_t task_info_outCnt; // [xsp+10h] [xbp-B0h] BYREF
-  mach_msg_type_number_t v27[2]; // [xsp+38h] [xbp-88h] BYREF
-  audit_token_t v28; // [xsp+40h] [xbp-80h] BYREF
-  integer_t task_info_out[2]; // [xsp+60h] [xbp-60h] BYREF
-  int v30; // [xsp+68h] [xbp-58h] BYREF
-  int v31; // [xsp+6Ch] [xbp-54h] BYREF
+    // Check if task already has the right special port
+    mach_port_t special_port = 0;
+    kern_return_t kr = task_get_special_port(task, 2, &special_port);
+    if (kr != KERN_SUCCESS)
+        return 0;
+    if (special_port == a3)
+        return 1;   // already set, nothing to do
 
-  if ( task_get_special_port(task, 2, &special_port) || special_port == a3 )
-    return;
-  if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
-  {
-    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
-    {
-      v20 = *(_DWORD *)(a1 + 6436);
-      v27[0] = 2;
-      if ( !task_info(task, 0xDu, task_info_out, v27) )
-      {
-        v27[0] = 8;
-        if ( !task_info(task, 0xFu, (task_info_t)&v28, v27) )
-        {
-          v21 = *(security_token_t *)task_info_out;
-          task_info_outCnt = v28;
-          host_security_set_task_token(v20, task, v21, task_info_outCnt, a3);
-        }
-      }
-    }
-    else
-    {
-      if ( mach_task_self_ != task )
-        return;
-      task_info_outCnt.val[0] = 2;
-      if ( task_info(task, 0xDu, task_info_out, task_info_outCnt.val) )
-        return;
-      task_info_outCnt.val[0] = 8;
-      if ( task_info(task, 0xFu, (task_info_t)&v28, task_info_outCnt.val) )
-        return;
-      v6 = sub_33FFC((struct_krwCtx *)a1, task);
-      if ( !v6 )
-        return;
-      v7 = v6;
-      if ( !kread64_internal((struct_krwCtx *)a1, v6, &task_info_outCnt) )
-        return;
-      v8 = sub_29CB0((struct_krwCtx *)a1, *(__int64 *)task_info_outCnt.val);
-      if ( !validate_addr(a1, v8)
-        || !kread32_outptr(a1, v8 + 24, &v31)
-        || *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && !kread32_outptr(a1, v8 + 32, &v30) )
-      {
-        return;
-      }
-      if ( *(_DWORD *)(a1 + 6432) == a3 )
-      {
-        v9 = 0;
-        v10 = *(_QWORD *)(a1 + 344);
-        v11 = v31;
-        v12 = v10 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && v31 == 0;
-        if ( v12 )
-          v13 = 501;
-        else
-          v13 = 0;
-      }
-      else
-      {
-        if ( *(_DWORD *)(a1 + 6440) != a3 )
-          return;
-        v13 = 0;
-        v11 = v31;
-        v10 = *(_QWORD *)(a1 + 344);
-        v12 = v10 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && v31 != 0;
-        v9 = v31;
-      }
-      if ( v11 != v9 || v12 )
-      {
-        if ( v10 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
-        {
-          if ( !noppl_kwrite32(a1, v8 + 24, v9) )
-            return;
-        }
-        else if ( v12 && !(unsigned int)ppl_kwrite32((struct_krwCtx *)a1, v8 + 24, v13)
-               || !(unsigned int)ppl_kwrite32((struct_krwCtx *)a1, v8 + 32, v9) )
-        {
-          return;
-        }
-      }
-      if ( (unsigned int)sub_34D14(a1, mach_task_self_)
-        && (*(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || !(unsigned int)sub_35FD8((struct_krwCtx *)a1, v8)) )
-      {
-        if ( !validate_addr(a1, *(_QWORD *)(a1 + 920))
-          || (sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), 0), v22) )
-        {
-          if ( !seteuid(v9) )
-          {
-            if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)
-              || kread64_internal((struct_krwCtx *)a1, v7, v27)
-              && (*(_QWORD *)v27 == *(_QWORD *)task_info_outCnt.val
-               || (sub_2A63C((struct_krwCtx *)a1, v7, *(__int64 *)task_info_outCnt.val), v23)) )
-            {
-              if ( !validate_addr(a1, *(_QWORD *)(a1 + 920))
-                || (sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), *(_QWORD *)(a1 + 936)), v24) )
-              {
-                if ( v31 != v9 || v12 )
-                {
-                  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
-                  {
-                    if ( !noppl_kwrite32(a1, v8 + 24, v31) )
-                      return;
-                  }
-                  else if ( v12 && !(unsigned int)ppl_kwrite32((struct_krwCtx *)a1, v8 + 24, v31)
-                         || !(unsigned int)ppl_kwrite32((struct_krwCtx *)a1, v8 + 32, v30) )
-                  {
-                    return;
-                  }
+    // Check flag: 0x5584001
+    if (*(uint32_t *)ctx & 0x5584001) {
+
+        // New path: version > 8018
+        uint64_t ver_threshold_old = XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023);
+        if (ctx->xnuVersionPacked > ver_threshold_old) {
+
+            // Must be operating on self task
+            if (mach_task_self_ != task)
+                return 0;
+
+            // Get security token (flavor 0xD)
+            uint32_t cnt = 2;
+            integer_t task_info_out[2] = {0};
+            if (task_info(task, 0xD, task_info_out, &cnt))
+                return 0;
+
+            // Get audit token (flavor 0xF)
+            cnt = 8;
+            audit_token_t audit_token = {0};
+            if (task_info(task, 0xF, (task_info_t)&audit_token, &cnt))
+                return 0;
+
+            // Get kernel address of task port
+            uint64_t task_kaddr = sub_33FFC(ctx, task);
+            if (!task_kaddr)
+                return 0;
+
+            // Read pointer from task_kaddr
+            uint64_t kptr = 0;
+            if (!kread64_internal(ctx, task_kaddr, &kptr))
+                return 0;
+
+            // Translate/canonicalize
+            uint64_t obj = sub_29CB0(ctx, kptr);
+            if (!validate_addr(ctx, obj))
+                return 0;
+
+            // Read credential field at obj+0x18
+            uint64_t cred_addr = obj + 0x18;  // x22
+            int32_t  cur_uid   = 0;            // [xbp-0x54]
+            if (!kread32_outptr(ctx, cred_addr, &cur_uid))
+                return 0;
+
+            // Second version threshold: 0x001F530F027FFFFF
+            uint64_t ver_threshold_new = XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);  // x25
+
+            int32_t  cur_uid2 = 0;  // [xbp-0x58]
+            if (ctx->xnuVersionPacked > ver_threshold_new) {
+                if (!kread32_outptr(ctx, obj + 0x20, &cur_uid2))
+                    return 0;
+            }
+
+            // Determine which port slot we're targeting and compute new uid
+            int32_t  new_uid;  // x24 / w24
+            int32_t  write_val2; // w2, used for ppl_kwrite32 of cred_addr
+            bool     need_v13;   // w27
+
+            if (*(uint32_t *)((uint8_t *)ctx + 0x1920) == a3) {
+                // Self task port slot
+                new_uid    = 0;
+                bool is_new_ver = ctx->xnuVersionPacked > ver_threshold_new;
+                bool uid_is_zero = (cur_uid == 0);
+                need_v13   = is_new_ver && uid_is_zero;  // ands w27, w10, w11
+                write_val2 = need_v13 ? 501 : 0;         // csel w2, #501, wzr
+            } else {
+                if (*(uint32_t *)((uint8_t *)ctx + 0x1928) != a3)
+                    return 0;
+                // Other port slot
+                new_uid    = cur_uid;    // mov x24, x9
+                write_val2 = 0;
+                bool is_new_ver = ctx->xnuVersionPacked > ver_threshold_new;
+                bool uid_nonzero = (cur_uid != 0);
+                need_v13   = is_new_ver && uid_nonzero;
+            }
+
+            // Write new uid if changed or need_v13
+            // cmp w9, w24; b.ne +776 / tbz w27,#0, +848
+            if (cur_uid != new_uid || need_v13) {
+                if (ctx->xnuVersionPacked > ver_threshold_new) {
+                    if (need_v13) {
+                        // ppl_kwrite32(ctx, cred_addr, write_val2)
+                        if (!ppl_kwrite32(ctx, cred_addr, write_val2))
+                            return 0;
+                    }
+                    // ppl_kwrite32(ctx, obj+0x20, new_uid)
+                    if (!ppl_kwrite32(ctx, obj + 0x20, new_uid))
+                        return 0;  // cbnz → return 0, else fall through
+                } else {
+                    // noppl_kwrite32(ctx, cred_addr, new_uid)
+                    if (!noppl_kwrite32(ctx, cred_addr, new_uid))
+                        return 0;
                 }
-                if ( (unsigned int)sub_39CC0((struct_krwCtx *)a1, task, 1, task_info_out, 8) )
-                  sub_39CC0((struct_krwCtx *)a1, task, 3, &v28, 32);
-              }
             }
-          }
+
+            // sub_34D14(ctx, mach_task_self_)
+            // ldr w1, [x26]  →  x26 = &mach_task_self_, so w1 = mach_task_self_
+            if (!sub_34D14(ctx, mach_task_self_))
+                return 0;
+
+            // Version check again
+            if (ctx->xnuVersionPacked > ver_threshold_new) {
+                if (!sub_35FD8(ctx, obj))
+                    return 0;  // cbnz → return 0
+            }
+
+            // validate_addr(ctx, ctx->field_0x398)
+            if (validate_addr(ctx, *(uint64_t *)((uint8_t *)ctx + 0x398))) {
+                // sub_35AE0(ctx, ctx->field_0x37c, 0)
+                if (!sub_35AE0(ctx,
+                               *(uint32_t *)((uint8_t *)ctx + 0x37c),
+                               0))
+                    return 0;
+            }
+
+            // seteuid(new_uid)
+            if (seteuid(new_uid))
+                return 0;
+
+            if (ctx->xnuVersionPacked > ver_threshold_new) {
+                // Re-read task_kaddr to verify it hasn't changed
+                uint64_t kptr2 = 0;
+                if (!kread64_internal(ctx, task_kaddr, &kptr2))
+                    return 0;
+
+                uint64_t saved_kptr = *(uint64_t *)((uint8_t *)ctx + 0x10);
+                // [sp+0x10] was the first kptr read
+                if (kptr2 != saved_kptr) {
+                    if (!sub_2A63C(ctx, task_kaddr, saved_kptr))
+                        return 0;
+                }
+            }
+
+            // validate_addr(ctx, ctx->field_0x398) again
+            if (validate_addr(ctx, *(uint64_t *)((uint8_t *)ctx + 0x398))) {
+                // sub_35AE0(ctx, ctx->field_0x37c, ctx->field_0x3a8)
+                if (!sub_35AE0(ctx,
+                               *(uint32_t *)((uint8_t *)ctx + 0x37c),
+                               *(uint64_t *)((uint8_t *)ctx + 0x3a8)))
+                    return 0;
+            }
+
+            // Restore uid if changed
+            // ldur w2,[xbp-0x54] = cur_uid; cmp w2,w24 (new_uid)
+            // orr w8,cset_ne,w27
+            if (cur_uid != new_uid || need_v13) {
+                if (ctx->xnuVersionPacked > ver_threshold_new) {
+                    if (need_v13) {
+                        if (!ppl_kwrite32(ctx, cred_addr, cur_uid))
+                            return 0;
+                    }
+                    // ppl_kwrite32(ctx, obj+0x20, cur_uid2)
+                    if (ppl_kwrite32(ctx, obj + 0x20, cur_uid2))
+                        return 0;  // cbnz → return 0
+                } else {
+                    if (!noppl_kwrite32(ctx, cred_addr, cur_uid))
+                        return 0;
+                }
+            }
+
+            // sub_39CC0(ctx, task, 1, task_info_out, 8)
+            if (sub_39CC0(ctx, task, 1, task_info_out, 8)) {
+                // sub_39CC0(ctx, task, 3, &audit_token, 32)
+                sub_39CC0(ctx, task, 3, &audit_token, 32);
+            }
+
+            return 0;
+
+        } else {
+            // Old path: version <= 8018
+            // Use host_security_set_task_token
+
+            host_security_t host_sec = *(uint32_t *)((uint8_t *)ctx + 0x1924);
+
+            uint32_t cnt = 2;
+            integer_t task_info_out[2] = {0};
+            if (task_info(task, 0xD, task_info_out, &cnt))
+                return 0;
+
+            cnt = 8;
+            audit_token_t audit_token = {0};
+            if (task_info(task, 0xF, (task_info_t)&audit_token, &cnt))
+                return 0;
+
+            security_token_t sec_token = *(security_token_t *)task_info_out;
+            // Copy audit_token to local (ldp q0,q1 / stp q0,q1)
+            audit_token_t audit_copy = audit_token;
+
+            kern_return_t r = host_security_set_task_token(
+                host_sec, task, sec_token, audit_copy, a3);
+
+            return (r == KERN_SUCCESS) ? 1 : 0;
         }
-      }
-    }
-  }
-  else
-  {
-    v14 = sub_32E84(a1);
-    if ( v14 )
-    {
-      v15 = v14;
-      v16 = port_name_to_kaddr((struct_krwCtx *)a1, task);
-      if ( v16 )
-      {
-        v17 = v16 + v15;
-        if ( kread64_outptr((struct_krwCtx *)a1, v17, (unsigned __int64 *)v28.val) )
-        {
-          if ( validate_addr(a1, *(__int64 *)v28.val) )
-          {
-            if ( a3 + 1 < 2 )
-            {
-              if ( a3 == -1 )
-                v19 = -1;
-              else
-                v19 = 0;
-            }
-            else
-            {
-              v18 = task_self_get_ipc_port((struct_krwCtx *)a1, a3);
-              if ( !v18 )
-                return;
-              v19 = v18;
-              if ( (unsigned int)sub_35E8C(a1, v18) )
-                return;
-            }
-            kwrite64(a1, v17, v19);
-          }
+
+    } else {
+        // Flag not set — use port kaddr write path
+
+        uint32_t offset = sub_32E84(ctx);  // field offset
+        if (!offset)
+            return 0;
+
+        uint64_t task_kaddr = port_name_to_kaddr(ctx, task);
+        if (!task_kaddr)
+            return 0;
+
+        uint64_t target_addr = task_kaddr + offset;  // add x20,x0,w21 uxtw
+
+        uint64_t cur_val = 0;
+        if (!kread64(ctx, target_addr, &cur_val))
+            return 0;
+
+        if (!validate_addr(ctx, cur_val))
+            return 0;
+
+        // Determine new value to write
+        // cmn w24, #1 → checks a3 == -1 (MACH_PORT_NULL-ish)
+        // csetm x21, eq → x21 = (a3==-1) ? -1 : 0
+        uint64_t new_val;
+        if ((uint32_t)(a3 + 1) < 2) {
+            // a3 is 0 or -1
+            new_val = (a3 == (mach_port_t)-1) ? (uint64_t)-1 : 0;
+        } else {
+            uint64_t ipc_port = task_self_get_ipc_port(ctx, a3);
+            if (!ipc_port)
+                return 0;
+            if (sub_35E8C(ctx, ipc_port))
+                return 0;
+            new_val = ipc_port;
         }
-      }
+
+        // kwrite64, return 1 on failure, 0 on success
+        int wr = kwrite64(ctx, target_addr, new_val);
+        return (wr != 0) ? 1 : 0;
     }
-  }
 }
 // 3BB7C: variable 'v22' is possibly undefined
 // 3BBC8: variable 'v23' is possibly undefined
@@ -44430,8 +44502,7 @@ __int64 __fastcall sub_3C450(__int64 a1, unsigned int a2, int a3, _BYTE *a4)
   else if ( *(_BYTE *)(a1 + 12) && (a3 & 1) == 0 )
   {
 LABEL_47:
-    sub_2A63C((struct_krwCtx *)a1, v18, 0);
-    if ( !v24 )
+    if ( !sub_2A63C((struct_krwCtx *)a1, v18, 0) )
       return 163856;
     goto LABEL_58;
   }
@@ -44520,8 +44591,7 @@ LABEL_58:
   else if ( *(_BYTE *)(a1 + 12) && (a3 & 1) == 0 )
   {
 LABEL_74:
-    sub_2A63C((struct_krwCtx *)a1, v26, 0);
-    if ( !v28 )
+    if ( !sub_2A63C((struct_krwCtx *)a1, v26, 0) )
       return 163856;
     goto LABEL_85;
   }
@@ -44683,8 +44753,7 @@ LABEL_37:
   if ( v25 )
   {
 LABEL_36:
-    sub_2A63C(a1, v13, v18);
-    if ( !v19 )
+    if ( !sub_2A63C(a1, v13, v18) )
       return v4;
     goto LABEL_37;
   }
@@ -45541,9 +45610,7 @@ LABEL_280:
               goto LABEL_291;
             }
 LABEL_293:
-            sub_3B7E0((__int64)krwCtx, mach_task_self_, v73);
-            v75 = !task_get_special_port(mach_task_self_, 2, (mach_port_t *)&v96) && v96 == v73;
-            if ( !v75 )
+            if ( !sub_3B7E0((__int64)krwCtx, mach_task_self_, v73) )
               return 163848;
             krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_HOST_PORT_READY);
           }
@@ -46016,8 +46083,7 @@ LABEL_90:
                 v32 = HIDWORD(a1->gap191[693]);
                 if ( !v32 )
                   v32 = a1->gap191[693];
-                sub_39FDC((__int64)a1, v32, v31);
-                if ( !v8[0] )
+                if ( !sub_39FDC((__int64)a1, v32, v31) )
                   goto LABEL_215;
                 LODWORD(v6) = 0;
                 if ( a1->gap1910 + 1 <= 1 )
@@ -46084,7 +46150,7 @@ LABEL_124:
                 else
                   v36 = mach_task_self_;
 LABEL_128:
-                sub_3AA2C((__int64)a1, v36, 0);
+                v8[0] = sub_3AA2C((__int64)a1, v36, 0);
                 goto LABEL_215;
               case 23:
                 if ( (_DWORD)v3 )
@@ -46099,7 +46165,7 @@ LABEL_128:
                 else
                   v33 = mach_task_self_;
 LABEL_136:
-                sub_3B7E0((__int64)a1, v33, a1->gap191[694]);
+                v8[0] = sub_3B7E0((__int64)a1, v33, a1->gap191[694]);
                 goto LABEL_215;
               case 31:
                 if ( !(_DWORD)v3 )
@@ -46158,7 +46224,7 @@ LABEL_48:
                       goto LABEL_216;
                     v29 = mach_task_self_;
 LABEL_150:
-                    sub_3FE68((__int64)a1, v29, (host_t *)v3);
+                    v8[0] = sub_3FE68((__int64)a1, v29, (host_t *)v3);
                     goto LABEL_215;
                 }
                 goto LABEL_215;
@@ -47005,23 +47071,23 @@ LABEL_40:
 // 19B94: using guessed type __int64 __fastcall sub_19B94(_QWORD, _QWORD);
 
 //----- (000000000003FE68) ----------------------------------------------------
-void __fastcall sub_3FE68(__int64 a1, task_inspect_t a2, host_t *a3)
+int __fastcall sub_3FE68(__int64 a1, task_inspect_t a2, host_t *a3)
 {
   host_t v4; // w2
-  int v6; // w0
+  int result; // w0
 
-  v4 = *(_DWORD *)(a1 + 6432);
-  if ( v4 + 1 >= 2 )
+  v4 = *(_DWORD *)(a1 + 0x1920);
+  if ( v4 + 1 < 2 )
+    return 0;
+  if ( *(_QWORD *)(a1 + 0x158) >= 0x1C1B1914600000uLL )
   {
-    if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
-    {
-      sub_3B7E0(a1, a2, v4);
-      if ( !v6 )
-        return;
-      v4 = *(_DWORD *)(a1 + 6432);
-    }
-    *a3 = v4;
+    result = sub_3B7E0(a1, a2, v4);
+    if ( !result )
+      return result;
+    v4 = *(_DWORD *)(a1 + 0x1920);
   }
+  *a3 = v4;
+  return 1;
 }
 // 3FEB8: variable 'v6' is possibly undefined
 
