@@ -16,11 +16,15 @@ entry1_type0x09_OPTFLAGS = -Og
 endif
 
 RECOMP_TRACE_DMAFAIL ?= 0
+RECOMP_TRACE_PHYSMAP ?= 0
+RECOMP_PHYSMAP_VALIDATE_CACHE ?= 1
 
 entry1_type0x09_FILES = entry1_type0x09.m
 entry1_type0x09_CFLAGS = \
     $(entry1_type0x09_OPTFLAGS) \
     -DRECOMP_TRACE_DMAFAIL=$(RECOMP_TRACE_DMAFAIL) \
+    -DRECOMP_TRACE_PHYSMAP=$(RECOMP_TRACE_PHYSMAP) \
+    -DRECOMP_PHYSMAP_VALIDATE_CACHE=$(RECOMP_PHYSMAP_VALIDATE_CACHE) \
     -fno-inline \
     -fno-strict-aliasing \
     -Wno-int-conversion \

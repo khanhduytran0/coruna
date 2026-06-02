@@ -10,6 +10,14 @@
 #define RECOMP_TRACE_DMAFAIL 0
 #endif
 
+#ifndef RECOMP_TRACE_PHYSMAP
+#define RECOMP_TRACE_PHYSMAP 0
+#endif
+
+#ifndef RECOMP_PHYSMAP_VALIDATE_CACHE
+#define RECOMP_PHYSMAP_VALIDATE_CACHE 1
+#endif
+
 #ifndef RECOMP_ENABLE_STOCK_CLOSE_RESTORE
 #define RECOMP_ENABLE_STOCK_CLOSE_RESTORE 0
 #endif
@@ -18,6 +26,12 @@
 #define TRACE_DMAFAIL(...) printf(__VA_ARGS__)
 #else
 #define TRACE_DMAFAIL(...) do { } while (0)
+#endif
+
+#if RECOMP_TRACE_PHYSMAP
+#define TRACE_PHYSMAP(...) printf(__VA_ARGS__)
+#else
+#define TRACE_PHYSMAP(...) do { } while (0)
 #endif
 
 
@@ -5541,6 +5555,12 @@ __int64 __fastcall sub_BBF4(__int64 a1)
 
   v1 = atomic_load((unsigned __int64 *)(a1 + 13872));
   v2 = atomic_load((unsigned int *)(a1 + 13880));
+  TRACE_PHYSMAP("physmap worker enter state=%llx size=%llx port=%x flag=%u count=%u\n",
+                (unsigned long long)a1,
+                (unsigned long long)v1,
+                v2,
+                atomic_load((unsigned __int8 *)(a1 + 13884)),
+                atomic_load((unsigned int *)(a1 + 13888)));
   if ( v1 )
     v3 = v2 == 0;
   else
@@ -5548,6 +5568,9 @@ __int64 __fastcall sub_BBF4(__int64 a1)
   if ( !v3 )
   {
     atomic_fetch_add((atomic_uint *volatile)(a1 + 13888), 1u);
+    TRACE_PHYSMAP("physmap worker counted state=%llx count=%u\n",
+                  (unsigned long long)a1,
+                  atomic_load((unsigned int *)(a1 + 13888)));
     v4 = (unsigned __int8 *)(a1 + 13884);
     do
     {
@@ -5558,6 +5581,10 @@ __int64 __fastcall sub_BBF4(__int64 a1)
     }
     while ( vm_map(mach_task_self_, &address, v1, 0, 0, v2, 0, 1, 1, 1, 1u) == 1 );
   }
+  TRACE_PHYSMAP("physmap worker exit state=%llx flag=%u count=%u\n",
+                (unsigned long long)a1,
+                atomic_load((unsigned __int8 *)(a1 + 13884)),
+                atomic_load((unsigned int *)(a1 + 13888)));
   return 0;
 }
 
@@ -5831,6 +5858,13 @@ __int64 __fastcall sub_BED0(__int64 a1, __int64 a2, unsigned int a3, __int64 a4)
   v8 = a3;
   v9 = vm_page_size;
   v10 = *(_DWORD *)(a1 + 320);
+  TRACE_PHYSMAP("sub_BED0 start ctx=%llx state=%llx pages=%u out=%llx board=%d page=%llu\n",
+                (unsigned long long)a1,
+                (unsigned long long)a2,
+                a3,
+                (unsigned long long)a4,
+                v10,
+                (unsigned long long)v9);
   if ( (int)number_of_cpus() >= 3 && (int)number_of_cpus() > 5 )
   {
     v11 = 4;
@@ -5856,6 +5890,10 @@ LABEL_9:
   if ( _os_alloc_once_table[160] == -1 )
   {
     v13 = (_QWORD *)_os_alloc_once_table[161];
+    TRACE_PHYSMAP("sub_BED0 os_alloc_once cached slot=%llx base=%llx size=%llx\n",
+                  (unsigned long long)v13,
+                  v13 ? (unsigned long long)v13[0] : 0,
+                  v13 ? (unsigned long long)v13[1] : 0);
   }
   else
   {
@@ -5863,8 +5901,25 @@ LABEL_9:
     v68 = (__int64)_os_alloc_once(&_os_alloc_once_table[160], 0x10u, 0);
     v12 = v67;
     v13 = (_QWORD *)v68;
+    TRACE_PHYSMAP("sub_BED0 os_alloc_once init slot=%llx base=%llx size=%llx\n",
+                  (unsigned long long)v13,
+                  v13 ? (unsigned long long)v13[0] : 0,
+                  v13 ? (unsigned long long)v13[1] : 0);
   }
   v14 = v9 * v8;
+#if RECOMP_PHYSMAP_VALIDATE_CACHE
+  if ( *v13 && v13[1] && v13[1] < v14 + 2 * v9 )
+  {
+    TRACE_PHYSMAP("sub_BED0 stale cached region base=%llx size=%llx required=%llx; rescanning\n",
+                  (unsigned long long)v13[0],
+                  (unsigned long long)v13[1],
+                  (unsigned long long)(v14 + 2 * v9));
+    *v13 = 0;
+    v13[1] = 0;
+    *(_QWORD *)(a2 + 13864) = 0;
+    atomic_store(0, (unsigned __int64 *)(a2 + 13872));
+  }
+#endif
   if ( *v13 && (v15 = v13[1]) != 0 )
   {
     *(_QWORD *)(a2 + 13864) = *v13;
@@ -5929,6 +5984,10 @@ LABEL_58:
     atomic_store(v45, (unsigned __int64 *)(a2 + 13872));
     *v13 = free_region_address;
     v13[1] = v139;
+    TRACE_PHYSMAP("sub_BED0 free region base=%llx size=%llx required=%llx\n",
+                  (unsigned long long)free_region_address,
+                  (unsigned long long)v139,
+                  (unsigned long long)(v14 + 2 * vm_page_size));
     v8 = v115;
     v12 = v117;
   }
@@ -5951,6 +6010,12 @@ LABEL_58:
       atomic_store(0, v20);
       atomic_store(0, v21);
       memset(object_handle, 0, sizeof(object_handle));
+      TRACE_PHYSMAP("sub_BED0 iter=%lld workers=%u mem_size=%llx map_base=%llx cached_size=%llx\n",
+                    (long long)v18,
+                    v11,
+                    (unsigned long long)v19,
+                    (unsigned long long)*(_QWORD *)(a2 + 13864),
+                    (unsigned long long)atomic_load((unsigned __int64 *)(a2 + 13872)));
       if ( v11 )
         break;
       v112 = 0;
@@ -6017,8 +6082,13 @@ LABEL_36:
         v35 = atomic_load((unsigned int *)(a2 + 13888));
         if ( v35 == v112 )
           break;
+        TRACE_PHYSMAP("sub_BED0 wait workers count=%u expected=%u flag=%u\n",
+                      v35,
+                      v112,
+                      atomic_load((unsigned __int8 *)(a2 + 13884)));
         sub_2AABC(v7, 0x3E8u);
       }
+      TRACE_PHYSMAP("sub_BED0 workers ready count=%u expected=%u\n", v35, v112);
       v131 = v19;
       memory_entry_64 = mach_make_memory_entry_64(mach_task_self_, &v131, 0, 1, &name, v26);
       if ( (_DWORD)memory_entry_64 )
@@ -6503,6 +6573,13 @@ LABEL_171:
     }
     while ( v89 );
   }
+  TRACE_PHYSMAP("sub_BED0 exit err=%lld state=%llx v141=%llx address=%llx name=%x workers=%u\n",
+                (long long)v42,
+                (unsigned long long)a2,
+                (unsigned long long)v141,
+                (unsigned long long)address,
+                name,
+                v11);
   return v42;
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(_QWORD);
