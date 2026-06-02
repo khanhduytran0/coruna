@@ -322,7 +322,7 @@ __int64 __fastcall sub_20C64(__int64 a1, __int64 a2, __int64 a3, int *a4);
 __int64 __fastcall sub_20D24(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 *a4);
 __int64 __fastcall sub_20D90(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3, int a4, unsigned __int64 *a5);
 __int64 __fastcall sub_21060(struct_krwCtx *a1, __int64 a2, __int16 a3, __int64 a4);
-__int64 __fastcall sub_211F4(__int64 a1, __int64 a2, unsigned __int64 a3, unsigned __int64 *a4);
+__int64 __fastcall sub_211F4(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3, unsigned __int64 *a4);
 __int64 __fastcall sub_21200(struct_krwCtx *a1, int w1_0);
 uint64_t __fastcall sub_21304(__int64 a1);
 unsigned __int64 __fastcall sub_21388(struct_krwCtx *a1);
@@ -530,11 +530,11 @@ __int64 __fastcall sub_33304(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_3338C(__int64);
 __int64 __fastcall krw_task_for_pid_0(struct_krwCtx *a1, __int64 a2, int pid);
 __int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char *a4);
-__int64 __fastcall krw_task_for_name(__int64 a1, __int64 a2, const char *a3);
+__int64 __fastcall krw_task_for_name(struct_krwCtx *a1, __int64 a2, const char *a3);
 __int64 __fastcall sub_336B8(struct_krwCtx *a1, __int64 a2, _DWORD *a3, _DWORD *a4);
 __int64 __fastcall sub_3382C(__int64 a1, mach_port_name_t task, _DWORD *a3, _DWORD *a4);
 __int64 __fastcall task_get_ipc_port_ptr(struct_krwCtx *a1, mach_port_name_t task, mach_port_t port);
-__int64 __fastcall task_self_get_ipc_port_ptr(__int64 a1, unsigned int a2);
+__int64 __fastcall task_self_get_ipc_port_ptr(struct_krwCtx *a1, unsigned int a2);
 unsigned __int64 __fastcall task_get_ipc_port(struct_krwCtx *ctx, mach_port_name_t task, mach_port_t port);
 __int64 __fastcall sub_33A88(struct_krwCtx *a1, __int64 a2, char a3);
 __int64 __fastcall sub_33B98(struct_krwCtx *a1, unsigned int a2, unsigned __int64 a3);
@@ -557,10 +557,10 @@ __int64 __fastcall sub_348BC(__int64);
 __int64 __fastcall sub_3492C(struct_krwCtx *a1, __int64 a2);
 unsigned __int64 __fastcall sub_349C8(struct_krwCtx *a1, unsigned int a2);
 __int64 __fastcall sub_34A40(__int64 a1, __int64 a2);
-__int64 __fastcall sub_34D14(__int64 a1, unsigned int a2);
+__int64 __fastcall sub_34D14(struct_krwCtx *a1, unsigned int a2);
 unsigned __int64 __fastcall sub_34D58(struct_krwCtx *a1, unsigned int a2, int a3);
 unsigned __int64 __fastcall sub_34F5C(struct_krwCtx *a1, unsigned int a2, int a3, unsigned int *a4);
-unsigned __int64 __fastcall sub_34FF8(__int64 a1, unsigned int a2, unsigned int *a3);
+unsigned __int64 __fastcall sub_34FF8(struct_krwCtx *a1, unsigned int a2, unsigned int *a3);
 __int64 __fastcall sub_35004(__int64 a1, int a2, __int64 a3, unsigned int *a4);
 __int64 __fastcall sub_353DC(__int64);
 __int64 __fastcall sub_35420(__int64, __int64);
@@ -575,7 +575,7 @@ unsigned __int64 __fastcall sub_35A50(struct_krwCtx *a1, int a2, _DWORD *a3);
 void __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3);
 mach_vm_address_t __fastcall sub_35D94(__int64 a1, __int64 a2, int a3);
 __int64 __fastcall sub_35E18(struct_krwCtx *a1, __int64 a2, int a3);
-__int64 __fastcall sub_35E8C(__int64 a1, __int64 a2);
+__int64 __fastcall sub_35E8C(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_35ECC(struct_krwCtx *a1, unsigned __int64 a2, int a3);
 __int64 __fastcall sub_35FD8(struct_krwCtx *a1, unsigned __int64 a2);
 __int64 __fastcall sub_36000(__int64 a1, __int64 a2);
@@ -610,10 +610,10 @@ double __fastcall physmap_unmap_cached(__int64 a1, __int64 a2);
 __int64 __fastcall sub_38C8C(__int64 a1, __int64 a2, __int64 a3);
 void __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned int a4, int a5);
 void __fastcall physwritebuf_direct_mapped(struct_krwCtx *krwCtx, unsigned __int64 paddr, const void *buf, unsigned int size, int something);
-__int64 __fastcall sub_38F38(__int64 a1, __int64 a2, __int64 a3);
+__int64 __fastcall sub_38F38(struct_krwCtx *a1, __int64 a2, __int64 a3);
 __int64 __fastcall sub_38F6C(__int64 a1, __int64 a2, __int16 a3);
 __int64 __fastcall sub_38FAC(unsigned int);
-__int64 __fastcall sub_38FD4(__int64 a1, __int64 a2);
+__int64 __fastcall sub_38FD4(struct_krwCtx *a1, __int64 a2);
 uint64_t __fastcall sub_39090(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_39150(__int64 x0_0);
 unsigned __int64 __fastcall kernel_get_base_slid(struct_krwCtx *ctx, unsigned __int64 optional_vtable_func);
@@ -21800,9 +21800,9 @@ LABEL_20:
 }
 
 //----- (00000000000211F4) ----------------------------------------------------
-__int64 __fastcall sub_211F4(__int64 a1, __int64 a2, unsigned __int64 a3, unsigned __int64 *a4)
+__int64 __fastcall sub_211F4(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3, unsigned __int64 *a4)
 {
-  return sub_20D90((struct_krwCtx *)a1, a2, a3, 2, a4);
+  return sub_20D90(a1, a2, a3, 2, a4);
 }
 
 //----- (0000000000021200) ----------------------------------------------------
@@ -27903,7 +27903,7 @@ __int64 __fastcall sub_28364(struct_krwCtx *a1)
     v4 = sub_32D24((__int64)a1);
     if ( !v4 )
       goto LABEL_19;
-    v5 = krw_task_for_name((__int64)a1, v4, "SpringBoard");
+    v5 = krw_task_for_name(a1, v4, "SpringBoard");
     if ( !v5 )
       goto LABEL_19;
     v6 = sub_33ED8(a1, v5);
@@ -37021,9 +37021,9 @@ __int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char 
 }
 
 //----- (00000000000336AC) ----------------------------------------------------
-__int64 __fastcall sub_336AC(__int64 a1, __int64 a2, const char *a3)
+__int64 __fastcall sub_336AC(struct_krwCtx *a1, __int64 a2, const char *a3)
 {
-  return sub_3341C((struct_krwCtx *)a1, a2, 0, a3);
+  return sub_3341C(a1, a2, 0, a3);
 }
 
 //----- (00000000000336B8) ----------------------------------------------------
@@ -37189,9 +37189,9 @@ __int64 __fastcall sub_339B4(struct_krwCtx *a1, mach_port_name_t task, mach_port
 }
 
 //----- (0000000000033A1C) ----------------------------------------------------
-__int64 __fastcall sub_33A1C(__int64 a1, unsigned int a2)
+__int64 __fastcall sub_33A1C(struct_krwCtx *a1, unsigned int a2)
 {
-  return task_get_ipc_port_ptr((struct_krwCtx *)a1, mach_task_self_, a2);
+  return task_get_ipc_port_ptr(a1, mach_task_self_, a2);
 }
 
 //----- (0000000000033A30) ----------------------------------------------------
@@ -38144,17 +38144,17 @@ LABEL_28:
 }
 
 //----- (0000000000034D14) ----------------------------------------------------
-__int64 __fastcall sub_34D14(__int64 a1, unsigned int a2)
+__int64 __fastcall sub_34D14(struct_krwCtx *a1, unsigned int a2)
 {
   __int64 result; // x0
 
-  result = port_name_to_kaddr((struct_krwCtx *)a1, a2);
+  result = port_name_to_kaddr(a1, a2);
   if ( result )
   {
-    result = sub_34A40(a1, result);
+    result = sub_34A40((__int64)a1, result);
     if ( (_DWORD)result )
     {
-      *(_DWORD *)(a1 + 6392) = a2;
+      *(_DWORD *)((char *)a1 + 6392) = a2;
       return 1;
     }
   }
@@ -38314,9 +38314,9 @@ LABEL_6:
 }
 
 //----- (0000000000034FF8) ----------------------------------------------------
-unsigned __int64 __fastcall sub_34FF8(__int64 a1, unsigned int a2, unsigned int *a3)
+unsigned __int64 __fastcall sub_34FF8(struct_krwCtx *a1, unsigned int a2, unsigned int *a3)
 {
-  return sub_34F5C((struct_krwCtx *)a1, a2, 0, a3);
+  return sub_34F5C(a1, a2, 0, a3);
 }
 
 //----- (0000000000035004) ----------------------------------------------------
@@ -39002,10 +39002,10 @@ __int64 __fastcall sub_35E18(struct_krwCtx *a1, __int64 a2, int a3)
 }
 
 //----- (0000000000035E8C) ----------------------------------------------------
-__int64 __fastcall sub_35E8C(__int64 a1, __int64 a2)
+__int64 __fastcall sub_35E8C(struct_krwCtx *a1, __int64 a2)
 {
-  sub_35E18((struct_krwCtx *)a1, a2, 1);
-  sub_35D94(a1, a2, 1);
+  sub_35E18(a1, a2, 1);
+  sub_35D94((__int64)a1, a2, 1);
   return 0;
 }
 
@@ -39618,7 +39618,7 @@ LABEL_54:
           v9 = sub_363E4(v30, 8u);
           if ( !(_DWORD)v9 )
           {
-            v39 = task_self_get_ipc_port_ptr((__int64)a1, previous[1]);
+            v39 = task_self_get_ipc_port_ptr(a1, previous[1]);
             if ( !v39 )
               return 163854;
             v40 = v39 + 8;
@@ -39650,7 +39650,7 @@ LABEL_54:
                       v45 = address;
                       if ( (v48 & 0x400) != 0 )
                         noppl_kwrite32((__int64)a1, a2, v48);
-                      v46 = task_self_get_ipc_port_ptr((__int64)a1, previous[1]);
+                      v46 = task_self_get_ipc_port_ptr(a1, previous[1]);
                       if ( !v46 )
                         return 163854;
                       v47 = v46 + 8;
@@ -41467,9 +41467,9 @@ void __fastcall physwritebuf_direct_mapped(
 }
 
 //----- (0000000000038F38) ----------------------------------------------------
-__int64 __fastcall sub_38F38(__int64 a1, __int64 a2, __int64 a3)
+__int64 __fastcall sub_38F38(struct_krwCtx *a1, __int64 a2, __int64 a3)
 {
-  if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, a2 + 8, 2, (void *)a3) )
+  if ( (unsigned int)kreadbuf_last_1(a1, a2 + 8, 2, (void *)a3) )
     return 0;
   else
     return 163855;
@@ -41501,7 +41501,7 @@ __int64 __fastcall sub_38FAC(unsigned int a1)
 }
 
 //----- (0000000000038FD4) ----------------------------------------------------
-__int64 __fastcall sub_38FD4(__int64 a1, __int64 a2)
+__int64 __fastcall sub_38FD4(struct_krwCtx *a1, __int64 a2)
 {
   __int64 v4; // x19
   __int64 v5; // x21
@@ -41510,10 +41510,10 @@ __int64 __fastcall sub_38FD4(__int64 a1, __int64 a2)
   __int16 v9; // [xsp+Eh] [xbp-22h] BYREF
 
   v4 = 163855;
-  if ( !validate_addr(a1, a2) )
+  if ( !validate_addr((__int64)a1, a2) )
     return 163878;
   v5 = a2 + 8;
-  if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v5, 2, &v8) )
+  if ( (unsigned int)kreadbuf_last_1(a1, v5, 2, &v8) )
   {
     if ( v8 <= 0xFFFDu )
     {
@@ -41523,7 +41523,7 @@ __int64 __fastcall sub_38FD4(__int64 a1, __int64 a2)
         v6 = -2;
       v8 = v6;
       v9 = v6;
-      if ( (unsigned int)kwritebuf_last_1(a1, v5, (__int64)&v9, 2) )
+      if ( (unsigned int)kwritebuf_last_1((__int64)a1, v5, (__int64)&v9, 2) )
         return 0;
       else
         return 163856;
@@ -49420,7 +49420,7 @@ bool __fastcall kwrite64_last_arg(__int64 a1, mach_vm_address_t address, __int64
   return this_is_the_kwrite64(a1, address, newValue, whatIsThis);
 }
 __int64 __fastcall krw_task_for_pid_0(struct_krwCtx *a1, __int64 a2, int pid) { return sub_33414(a1, a2, pid); }
-__int64 __fastcall krw_task_for_name(__int64 a1, __int64 a2, const char *a3) { return sub_336AC(a1, a2, a3); }
+__int64 __fastcall krw_task_for_name(struct_krwCtx *a1, __int64 a2, const char *a3) { return sub_336AC(a1, a2, a3); }
 bool __fastcall krw_task_for_pid(__int64 a1, int a2, mach_port_name_t *a3) { return real_task_for_pid(a1, a2, a3); }
 bool __fastcall krw_task_for_pid_or_name(__int64 a1, int victim_pid, const char *victim_process_name, mach_port_name_t *out_task)
 {
@@ -49431,9 +49431,9 @@ unsigned __int64 __fastcall maybe_ipc_port_get_kobject(struct_krwCtx *a1, unsign
   return sub_328A4(a1, ipc_port_kaddr);
 }
 __int64 __fastcall kreadptr(struct_krwCtx *krwCtx, __int64 addr) { return sub_32D80(krwCtx, addr); }
-__int64 __fastcall task_self_get_ipc_port_ptr(__int64 a1, unsigned int a2)
+__int64 __fastcall task_self_get_ipc_port_ptr(struct_krwCtx *a1, unsigned int a2)
 {
-  return task_get_ipc_port_ptr((struct_krwCtx *)a1, mach_task_self_, a2);
+  return task_get_ipc_port_ptr(a1, mach_task_self_, a2);
 }
 
 __int64 __fastcall check_sandboxed(int a1) { return sub_240CC(a1); }
