@@ -174,7 +174,7 @@ __int64 __fastcall kwrite_something(struct_krwCtx *a1, mach_vm_address_t a2, __i
 __int64 __fastcall check_rootfs_rw(__int64 ctx, int *outIsReadWrite);
 bool __fastcall sub_13FF8(struct_krwCtx *a1, char *a2);
 __int64 __fastcall sub_14164(struct_krwCtx *a1, int a2);
-__int64 __fastcall sub_141F0(__int64 a1);
+__int64 __fastcall sub_141F0(struct_krwCtx *a1);
 __int64 __fastcall add_rw_to_disk(struct_krwCtx *a1, const char *a2, const char *a3);
 bool __fastcall sub_14444(const char *a1);
 __int64 __fastcall sub_14524(struct_krwCtx *a1, int a2);
@@ -187,7 +187,7 @@ __int64 __fastcall sub_14EC4(__int64 a1, const char *a2, unsigned int a3);
 __int64 __fastcall sub_14F5C(__int64 a1, const char *a2, int a3);
 bool sub_14F9C();
 __int64 __fastcall krw_inject_entitlements_maybe(struct_krwCtx *krwCtx, __int64 task, char *entitlementXml);
-__int64 __fastcall sub_154D0(__int64 a1, __int64 a2, char *a3, __int64 a4, int a5);
+__int64 __fastcall sub_154D0(struct_krwCtx *a1, __int64 a2, char *a3, __int64 a4, int a5);
 __int64 __fastcall sub_155A0(__int64 a1);
 __int64 __fastcall sub_15880(__int64 a1);
 __int64 sub_15CA4();
@@ -308,7 +308,7 @@ __int64 __fastcall sub_1FA7C(__int64 a1, __int64 a2, int a3, __int64 a4);
 __int64 __fastcall sub_1FADC(__int64 a1);
 __int64 __fastcall sub_1FC94(__int64 a1);
 __int64 __fastcall sub_1FD98(struct statfs *a1);
-__int64 __fastcall driver_cmd_setup_untethered_persistence_maybe(__int64 a1, int a2);
+__int64 __fastcall driver_cmd_setup_untethered_persistence_maybe(struct_krwCtx *a1, int a2);
 __int64 __fastcall sub_203B0(__int64 a1, _DWORD *a2, char *a3);
 __int64 __fastcall sub_20468(__int64 a1, __int64 a2, int a3);
 int *__fastcall sub_20490(__int64 a1);
@@ -11948,7 +11948,7 @@ __int64 __fastcall sub_14164(struct_krwCtx *a1, int a2)
 }
 
 //----- (00000000000141F0) ----------------------------------------------------
-__int64 __fastcall sub_141F0(__int64 a1)
+__int64 __fastcall sub_141F0(struct_krwCtx *a1)
 {
   __int64 result; // x0
   unsigned int v3; // w20
@@ -11962,7 +11962,7 @@ __int64 __fastcall sub_141F0(__int64 a1)
   bzero(&v7, 0x878u);
   if ( statfs(v6, &v7) )
     return 0;
-  result = add_rw_to_disk((struct_krwCtx *)a1, v6, "/dev/disk0s1s1");
+  result = add_rw_to_disk(a1, v6, "/dev/disk0s1s1");
   if ( (_DWORD)result )
   {
     v3 = 0;
@@ -11976,7 +11976,7 @@ __int64 __fastcall sub_141F0(__int64 a1)
     while ( v3++ < 0x32 );
     if ( !v4 )
       return 1;
-    add_rw_to_disk((struct_krwCtx *)a1, v6, v7.f_mntfromname);
+    add_rw_to_disk(a1, v6, v7.f_mntfromname);
     return 0;
   }
   return result;
@@ -12069,7 +12069,7 @@ __int64 __fastcall sub_14524(struct_krwCtx *a1, int a2)
   strcpy(v18, "/");
   krw_ctx_set_flag(a1, KRW_CTX_FLAG_SNAPSHOT_MOUNTED);
   if ( !(unsigned int)sub_154D0(
-                        (__int64)a1,
+                        a1,
                         mach_task_self_,
                         "<dict><key>com.apple.private.vfs.snapshot</key><true/></dict>",
                         0,
@@ -12078,7 +12078,7 @@ __int64 __fastcall sub_14524(struct_krwCtx *a1, int a2)
   if ( !(unsigned int)sub_226D4() )
     return 0;
   v4 = sub_22CA8(&v19);
-  if ( v4 && !v19 && !(unsigned int)sub_141F0((__int64)a1) )
+  if ( v4 && !v19 && !(unsigned int)sub_141F0(a1) )
     return 0;
   if ( a2 == 4 || a2 == 2 )
   {
@@ -12747,7 +12747,7 @@ LABEL_16:
 // 19728: using guessed type __int64 __fastcall nullsub_1(_QWORD);
 
 //----- (00000000000154D0) ----------------------------------------------------
-__int64 __fastcall sub_154D0(__int64 a1, __int64 a2, char *a3, __int64 a4, int a5)
+__int64 __fastcall sub_154D0(struct_krwCtx *a1, __int64 a2, char *a3, __int64 a4, int a5)
 {
   __int64 result; // x0
   __int64 v10; // x23
@@ -12756,23 +12756,23 @@ __int64 __fastcall sub_154D0(__int64 a1, __int64 a2, char *a3, __int64 a4, int a
   v11 = 0;
   if ( (a5 & 0xB) == 0 )
     return 0;
-  result = task_self_get_ipc_port((struct_krwCtx *)a1, a2);
+  result = task_self_get_ipc_port(a1, a2);
   if ( result )
   {
-    result = sub_329B8(a1, result);
+    result = sub_329B8((__int64)a1, result);
     if ( result )
     {
       v10 = result;
-      result = kreadbuf_last_1((struct_krwCtx *)a1, result, 4, &v11);
+      result = kreadbuf_last_1(a1, result, 4, &v11);
       if ( (_DWORD)result )
       {
         if ( (v11 & a5) == 0 )
         {
-          result = krw_inject_entitlements_maybe((struct_krwCtx *)a1, a2, a3);
+          result = krw_inject_entitlements_maybe(a1, a2, a3);
           if ( (_DWORD)result )
           {
             v11 |= a5;
-            return kwritebuf_last_1(a1, v10, (__int64)&v11, 4);
+            return kwritebuf_last_1((__int64)a1, v10, (__int64)&v11, 4);
           }
         }
       }
@@ -20797,7 +20797,7 @@ __int64 __fastcall sub_1FD98(struct statfs *a1)
 }
 
 //----- (000000000001FE38) ----------------------------------------------------
-__int64 __fastcall setup_untethered_persistence_maybe(__int64 a1, int a2)
+__int64 __fastcall setup_untethered_persistence_maybe(struct_krwCtx *a1, int a2)
 {
   __int64 st_uid; // x22
   CFMutableDictionaryRef Mutable; // x0
@@ -20919,7 +20919,7 @@ __int64 __fastcall setup_untethered_persistence_maybe(__int64 a1, int a2)
     {
       st_uid = 708619;
       if ( (unsigned int)krw_inject_entitlements2_maybe(
-                           (struct_krwCtx *)a1,
+                           a1,
                            mach_task_self_,
                            "<dict><key>com.apple.private.diskimages.kext.user-client-access</key><true/><key>com.apple.pr"
                            "ivate.security.disk-device-access</key><true/><key>com.apple.security.iokit-user-client-class"
@@ -45626,7 +45626,7 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
           switch ( cmd )
           {
             case 0x40000301:
-              v13 = driver_cmd_setup_untethered_persistence_maybe((__int64)a1, *(_DWORD *)v3);
+              v13 = driver_cmd_setup_untethered_persistence_maybe(a1, *(_DWORD *)v3);
               goto LABEL_90;
             case 0x40000304:
               v13 = sub_1FA28((__int64)a1, *(_DWORD *)(v3 + 12));
@@ -49438,7 +49438,7 @@ __int64 __fastcall task_self_get_ipc_port_ptr(struct_krwCtx *a1, unsigned int a2
 
 __int64 __fastcall check_sandboxed(int a1) { return sub_240CC(a1); }
 __int64 __fastcall driver_close_internal(char *a1) { return sub_3F4BC(a1); }
-__int64 __fastcall driver_cmd_setup_untethered_persistence_maybe(__int64 a1, int a2)
+__int64 __fastcall driver_cmd_setup_untethered_persistence_maybe(struct_krwCtx *a1, int a2)
 {
   return setup_untethered_persistence_maybe(a1, a2);
 }
