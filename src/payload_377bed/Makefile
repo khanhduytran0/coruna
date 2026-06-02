@@ -36,7 +36,8 @@ entry1_type0x09_INSTALL_PATH = /usr/local/lib
 
 TOOL_NAME = entry1_type0x09_test
 entry1_type0x09_test_FILES = test.m
-entry1_type0x09_INSTALL_PATH = /usr/local/bin
+entry1_type0x09_test_CODESIGN_FLAGS = -Sentitlements.xml
+entry1_type0x09_test_INSTALL_PATH = /usr/local/bin
 
 include $(THEOS_MAKE_PATH)/library.mk
 include $(THEOS_MAKE_PATH)/tool.mk

