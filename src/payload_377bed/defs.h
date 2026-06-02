@@ -47,6 +47,10 @@ enum CPUFamily : uint32_t
   CPUFamily_ARM_UNKNOWN_573B5EEC = 0x573B5EEC,
 };
 
+#define XNU_VERSION_PACKED(major, minor, patch, build, variant) \
+  (((uint64_t)((major) & 0x7FFF) << 40) | ((uint64_t)((minor) & 0x3FF) << 30) | ((uint64_t)((patch) & 0x3FF) << 20) | ((uint64_t)((build) & 0x3FF) << 10) | (uint64_t)((variant) & 0x3FF))
+
+
 /* 164 */
 struct struct_krwCtx
 {
@@ -56,7 +60,7 @@ struct struct_krwCtx
   uint8_t gap42[144];
   int xnuMajorVersion;
   uint8_t gap144[20];
-  uint64_t someLargeNumber;
+  uint64_t xnuVersionPacked;
   uint8_t gap160[8];
   int int168;
   int gap16C[5];

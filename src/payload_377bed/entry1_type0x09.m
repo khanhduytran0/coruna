@@ -5217,7 +5217,7 @@ __int64 __fastcall sub_B460(__int64 a1, _DWORD *a2)
   address = 0;
   v2 = vm_page_size;
   v20 = -1;
-  if ( *(_QWORD *)(a1 + 344) < 0x1F543C40800000uLL )
+  if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
     return 708609;
   result = fd_open_dev_null(&v20);
   if ( !(_DWORD)result )
@@ -7171,7 +7171,7 @@ LABEL_15:
   }
   v260 = (unsigned int *)(v4 + 17988);
   v22 = *(_QWORD *)(v5 + 344);
-  if ( v22 > 0x27120F04B00002LL )
+  if ( v22 > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) )
   {
     if ( (*(_BYTE *)v5 & 0x20) != 0 )
     {
@@ -7191,7 +7191,7 @@ LABEL_15:
     }
     goto LABEL_36;
   }
-  if ( v22 > 0x27120080CFFFFFLL || v22 >= 0x225C23801AF00ELL && *(int *)(v5 + 320) < 10002 )
+  if ( v22 > XNU_VERSION_PACKED(10002, 2, 12, 1023, 1023) || v22 >= XNU_VERSION_PACKED(8796, 142, 1, 700, 14) && *(int *)(v5 + 320) < 10002 )
   {
 LABEL_36:
     theDict = 68;
@@ -7857,7 +7857,7 @@ LABEL_247:
   if ( (_DWORD)v10 )
     return v10;
   v120 = *(_QWORD *)(v5 + 344);
-  if ( v120 > 0x27120F04B00002LL )
+  if ( v120 > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) )
   {
     if ( (*(_BYTE *)v5 & 0x20) != 0 )
     {
@@ -7876,8 +7876,8 @@ LABEL_247:
     }
     goto LABEL_372;
   }
-  if ( v120 > 0x225C1E804FFFFFLL
-    || v120 >= 0x225C1980500000LL && ((*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (*(_DWORD *)v5 & 1) != 0) )
+  if ( v120 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023)
+    || v120 >= XNU_VERSION_PACKED(8796, 102, 5, 0, 0) && ((*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (*(_DWORD *)v5 & 1) != 0) )
   {
 LABEL_372:
     v319[0] = 0;
@@ -8657,9 +8657,9 @@ LABEL_500:
   }
   *(_DWORD *)(v4 + 26184) = 0;
   v225 = *(_QWORD *)(v5 + 344);
-  if ( v225 <= 0x1F530F027FFFFFLL )
+  if ( v225 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
-    if ( v225 >= 0x1C1B0A80100000LL && ((*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v225 >= 0x1F530000000000LL) )
+    if ( v225 >= XNU_VERSION_PACKED(7195, 42, 1, 0, 0) && ((*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v225 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0)) )
       goto LABEL_532;
     *(_QWORD *)v319 = -1;
     *(_QWORD *)a1 = -1;
@@ -8745,7 +8745,7 @@ LABEL_531:
     *(_QWORD *)(v5 + 6448) = -1;
     goto LABEL_531;
   }
-  v226 = (*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v225 > 0x1F5418FFFFFFFFLL;
+  v226 = (*(_DWORD *)v5 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v225 > XNU_VERSION_PACKED(8020, 99, 1023, 1023, 1023);
   if ( !v226 )
   {
 LABEL_532:
@@ -9320,7 +9320,7 @@ __int64 __fastcall sub_FF10(__int64 a1, __int64 a2, __int64 a3, _QWORD *a4)
   __int64 result; // x0
 
   v4 = *(_QWORD *)(a1 + 344);
-  if ( v4 >= 0x27120080D00000LL )
+  if ( v4 >= XNU_VERSION_PACKED(10002, 2, 13, 0, 0) )
   {
     v5 = (int *)(a2 + 124);
     v6 = *(_DWORD *)(a2 + 124);
@@ -9331,22 +9331,22 @@ __int64 __fastcall sub_FF10(__int64 a1, __int64 a2, __int64 a3, _QWORD *a4)
     v11 = 88LL;
     goto LABEL_23;
   }
-  if ( v4 <= 0x225C23801AF00DLL )
+  if ( v4 <= XNU_VERSION_PACKED(8796, 142, 1, 700, 13) )
   {
     v5 = (int *)(a2 + 116);
     v6 = *(_DWORD *)(a2 + 116);
     v11 = 80LL;
 LABEL_11:
-    v13 = v4 > 0x271200073FFFFFLL;
-    if ( v4 <= 0x271200073FFFFFLL )
+    v13 = v4 > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023);
+    if ( v4 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023) )
       v10 = 0x80000;
     else
       v10 = 0x4000;
-    if ( v4 <= 0x271200073FFFFFLL )
+    if ( v4 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023) )
       v9 = 4096;
     else
       v9 = 128;
-    if ( v4 <= 0x271200073FFFFFLL )
+    if ( v4 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023) )
       v8 = 0x20000000;
     else
       v8 = 0x1000000;
@@ -9364,7 +9364,7 @@ LABEL_11:
     v11 = 88LL;
   v5 = (int *)(a2 + v12);
   v6 = *v5;
-  if ( v4 <= 0x2712000C6FFFFFLL )
+  if ( v4 <= XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023) )
     goto LABEL_11;
   v7 = 2048;
   v8 = 0x1000000;
@@ -9394,7 +9394,7 @@ __int64 __fastcall sub_1003C(
   unsigned __int64 v14; // x0
   vm_size_t v15; // x8
   unsigned __int64 v16; // x8
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   __int64 v18; // x9
   __int64 result; // x0
   int v20; // w10
@@ -9419,10 +9419,10 @@ __int64 __fastcall sub_1003C(
   *(_QWORD *)(a2 + 32) = a6;
   if ( !a4 )
     return 0;
-  someLargeNumber = a1->someLargeNumber;
-  if ( someLargeNumber <= 0x27120080CFFFFFLL )
+  xnuVersionPacked = a1->xnuVersionPacked;
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(10002, 2, 12, 1023, 1023) )
   {
-    if ( someLargeNumber < 0x225C23801AF00ELL )
+    if ( xnuVersionPacked < XNU_VERSION_PACKED(8796, 142, 1, 700, 14) )
     {
       v18 = 116;
     }
@@ -9438,14 +9438,14 @@ __int64 __fastcall sub_1003C(
     v18 = 124;
   }
   v20 = *(_DWORD *)(a2 + v18);
-  if ( someLargeNumber <= 0x271200073FFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023) )
     v21 = 589824;
   else
     v21 = 18432;
   if ( (v21 & ~v20) != 0 )
     return 163857;
   result = 0;
-  if ( someLargeNumber <= 0x271200073FFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023) )
     v22 = 4096;
   else
     v22 = 128;
@@ -9566,12 +9566,12 @@ __int64 __fastcall sub_10414(struct_krwCtx *a1, __int64 a2, unsigned __int64 *a3
     }
 LABEL_10:
     v7 = 256;
-    if ( a1->someLargeNumber > 0x1F530F027FFFFFLL )
+    if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v7 = 248;
 LABEL_12:
     if ( !kread64_outptr(a1, v7 + a2, &v10) )
       return 163855;
-    if ( a1->someLargeNumber > 0x1F52FFFFFFFFFFLL || (v9 = kread64_outptr(a1, v10, &v10), result = 163855, v9) )
+    if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || (v9 = kread64_outptr(a1, v10, &v10), result = 163855, v9) )
     {
       if ( validate_addr((__int64)a1, v10) )
       {
@@ -11200,21 +11200,21 @@ void __fastcall sub_12EF8(struct_krwCtx *a1)
   __int64 vars8; // [xsp+18h] [xbp+8h]
 
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
-    && ((v2 = a1->someLargeNumber, v2 > 0x2712000C6FFFFFLL) || v2 > 0x225C23800FFFFFLL && a1->xnuMajorVersion < 10002)
+    && ((v2 = a1->xnuVersionPacked, v2 > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023)) || v2 > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002)
     || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
-    && ((v3 = a1->someLargeNumber, v3 > 0x271200073FFFFFLL) || v3 > 0x225C1E804FFFFFLL && a1->xnuMajorVersion <= 10001) )
+    && ((v3 = a1->xnuVersionPacked, v3 > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)) || v3 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001) )
   {
     if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
       __break(0xC471u);
     sub_15CC8((__int64)a1);
   }
   else if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
-         || (v4 = a1->someLargeNumber, v4 <= 0x2712000C6FFFFFLL)
-         && (v4 <= 0x225C23800FFFFFLL || a1->xnuMajorVersion >= 10002) )
+         || (v4 = a1->xnuVersionPacked, v4 <= XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023))
+         && (v4 <= XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) || a1->xnuMajorVersion >= 10002) )
   {
     if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
-      || (v5 = a1->someLargeNumber, v5 <= 0x271200073FFFFFLL)
-      && (v5 <= 0x225C1E804FFFFFLL || a1->xnuMajorVersion >= 10002) )
+      || (v5 = a1->xnuVersionPacked, v5 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023))
+      && (v5 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) || a1->xnuMajorVersion >= 10002) )
     {
       if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
         __break(0xC471u);
@@ -11256,7 +11256,7 @@ bool __fastcall sub_130B4(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned 
     v25 = 0;
     if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK)) return 0;
     if (!a2 || !a3 || !a4 ) return 0;
-    if ( *(_QWORD *)(a1 + 344) >= 0x1F530000000000uLL ) {
+    if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) ) {
         return !!sub_13304((struct_krwCtx *)a1, a2, a3, a4, 0);
     }
     if ( sub_1353C(a1, (__int64 *)&v24, &v231) )
@@ -11270,7 +11270,7 @@ bool __fastcall sub_130B4(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned 
                     if ( v25 )
                         goto LABEL_13;
                     v16 = (unsigned int)v231 > 0x8C000
-                    || (unsigned __int64)(*(_QWORD *)(a1 + 344) - 0x18090A07900000LL) > 0xF788FFFFFLL;
+                    || (unsigned __int64)(*(_QWORD *)(a1 + 344) - XNU_VERSION_PACKED(6153, 40, 121, 0, 0)) > 0xF788FFFFFLL;
                     v17 = v231 + 8;
                     if ( !v16 )
                         v17 = 573448;
@@ -11350,7 +11350,7 @@ bool __fastcall sub_13304(struct_krwCtx *ctx, mach_vm_address_t vaddr, __int64 n
     v12 = vaddr & ~qword188;
     if ( v12 == ((vaddr + (unsigned int)size - 1) & ~qword188) )
     {
-      if ( ctx->someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+      if ( ctx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
         v13 = 16;
       else
         v13 = 256;
@@ -11501,7 +11501,7 @@ LABEL_13:
   v13 = "1F 01 13 EB 20 91 53 FA .. .. 00 54 68 02";
 LABEL_15:
   sub_19B98("__PPLTEXT", &v23, v9);
-  if ( *(_QWORD *)(a1 + 344) >= 0x18091980200000uLL && *(int *)(a1 + 320) <= 7194 )
+  if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(6153, 102, 2, 0, 0) && *(int *)(a1 + 320) <= 7194 )
   {
     if ( !*((_QWORD *)&v23 + 1) )
       return 0;
@@ -11541,7 +11541,7 @@ LABEL_31:
         {
           v7 = 589824;
         }
-        else if ( *(_QWORD *)(a1 + 344) <= 0x18090A078FFFFFuLL )
+        else if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
         {
           v7 = 573440;
         }
@@ -11618,7 +11618,7 @@ bool __fastcall sub_13844(struct_krwCtx *a1, unsigned __int64 a2, int a3)
     v7 = 0;
     v6 = 0;
     if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) ) return 0;
-    if ( a1->someLargeNumber >= (uint64_t)0x1F530000000000 )
+    if ( a1->xnuVersionPacked >= (uint64_t)XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
         return sub_13924(a1, a2, a3);
     if ( !sub_1353C((__int64)a1, (__int64 *)&v7, (int *)&v6) )
         return 0;
@@ -11631,26 +11631,26 @@ bool __fastcall sub_13844(struct_krwCtx *a1, unsigned __int64 a2, int a3)
 //----- (0000000000013924) ----------------------------------------------------
 bool __fastcall sub_13924(struct_krwCtx *a1, unsigned __int64 a2, int a3)
 {
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   unsigned __int64 v7; // x8
   int v8; // w0
   unsigned __int64 v10; // x8
 
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
-    && ((someLargeNumber = a1->someLargeNumber, someLargeNumber > 0x2712000C6FFFFFLL)
-     || someLargeNumber > 0x225C23800FFFFFLL && a1->xnuMajorVersion < 10002)
+    && ((xnuVersionPacked = a1->xnuVersionPacked, xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023))
+     || xnuVersionPacked > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002)
     || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
-    && ((v7 = a1->someLargeNumber, v7 > 0x271200073FFFFFLL) || v7 > 0x225C1E804FFFFFLL && a1->xnuMajorVersion <= 10001) )
+    && ((v7 = a1->xnuVersionPacked, v7 > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)) || v7 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001) )
   {
     v8 = sub_15D1C((__int64)a1, a2, a3);
     return v8 == 0;
   }
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
   {
-    v10 = a1->someLargeNumber;
-    if ( v10 > 0x2712000C6FFFFFLL )
+    v10 = a1->xnuVersionPacked;
+    if ( v10 > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023) )
       goto LABEL_17;
-    if ( v10 > 0x225C23800FFFFFLL && a1->xnuMajorVersion < 10002 )
+    if ( v10 > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002 )
       goto LABEL_21;
   }
   if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK) )
@@ -11659,15 +11659,15 @@ LABEL_22:
     v8 = dmaFail_physwrite32(a1, a2, a3);
     return v8 == 0;
   }
-  v10 = a1->someLargeNumber;
-  if ( v10 <= 0x271200073FFFFFLL )
+  v10 = a1->xnuVersionPacked;
+  if ( v10 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023) )
   {
-    if ( v10 > 0x225C1E804FFFFFLL && a1->xnuMajorVersion < 10002 )
+    if ( v10 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion < 10002 )
       goto LABEL_21;
     goto LABEL_22;
   }
 LABEL_17:
-  if ( v10 <= 0x27120A807FFFFFLL )
+  if ( v10 <= XNU_VERSION_PACKED(10002, 42, 7, 1023, 1023) )
   {
 LABEL_21:
     v8 = sub_B768((__int64)a1, a2, a3);
@@ -11897,7 +11897,7 @@ bool __fastcall sub_13FF8(struct_krwCtx *a1, char *a2)
     v4 = 0;
     if ( v3 != 7195 )
       return v4;
-    if ( a1->someLargeNumber <= 0x1C1B19145FFFFFLL )
+    if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
       v5 = 536;
     else
       v5 = 512;
@@ -12462,7 +12462,7 @@ __int64 __fastcall sub_14D98(struct_krwCtx *a1, char *a2, int a3, unsigned int *
         if ( xnuMajorVersion != 7195 )
           goto LABEL_18;
         v11 = 476;
-        if ( a1->someLargeNumber > 0x1C1B19145FFFFFLL )
+        if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
           v11 = 452;
       }
       v13 = v11 + v9;
@@ -12609,7 +12609,7 @@ __int64 __fastcall krw_inject_entitlements_maybe(struct_krwCtx *krwCtx, __int64 
   v4 = task;
   format = kCFPropertyListXMLFormat_v1_0;
   cf = 0;
-  if ( krwCtx->someLargeNumber < 0x1F530000000000LL )
+  if ( krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
   {
     v7 = 0;
     if ( (unsigned int)sub_251A4((__int64)krwCtx, 0, 0x2710u) )
@@ -12646,7 +12646,7 @@ LABEL_12:
             v8 = 0;
             goto LABEL_15;
           }
-          if ( krwCtx->someLargeNumber >= 0x1C1B0A80100000LL && (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
+          if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(7195, 42, 1, 0, 0) && (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
           {
             address = (__int64)krwCtx;
             v26 = v4;
@@ -12888,7 +12888,7 @@ LABEL_43:
     if ( kread64_outptr((struct_krwCtx *)v2, v15, (unsigned __int64 *)&v21) )
     {
       v16 = *(_QWORD *)(v2 + 912);
-      if ( *(_QWORD *)(v2 + 344) < 0x1F530000000000uLL )
+      if ( *(_QWORD *)(v2 + 344) < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
       {
         v20 = *(_QWORD *)(v2 + 912);
 LABEL_35:
@@ -13636,7 +13636,7 @@ __int64 __fastcall sub_15EC4(__int64 a1)
   __int64 v345; // [xsp+6A0h] [xbp-70h]
 
   v1 = 708616;
-  if ( *(_QWORD *)(a1 + 344) < 0x225C23801AF00DuLL || !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
+  if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8796, 142, 1, 700, 13) || !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
     return v1;
   if ( *(_QWORD *)(a1 + 7512) )
     return 0;
@@ -14870,7 +14870,7 @@ LABEL_382:
     v235 = *(_QWORD *)(v233 + 608);
     if ( v232 )
     {
-      if ( *(_QWORD *)(a1 + 344) <= 0x2711FFFFFFFFFFuLL )
+      if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
         v236 = 832;
       else
         v236 = 848;
@@ -15079,7 +15079,7 @@ LABEL_425:
       sub_19354(a1, *(_QWORD *)(v233 + 344) + 1LL, v279);
       goto LABEL_417;
     }
-    if ( *(_QWORD *)(a1 + 344) <= 0x2711FFFFFFFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
       v251 = 832;
     else
       v251 = 848;
@@ -16026,7 +16026,7 @@ __int64 __fastcall sub_193C0(__int64 a1, __int64 a2, int a3)
       return 0xFFFFFFFFLL;
     if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v16 + *(unsigned int *)(v6 + 172), 8, v15) )
     {
-      if ( *(_QWORD *)(a1 + 344) <= 0x2711FFFFFFFFFFuLL )
+      if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
         v10 = 65539;
       else
         v10 = 65538;
@@ -17855,7 +17855,7 @@ __int64 __fastcall sub_1BE0C(__int64 a1, unsigned int a2, mach_port_name_t *a3)
   mach_port_name_t name; // [xsp+Ch] [xbp-24h] BYREF
 
   name = 0;
-  if ( *(_QWORD *)(a1 + 344) < 0x1F543C40800000uLL )
+  if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
   {
     if ( voucher_create_mach_voucher(a1, a2 + 0x1122334455667788LL, &name) )
     {
@@ -17993,11 +17993,11 @@ __int64 __fastcall sub_1C0C8(__int64 a1, int *a2)
   v23 = -1;
   nullFd = -1;
   v4 = *(_QWORD *)(a1 + 344);
-  if ( v4 > 0x1C1B0A800FFFFFLL && (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
+  if ( v4 > XNU_VERSION_PACKED(7195, 42, 0, 1023, 1023) && (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
   {
     v5 = 3;
   }
-  else if ( v4 > 0x1F52FFFFFFFFFFLL )
+  else if ( v4 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
   {
     v5 = 3;
   }
@@ -18050,7 +18050,7 @@ LABEL_13:
     *(_DWORD *)(a1 + 6448) = v22[0];
     *(_DWORD *)(a1 + 6452) = v13;
     v14 = *(_QWORD *)(a1 + 344);
-    if ( v14 > 0x1C1B0A800FFFFFLL && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v14 > 0x1F52FFFFFFFFFFLL) )
+    if ( v14 > XNU_VERSION_PACKED(7195, 42, 0, 1023, 1023) && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v14 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
       *(_DWORD *)(a1 + 6464) = v23;
     else
       *(_QWORD *)(a1 + 6456) = v23;
@@ -18060,7 +18060,7 @@ LABEL_13:
       if ( validate_addr(a1, v20.st_atimespec.tv_sec) )
         *(_QWORD *)(a1 + 6608) = tv_sec;
       v16 = *(_QWORD *)(a1 + 344);
-      if ( v16 > 0x1C1B0A800FFFFFLL && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v16 > 0x1F52FFFFFFFFFFLL) )
+      if ( v16 > XNU_VERSION_PACKED(7195, 42, 0, 1023, 1023) && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v16 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
       {
         v17 = v20.st_atimespec.tv_nsec | 0xFFFFFF0000000000LL;
         if ( validate_addr(a1, v20.st_atimespec.tv_nsec | 0xFFFFFF0000000000LL) )
@@ -18072,7 +18072,7 @@ LABEL_13:
         {
           if ( *(_QWORD *)(a1 + 536) )
           {
-            if ( *(_QWORD *)(a1 + 344) >= 0x1C1B1914600000uLL && !(unsigned int)sub_1C058(a1) )
+            if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) && !(unsigned int)sub_1C058(a1) )
             {
               v19 = *(_QWORD *)(*(_QWORD *)(a1 + 280) + 256LL);
               if ( validate_addr(a1, v19) )
@@ -18137,7 +18137,7 @@ __int64 __fastcall sub_1C3EC(__int64 a1, int *a2)
     v8 = connection;
     do
     {
-      if ( *(_QWORD *)(a1 + 344) < 0x1F543C40800000uLL )
+      if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
       {
         result = voucher_create_mach_voucher(a1, v7 + 0x312233445566778BLL, v8);
         if ( !(_DWORD)result )
@@ -18319,7 +18319,7 @@ __int64 __fastcall sub_1C8B0(struct_krwCtx *a1, unsigned int a2, unsigned int a3
   mach_port_name_t name; // [xsp+Ch] [xbp-34h] BYREF
 
   name = 0;
-  if ( a1->someLargeNumber < 0x1F543C40800000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
   {
     if ( voucher_create_mach_voucher((__int64)a1, a2 + 0x1122334455667788LL, &name)
       && (unsigned int)sub_1C720(a1, &name, a3) )
@@ -18405,7 +18405,7 @@ __int64 __fastcall sub_1CA3C(__int64 a1, task_name_t a2, unsigned int a3, __int6
   _QWORD v32[2]; // [xsp+28h] [xbp-78h] BYREF
   _QWORD v33[2]; // [xsp+38h] [xbp-68h] BYREF
 
-  if ( *(_QWORD *)(a1 + 344) < 0x1F543C40800000uLL )
+  if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
     return 0;
   LODWORD(v5) = a3;
   if ( a3 - 1 > 3 )
@@ -18664,8 +18664,8 @@ LABEL_13:
                     if ( (unsigned int)(v10 - 8019) >= 2 && v10 != 8792 && v10 != 7195 )
                       return 0;
                     sub_288A4((__int64)a1, v14 + 280, a1->gap19210);
-                    v11 = a1->someLargeNumber;
-                    if ( v11 >= 0x1C1B0A80100000LL && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v11 >= 0x1F530000000000LL) )
+                    v11 = a1->xnuVersionPacked;
+                    if ( v11 >= XNU_VERSION_PACKED(7195, 42, 1, 0, 0) && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v11 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0)) )
                     {
                       v13 = a1->gap190u & 0xFFFFFFFFFFLL
                           | ((unsigned __int64)(unsigned int)(a1->slideMaybe / (unsigned int)a1->pageSizeOrSomething) << 40);
@@ -18732,7 +18732,7 @@ __int64 __fastcall sub_1D1B0(__int64 a1)
   v2 = vm_page_size;
   address = 0;
   size = vm_page_size;
-  if ( *(_QWORD *)(a1 + 344) <= 0x1F543C407FFFFFuLL )
+  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8020, 241, 7, 1023, 1023) )
   {
     v19[0] = 0;
     result = voucher_create_mach_voucher(a1, 0x3122334455667788LL, v19);
@@ -18748,7 +18748,7 @@ __int64 __fastcall sub_1D1B0(__int64 a1)
     v4 = *(_DWORD *)result;
   }
   v18 = v4;
-  if ( *(_QWORD *)(a1 + 344) <= 0x1F543C407FFFFFuLL )
+  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8020, 241, 7, 1023, 1023) )
   {
     result = task_self_get_ipc_port((struct_krwCtx *)a1, v4);
     if ( !result )
@@ -18796,7 +18796,7 @@ __int64 __fastcall sub_1D1B0(__int64 a1)
       v10 = &v18;
       do
       {
-        if ( *(_QWORD *)(a1 + 344) <= 0x1F543C407FFFFFuLL )
+        if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8020, 241, 7, 1023, 1023) )
         {
           v13 = 0;
           result = voucher_create_mach_voucher(a1, v9 + 0x3122334455667788LL, &v13);
@@ -18854,7 +18854,7 @@ unsigned int *__fastcall sub_1D4A0(__int64 a1)
   v1 = vm_page_size;
   address = 0;
   size = vm_page_size;
-  if ( *(_QWORD *)(a1 + 344) < 0x1F543C40800000uLL )
+  if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
     return 0;
   result = (unsigned int *)sub_1BD80(a1, 0);
   if ( !result )
@@ -18961,7 +18961,7 @@ __int64 __fastcall sub_1D70C(__int64 a1, _DWORD *a2)
   *(_QWORD *)object = 0;
   v2 = vm_page_size;
   v26 = -1;
-  if ( *(_QWORD *)(a1 + 344) < 0x1F543C40800000uLL )
+  if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
     return 0;
   v5 = fd_open_dev_null(&v26);
   if ( (_DWORD)v5 )
@@ -19554,7 +19554,7 @@ char *__fastcall sub_1E45C(__int64 a1)
     v3 = (unsigned __int64)(result + 12);
     return sub_1EB2C((__int64 *)a1, (__int64 *)(v3 & 0xFFFFFFFFFFFFFFFCLL), 1);
   }
-  if ( *(_QWORD *)(a1 + 136) >= 0x22581401900000uLL && !krw_ctx_has_flag(*(struct_krwCtx **)(a1 + 280), KRW_CTX_FLAG_CPU_A9) )
+  if ( *(_QWORD *)(a1 + 136) >= XNU_VERSION_PACKED(8792, 80, 25, 0, 0) && !krw_ctx_has_flag(*(struct_krwCtx **)(a1 + 280), KRW_CTX_FLAG_CPU_A9) )
   {
     sub_19D10(a1, v10);
     result = (char *)kernel_pattern_scan((__int64)v10, ".. FD .. D3 .. 00 00 B5", 0);
@@ -21620,7 +21620,7 @@ __int64 __fastcall sub_20D90(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3,
   unsigned __int64 v26; // x9
   int v27; // w11
   unsigned int v29; // [xsp+Ch] [xbp-64h]
-  unsigned __int64 someLargeNumber; // [xsp+10h] [xbp-60h]
+  unsigned __int64 xnuVersionPacked; // [xsp+10h] [xbp-60h]
   int v31; // [xsp+1Ch] [xbp-54h] BYREF
 
   v10 = 163852;
@@ -21636,7 +21636,7 @@ __int64 __fastcall sub_20D90(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3,
     return 163878;
   v15 = v14;
   v29 = v13;
-  someLargeNumber = a1->someLargeNumber;
+  xnuVersionPacked = a1->xnuVersionPacked;
   v16 = v12;
   if ( v14 <= a3 )
   {
@@ -21654,7 +21654,7 @@ __int64 __fastcall sub_20D90(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3,
         return 163855;
       }
       v19 = v31 & 0x3FF;
-      if ( someLargeNumber < 0x1C1B1914600000LL )
+      if ( xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
       {
         if ( v19 == a4 )
           goto LABEL_47;
@@ -21703,7 +21703,7 @@ LABEL_47:
       return 163855;
     }
     v24 = v31 & 0x3FF;
-    if ( someLargeNumber < 0x1C1B1914600000LL )
+    if ( xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
     {
       if ( v24 == a4 )
         goto LABEL_47;
@@ -22294,7 +22294,7 @@ LABEL_20:
             while ( 1 )
             {
               v7 = v17;
-              if ( *(_QWORD *)(a1 + 344) <= 0x2257FFFFFFFFFFuLL )
+              if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
               {
                 LODWORD(v8) = kreadbuf_last_1((struct_krwCtx *)a1, v17, 48, v45);
                 if ( !(_DWORD)v8 )
@@ -22353,7 +22353,7 @@ LABEL_108:
           }
           v35 = v8;
           v42 = (__int64)v31;
-          if ( *(_QWORD *)(a1 + 344) <= 0x2257FFFFFFFFFFuLL )
+          if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
           {
             v36 = 163855;
             if ( kread64_outptr((struct_krwCtx *)a1, v16, (unsigned __int64 *)v44) )
@@ -22447,7 +22447,7 @@ LABEL_3:
           LODWORD(v8) = kreadbuf_last_1((struct_krwCtx *)a1, v7, v13, v12);
           if ( (_DWORD)v8 )
           {
-            if ( *(_QWORD *)(a1 + 344) <= 0x2257FFFFFFFFFFuLL )
+            if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
               v14 = (char *)&v46[2] + 12;
             else
               v14 = (char *)&v45[3] + 12;
@@ -22488,7 +22488,7 @@ LABEL_116:
     if ( *(_QWORD *)(a1 + 344) >> 43 < 0x44Bu )
     {
       sub_39B70(v45, (struct_krwCtx *)a1);
-      if ( *(_QWORD *)(a1 + 344) <= 0x1F541DFFFFFFFFuLL )
+      if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8020, 119, 1023, 1023, 1023) )
         v21 = "0A 05 40 F9 2B 11 40 39";
       else
         v21 = "0B 05 40 F9 6C 11 40 39";
@@ -22499,10 +22499,10 @@ LABEL_116:
       {
         v22 = (__int64 *)v8;
         v23 = *(_QWORD *)(a1 + 344);
-        if ( v23 < 0x1C1B0002E00000LL )
+        if ( v23 < XNU_VERSION_PACKED(7195, 0, 46, 0, 0) )
         {
           v27 = *(__int64 **)(a1 + 6648);
-          if ( v23 < 0x18091980200000LL )
+          if ( v23 < XNU_VERSION_PACKED(6153, 102, 2, 0, 0) )
             v28 = v22 - 2;
           else
             v28 = (__int64 *)((char *)v22 - 28);
@@ -23988,7 +23988,7 @@ __int64 __fastcall sub_239D8(struct_krwCtx *a1, _QWORD *a2, _DWORD *a3, _QWORD *
   __int64 v16; // x27
   __int64 v17; // x28
   unsigned int v18; // w21
-  unsigned __int64 someLargeNumber; // x9
+  unsigned __int64 xnuVersionPacked; // x9
   unsigned __int64 v20; // x26
   unsigned __int64 v21; // x1
   size_t v22; // x27
@@ -24038,7 +24038,7 @@ LABEL_26:
     result = validate_addr((__int64)a1, v20);
     if ( !result )
       return result;
-    if ( a1->someLargeNumber < 0x1F541900000000LL )
+    if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8020, 100, 0, 0, 0) )
     {
       v21 = v20 + v17;
     }
@@ -24146,12 +24146,12 @@ LABEL_58:
     v14 = a3;
     v27 = a5;
     v15 = 0;
-    someLargeNumber = a1->someLargeNumber;
-    if ( someLargeNumber <= 0x18091E01EFFFFFLL )
+    xnuVersionPacked = a1->xnuVersionPacked;
+    if ( xnuVersionPacked <= XNU_VERSION_PACKED(6153, 120, 30, 1023, 1023) )
       v18 = 32;
     else
       v18 = 16;
-    if ( someLargeNumber <= 0x18091E01EFFFFFLL )
+    if ( xnuVersionPacked <= XNU_VERSION_PACKED(6153, 120, 30, 1023, 1023) )
       v16 = 8;
     else
       v16 = 4;
@@ -25448,12 +25448,12 @@ bool __fastcall sub_25734(__int64 a1)
 
   v1 = a1;
   v2 = *(_QWORD *)(a1 + 344);
-  if ( v2 >= 0x27120000000000LL )
+  if ( v2 >= XNU_VERSION_PACKED(10002, 0, 0, 0, 0) )
   {
     v3 = *(_QWORD *)(a1 + 7504) == 0;
     return !v3;
   }
-  if ( v2 < 0x1F530F02800000LL )
+  if ( v2 < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     if ( *(_QWORD *)(a1 + 560) && *(_QWORD *)(a1 + 552) )
     {
@@ -25518,7 +25518,7 @@ __int64 __fastcall sub_25804(__int64 a1)
   pthread_attr_t v38; // [xsp+28h] [xbp-88h] BYREF
 
   v2 = *(_QWORD *)(a1 + 344);
-  if ( v2 >= 0x27120000000000LL )
+  if ( v2 >= XNU_VERSION_PACKED(10002, 0, 0, 0, 0) )
   {
     address = 0;
     v37 = 0;
@@ -25625,7 +25625,7 @@ LABEL_42:
       free(v3);
     return v8;
   }
-  if ( v2 < 0x1F530F02800000LL )
+  if ( v2 < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     v12 = mach_task_self_;
     v13 = sub_34FF8(a1, mach_task_self_, (unsigned int *)&v38);
@@ -25668,7 +25668,7 @@ LABEL_42:
             {
               v9 = *(_QWORD *)(a1 + 344);
               v10 = 880;
-              if ( v9 > 0x1F541DFFFFFFFFLL )
+              if ( v9 > XNU_VERSION_PACKED(8020, 119, 1023, 1023, 1023) )
                 v10 = 1392;
               if ( v9 >> 43 > 0x44A )
                 v10 = 1408;
@@ -25677,7 +25677,7 @@ LABEL_42:
                 if ( v34 != 8 )
                   return 163857;
                 v11 = 888;
-                if ( v9 > 0x1F541DFFFFFFFFLL )
+                if ( v9 > XNU_VERSION_PACKED(8020, 119, 1023, 1023, 1023) )
                   v11 = 1400;
                 if ( v9 >> 43 > 0x44A )
                   v11 = 1416;
@@ -25734,9 +25734,9 @@ __int64 __fastcall sub_25C6C(__int64 a1)
   int v13; // [xsp+Ch] [xbp-24h] BYREF
 
   v2 = *(_QWORD *)(a1 + 344);
-  if ( v2 < 0x27120000000000LL )
+  if ( v2 < XNU_VERSION_PACKED(10002, 0, 0, 0, 0) )
   {
-    if ( v2 < 0x1F530F02800000LL )
+    if ( v2 < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
     {
       return 0;
     }
@@ -25818,11 +25818,11 @@ __int64 __fastcall sub_25DB0(__int64 a1)
   unsigned int v2; // w9
 
   v1 = *(_QWORD *)(a1 + 344);
-  if ( v1 <= 0x1F530F027FFFFFLL )
+  if ( v1 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     v2 = 0x4000;
   else
     v2 = 0x80000;
-  if ( v1 <= 0x2711FFFFFFFFFFLL )
+  if ( v1 <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
     return v2;
   else
     return 528LL;
@@ -25912,11 +25912,11 @@ LABEL_61:
     if ( (*(_QWORD *)(a1 + 392) & v15) != 0 || (unsigned int)v16 < 0x4000 || !sub_25734(a1) )
       break;
     v17 = *(_QWORD *)(a1 + 344);
-    if ( v17 <= 0x1F530F027FFFFFLL )
+    if ( v17 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v18 = 0x4000;
     else
       v18 = 0x80000;
-    if ( v17 <= 0x2711FFFFFFFFFFLL )
+    if ( v17 <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
       v19 = v18;
     else
       v19 = 528;
@@ -26057,10 +26057,10 @@ __int64 __fastcall sub_26204(__int64 a1, __int64 a2, char *a3, mach_msg_type_num
   mach_msg_type_number_t old_stateCnt[2]; // [xsp+240h] [xbp-60h] BYREF
 
   v7 = *(_QWORD *)(a1 + 344);
-  if ( v7 < 0x27120000000000LL )
+  if ( v7 < XNU_VERSION_PACKED(10002, 0, 0, 0, 0) )
   {
     v8 = 708609;
-    if ( v7 >= 0x1F530F02800000LL )
+    if ( v7 >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
     {
       *(_QWORD *)old_state = a2;
       old_stateCnt[0] = a4;
@@ -26073,10 +26073,10 @@ __int64 __fastcall sub_26204(__int64 a1, __int64 a2, char *a3, mach_msg_type_num
           {
             v22 = *(_QWORD *)(a1 + 344);
             v23 = 880;
-            if ( v22 > 0x1F541DFFFFFFFFLL )
+            if ( v22 > XNU_VERSION_PACKED(8020, 119, 1023, 1023, 1023) )
               v23 = 1392;
             v24 = 888;
-            if ( v22 > 0x1F541DFFFFFFFFLL )
+            if ( v22 > XNU_VERSION_PACKED(8020, 119, 1023, 1023, 1023) )
               v24 = 1400;
             v25 = v22 >> 43 > 0x44A;
             v26 = 1408;
@@ -26546,7 +26546,7 @@ __int64 __fastcall sub_26BE4(__int64 a1)
   pthread_t v11; // [xsp+0h] [xbp-40h] BYREF
   semaphore_t semaphore[2]; // [xsp+8h] [xbp-38h] BYREF
 
-  if ( *(_QWORD *)(a1 + 344) < 0x1F530000000000uLL )
+  if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
   {
     if ( *(_BYTE *)(a1 + 12) )
     {
@@ -26757,7 +26757,7 @@ LABEL_27:
                     {
                       v23 = *(_QWORD *)(a1 + 264) + v22;
                       v24 = 1096;
-                      if ( *(_QWORD *)(a1 + 344) > 0x225C192D0FFFFFuLL )
+                      if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8796, 100, 720, 1023, 1023) )
                         v24 = 1104;
                       v25 = (__int128 *)(v23 + v24);
                       v37 = *v25;
@@ -26800,7 +26800,7 @@ LABEL_27:
                           v32 = 0;
                           v33 = *(_QWORD *)(a1 + 264) + v31;
                           v34 = 1096;
-                          if ( *(_QWORD *)(a1 + 344) > 0x225C192D0FFFFFuLL )
+                          if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8796, 100, 720, 1023, 1023) )
                             v34 = 1104;
                           *(_OWORD *)(v33 + v34) = v37;
                         }
@@ -26832,11 +26832,11 @@ LABEL_29:
               if ( sub_25734(a1) )
               {
                 v16 = *(_QWORD *)(a1 + 344);
-                if ( v16 <= 0x1F530F027FFFFFLL )
+                if ( v16 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
                   v17 = 0x4000;
                 else
                   v17 = 0x80000;
-                if ( v16 <= 0x2711FFFFFFFFFFLL )
+                if ( v16 <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
                   v18 = v17;
                 else
                   v18 = 528;
@@ -27349,7 +27349,7 @@ LABEL_158:
       }
       goto LABEL_76;
     }
-    if ( *(_QWORD *)(a1 + 344) <= 0x1F5313FFFFFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 79, 1023, 1023, 1023) )
       v21 = 9728;
     else
       v21 = 9744;
@@ -27370,7 +27370,7 @@ LABEL_158:
       case 10002:
         v13 = *(_QWORD *)(a1 + 344);
         v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
-        if ( v13 < 0x27120A80800000LL )
+        if ( v13 < XNU_VERSION_PACKED(10002, 42, 8, 0, 0) )
         {
           v15 = 17904;
           v16 = 10160;
@@ -27696,7 +27696,7 @@ LABEL_146:
   if ( (_DWORD)v6 )
     goto LABEL_158;
 LABEL_155:
-  if ( *(_QWORD *)(a1 + 344) >= 0x27120F04B00003uLL && (*(_BYTE *)a1 & 0x20) != 0 )
+  if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (*(_BYTE *)a1 & 0x20) != 0 )
   {
     v78 = 0;
   }
@@ -28302,7 +28302,7 @@ LABEL_29:
           if ( (unsigned int)(v25 - 1) >= 0xBFF )
             return 163857;
           *((_DWORD *)v6 + 14) = v25;
-          if ( a1->someLargeNumber < 0x27120F04B00003LL || (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0 )
+          if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) || (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0 )
           {
             if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
             {
@@ -28636,7 +28636,7 @@ LABEL_25:
     {
       if ( v37 != 11 )
         thread_switch(*(_DWORD *)(v31 + 48), 2, 0xAu);
-      if ( a1->someLargeNumber > 0x27120F04B00002LL && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+      if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
       {
         v68 = 0;
         sub_38D60((__int64)a1, v60, &v68, a1->int168, 0);
@@ -28672,7 +28672,7 @@ LABEL_64:
           goto LABEL_66;
         }
         v41 = paddr;
-        if ( a1->someLargeNumber > 0x27120F04B00002LL && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+        if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) && (a1->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
         {
           sub_38D60((__int64)a1, paddr + 52, &v65, 4u, 0);
           v5 = v45;
@@ -28871,7 +28871,7 @@ __int64 __fastcall kreadbuf_via_dev_null_and_thread_state(
   unsigned int iMaybe; // w8
   unsigned __int32 sizeMinusI; // w19
   __int64 iPtr; // x26
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   int v16; // w9
   unsigned __int32 v17; // w8
   unsigned __int32 v18[2]; // x24
@@ -28932,12 +28932,12 @@ __int64 __fastcall kreadbuf_via_dev_null_and_thread_state(
               vaddrPlusI = vaddr_ + iMaybe;
               if ( (krwCtx->qword188 & vaddrPlusI) == 0 && sizeMinusI >= 0x4000 && sub_25734((__int64)krwCtx) )
               {
-                someLargeNumber = krwCtx->someLargeNumber;
-                if ( someLargeNumber <= 0x1F530F027FFFFFLL )
+                xnuVersionPacked = krwCtx->xnuVersionPacked;
+                if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
                   v16 = 0x4000;
                 else
                   v16 = 0x80000;
-                if ( someLargeNumber <= 0x2711FFFFFFFFFFLL )
+                if ( xnuVersionPacked <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
                   v17 = v16;
                 else
                   v17 = 528;
@@ -28977,7 +28977,7 @@ LABEL_69:
               v22 = v19 + vaddrPlusI;
               outBufWithOffAndOff = (void *)(v19 + outBufWithOff);
               v24 = *(_QWORD *)v18 - v19;
-              if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+              if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
               {
                 *(_QWORD *)old_stateCnt = 0;
                 v47 = 132;
@@ -29220,7 +29220,7 @@ unsigned __int64 __fastcall sub_29D88(struct_krwCtx *a1, __int64 a2)
   v2 = a2;
   if ( a2 && (a2 & 0x80000000000000LL) != 0 )
   {
-    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16_A17_MASK) && a1->someLargeNumber >= 0x22580A06C00000LL )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16_A17_MASK) && a1->xnuVersionPacked >= XNU_VERSION_PACKED(8792, 40, 108, 0, 0) )
       return v2 | 0xFFFF800000000000LL;
     else
       return v2 | 0xFFFFFF8000000000LL;
@@ -29295,7 +29295,7 @@ LABEL_27:
     v7 = sub_251A4(a1, 1u, 0x2710u);
     if ( v7 )
       goto LABEL_3;
-    if ( *(_QWORD *)(a1 + 344) < 0x1F530000000000uLL )
+    if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
     {
       v12 = sub_2B5BC(a1, address);
       goto LABEL_32;
@@ -29459,13 +29459,13 @@ unsigned __int64 __fastcall sub_2A200(struct_krwCtx *a1, unsigned __int64 a2, _D
   {
     if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16_A17_MASK) )
     {
-      v6 = a1->someLargeNumber > 0x225814018FFFFFLL;
+      v6 = a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023);
       v7 = v6;
       v8 = 0xFFFF9FFFFFFFFFF0LL;
-      if ( a1->someLargeNumber > 0x225814018FFFFFLL )
+      if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
         v8 = -32;
       v9 = 0xFFFFBFFFFFFFC000LL;
-      if ( a1->someLargeNumber > 0x225814018FFFFFLL )
+      if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
       {
         v10 = 46;
       }
@@ -29479,13 +29479,13 @@ unsigned __int64 __fastcall sub_2A200(struct_krwCtx *a1, unsigned __int64 a2, _D
     }
     else
     {
-      v6 = a1->someLargeNumber > 0x225814018FFFFFLL;
+      v6 = a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023);
       v7 = v6;
       v8 = 0xFFFFFF9FFFFFFFF0LL;
-      if ( a1->someLargeNumber > 0x225814018FFFFFLL )
+      if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
         v8 = -32;
       v9 = 0xFFFFFFBFFFFFC000LL;
-      if ( a1->someLargeNumber > 0x225814018FFFFFLL )
+      if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
       {
         v10 = 38;
       }
@@ -29647,7 +29647,7 @@ mach_vm_address_t __fastcall ppl_kwrite32(struct_krwCtx *a1, mach_vm_address_t a
   v4 = a2;
   v5 = a1;
   newBytes = a3;
-  if ( a1->someLargeNumber < 0x1F530F02800000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
 LABEL_8:
     if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
@@ -29677,7 +29677,7 @@ void __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 
 
   v4 = address;
   v5 = (__int64)a1;
-  if ( a1->someLargeNumber < 0x1F530F02800000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     v6 = a1->gap4[8];
   }
@@ -29717,7 +29717,7 @@ unsigned __int64 __fastcall kwritebuf_universal(
 
   vaddr_ = vaddr;
   ctx_ = (struct_krwCtx *)a1;
-  if ( a1[43] >= 0x1F530F02800000uLL )
+  if ( a1[43] >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
@@ -30287,7 +30287,7 @@ __int64 __fastcall sub_2B0E8(struct_krwCtx *krwCtx, unsigned __int64 vaddr, __in
     v27 = paddr_2 + 104;
   }
   v32 = 0;
-  if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+  if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     physwritebuf_direct_mapped(krwCtx, paddr_1, &v32, 4u, 0);
   else
     v23 = dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr_1, &v32, 4u);
@@ -30327,7 +30327,7 @@ void __fastcall physwrite64_maybe(struct_krwCtx *krwCtx, unsigned __int64 paddr,
   __int64 value; // [xsp+8h] [xbp-8h] BYREF
 
   value = value_1;
-  if ( krwCtx->someLargeNumber >= 0x27120F04B00003LL && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+  if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     physwritebuf_direct_mapped(krwCtx, paddr, &value, 8u, 0);
   else
     dmaFail_physwritebuf_ppl((__int64)krwCtx, paddr, &value, 8u);
@@ -30554,7 +30554,7 @@ unsigned __int64 __fastcall sub_2B94C(
   __int64 v14; // x1
   int v15; // w20
   __int64 v16; // x2
-  unsigned __int64 someLargeNumber; // x9
+  unsigned __int64 xnuVersionPacked; // x9
   __int64 v18; // x8
   bool v19; // cc
   unsigned __int64 v20; // x9
@@ -30613,14 +30613,14 @@ LABEL_10:
         v36 = 0;
         v34 = 0u;
         memset(v35, 0, sizeof(v35));
-        v16 = a1->someLargeNumber <= 0x1F530F027FFFFFLL ? 48LL : 64LL;
+        v16 = a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
         v32 = 0u;
         v33 = 0u;
         if ( !(unsigned int)kreadbuf_last_1(a1, v14, v16, &v32) )
           break;
-        someLargeNumber = a1->someLargeNumber;
+        xnuVersionPacked = a1->xnuVersionPacked;
         v18 = *((_QWORD *)&v33 + 1);
-        if ( someLargeNumber > 0x1F530F027FFFFFLL )
+        if ( xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v18 = *((_QWORD *)&v34 + 1);
         if ( v15 )
         {
@@ -30629,8 +30629,8 @@ LABEL_10:
         }
         else
         {
-          v19 = someLargeNumber > 0x1F530F027FFFFFLL;
-          if ( someLargeNumber <= 0x1F530F027FFFFFLL )
+          v19 = xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
+          if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
             v20 = *((_QWORD *)&v34 + 1);
           else
             v20 = *((_QWORD *)&v35[0] + 1);
@@ -30682,11 +30682,11 @@ __int64 __fastcall sub_2BBA4(__int64 a1, int *a2, int *a3)
         break;
       case 8019:
         v9 = *(_QWORD *)(a1 + 344);
-        if ( v9 <= 0x1F530F027FFFFFLL )
+        if ( v9 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v8 = 680;
         else
           v8 = 856;
-        if ( v9 <= 0x1F530F027FFFFFLL )
+        if ( v9 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v7 = 688;
         else
           v7 = 864;
@@ -30954,7 +30954,7 @@ bool __fastcall sub_2C0F8(struct_krwCtx *a1, unsigned int a2, const char *a3)
 
   if ( (unsigned int)sub_2C2F8(a1, a2, (__int64)v20) )
   {
-    v5 = (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || a1->someLargeNumber > 0x1F52FFFFFFFFFFLL;
+    v5 = (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023);
     v7 = sub_2C9B0((__int64)v20, 0, -86111230);
     if ( !v7 )
       goto LABEL_23;
@@ -31039,7 +31039,7 @@ LABEL_18:
 __int64 __fastcall sub_2C2F8(struct_krwCtx *a1, unsigned int a2, __int64 a3)
 {
   __int64 result; // x0
-  unsigned __int64 someLargeNumber; // x22
+  unsigned __int64 xnuVersionPacked; // x22
   unsigned int *v9; // x0
   unsigned int *v10; // x23
   int v11; // w22
@@ -31091,8 +31091,8 @@ __int64 __fastcall sub_2C2F8(struct_krwCtx *a1, unsigned int a2, __int64 a3)
   if ( (unsigned int)sub_2E5C0(a1, a2, 0, 1u, (__int64)&v46)
     || (result = sub_2E5C0(a1, a2, 0, 0, (__int64)&v46), (_DWORD)result) )
   {
-    someLargeNumber = a1->someLargeNumber;
-    if ( someLargeNumber >= 0x1C1B1914600000LL && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || someLargeNumber > 0x1F52FFFFFFFFFFLL) )
+    xnuVersionPacked = a1->xnuVersionPacked;
+    if ( xnuVersionPacked >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
       LOBYTE(v52) = 1;
     if ( *((_QWORD *)&v48 + 1) >> 29 )
     {
@@ -31125,7 +31125,7 @@ __int64 __fastcall sub_2C2F8(struct_krwCtx *a1, unsigned int a2, __int64 a3)
     if ( v9[10] )
       goto LABEL_82;
     v9[10] = 128;
-    if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+    if ( (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     {
 LABEL_15:
       v11 = sub_2CA80(a1, (__int64)&v46);
@@ -31162,9 +31162,9 @@ LABEL_24:
     v54 = 0;
     v55 = 0;
     v53 = 0;
-    if ( someLargeNumber > 0x1F52FFFFFFFFFFLL && !(_BYTE)v52 )
+    if ( xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && !(_BYTE)v52 )
       goto LABEL_82;
-    if ( someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+    if ( xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     {
       v22 = sub_2C9B0((__int64)&v46, 5, -86085263);
       if ( !v22 )
@@ -31444,12 +31444,12 @@ __int64 __fastcall sub_2CA80(struct_krwCtx *a1, __int64 a2)
   v4[0] = a1;
   v4[1] = a2;
   v5 = 0;
-  if ( a1->someLargeNumber < 0x1C1B1914600000LL || krw_ctx_has_flag(a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
   {
     sub_2FA24((__int64)v4);
     return v5;
   }
-  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) && a1->someLargeNumber <= 0x1C1B1E025FFFFFLL )
+  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) && a1->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 120, 37, 1023, 1023) )
   {
     result = sub_23F78((__int64)a1, sub_2FA24, (__int64)v4);
     if ( (_DWORD)result )
@@ -31525,8 +31525,8 @@ __int64 __fastcall sub_2CBA4(struct_krwCtx *a1, __int64 task, char *entitlementX
   result = sub_2C2F8(a1, task, (__int64)v36);
   if ( !(_DWORD)result )
     return result;
-  v9 = a1->someLargeNumber;
-  if ( v9 < 0x1C1B1914600000LL || ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 ? (v10 = v9 > 0x1F52FFFFFFFFFFLL) : (v10 = 1), !v10) )
+  v9 = a1->xnuVersionPacked;
+  if ( v9 < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) || ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 ? (v10 = v9 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) : (v10 = 1), !v10) )
   {
     v12 = 0;
     v11 = (a4 & 1) == 0;
@@ -31570,7 +31570,7 @@ LABEL_12:
       goto LABEL_56;
     if ( !v33 )
       goto LABEL_25;
-    if ( a1->someLargeNumber < 0x1F530000000000LL || v11 )
+    if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) || v11 )
     {
 LABEL_18:
       v18 = 0;
@@ -31628,11 +31628,11 @@ LABEL_55:
   }
   v38 = 1;
   v11 = (a4 & 1) == 0;
-  if ( v9 >= 0x1F530000000000LL && (a4 & 1) != 0 )
+  if ( v9 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) && (a4 & 1) != 0 )
   {
     v39 = 1;
   }
-  else if ( v9 <= 0x1F52FFFFFFFFFFLL )
+  else if ( v9 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
   {
     v12 = 0;
     goto LABEL_12;
@@ -31664,7 +31664,7 @@ LABEL_53:
     goto LABEL_69;
   }
   v18 = 0;
-  if ( a1->someLargeNumber >= 0x1F530000000000LL && (a4 & 1) != 0 )
+  if ( a1->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) && (a4 & 1) != 0 )
   {
     if ( !(unsigned int)sub_2D2B4(a1, (__int64)v36, task, &v33) )
       goto LABEL_55;
@@ -31686,7 +31686,7 @@ LABEL_59:
   sub_2CB54((__int64)v36);
   if ( v18 )
     return 0;
-  if ( a1->someLargeNumber > 0x1F52FFFFFFFFFFLL || v11 )
+  if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || v11 )
     return 1;
   return krw_inject_entitlements_maybe((__int64)a1, task, entitlementXml);
 }
@@ -31815,21 +31815,21 @@ LABEL_20:
 //----- (000000000002D2B4) ----------------------------------------------------
 __int64 __fastcall sub_2D2B4(struct_krwCtx *a1, __int64 a2, unsigned int a3, bool *a4)
 {
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   __int64 v8; // x11
   __int64 v9; // x13
   __int64 v10; // x8
   __int64 result; // x0
   unsigned __int64 v12; // [xsp+8h] [xbp-28h] BYREF
 
-  someLargeNumber = a1->someLargeNumber;
+  xnuVersionPacked = a1->xnuVersionPacked;
   v8 = 168;
   v9 = 144;
-  if ( someLargeNumber > 0x1C1B19145FFFFFLL )
+  if ( xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
     v9 = 152;
-  if ( someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     v8 = v9;
-  if ( someLargeNumber <= 0x1F530F027FFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     v10 = v8;
   else
     v10 = 160;
@@ -32101,7 +32101,7 @@ __int64 __fastcall sub_2D934(struct_krwCtx *a1, unsigned int a2)
   int xnuMajorVersion; // w8
   __int64 v18; // x8
   _BOOL4 v19; // w0
-  unsigned __int64 someLargeNumber; // x9
+  unsigned __int64 xnuVersionPacked; // x9
   _BOOL4 v21; // w0
   __int64 v22; // x8
   __int64 v23; // x9
@@ -32139,7 +32139,7 @@ LABEL_5:
           if ( xnuMajorVersion <= 7194 )
           {
             v18 = 239;
-            if ( a1->someLargeNumber > 0x18090A078FFFFFLL )
+            if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
               v18 = 231;
           }
           else
@@ -32206,8 +32206,8 @@ LABEL_50:
     v10 = 1572864;
     goto LABEL_13;
   }
-  someLargeNumber = a1->someLargeNumber;
-  if ( someLargeNumber >= 0x1C1B0A80100000LL )
+  xnuVersionPacked = a1->xnuVersionPacked;
+  if ( xnuVersionPacked >= XNU_VERSION_PACKED(7195, 42, 1, 0, 0) )
   {
     v21 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14);
     v12 = !v21;
@@ -32238,16 +32238,16 @@ LABEL_46:
     v23 = 257;
     goto LABEL_46;
   }
-  if ( someLargeNumber <= 0x18090A078FFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
     v13 = 272;
   else
     v13 = 264;
-  if ( someLargeNumber <= 0x18090A078FFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
     v14 = 273;
   else
     v14 = 265;
   v15 = 271;
-  if ( someLargeNumber > 0x18090A078FFFFFLL )
+  if ( xnuVersionPacked > XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
     v15 = 263;
 LABEL_52:
   v25 = v15 + v5;
@@ -32294,7 +32294,7 @@ __int64 __fastcall sub_2DC40(struct_krwCtx *a1, unsigned int a2)
   __int64 v14; // x10
   _BOOL4 v15; // w0
   __int64 v16; // x21
-  unsigned __int64 someLargeNumber; // x9
+  unsigned __int64 xnuVersionPacked; // x9
   _BOOL4 v18; // w0
   _BOOL4 v19; // w0
   unsigned __int8 v20; // [xsp+Fh] [xbp-31h] BYREF
@@ -32363,8 +32363,8 @@ LABEL_17:
     v9 = 1572864;
     goto LABEL_10;
   }
-  someLargeNumber = a1->someLargeNumber;
-  if ( someLargeNumber >= 0x1C1B0A80100000LL )
+  xnuVersionPacked = a1->xnuVersionPacked;
+  if ( xnuVersionPacked >= XNU_VERSION_PACKED(7195, 42, 1, 0, 0) )
   {
     v18 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14);
     v11 = !v18;
@@ -32387,7 +32387,7 @@ LABEL_17:
     goto LABEL_17;
   }
   v12 = 272;
-  if ( someLargeNumber <= 0x18090A078FFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
   {
     v16 = 273;
   }
@@ -32474,7 +32474,7 @@ mach_vm_address_t __fastcall sub_2DED4(struct_krwCtx *a1, unsigned int a2, int a
               if ( (_DWORD)result )
               {
                 v13 = v18;
-                if ( a1->someLargeNumber <= 0x1C1B1E025FFFFFLL )
+                if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 120, 37, 1023, 1023) )
                   v14 = 16;
                 else
                   v14 = 32784;
@@ -32532,8 +32532,8 @@ void __fastcall sub_2E00C(__int64 a1, unsigned int a2)
   v4 = sub_34FF8(a1, a2, &v21);
   if ( v4 && ((v21 & 0x400) != 0 || noppl_kwrite32(a1, v4, v21 | 0x400)) )
   {
-    if ( (v5 = *(_QWORD *)(a1 + 344), v5 <= 0x22580A06BFFFFFLL)
-      && (v5 < 0x1F543C40800000LL || *(int *)(a1 + 320) > 8791)
+    if ( (v5 = *(_QWORD *)(a1 + 344), v5 <= XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023))
+      && (v5 < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) || *(int *)(a1 + 320) > 8791)
       || (v6 = sub_34F5C((struct_krwCtx *)a1, a2, 1, &v21)) != 0
       && ((v21 & 0x400) != 0 || (unsigned int)ppl_kwrite32((struct_krwCtx *)a1, v6, v21 | 0x400)) )
     {
@@ -32543,7 +32543,7 @@ void __fastcall sub_2E00C(__int64 a1, unsigned int a2)
         if ( v7 )
         {
           v8 = *(_QWORD *)(a1 + 344);
-          if ( v8 >= 0x1C1B1914600000LL && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v8 >= 0x1F530000000000LL) )
+          if ( v8 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v8 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0)) )
           {
             if ( v24 )
             {
@@ -32556,12 +32556,12 @@ void __fastcall sub_2E00C(__int64 a1, unsigned int a2)
                   {
                     v28 = 0;
                     memset(&v27[1], 0, 160);
-                    v12 = *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL ? 48LL : 64LL;
+                    v12 = *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
                     v26 = 0u;
                     v27[0] = 0u;
                     if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v11, v12, &v26) )
                       break;
-                    v13 = *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL
+                    v13 = *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)
                         ? (unsigned __int64 *)((char *)v27 + 8)
                         : (unsigned __int64 *)((char *)&v27[1] + 8);
                     v14 = *v13;
@@ -32595,7 +32595,7 @@ LABEL_16:
               && (unsigned int)sub_2E5C0((struct_krwCtx *)a1, a2, (__int64 *)v18, 0, (__int64)v22) )
             {
               v9 = 72;
-              if ( *(_QWORD *)(a1 + 344) > 0x1F530F027FFFFFuLL )
+              if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
                 v9 = 88;
               if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v9 + v23, 20, &v26)
                 && sub_22464(a1, (__int64)&v26, 20) )
@@ -32631,11 +32631,11 @@ void __fastcall sub_2E310(__int64 a1, __int64 a2)
 
   v13 = 1;
   v4 = *(_QWORD *)(a1 + 344);
-  if ( v4 <= 0x1F530F027FFFFFLL )
+  if ( v4 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
-    if ( v4 <= 0x1F52FFFFFFFFFFLL )
+    if ( v4 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     {
-      if ( v4 <= 0x1C1B19145FFFFFLL )
+      if ( v4 <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
       {
         if ( *(int *)(a1 + 320) <= 7194 )
           v5 = 168;
@@ -32661,7 +32661,7 @@ void __fastcall sub_2E310(__int64 a1, __int64 a2)
     if ( (v13 & 1) != 0
       || (v13 |= 1u, (unsigned int)kwritebuf_universal((_QWORD *)a1, *(_QWORD *)(a2 + 8) + v5, &v13, 1u)) )
     {
-      v6 = *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL ? 16LL : 32LL;
+      v6 = *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 16LL : 32LL;
       if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v6 + *(_QWORD *)(a2 + 8), 4, &v12) )
       {
         v7 = v12;
@@ -32676,7 +32676,7 @@ void __fastcall sub_2E310(__int64 a1, __int64 a2)
             *(_DWORD *)a2 = v12;
           }
         }
-        if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+        if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v9 = 128;
         else
           v9 = 136;
@@ -32821,13 +32821,13 @@ __int64 __fastcall sub_2E5C0(struct_krwCtx *a1, unsigned int a2, __int64 *a3, un
   if ( !v8 )
     return 0;
   v9 = v8;
-  v10 = a1->someLargeNumber <= 0x1F530F027FFFFFLL ? 48LL : 64LL;
-  v11 = a1->someLargeNumber <= 0x1F530F027FFFFFLL ? 64LL : 80LL;
-  v12 = a1->someLargeNumber <= 0x1F530F027FFFFFLL ? 16LL : 32LL;
-  v13 = a1->someLargeNumber <= 0x1F530F027FFFFFLL ? 120LL : 128LL;
+  v10 = a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
+  v11 = a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 64LL : 80LL;
+  v12 = a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 16LL : 32LL;
+  v13 = a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 120LL : 128LL;
   v14 = 136;
-  v15 = a1->someLargeNumber <= 0x1F530F027FFFFFLL ? 128LL : 136LL;
-  if ( a1->someLargeNumber <= 0x1F530F027FFFFFLL )
+  v15 = a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 128LL : 136LL;
+  if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
     v16 = 24;
   }
@@ -32837,7 +32837,7 @@ __int64 __fastcall sub_2E5C0(struct_krwCtx *a1, unsigned int a2, __int64 *a3, un
     v16 = 40;
   }
   if ( !kread64_outptr(a1, v14 + v8, &v59)
-    || a1->someLargeNumber > 0x1F52FFFFFFFFFFLL && !kread64_outptr(a1, v9 + 152, &v58)
+    || a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && !kread64_outptr(a1, v9 + 152, &v58)
     || !kread64_outptr(a1, v13 + v9, &v61)
     || !kread64_outptr(a1, v15 + v9, &v60)
     || !kread32_outptr((__int64)a1, v12 + v9, &v64)
@@ -32883,7 +32883,7 @@ __int64 __fastcall sub_2E5C0(struct_krwCtx *a1, unsigned int a2, __int64 *a3, un
         *(_DWORD *)(a5 + 80) = v24;
         if ( (_DWORD)v24 )
         {
-          if ( v20 <= v24 && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || a1->someLargeNumber > 0x1F52FFFFFFFFFFLL) )
+          if ( v20 <= v24 && ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
             goto LABEL_110;
         }
         v25 = v59 ? (unsigned int)(v59 - v21) : 0LL;
@@ -32923,7 +32923,7 @@ LABEL_104:
               if ( v53 )
               {
                 *(_DWORD *)(a5 + 72) = *((unsigned __int8 *)v53 + 36);
-                if ( a1->someLargeNumber <= 0x1F52FFFFFFFFFFLL
+                if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)
                   || !sub_2C9B0(a5, 7, -86085262)
                   || sub_2C9B0(a5, 5, -86085263)
                   || (unsigned int)sub_2D3F8(a5, 5u, -86085263) )
@@ -33472,7 +33472,7 @@ unsigned __int64 __fastcall sub_2F2C8(struct_krwCtx *a1, unsigned int a2, __int6
   __int64 v10; // x1
   __int64 *v11; // x28
   __int64 v12; // x2
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   char *v14; // x9
   __int64 v15; // x9
   __int64 v16; // x21
@@ -33563,23 +33563,23 @@ unsigned __int64 __fastcall sub_2F2C8(struct_krwCtx *a1, unsigned int a2, __int6
           {
             v58 = 0;
             memset(&v57[1], 0, 160);
-            v12 = v5->someLargeNumber <= 0x1F530F027FFFFFLL ? 48LL : 64LL;
+            v12 = v5->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
             v56 = 0u;
             v57[0] = 0u;
             if ( !(unsigned int)kreadbuf_last_1(v5, v10, v12, &v56) )
               break;
-            someLargeNumber = v5->someLargeNumber;
+            xnuVersionPacked = v5->xnuVersionPacked;
             v14 = (char *)&v57[1] + 8;
-            if ( someLargeNumber <= 0x1F530F027FFFFFLL )
+            if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
               v14 = (char *)v57 + 8;
             if ( !(*(_QWORD *)v14 >> 29) )
             {
               v15 = 144;
-              if ( someLargeNumber > 0x1C1B19145FFFFFLL )
+              if ( xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
                 v15 = 152;
-              if ( someLargeNumber > 0x1F52FFFFFFFFFFLL )
+              if ( xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
                 v15 = 168;
-              if ( someLargeNumber <= 0x1F530F027FFFFFLL )
+              if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
                 v16 = v15;
               else
                 v16 = 160;
@@ -33592,7 +33592,7 @@ unsigned __int64 __fastcall sub_2F2C8(struct_krwCtx *a1, unsigned int a2, __int6
                 sub_2A63C(v5, address + v16, 0);
                 if ( !v17 )
                   break;
-                if ( v5->someLargeNumber > 0x1F52FFFFFFFFFFLL )
+                if ( v5->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
                 {
                   v40 = address;
                   v18 = v46;
@@ -33657,7 +33657,7 @@ LABEL_39:
                       newBytes = 14;
                       v49 = 0x7F00000000000000LL;
                       v27 = 8;
-                      if ( v5->someLargeNumber <= 0x1F530F027FFFFFLL )
+                      if ( v5->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
                       {
                         v28 = 24;
                       }
@@ -34124,7 +34124,7 @@ void __fastcall sub_2FA24(__int64 a1)
   v2 = *(_QWORD *)a1;
   v3 = *(int **)(a1 + 8);
   v4 = *(_QWORD *)(*(_QWORD *)a1 + 344LL);
-  v5 = (**(_DWORD **)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v4 > 0x1F52FFFFFFFFFFLL;
+  v5 = (**(_DWORD **)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v4 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023);
   if ( !v5 )
   {
     v204 = 0;
@@ -34200,7 +34200,7 @@ LABEL_63:
             v34 = (_DWORD)newBytes ? *v21 + (unsigned int)newBytes : 0LL;
             if ( kwrite64(v2, *((_QWORD *)v18 + 1) + 136LL, v34) )
             {
-              if ( *(_QWORD *)(v2 + 344) <= 0x1F52FFFFFFFFFFuLL
+              if ( *(_QWORD *)(v2 + 344) <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)
                 || (!v193 ? (v38 = 0) : (v38 = *v21 + (unsigned int)v193),
                     kwrite64(v2, *((_QWORD *)v18 + 1) + 152LL, v38)) )
               {
@@ -34295,7 +34295,7 @@ LABEL_121:
                   if ( !(unsigned int)kwritebuf_last_1(v2, (__int64)v49, (__int64)buf, v23) )
                     goto LABEL_349;
                   *(_QWORD *)name = 0;
-                  if ( *(_QWORD *)(v2 + 344) <= 0x1F52FFFFFFFFFFuLL )
+                  if ( *(_QWORD *)(v2 + 344) <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
                   {
                     v211 = size;
                     bufb = sub_37210(v2, &v211);
@@ -34339,15 +34339,15 @@ LABEL_121:
                   __memcpy_chk((char *)&v216 + 0x78, &v210, *(int *)(v2 + 360), 0x88u);
                   v98 = *(_QWORD *)(v2 + 344);
                   v99 = 144;
-                  if ( v98 > 0x1C1B19145FFFFFLL )
+                  if ( v98 > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
                     v99 = 152;
-                  if ( v98 > 0x1F52FFFFFFFFFFLL )
+                  if ( v98 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
                     v99 = 168;
                   v100 = *(_QWORD *)((char *)&v216 + v99);
                   __src[0] = v100;
                   if ( v100 )
                   {
-                    if ( v98 <= 0x1F52FFFFFFFFFFLL )
+                    if ( v98 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
                     {
                       __src[0] = 0;
                       memcpy((char *)&v216 + v99, __src, *(int *)(v2 + 360));
@@ -34363,7 +34363,7 @@ LABEL_121:
                     v209 = (unsigned __int64)v50 + *((_QWORD *)&v224 + 1) - *((_QWORD *)v3 + 3);
                     __memcpy_chk((char *)&v216 + 0x88, &v209, *(int *)(v2 + 360), 0x78u);
                   }
-                  if ( *(_QWORD *)(v2 + 344) > 0x1F52FFFFFFFFFFuLL )
+                  if ( *(_QWORD *)(v2 + 344) > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
                   {
                     v208 = *((_QWORD *)&v225 + 1);
                     if ( *((_QWORD *)&v225 + 1) )
@@ -34416,7 +34416,7 @@ LABEL_111:
         {
           if ( (*((_BYTE *)v3 + 3) & 4) == 0 )
           {
-            v48 = *(_QWORD *)(v2 + 344) <= 0x1F530F027FFFFFuLL ? 128LL : 136LL;
+            v48 = *(_QWORD *)(v2 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 128LL : 136LL;
             if ( !kread64_outptr((struct_krwCtx *)v2, v48 + *((_QWORD *)v3 + 1), (unsigned __int64 *)&v210)
               || !kwrite64(v2, v196 + v48, (__int64)v210) )
             {
@@ -34431,12 +34431,12 @@ LABEL_111:
       if ( errno != 7 )
         goto LABEL_349;
       v46 = *(_QWORD *)(v2 + 344);
-      if ( v46 <= 0x1F530F027FFFFFLL )
+      if ( v46 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       {
-        if ( v46 <= 0x1F52FFFFFFFFFFLL )
+        if ( v46 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
         {
           v47 = 168;
-          if ( v46 <= 0x1C1B19145FFFFFLL )
+          if ( v46 <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
           {
             if ( *(int *)(v2 + 320) <= 7194 )
               v47 = 168;
@@ -34515,7 +34515,7 @@ LABEL_39:
   v198 = -1;
   if ( !*((_BYTE *)v3 + 96)
     && *((_QWORD *)v3 + 5) >> 29
-    && (v3[19] != v192 || v3[21] != v191 && !v187 || v3[22] != v187 && *(_QWORD *)(v2 + 344) > 0x1F52FFFFFFFFFFuLL) )
+    && (v3[19] != v192 || v3[21] != v191 && !v187 || v3[22] != v187 && *(_QWORD *)(v2 + 344) > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
   {
     goto LABEL_451;
   }
@@ -34570,12 +34570,12 @@ LABEL_39:
   if ( errno != 7 )
     goto LABEL_451;
   v36 = *(_QWORD *)(v2 + 344);
-  if ( v36 <= 0x1F530F027FFFFFLL )
+  if ( v36 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
-    if ( v36 <= 0x1F52FFFFFFFFFFLL )
+    if ( v36 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     {
       v37 = 168;
-      if ( v36 <= 0x1C1B19145FFFFFLL )
+      if ( v36 <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
       {
         if ( *(int *)(v2 + 320) <= 7194 )
           v37 = 168;
@@ -34596,7 +34596,7 @@ LABEL_39:
   if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)v2, *((_QWORD *)v3 + 1) + v37, 1, &v171) )
     goto LABEL_451;
   v52 = v171 & 1;
-  if ( v4 <= 0x1F52FFFFFFFFFFLL )
+  if ( v4 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     goto LABEL_142;
   bufSize = v171 & 1;
   if ( !(unsigned int)sub_31FC0((__int64)v3, v212) || !sub_22464(v2, (__int64)v212, 20) )
@@ -34610,7 +34610,7 @@ LABEL_143:
     v53 = *(_QWORD *)(v2 + 344);
     goto LABEL_144;
   }
-  if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (v53 = *(_QWORD *)(v2 + 344), v53 > 0x1F530F027FFFFFLL) )
+  if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (v53 = *(_QWORD *)(v2 + 344), v53 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)) )
   {
     LODWORD(v216) = v171 | 1;
     bufSize_4a = 1;
@@ -34623,7 +34623,7 @@ LABEL_143:
   bufSize_4a = 0;
   v52 = 0;
 LABEL_144:
-  if ( v53 <= 0x1F52FFFFFFFFFFLL )
+  if ( v53 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
   {
     v55 = 0;
     LOBYTE(sizea) = 0;
@@ -34636,7 +34636,7 @@ LABEL_144:
   v213 = v170;
   v214 = v207;
   v215 = (__int64)v205;
-  if ( v4 > 0x1F52FFFFFFFFFFLL )
+  if ( v4 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
   {
     v56 = 0;
     LODWORD(v208) = v31;
@@ -34654,7 +34654,7 @@ LABEL_144:
     v176 = 0u;
     *(_OWORD *)name = 0u;
     if ( v55 )
-      v56 = (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && v53 < 0x1F530F02800000LL;
+      v56 = (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && v53 < XNU_VERSION_PACKED(8019, 60, 40, 0, 0);
     if ( v52 )
     {
       v52 = 0;
@@ -34667,7 +34667,7 @@ LABEL_144:
       if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
       {
         v59 = 0;
-        if ( v53 < 0x1F530F02800000LL )
+        if ( v53 < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
         {
           v147 = v57;
           v60 = v56;
@@ -34977,7 +34977,7 @@ LABEL_441:
     v64 = 163884;
     goto LABEL_254;
   }
-  if ( *(_QWORD *)(v2 + 344) > 0x1F52FFFFFFFFFFuLL )
+  if ( *(_QWORD *)(v2 + 344) > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
   {
     v64 = 708616;
 LABEL_254:
@@ -34991,7 +34991,7 @@ LABEL_254:
   if ( !v80 )
     goto LABEL_363;
   v81 = v80;
-  if ( *(_QWORD *)(v2 + 344) <= 0x1F52FFFFFFFFFFuLL )
+  if ( *(_QWORD *)(v2 + 344) <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
   {
     v81 = sub_402CC(v2, v80);
     if ( !v81 )
@@ -35139,7 +35139,7 @@ LABEL_59:
       if ( v195 != *v3 )
       {
         v39 = 16;
-        if ( *(_QWORD *)(v2 + 344) > 0x1F530F027FFFFFuLL )
+        if ( *(_QWORD *)(v2 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v39 = 32;
         if ( !(unsigned int)kwritebuf_universal((_QWORD *)v2, v39 + v196, v3, 4u) )
           goto LABEL_451;
@@ -35150,7 +35150,7 @@ LABEL_59:
         v69 = v33;
         v70 = *(_QWORD *)(v2 + 344);
         v71 = 128;
-        if ( v70 > 0x1F530F027FFFFFLL )
+        if ( v70 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v71 = 136;
         bufc = v71;
         v72 = sub_2C9B0((__int64)&v195, v199, -86111230);
@@ -35169,7 +35169,7 @@ LABEL_59:
         {
           v74 = 0;
         }
-        v5 = v70 > 0x1F530F027FFFFFLL;
+        v5 = v70 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
         v33 = v69;
         if ( v5 || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || !v74 )
         {
@@ -35210,12 +35210,12 @@ LABEL_88:
       if ( !(unsigned int)kwritebuf_last_1(v2, v8, (__int64)&v202, 8) )
         goto LABEL_451;
       v41 = *(_QWORD *)(v2 + 344);
-      if ( v41 < 0x1F530000000000LL || ((v27 ^ 1) & 1) != 0 )
+      if ( v41 < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) || ((v27 ^ 1) & 1) != 0 )
         goto LABEL_90;
       if ( !(unsigned int)sub_34D14(v2, v3[17]) )
         goto LABEL_451;
       v45 = *(_QWORD *)(v2 + 344);
-      if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && v45 <= 0x1F530F027FFFFFLL )
+      if ( (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && v45 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       {
         if ( !(unsigned int)sub_2F2C8((struct_krwCtx *)v2, v3[17], *(_QWORD *)(v2 + 912)) )
           goto LABEL_451;
@@ -35223,7 +35223,7 @@ LABEL_88:
       else
       {
         v77 = 168;
-        if ( v45 > 0x1F530F027FFFFFLL )
+        if ( v45 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v77 = 160;
         if ( !kread64_outptr((struct_krwCtx *)v2, *((_QWORD *)v3 + 1) + v77, (unsigned __int64 *)&v216) )
           goto LABEL_451;
@@ -35245,7 +35245,7 @@ LABEL_88:
     }
     v41 = *(_QWORD *)(v2 + 344);
 LABEL_90:
-    if ( v41 <= 0x1F52FFFFFFFFFFLL || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) == 0 )
+    if ( v41 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) == 0 )
       goto LABEL_335;
     v42 = v3[17];
     v43 = *((_QWORD *)v3 + 1);
@@ -35253,7 +35253,7 @@ LABEL_90:
     *(_QWORD *)name = 0;
     *(_QWORD *)&v181 = 0;
     __src[0] = 0;
-    if ( v41 <= 0x1F530F027FFFFFLL )
+    if ( v41 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     {
       v44 = 192;
     }
@@ -35384,7 +35384,7 @@ LABEL_373:
           if ( (_QWORD)v181 == __src[0] )
           {
             v186 = 0;
-            if ( *(_QWORD *)(v2 + 344) <= 0x1F52FFFFFFFFFFuLL || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) == 0 )
+            if ( *(_QWORD *)(v2 + 344) <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || (*(_DWORD *)v2 & KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) == 0 )
               break;
             v129 = *(int *)(v2 + 320) <= 8791 ? 80LL : 400LL;
             v130 = v129 + v181;
@@ -35655,7 +35655,7 @@ __int64 __fastcall sub_31B90(struct_krwCtx *a1, __int64 a2, mach_vm_address_t *a
   mach_port_name_t name[2]; // [xsp+20h] [xbp-50h] BYREF
   __int64 v33; // [xsp+28h] [xbp-48h] BYREF
 
-  if ( a1->someLargeNumber < 0x1F530F02800000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     v11 = 0;
     v33 = 0;
@@ -35869,7 +35869,7 @@ __int64 __fastcall sub_320EC(struct_krwCtx *a1)
       v7 = 200;
     else
       v7 = 192;
-    if ( a1->someLargeNumber >= 0x1F530F02800000LL )
+    if ( a1->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
       return v7;
     else
       return v6;
@@ -35884,7 +35884,7 @@ __int64 __fastcall sub_320EC(struct_krwCtx *a1)
       v9 = 184;
     else
       v9 = 176;
-    if ( a1->someLargeNumber >= 0x1C1B1914600000LL )
+    if ( a1->xnuVersionPacked >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
       return v9;
     else
       return v8;
@@ -36303,7 +36303,7 @@ __int64 __fastcall sub_32820(struct_krwCtx *ctx, __int64 ipc_port)
 unsigned __int64 __fastcall sub_328A4(struct_krwCtx *a1, unsigned __int64 ipc_port_kaddr)
 {
   unsigned __int64 result; // x0
-  uint64_t someLargeNumber; // x8
+  uint64_t xnuVersionPacked; // x8
   int v6; // [xsp+4h] [xbp-1Ch] BYREF
   __int64 v7; // [xsp+8h] [xbp-18h] BYREF
 
@@ -36317,16 +36317,16 @@ unsigned __int64 __fastcall sub_328A4(struct_krwCtx *a1, unsigned __int64 ipc_po
   result = validate_addr((__int64)a1, v7);
   if ( !result )
     return result;
-  someLargeNumber = a1->someLargeNumber;
-  if ( someLargeNumber >= 0x27120000000000LL )
+  xnuVersionPacked = a1->xnuVersionPacked;
+  if ( xnuVersionPacked >= XNU_VERSION_PACKED(10002, 0, 0, 0, 0) )
   {
     if ( (v6 & 0x3FFu) > 0x29 || ((1LL << v6) & 0x20068000000LL) == 0 )
       return v7;
     if ( !kread64_outptr(a1, v7 + 48, (unsigned __int64 *)&v7) )
       return 0;
-    someLargeNumber = a1->someLargeNumber;
+    xnuVersionPacked = a1->xnuVersionPacked;
   }
-  if ( someLargeNumber > 0x1F52FFFFFFFFFFLL || (v6 & 0x400) == 0 )
+  if ( xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || (v6 & 0x400) == 0 )
     return v7;
   if ( kread64_outptr(a1, v7 + a1->int168, (unsigned __int64 *)&v7) )
   {
@@ -36343,7 +36343,7 @@ __int64 __fastcall sub_329B8(__int64 a1, __int64 a2)
 {
     switch ( *(int *)(a1 + 320) ) {
         case 6153:
-            if ( *(_QWORD *)(a1 + 344) <= 0x18090A095FFFFFuLL )
+            if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
                 return a2 + 152;
             else
                 return a2 + 144;
@@ -36366,7 +36366,7 @@ __int64 __fastcall sub_32A64(__int64 a1, __int64 a2)
 {
     switch ( *(int *)(a1 + 0x140) ) {
         case 6153:
-            if ( *(_QWORD *)(a1 + 344) <= 0x18090A095FFFFFuLL )
+            if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
                 return a2 + 168;
             else
                 return a2 + 160;
@@ -36436,7 +36436,7 @@ __int64 __fastcall sub_32BC8(__int64 a1)
     switch ( v2 )
     {
       case 6153:
-        if ( *(_QWORD *)(a1 + 344) <= 0x18090A095FFFFFuLL )
+        if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
           v1 = 176LL;
         else
           v1 = 168LL;
@@ -36552,7 +36552,7 @@ __int64 __fastcall sub_32D80(struct_krwCtx *krwCtx, __int64 addr)
   {
     if ( (unsigned int)(xnuMajorVersion - 8019) < 2 )
     {
-      v5 = krwCtx->someLargeNumber > 0x1F530F027FFFFFLL;
+      v5 = krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
       off = 816;
       v7 = 776;
 LABEL_16:
@@ -36564,7 +36564,7 @@ LABEL_16:
     {
       if ( xnuMajorVersion != 7195 )
         return result;
-      v5 = krwCtx->someLargeNumber > 0x1C1B19145FFFFFLL;
+      v5 = krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
       off = 816;
       v7 = 824;
       goto LABEL_16;
@@ -36600,7 +36600,7 @@ __int64 __fastcall sub_32E84(__int64 a1)
   }
   else if ( (unsigned int)(v3 - 8019) < 2 )
   {
-    if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       return 744LL;
     else
       return 704LL;
@@ -36621,7 +36621,7 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
 {
   __int64 result; // x0
   int xnuMajorVersion; // w8
-  uint64_t someLargeNumber; // x20
+  uint64_t xnuVersionPacked; // x20
   _BOOL4 has_flag; // w0
   unsigned int v6; // w9
   unsigned int v7; // w10
@@ -36649,7 +36649,7 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
       }
       else if ( xnuMajorVersion == 7195 )
       {
-        someLargeNumber = a1->someLargeNumber;
+        xnuVersionPacked = a1->xnuVersionPacked;
         has_flag = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
         if ( has_flag )
           v6 = 928;
@@ -36659,7 +36659,7 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
           v7 = 944;
         else
           v7 = 920;
-        if ( someLargeNumber >= 0x1C1B1914600000LL )
+        if ( xnuVersionPacked >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
           return v7;
         else
           return v6;
@@ -36669,9 +36669,9 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
     if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
     {
       v12 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
-      v13 = a1->someLargeNumber;
-      v14 = v13 > 0x1F530F027FFFFFLL;
-      if ( v13 <= 0x1F530F027FFFFFLL )
+      v13 = a1->xnuVersionPacked;
+      v14 = v13 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
+      if ( v13 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
         v15 = 928;
       else
         v15 = 888;
@@ -36684,7 +36684,7 @@ __int64 __fastcall sub_32F1C(struct_krwCtx *a1)
       else
         return v15;
     }
-    v9 = a1->someLargeNumber > 0x1F530F027FFFFFLL;
+    v9 = a1->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
     v10 = 968;
     v11 = 928;
 LABEL_27:
@@ -36695,7 +36695,7 @@ LABEL_27:
   }
   if ( xnuMajorVersion == 8792 )
   {
-    v9 = a1->someLargeNumber > 0x22580F032FFFFFLL;
+    v9 = a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 60, 50, 1023, 1023);
     v10 = 1328;
     v11 = 1336;
     goto LABEL_27;
@@ -36717,7 +36717,7 @@ __int64 __fastcall sub_33098(struct_krwCtx *a1)
   {
     if ( (unsigned int)(xnuMajorVersion - 8019) < 2 )
     {
-      if ( a1->someLargeNumber < 0x1F530F02800000LL )
+      if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
         return 0;
       else
         return (unsigned int)sub_32F1C(a1) + 8;
@@ -36758,7 +36758,7 @@ __int64 __fastcall sub_33168(__int64 a1)
     if ( (unsigned int)(v3 - 8019) >= 2 && v3 != 8792 )
       return result;
 LABEL_7:
-    if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       return 0LL;
     else
       return 40LL;
@@ -36781,7 +36781,7 @@ __int64 __fastcall sub_331D0(__int64 a1)
     if ( (unsigned int)(v3 - 8019) >= 2 && v3 != 8792 )
       return result;
 LABEL_7:
-    if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       return 0LL;
     else
       return 112LL;
@@ -36825,7 +36825,7 @@ unsigned __int64 __fastcall sub_33268(__int64 a1, unsigned int a2)
 LABEL_5:
   result = port_name_to_kaddr((struct_krwCtx *)a1, a2);
   if ( result )
-    result += v5 + ((__int64)*(int *)(a1 + 360) << (*(_QWORD *)(a1 + 344) > 0x1F530F027FFFFFuLL));
+    result += v5 + ((__int64)*(int *)(a1 + 360) << (*(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)));
   return result;
 }
 
@@ -36863,7 +36863,7 @@ __int64 __fastcall sub_3338C(__int64 a1)
     {
       if ( v3 != 7195 )
         return result;
-      if ( *(_QWORD *)(a1 + 344) <= 0x1C1B19145FFFFFuLL )
+      if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
         return 40LL;
       else
         return 32LL;
@@ -37059,7 +37059,7 @@ LABEL_18:
   v14 = v16;
   if ( !v16 )
     return 0;
-  if ( a1->someLargeNumber > 0x22580A06BFFFFFLL )
+  if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023) )
   {
     v14 = sub_2A200(a1, v16, &v17);
     v16 = v14;
@@ -37068,7 +37068,7 @@ LABEL_18:
   v16 = result;
   if ( result )
   {
-    if ( a1->someLargeNumber <= 0x22580A06BFFFFFLL )
+    if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023) )
     {
       if ( a1->xnuMajorVersion < 7938 )
         v15 = v11 + a2;
@@ -37221,7 +37221,7 @@ __int64 __fastcall sub_33A88(struct_krwCtx *a1, __int64 a2, char a3)
   __int64 v9; // [xsp+18h] [xbp-18h] BYREF
 
   v7 = 0;
-  if ( !kread64_outptr(a1, a2 + 16LL * ((a1->someLargeNumber - 0x1F541900000000LL) >> 32 > 4), (unsigned __int64 *)&v9) )
+  if ( !kread64_outptr(a1, a2 + 16LL * ((a1->xnuVersionPacked - XNU_VERSION_PACKED(8020, 100, 0, 0, 0)) >> 32 > 4), (unsigned __int64 *)&v9) )
     return 0;
   result = validate_addr((__int64)a1, v9);
   if ( !result )
@@ -37243,7 +37243,7 @@ __int64 __fastcall sub_33A88(struct_krwCtx *a1, __int64 a2, char a3)
       if ( kread64_internal(a1, v8 + 56, &v7) )
       {
         v6 = v7;
-        if ( a1->someLargeNumber >= 0x1F542301E00000LL )
+        if ( a1->xnuVersionPacked >= XNU_VERSION_PACKED(8020, 140, 30, 0, 0) )
         {
           v6 = sub_2A190((__int64)a1, HIDWORD(v7));
           v7 = v6;
@@ -37365,7 +37365,7 @@ unsigned __int64 __fastcall sub_33D38(__int64 krwCtx, unsigned int port, unsigne
     if ( v13 && (unsigned int)kreadbuf_last_1((struct_krwCtx *)krwCtx, v13 + 56, 16, v15) )
     {
       v14 = v15[0];
-      if ( *(_QWORD *)(krwCtx + 344) >= 0x1F542301E00000uLL )
+      if ( *(_QWORD *)(krwCtx + 344) >= XNU_VERSION_PACKED(8020, 140, 30, 0, 0) )
       {
         v14 = sub_2A190(krwCtx, HIDWORD(v15[0]));
         v15[0] = v14;
@@ -37451,7 +37451,7 @@ __int64 __fastcall sub_33ED8(struct_krwCtx *a1, __int64 a2)
   v7 = result;
   if ( result )
   {
-    if ( a1->someLargeNumber > 0x1F530F027FFFFFLL )
+    if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     {
       v4 = 32;
       if ( a1->xnuMajorVersion > 8791 )
@@ -37469,7 +37469,7 @@ __int64 __fastcall sub_33ED8(struct_krwCtx *a1, __int64 a2)
       if ( (unsigned int)(xnuMajorVersion - 8019) < 2 )
       {
         v6 = 216;
-        if ( a1->someLargeNumber > 0x1F530F027FFFFFLL )
+        if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v6 = 32;
       }
       else if ( xnuMajorVersion == 6153 )
@@ -37583,7 +37583,7 @@ unsigned __int64 __fastcall sub_3412C(struct_krwCtx *a1, unsigned int a2)
       v9 = 984;
       goto LABEL_13;
     }
-    if ( a1->someLargeNumber < 0x1C1B1914600000LL )
+    if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
     {
       v8 = !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
       v7 = 1048;
@@ -37596,7 +37596,7 @@ unsigned __int64 __fastcall sub_3412C(struct_krwCtx *a1, unsigned int a2)
         v7 = 1264;
 LABEL_15:
         v10 = v4 + v7;
-        if ( a1->someLargeNumber >= 0x1F530F02800000LL )
+        if ( a1->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
         {
           v11 = v4 + v7;
           goto LABEL_19;
@@ -37642,7 +37642,7 @@ unsigned __int64 __fastcall sub_34298(struct_krwCtx *a1, unsigned int a2)
   int v5; // w8
   __int64 v6; // x8
 
-  if ( a1->someLargeNumber < 0x1F530F02800000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     result = sub_3412C(a1, a2);
     if ( !result )
@@ -37658,7 +37658,7 @@ unsigned __int64 __fastcall sub_34298(struct_krwCtx *a1, unsigned int a2)
         break;
       case 6153:
         v6 = 336;
-        if ( a1->someLargeNumber > 0x18090A095FFFFFLL )
+        if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
           v6 = 296;
         break;
       default:
@@ -37703,7 +37703,7 @@ __int64 __fastcall sub_343E0(struct_krwCtx *a1)
   __int64 result; // x0
   int xnuMajorVersion; // w8
   unsigned int v4; // w8
-  uint64_t someLargeNumber; // x9
+  uint64_t xnuVersionPacked; // x9
   unsigned int v6; // w10
   unsigned __int64 v7; // x11
 
@@ -37735,11 +37735,11 @@ __int64 __fastcall sub_343E0(struct_krwCtx *a1)
       {
         v4 = 904;
       }
-      someLargeNumber = a1->someLargeNumber;
+      xnuVersionPacked = a1->xnuVersionPacked;
       v6 = v4 + 16;
-      v7 = 0x27120A807FFFFFLL;
+      v7 = XNU_VERSION_PACKED(10002, 42, 7, 1023, 1023);
 LABEL_37:
-      if ( someLargeNumber <= v7 )
+      if ( xnuVersionPacked <= v7 )
         return v4;
       else
         return v6;
@@ -37749,7 +37749,7 @@ LABEL_37:
   {
     if ( (unsigned int)(xnuMajorVersion - 8019) < 2 )
     {
-      if ( a1->someLargeNumber < 0x1F530F02800000LL )
+      if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
         return 0;
       if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
       {
@@ -37771,9 +37771,9 @@ LABEL_37:
       {
         v4 = 960;
       }
-      someLargeNumber = a1->someLargeNumber;
+      xnuVersionPacked = a1->xnuVersionPacked;
       v6 = v4 - 8;
-      v7 = 0x1F541DFFFFFFFFLL;
+      v7 = XNU_VERSION_PACKED(8020, 119, 1023, 1023, 1023);
       goto LABEL_37;
     }
     if ( xnuMajorVersion != 8792 )
@@ -37821,7 +37821,7 @@ __int64 __fastcall sub_345D4(__int64 a1, unsigned int a2)
       if ( v5 == 6153 )
       {
         v6 = 304;
-        if ( *(_QWORD *)(a1 + 344) > 0x18090A095FFFFFuLL )
+        if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
           v6 = 264;
         return v6 + v3;
       }
@@ -37843,7 +37843,7 @@ unsigned __int64 __fastcall sub_34680(struct_krwCtx *a1, unsigned int a2)
   int v5; // w9
   __int64 v6; // x8
 
-  if ( a1->someLargeNumber <= 0x1F530F027FFFFFLL )
+  if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     v3 = sub_33E8C(a1, a2);
   else
     v3 = sub_34754(a1, a2);
@@ -37857,7 +37857,7 @@ unsigned __int64 __fastcall sub_34680(struct_krwCtx *a1, unsigned int a2)
       return v4;
 LABEL_13:
     v6 = 768;
-    if ( a1->someLargeNumber > 0x1F530F027FFFFFLL )
+    if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v6 = 28;
     return v6 + v3;
   }
@@ -38074,18 +38074,18 @@ LABEL_12:
   if ( (unsigned __int64)(v12 + 1) >= 2 && !validate_addr(a1, v12) )
   {
     v8 = *(_QWORD *)(a1 + 344);
-    if ( v8 <= 0x1F52FFFFFFFFFFLL )
+    if ( v8 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
       return 0;
     if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && (v12 & 0x7FFFFFFFFFLL) == 0 )
     {
       v12 = 0;
     }
-    else if ( v8 <= 0x1F530F027FFFFFLL )
+    else if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     {
       return 0;
     }
   }
-  if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL && (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
+  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
   {
     result = kread64_internal((struct_krwCtx *)a1, v11 + *(unsigned int *)(a1 + 360), &v10);
     if ( !(_DWORD)result )
@@ -38106,18 +38106,18 @@ LABEL_12:
     if ( (unsigned __int64)(v13 + 1) < 2 || validate_addr(a1, v13) )
       goto LABEL_23;
     v9 = *(_QWORD *)(a1 + 344);
-    if ( v9 > 0x1F52FFFFFFFFFFLL )
+    if ( v9 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     {
       if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 && (v13 & 0x7FFFFFFFFFLL) == 0 )
       {
         v13 = 0;
       }
-      else if ( v9 <= 0x1F530F027FFFFFLL )
+      else if ( v9 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       {
         return 0;
       }
 LABEL_23:
-      if ( *(_QWORD *)(a1 + 344) > 0x1F530F027FFFFFuLL || (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
+      if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
       {
         v7 = v13;
         *(_QWORD *)(a1 + 936) = v13;
@@ -38178,7 +38178,7 @@ unsigned __int64 __fastcall sub_34D58(struct_krwCtx *a1, unsigned int a2, int a3
   bool v15; // zf
   __int64 v16; // x9
   _BOOL4 has_flag; // w0
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   bool v19; // cc
 
   if ( a3 )
@@ -38219,16 +38219,16 @@ LABEL_20:
       if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15) )
       {
         v14 = 1052;
-        if ( a1->someLargeNumber > 0x1F530F027FFFFFLL )
+        if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v14 = 1004;
         return v14 + v8;
       }
       has_flag = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
-      someLargeNumber = a1->someLargeNumber;
+      xnuVersionPacked = a1->xnuVersionPacked;
       v16 = 1000;
-      if ( someLargeNumber > 0x1F530F027FFFFFLL )
+      if ( xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
         v16 = 952;
-      v19 = someLargeNumber > 0x1F530F027FFFFFLL;
+      v19 = xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
       v14 = 1036;
       if ( v19 )
         v14 = 988;
@@ -38240,7 +38240,7 @@ LABEL_20:
       {
         if ( v9 != 7195 )
           return result;
-        v10 = a1->someLargeNumber;
+        v10 = a1->xnuVersionPacked;
         v11 = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK);
         v12 = 1012;
         if ( !v11 )
@@ -38248,7 +38248,7 @@ LABEL_20:
         v13 = 1028;
         if ( !v11 )
           v13 = 992;
-        if ( v10 >= 0x1C1B1914600000LL )
+        if ( v10 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
           v14 = v13;
         else
           v14 = v12;
@@ -38441,7 +38441,7 @@ LABEL_17:
   {
     if ( v9 != 7195 )
       return v10;
-    if ( *(_QWORD *)(a1 + 344) <= 0x1C1B1400FFFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(7195, 80, 15, 1023, 1023) )
       v11 = 32;
     else
       v11 = 40;
@@ -38624,7 +38624,7 @@ __int64 __fastcall sub_35500(struct_krwCtx *a1, unsigned int a2)
 __int64 __fastcall sub_35568(struct_krwCtx *a1, unsigned int a2)
 {
   __int64 result; // x0
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   unsigned __int64 v5; // x1
   bool v6; // cc
   __int64 v7; // x8
@@ -38634,16 +38634,16 @@ __int64 __fastcall sub_35568(struct_krwCtx *a1, unsigned int a2)
   v8 = result;
   if ( result )
   {
-    someLargeNumber = a1->someLargeNumber;
-    if ( someLargeNumber < 0x1C1B0A80100000LL )
+    xnuVersionPacked = a1->xnuVersionPacked;
+    if ( xnuVersionPacked < XNU_VERSION_PACKED(7195, 42, 1, 0, 0) )
     {
       v5 = result + 24;
     }
     else
     {
-      if ( someLargeNumber >> 43 >= 0x44B )
+      if ( xnuVersionPacked >> 43 >= 0x44B )
         return result + 80;
-      v6 = someLargeNumber > 0x1C1B19145FFFFFLL;
+      v6 = xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
       v7 = 32;
       if ( v6 )
         v7 = 24;
@@ -38749,7 +38749,7 @@ __int64 __fastcall sub_3579C(struct_krwCtx *a1, int a2, __int64 *a3)
       goto LABEL_13;
     }
 LABEL_10:
-    if ( a1->someLargeNumber <= 0x1F530F027FFFFFLL )
+    if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v11 = 256;
     else
       v11 = 248;
@@ -38771,7 +38771,7 @@ LABEL_16:
     if ( !validate_addr((__int64)a1, v16) )
       return 163878;
     v13 = v16;
-    if ( a1->someLargeNumber < 0x1F530000000000LL )
+    if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
     {
       if ( !kread64_outptr(a1, v16, (unsigned __int64 *)&v15) )
         return v6;
@@ -38861,7 +38861,7 @@ unsigned __int64 __fastcall sub_35A50(struct_krwCtx *a1, int a2, _DWORD *a3)
   else
   {
     v3 = 0xFFFFFFE000000000LL;
-    if ( a1->someLargeNumber >= 0x22581401900000LL && !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A9) )
+    if ( a1->xnuVersionPacked >= XNU_VERSION_PACKED(8792, 80, 25, 0, 0) && !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A9) )
       v3 = 0xFFFFFFDC00000000LL;
   }
   *a3 = 6;
@@ -38894,8 +38894,8 @@ void __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
     return;
   v3 = a3;
   v5 = (__int64)a1;
-  v6 = a1->someLargeNumber;
-  if ( v6 >= 0x1F530F02800000LL )
+  v6 = a1->xnuVersionPacked;
+  if ( v6 >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     if ( !a3 )
       a3 = -1;
@@ -38911,7 +38911,7 @@ void __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
       return;
     goto LABEL_18;
   }
-  if ( v6 < 0x1F530000000000LL || (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
+  if ( v6 < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) || (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
   {
 LABEL_18:
     v11 = *(_QWORD *)(v5 + 6384) + *(_DWORD *)(v5 + 360) * (a2 + 1);
@@ -39027,7 +39027,7 @@ __int64 __fastcall sub_35ECC(struct_krwCtx *a1, unsigned __int64 a2, int a3)
     result = ppl_kwrite32(a1, v6, v10 + a3);
     if ( !(_DWORD)result )
       return result;
-    if ( a1->someLargeNumber < 0x1F530F02800000LL )
+    if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
       return 1;
     result = kread64_outptr(a1, a2, (unsigned __int64 *)&v9);
     if ( (_DWORD)result )
@@ -39317,7 +39317,7 @@ __int64 __fastcall sub_36480(struct_krwCtx *a1, unsigned __int64 a2, mach_port_n
   _BOOL4 v7; // w0
   unsigned int v8; // w9
   __int64 v9; // x22
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   int v11; // w23
   _BOOL8 v12; // x0
   __int64 v13; // x0
@@ -39373,8 +39373,8 @@ __int64 __fastcall sub_36480(struct_krwCtx *a1, unsigned __int64 a2, mach_port_n
     v9 = 163855;
   if ( !v7 || (address & 0x80000000) == 0 )
     return v9;
-  someLargeNumber = a1->someLargeNumber;
-  if ( someLargeNumber < 0x1F530000000000LL )
+  xnuVersionPacked = a1->xnuVersionPacked;
+  if ( xnuVersionPacked < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
   {
 LABEL_21:
     *(_QWORD *)name = 0;
@@ -39504,7 +39504,7 @@ LABEL_72:
     }
     return v6;
   }
-  if ( someLargeNumber <= 0x1F5418FFFFFFFFLL )
+  if ( xnuVersionPacked <= XNU_VERSION_PACKED(8020, 99, 1023, 1023, 1023) )
     v11 = 0x400000;
   else
     v11 = 0x200000;
@@ -39517,7 +39517,7 @@ LABEL_72:
     if ( !v12 )
       return v6;
   }
-  if ( a1->someLargeNumber < 0x1F543C40800000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
     goto LABEL_21;
   name[0] = 0;
   *(_QWORD *)previous = 0;
@@ -39816,7 +39816,7 @@ __int64 __fastcall sub_36E4C(__int64 a1, __int64 a2, __int64 size)
   mach_port_name_t name; // [xsp+4h] [xbp-6Ch] BYREF
   vm_address_t address[3]; // [xsp+8h] [xbp-68h] BYREF
 
-  if ( *(_QWORD *)(a1 + 344) >= 0x1F541E00000000uLL )
+  if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(8020, 120, 0, 0, 0) )
   {
     v6 = 708609;
     address[0] = 0;
@@ -39867,8 +39867,8 @@ __int64 __fastcall sub_36E4C(__int64 a1, __int64 a2, __int64 size)
             if ( (unsigned int)kwritebuf_last_1(a1, a2, address[0], size) )
             {
               v32 = *(_QWORD *)(a1 + 344);
-              if ( v32 > 0x22580A06BFFFFFLL
-                || (v32 < 0x1F543C40800000LL || *(int *)(a1 + 320) >= 8792
+              if ( v32 > XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023)
+                || (v32 < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) || *(int *)(a1 + 320) >= 8792
                   ? (v33 = *(unsigned int *)(a1 + 360))
                   : (v33 = 0),
                     kwrite64(a1, v33 + a2, v27)) )
@@ -40054,9 +40054,9 @@ static __int64 cleanup_restore_record_metadata_only(__int64 a1, __int64 a2, __in
   }
 
   version = *(_QWORD *)(a1 + 344);
-  if ( version <= 0x22580A06BFFFFFLL )
+  if ( version <= XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023) )
   {
-    if ( version < 0x1F543C40800000LL || *(int *)(a1 + 320) >= 8792 )
+    if ( version < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) || *(int *)(a1 + 320) >= 8792 )
       a2_restore_offset = *(unsigned int *)(a1 + 360);
     else
       a2_restore_offset = 0;
@@ -40134,12 +40134,12 @@ unsigned __int64 __fastcall sub_37210(__int64 a1, unsigned int *a2)
 
   v4 = *a2;
   v5 = *(_QWORD *)(a1 + 344);
-  if ( v5 >= 0x1F541E00000000LL )
+  if ( v5 >= XNU_VERSION_PACKED(8020, 120, 0, 0, 0) )
   {
     *(_QWORD *)v58 = 0;
     previous = 0;
     *(_QWORD *)name = 0;
-    if ( v5 > 0x22580A06BFFFFFLL || v5 >= 0x1F543C40800000LL && *(int *)(a1 + 320) <= 8791 )
+    if ( v5 > XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023) || v5 >= XNU_VERSION_PACKED(8020, 241, 8, 0, 0) && *(int *)(a1 + 320) <= 8791 )
     {
       v6 = 0;
       v7 = *(unsigned int *)(a1 + 360);
@@ -40176,11 +40176,11 @@ unsigned __int64 __fastcall sub_37210(__int64 a1, unsigned int *a2)
       if ( !kread64_internal((struct_krwCtx *)a1, v27, v59) )
         goto LABEL_29;
       v22 = sub_29CB0((struct_krwCtx *)a1, v59[0]);
-      if ( *(_QWORD *)(a1 + 344) > 0x22580A06BFFFFFuLL )
+      if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023) )
         v22 = sub_2A200((struct_krwCtx *)a1, v22, &v55);
       if ( !validate_addr(a1, v22) )
         goto LABEL_29;
-      if ( *(_QWORD *)(a1 + 344) <= 0x22580A06BFFFFFuLL )
+      if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023) )
       {
         if ( !kread64_internal((struct_krwCtx *)a1, v22 + v6, name) )
           goto LABEL_29;
@@ -40274,7 +40274,7 @@ LABEL_29:
     if ( !mach_port_allocate(mach_task_self_, 1u, name) )
     {
       v30 = sub_353DC(a1);
-      if ( *(_QWORD *)(a1 + 344) <= 0x1F52FFFFFFFFFFuLL )
+      if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
       {
         v31 = -36;
         if ( v4 >= 0x25 && v30 + 104 <= v4 )
@@ -40334,9 +40334,9 @@ LABEL_29:
             {
               v53 = v43;
               v44 = *(_QWORD *)(a1 + 344);
-              if ( v44 < 0x1C1B0A80100000LL )
+              if ( v44 < XNU_VERSION_PACKED(7195, 42, 1, 0, 0) )
                 goto LABEL_100;
-              v45 = v44 > 0x1C1B19145FFFFFLL;
+              v45 = v44 > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
               v46 = 24;
               if ( v45 )
                 v46 = 16;
@@ -40615,16 +40615,16 @@ __int64 __fastcall sub_37C50(int *a1, int *a2, int *a3, int *a4, int *a5)
           v15 = 388;
         else
           v15 = 396;
-        v16 = v8 >= 0x1C1B1914600000LL;
-        if ( v8 >= 0x1C1B1914600000LL )
+        v16 = v8 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0);
+        if ( v8 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
           v17 = v12;
         else
           v17 = 448;
-        if ( v8 >= 0x1C1B1914600000LL )
+        if ( v8 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
           v18 = v13;
         else
           v18 = 172;
-        if ( v8 >= 0x1C1B1914600000LL )
+        if ( v8 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
           v19 = v14;
         else
           v19 = 364;
@@ -40634,16 +40634,16 @@ __int64 __fastcall sub_37C50(int *a1, int *a2, int *a3, int *a4, int *a5)
           v20 = 196;
         goto LABEL_111;
       }
-      v31 = v8 > 0x18090A095FFFFFLL;
-      if ( v8 <= 0x18090A095FFFFFLL )
+      v31 = v8 > XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023);
+      if ( v8 <= XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
         v17 = 424;
       else
         v17 = 416;
-      if ( v8 <= 0x18090A095FFFFFLL )
+      if ( v8 <= XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
         v18 = 172;
       else
         v18 = 164;
-      if ( v8 <= 0x18090A095FFFFFLL )
+      if ( v8 <= XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
         v19 = 340;
       else
         v19 = 332;
@@ -40653,16 +40653,16 @@ __int64 __fastcall sub_37C50(int *a1, int *a2, int *a3, int *a4, int *a5)
     }
     if ( (v9 & 0x100000) != 0 )
     {
-      v31 = v8 > 0x1F530F027FFFFFLL;
-      if ( v8 <= 0x1F530F027FFFFFLL )
+      v31 = v8 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
+      if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
         v18 = 384;
       else
         v18 = 380;
-      if ( v8 <= 0x1F530F027FFFFFLL )
+      if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
         v17 = 656;
       else
         v17 = 544;
-      if ( v8 <= 0x1F530F027FFFFFLL )
+      if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
         v19 = 560;
       else
         v19 = 452;
@@ -40673,20 +40673,20 @@ LABEL_93:
         v20 = v32;
       goto LABEL_111;
     }
-    if ( v8 <= 0x1F530F027FFFFFLL )
+    if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v23 = 368;
     else
       v23 = 364;
-    if ( v8 <= 0x1F530F027FFFFFLL )
+    if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v24 = 640;
     else
       v24 = 528;
-    if ( v8 <= 0x1F530F027FFFFFLL )
+    if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v25 = 548;
     else
       v25 = 436;
-    v26 = v8 > 0x1F530F027FFFFFLL;
-    if ( v8 <= 0x1F530F027FFFFFLL )
+    v26 = v8 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
+    if ( v8 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v27 = 376;
     else
       v27 = 372;
@@ -41430,7 +41430,7 @@ void __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned in
     v9();
   }
   else if ( a5
-         && (*(_QWORD *)(a1 + 344) < 0x27120F04B00003uLL || (*(_BYTE *)a1 & 0x20) == 0)
+         && (*(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) || (*(_BYTE *)a1 & 0x20) == 0)
          && !(unsigned int)physmap_map_cached((struct_krwCtx *)a1, a2, (__int64)v10) )
   {
     memcpy(a3, (const void *)((*(_QWORD *)(a1 + 392) & a2) + v10[0]), a4);
@@ -41458,7 +41458,7 @@ void __fastcall physwritebuf_direct_mapped(
     v9();
   }
   else if ( something
-         && (krwCtx->someLargeNumber < 0x27120F04B00003LL || (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0)
+         && (krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) || (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) == 0)
          && !(unsigned int)physmap_map_cached(krwCtx, paddr, (__int64)v10) )
   {
     memcpy((void *)((krwCtx->qword188 & paddr) + v10[0]), buf, size);
@@ -42142,7 +42142,7 @@ void sub_39B70(_QWORD *a1, struct_krwCtx *a2)
   }
   sub_19D10(a2->gap1921[2], &v11);
   v4 = v12;
-  if ( a2->someLargeNumber < 0x1C1B1914600000LL )
+  if ( a2->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
   {
     *(_OWORD *)a1 = v11;
     a1[2] = v4;
@@ -42199,7 +42199,7 @@ __int64 __fastcall sub_39CC0(struct_krwCtx *a1, task_name_t target_task, int a3,
   {
 LABEL_14:
     v12 = 64;
-    v13 = 0x1F530F027FFFFFLL;
+    v13 = XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
     goto LABEL_15;
   }
   if ( xnuMajorVersion == 6153 )
@@ -42210,9 +42210,9 @@ LABEL_14:
   if ( xnuMajorVersion != 7195 )
     return result;
   v12 = 148;
-  v13 = 0x1C1B19145FFFFFLL;
+  v13 = XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
 LABEL_15:
-  if ( a1->someLargeNumber <= v13 )
+  if ( a1->xnuVersionPacked <= v13 )
     v16 = 156;
   else
     v16 = v12;
@@ -42237,7 +42237,7 @@ LABEL_18:
   task_info_outCnt = v17;
   if ( task_info(target_task, v18, task_info_out, &task_info_outCnt) )
     return 0;
-  if ( a1->someLargeNumber <= 0x1F530F027FFFFFLL )
+  if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
     result = port_name_to_kaddr(a1, target_task);
     if ( !result )
@@ -42350,7 +42350,7 @@ void __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int 
   __int64 v10; // [xsp+8h] [xbp-38h] BYREF
   __int64 vars8; // [xsp+48h] [xbp+8h]
 
-  if ( someCtx->someLargeNumber > 0x1F530F027FFFFFLL )
+  if ( someCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     v5 = 1;
   else
     v5 = 0x4000000;
@@ -42369,7 +42369,7 @@ void __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int 
           if ( (unsigned int)set_flags_something_INEEDTOLOOK_sub_3F8C0((__int64)someCtx, a3, v5, 1) )
           {
             sub_35FD8(someCtx, newValue);
-            if ( someCtx->someLargeNumber <= 0x1F530F027FFFFFLL )
+            if ( someCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
               kwrite64((__int64)someCtx, address, newValue);
             else
               sub_2A63C(someCtx, address, newValue);
@@ -42619,11 +42619,11 @@ __int64 __fastcall sub_3A5F0(__int64 a1, task_name_t a2)
   __int64 vars8; // [xsp+28h] [xbp+8h]
 
   v2 = *(_QWORD *)(a1 + 344);
-  if ( v2 < 0x27120F04B00003LL )
+  if ( v2 < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) )
   {
-    if ( v2 <= 0x225C1E804FFFFFLL )
+    if ( v2 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) )
     {
-      if ( v2 < 0x225C1980500000LL
+      if ( v2 < XNU_VERSION_PACKED(8796, 102, 5, 0, 0)
         || ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 ? (v6 = (*(_DWORD *)a1 & 1) == 0) : (v6 = 0), v6) )
       {
         v4 = 4;
@@ -42664,10 +42664,10 @@ unsigned __int64 __fastcall sub_3A72C(__int64 a1)
     if ( !host_get_special_port(v2, -1, 2, &port) )
       return port;
     v4 = *(_QWORD *)(a1 + 344);
-    if ( v4 >= 0x1F530000000000LL
+    if ( v4 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0)
       && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0
-       || v4 > 0x22580A06BFFFFFLL
-       || v4 >= 0x1F543C40800000LL && *(int *)(a1 + 320) <= 8791) )
+       || v4 > XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023)
+       || v4 >= XNU_VERSION_PACKED(8020, 241, 8, 0, 0) && *(int *)(a1 + 320) <= 8791) )
     {
       result = sub_35610(a1, 2);
       if ( !result )
@@ -42845,7 +42845,7 @@ void __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3)
       {
         if ( v10 < 7195 )
         {
-          if ( *(_QWORD *)(a1 + 344) <= 0x18090A078FFFFFuLL )
+          if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
             v16 = 240;
           else
             v16 = 232;
@@ -42971,7 +42971,7 @@ __int64 __fastcall sub_3AD2C(struct_krwCtx *a1, unsigned int a2)
         break;
       case 8019:
         v6 = 1072;
-        if ( a1->someLargeNumber > 0x1F530F027FFFFFLL )
+        if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v6 = 1232;
         break;
       default:
@@ -42991,7 +42991,7 @@ LABEL_19:
       v8 = v11;
       if ( !HIBYTE(v11) )
       {
-        v10 = a1->someLargeNumber <= 0x1F52FFFFFFFFFFLL ? v11 | 0x20 : v11 & 0xFFF71FDF | 0x80000;
+        v10 = a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) ? v11 | 0x20 : v11 & 0xFFF71FDF | 0x80000;
         v11 = v10 & 0xFFFF1FFF;
         if ( v8 == (v10 & 0xFFFF1FFF) || noppl_kwrite32((__int64)a1, v7, v10 & 0xFFFF1FFF) )
           return 1;
@@ -43082,7 +43082,7 @@ void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5)
             if ( v26 < 6153 )
               return;
             v27 = 239;
-            if ( *(_QWORD *)(a1 + 344) > 0x18090A078FFFFFuLL )
+            if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
               v27 = 231;
           }
           else
@@ -43130,15 +43130,15 @@ LABEL_26:
       if ( v20 < 7195 )
       {
         v24 = 271;
-        if ( *(_QWORD *)(a1 + 344) > 0x18090A078FFFFFuLL )
+        if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
           v24 = 263;
 LABEL_34:
         v28 = v24 + v11;
         if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v28, 4, (char *)&v50 + 4) )
         {
           v29 = *(_QWORD *)(a1 + 344);
-          v30 = v29 > 0x1C1B0A800FFFFFLL;
-          if ( v29 <= 0x1C1B0A800FFFFFLL )
+          v30 = v29 > XNU_VERSION_PACKED(7195, 42, 0, 1023, 1023);
+          if ( v29 <= XNU_VERSION_PACKED(7195, 42, 0, 1023, 1023) )
             v31 = -16777216;
           else
             v31 = 65280;
@@ -43160,7 +43160,7 @@ LABEL_34:
           {
             if ( *(int *)(a1 + 320) <= 8018 )
               a4 |= a3 ^ 1;
-            if ( *(_QWORD *)(a1 + 344) > 0x1F52FFFFFFFFFFuLL || sub_2F194((struct_krwCtx *)a1, a2, a4, a5) )
+            if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || sub_2F194((struct_krwCtx *)a1, a2, a4, a5) )
               goto LABEL_54;
           }
         }
@@ -43396,7 +43396,7 @@ unsigned __int64 __fastcall sub_3B524(struct_krwCtx *a1, unsigned int a2, bool *
             if ( v16 < 6153 )
               return 0;
             v17 = 239;
-            if ( a1->someLargeNumber > 0x18090A078FFFFFLL )
+            if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
               v17 = 231;
           }
           else
@@ -43442,7 +43442,7 @@ LABEL_10:
       if ( v10 < 7195 )
       {
         v14 = 271;
-        if ( a1->someLargeNumber > 0x18090A078FFFFFLL )
+        if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
           v14 = 263;
         goto LABEL_18;
       }
@@ -43462,10 +43462,10 @@ LABEL_16:
 LABEL_18:
     if ( !kread32_outptr((__int64)a1, v14 + v9, &v25) )
       return 0;
-    v18 = a1->someLargeNumber;
+    v18 = a1->xnuVersionPacked;
     v19 = v25;
     *a5 = (unsigned __int8)v25 != 0;
-    if ( v18 < 0x1C1B0A80100000LL )
+    if ( v18 < XNU_VERSION_PACKED(7195, 42, 1, 0, 0) )
     {
       *a3 = (v19 & 0xFF00) != 0;
       v20 = (v19 & 0xFF0000) == 0;
@@ -43516,7 +43516,7 @@ void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
     return;
   if ( (*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
   {
-    if ( *(_QWORD *)(a1 + 344) <= 0x1F52FFFFFFFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     {
       v20 = *(_DWORD *)(a1 + 6436);
       v27[0] = 2;
@@ -43550,7 +43550,7 @@ void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
       v8 = sub_29CB0((struct_krwCtx *)a1, *(__int64 *)task_info_outCnt.val);
       if ( !validate_addr(a1, v8)
         || !kread32_outptr(a1, v8 + 24, &v31)
-        || *(_QWORD *)(a1 + 344) > 0x1F530F027FFFFFuLL && !kread32_outptr(a1, v8 + 32, &v30) )
+        || *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && !kread32_outptr(a1, v8 + 32, &v30) )
       {
         return;
       }
@@ -43559,7 +43559,7 @@ void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
         v9 = 0;
         v10 = *(_QWORD *)(a1 + 344);
         v11 = v31;
-        v12 = v10 > 0x1F530F027FFFFFLL && v31 == 0;
+        v12 = v10 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && v31 == 0;
         if ( v12 )
           v13 = 501;
         else
@@ -43572,12 +43572,12 @@ void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
         v13 = 0;
         v11 = v31;
         v10 = *(_QWORD *)(a1 + 344);
-        v12 = v10 > 0x1F530F027FFFFFLL && v31 != 0;
+        v12 = v10 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && v31 != 0;
         v9 = v31;
       }
       if ( v11 != v9 || v12 )
       {
-        if ( v10 <= 0x1F530F027FFFFFLL )
+        if ( v10 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
         {
           if ( !noppl_kwrite32(a1, v8 + 24, v9) )
             return;
@@ -43589,14 +43589,14 @@ void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
         }
       }
       if ( (unsigned int)sub_34D14(a1, mach_task_self_)
-        && (*(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL || !(unsigned int)sub_35FD8((struct_krwCtx *)a1, v8)) )
+        && (*(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || !(unsigned int)sub_35FD8((struct_krwCtx *)a1, v8)) )
       {
         if ( !validate_addr(a1, *(_QWORD *)(a1 + 920))
           || (sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), 0), v22) )
         {
           if ( !seteuid(v9) )
           {
-            if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL
+            if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)
               || kread64_internal((struct_krwCtx *)a1, v7, v27)
               && (*(_QWORD *)v27 == *(_QWORD *)task_info_outCnt.val
                || (sub_2A63C((struct_krwCtx *)a1, v7, *(__int64 *)task_info_outCnt.val), v23)) )
@@ -43606,7 +43606,7 @@ void __fastcall sub_3B7E0(__int64 a1, task_inspect_t task, host_t a3)
               {
                 if ( v31 != v9 || v12 )
                 {
-                  if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+                  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
                   {
                     if ( !noppl_kwrite32(a1, v8 + 24, v31) )
                       return;
@@ -43724,12 +43724,12 @@ bool __fastcall real_task_for_pid_or_name(
     {
       if ( (unsigned int)(v14 - 8019) < 2 )
       {
-        v15 = 0x1F530F027FFFFFLL;
+        v15 = XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023);
         v16 = 208;
       }
       else
       {
-        v15 = 0x1C1B19145FFFFFLL;
+        v15 = XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
         v16 = 240;
         if ( v14 != 6153 && v14 != 7195 )
           return v10;
@@ -43786,7 +43786,7 @@ bool __fastcall sub_3BE3C(
   __int64 v32; // [xsp+10h] [xbp-60h] BYREF
   int v33; // [xsp+1Ch] [xbp-54h] BYREF
 
-  if ( a1->someLargeNumber < 0x1C1B0002E00000LL
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(7195, 0, 46, 0, 0)
     || ((a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 ? (v11 = mach_task_self_ == a2) : (v11 = 1), v11) )
   {
     v12 = sub_3C25C(a1, a3, a4, a5, a6);
@@ -43805,7 +43805,7 @@ bool __fastcall sub_3BE3C(
       return 0;
     if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A14) )
     {
-      v15 = a1->someLargeNumber > 0x1C1B19145FFFFFLL;
+      v15 = a1->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
       v16 = 1304;
     }
     else
@@ -43821,7 +43821,7 @@ LABEL_42:
           v19 = 1;
           goto LABEL_43;
         }
-        v15 = a1->someLargeNumber > 0x1C1B19145FFFFFLL;
+        v15 = a1->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
         v16 = 1288;
         v18 = 352;
 LABEL_26:
@@ -43831,7 +43831,7 @@ LABEL_26:
           v17 = v16;
         goto LABEL_42;
       }
-      v15 = a1->someLargeNumber > 0x1C1B19145FFFFFLL;
+      v15 = a1->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023);
       v16 = 1296;
     }
     v18 = 360;
@@ -44084,7 +44084,7 @@ __int64 __fastcall sub_3C450(__int64 a1, unsigned int a2, int a3, _BYTE *a4)
   v10 = v9;
   v11 = *(_QWORD *)(a1 + 344);
   v12 = *(_DWORD *)(a1 + 320);
-  if ( v11 <= 0x1F530F027FFFFFLL )
+  if ( v11 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
     if ( v12 == 8019 )
     {
@@ -44114,7 +44114,7 @@ __int64 __fastcall sub_3C450(__int64 a1, unsigned int a2, int a3, _BYTE *a4)
         v22 = 992;
       else
         v22 = 968;
-      if ( v11 >= 0x1C1B1914600000LL )
+      if ( v11 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
         v19 = v22;
       else
         v19 = v21;
@@ -44221,7 +44221,7 @@ LABEL_47:
     *a4 = 1;
   }
 LABEL_58:
-  if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
     v26 = v10 + v19 + *(int *)(a1 + 360);
   }
@@ -44345,7 +44345,7 @@ __int64 __fastcall sub_3C9A4(struct_krwCtx *a1, unsigned int a2)
 
   v4 = 163856;
   vaddr = 0;
-  if ( a1->someLargeNumber < 0x1F530F02800000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     v14 = sub_33E8C(a1, a2);
     if ( v14 )
@@ -44507,7 +44507,7 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   int v26; // w9
   __int64 v27; // x8
   int v28; // w0
-  unsigned __int64 someLargeNumber; // x8
+  unsigned __int64 xnuVersionPacked; // x8
   int v30; // w1
   int v31; // w1
   unsigned __int64 v32; // x8
@@ -44608,7 +44608,7 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   *(_QWORD *)krwCtx->gap160 = xnuVersion.qword20;
   krwCtx->int168 = 8;
   mach_port_with_a2 = 163847;
-  if ( (unsigned __int64)(v10 - 0x18090006700000LL) > 0xF090EFE400003LL )
+  if ( (unsigned __int64)(v10 - XNU_VERSION_PACKED(6153, 0, 103, 0, 0)) > 0xF090EFE400003LL )
     return mach_port_with_a2;
   memset(&v104, 0, sizeof(v104));
   if ( !stat("/usr/libexec/corelliumd", &v104) )
@@ -44682,7 +44682,7 @@ LABEL_23:
     return mach_port_with_a2;
 LABEL_33:
   if ( xnuMajorVersion >= 7195 )
-    krwCtx->gap4[7] = check_sandboxed(krwCtx->someLargeNumber >> 43 > 0x44A);
+    krwCtx->gap4[7] = check_sandboxed(krwCtx->xnuVersionPacked >> 43 > 0x44A);
   if ( !(unsigned int)comm_page_get_cpu_family((_DWORD *)&cpuFamily) )
     return 163858;
   if ( (int)cpuFamily <= 0x2876F5B4 )
@@ -44699,7 +44699,7 @@ LABEL_33:
         {
           if ( (_DWORD)cpuFamily != CPUFamily_A14 )
             goto LABEL_69;
-          if ( (int)number_of_cpus() >= 8 && krwCtx->someLargeNumber >= 0x22580A06C00000LL )
+          if ( (int)number_of_cpus() >= 8 && krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8792, 40, 108, 0, 0) )
             krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
           v31 = KRW_CTX_FLAG_CPU_A14;
         }
@@ -44718,7 +44718,7 @@ LABEL_68:
     if ( (_DWORD)cpuFamily == CPUFamily_A16 )
     {
 LABEL_65:
-      if ( krwCtx->someLargeNumber > 0x2711FFFFFFFFFFLL )
+      if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
         krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
       v31 = KRW_CTX_FLAG_CPU_A16;
       goto LABEL_68;
@@ -44731,16 +44731,16 @@ LABEL_65:
     if ( (_DWORD)cpuFamily != CPUFamily_A15 )
       goto LABEL_69;
     v28 = number_of_cpus();
-    someLargeNumber = krwCtx->someLargeNumber;
+    xnuVersionPacked = krwCtx->xnuVersionPacked;
     if ( v28 < 8 )
     {
-      if ( someLargeNumber > 0x2711FFFFFFFFFFLL )
+      if ( xnuVersionPacked > XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
       {
         v30 = KRW_CTX_FLAG_PAC_KERNEL_LAYOUT;
         goto LABEL_118;
       }
     }
-    else if ( someLargeNumber >> 43 > 0x44A )
+    else if ( xnuVersionPacked >> 43 > 0x44A )
     {
       v30 = KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER;
 LABEL_118:
@@ -44787,16 +44787,16 @@ LABEL_64:
     goto LABEL_64;
   }
   krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_CPU_A14);
-  v40 = krwCtx->someLargeNumber;
-  if ( v40 - 0x1C1B1914600000LL <= 0x641056BEFFFFFLL )
+  v40 = krwCtx->xnuVersionPacked;
+  if ( v40 - XNU_VERSION_PACKED(7195, 100, 326, 0, 0) <= 0x641056BEFFFFFLL )
   {
     v27 = 708616;
-    if ( v40 <= 0x1F543C41E00000LL || krwCtx->xnuMajorVersion >= 8792 )
+    if ( v40 <= XNU_VERSION_PACKED(8020, 241, 30, 0, 0) || krwCtx->xnuMajorVersion >= 8792 )
       return v27;
   }
 LABEL_69:
-  v32 = krwCtx->someLargeNumber;
-  if ( v32 <= 0x1F530F027FFFFFLL )
+  v32 = krwCtx->xnuVersionPacked;
+  if ( v32 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     return mach_port_with_a2;
   if ( krwCtx->xnuMajorVersion <= 8791 )
   {
@@ -44811,24 +44811,24 @@ LABEL_69:
     }
     if ( (v104.st_dev & 0xDF) == 0x4A && !((comm_page_memory_size() - 1073741825) >> 30) )
       krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_LOW_MEMORY_DEVICE);
-    v32 = krwCtx->someLargeNumber;
+    v32 = krwCtx->xnuVersionPacked;
   }
-  if ( v32 <= 0x225C23801AF00CLL )
+  if ( v32 <= XNU_VERSION_PACKED(8796, 142, 1, 700, 12) )
   {
-    if ( v32 > 0x225C19804FFFFFLL )
+    if ( v32 > XNU_VERSION_PACKED(8796, 102, 4, 1023, 1023) )
     {
       if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12) != 0 )
         goto LABEL_87;
       goto LABEL_86;
     }
-    if ( v32 > 0x1F543C41E00000LL )
+    if ( v32 > XNU_VERSION_PACKED(8020, 241, 30, 0, 0) )
     {
 LABEL_86:
       if ( *p_xnuMajorVersion >= 8792 )
         return mach_port_with_a2;
       goto LABEL_87;
     }
-    if ( v32 <= 0x1F530F027FFFFFLL || *p_xnuMajorVersion > 8791 || ((krwCtx->flags & KRW_CTX_FLAG_LOW_MEMORY_DEVICE) != 0) == 0 )
+    if ( v32 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || *p_xnuMajorVersion > 8791 || ((krwCtx->flags & KRW_CTX_FLAG_LOW_MEMORY_DEVICE) != 0) == 0 )
       return mach_port_with_a2;
   }
 LABEL_87:
@@ -44863,14 +44863,14 @@ LABEL_96:
   gap192 = (uint64_t *)krwCtx->gap1911;
   if ( something )
   {
-    v38 = krwCtx->someLargeNumber;
-    if ( v38 <= 0x27120F04B00002LL )
+    v38 = krwCtx->xnuVersionPacked;
+    if ( v38 <= XNU_VERSION_PACKED(10002, 60, 75, 0, 2) )
     {
-      if ( v38 <= 0x225C1E804FFFFFLL )
+      if ( v38 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) )
       {
-        if ( v38 <= 0x225C19804FFFFFLL )
+        if ( v38 <= XNU_VERSION_PACKED(8796, 102, 4, 1023, 1023) )
         {
-          if ( v38 <= 0x1F530F027FFFFFLL || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v38 <= 0x1F5418FFFFFFFFLL )
+          if ( v38 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v38 <= XNU_VERSION_PACKED(8020, 99, 1023, 1023, 1023) )
           {
             v39 = sub_1C0C8((__int64)krwCtx, &v96);
             goto LABEL_122;
@@ -44909,7 +44909,7 @@ LABEL_121:
     goto LABEL_122;
   }
 LABEL_148:
-  v41 = krwCtx->someLargeNumber;
+  v41 = krwCtx->xnuVersionPacked;
   if ( v41 >> 43 <= 0x44A )
     v42 = 128;
   else
@@ -44929,7 +44929,7 @@ LABEL_148:
   }
   if ( sub_25DE8((__int64)krwCtx) )
   {
-    if ( krwCtx->someLargeNumber > 0x1F530F027FFFFFLL && krwCtx->gap4[7] )
+    if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && krwCtx->gap4[7] )
     {
       v95 = 1;
       goto LABEL_172;
@@ -44940,17 +44940,17 @@ LABEL_148:
   }
   v95 = 0;
 LABEL_172:
-  v94 = krwCtx->someLargeNumber;
+  v94 = krwCtx->xnuVersionPacked;
   v43 = v94;
-  if ( v94 <= 0x1F530F027FFFFFLL )
+  if ( v94 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
     mach_port_with_a2 = sub_3C450((__int64)krwCtx, mach_task_self_, 0, &v97);
     if ( (_DWORD)mach_port_with_a2 )
       return mach_port_with_a2;
-    v43 = krwCtx->someLargeNumber;
+    v43 = krwCtx->xnuVersionPacked;
   }
   v93 = (mach_port_name_t *)&krwCtx->gap191[693] + 1;
-  if ( v43 <= 0x2257FFFFFFFFFFLL )
+  if ( v43 <= XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
   {
     v47 = krwCtx->gap19210;
     mach_port_with_a2 = 163852;
@@ -45026,7 +45026,7 @@ LABEL_200:
   }
   if ( !sub_3E1D8((__int64)krwCtx, mach_task_self_) )
     return 163862;
-  if ( krwCtx->someLargeNumber > 0x1F530F027FFFFFLL )
+  if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
     if ( (v95 & 1) != 0 )
       goto LABEL_211;
@@ -45034,7 +45034,7 @@ LABEL_210:
     krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_KERNEL_PORT_READY);
     goto LABEL_211;
   }
-  if ( !v97 && v94 <= 0x1F530F027FFFFFLL )
+  if ( !v97 && v94 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     goto LABEL_210;
 LABEL_211:
   v52 = krwCtx->gap1921[2];
@@ -45064,7 +45064,7 @@ LABEL_211:
     *(_QWORD *)&krwCtx->gap190[80] = 0;
     *(_QWORD *)&krwCtx->gap190[88] = 0;
   }
-  if ( krwCtx->someLargeNumber > 0x2257FFFFFFFFFFLL )
+  if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
   {
     v54 = *v93;
     if ( !*v93 )
@@ -45094,7 +45094,7 @@ LABEL_233:
   if ( *(_DWORD *)gap192 == -1 || krwCtx->gap1911[1] == -1 || krwCtx->gap1915 == -1 || !krwCtx->gap190u )
     goto LABEL_260;
   v61 = *(__int64 **)krwCtx->gap190_;
-  if ( krwCtx->someLargeNumber <= 0x1C1B19145FFFFFLL )
+  if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
   {
     if ( v61 )
       goto LABEL_259;
@@ -45137,7 +45137,7 @@ LABEL_259:
 LABEL_260:
   if ( *(_BYTE *)(v52 + 156) )
     krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_HAS_AUXKC_INFO);
-  if ( v41 > 0x2257FFFFFFFFFFLL && *(_QWORD *)(v52 + 160) )
+  if ( v41 > XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) && *(_QWORD *)(v52 + 160) )
   {
     v67 = (struct_a1 *)calloc(0x128u, 1u);
     if ( v67 )
@@ -45176,7 +45176,7 @@ LABEL_267:
     *(_QWORD *)&v79->oword90 = xnuVersion.qword20;
     DWORD2(v79->oword90) = krwCtx->gap16C[3];
     DWORD2(v79->oword30) = krwCtx->pageSizeOrSomething;
-    if ( v41 > 0x2257FFFFFFFFFFLL )
+    if ( v41 > XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
     {
       BYTE1(v79->oword100) = 1;
       *((_QWORD *)&v79->owordA0 + 1) = v52;
@@ -45199,7 +45199,7 @@ LABEL_267:
     v83->qword90 = xnuVersion.qword20;
     v83->dword98 = krwCtx->gap16C[3];
     v83->dword38 = krwCtx->pageSizeOrSomething;
-    if ( v41 > 0x2257FFFFFFFFFFLL )
+    if ( v41 > XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
     {
       v83->byte101 = 1;
       v83->qwordA8 = v52;
@@ -45240,7 +45240,7 @@ LABEL_267:
       || !*(_QWORD *)&krwCtx->gap42[40]
       || (mach_port_with_a2 = sub_28364((__int64)krwCtx), !(_DWORD)mach_port_with_a2) )
     {
-      if ( krwCtx->someLargeNumber <= 0x2257FFFFFFFFFFLL )
+      if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
         goto LABEL_280;
       LOBYTE(cpuFamily) = 0;
       if ( (unsigned int)sub_3F9A0(krwCtx, (bool *)&cpuFamily) )
@@ -45273,7 +45273,7 @@ LABEL_267:
           if ( !kwrite64(krwCtx, v90, v103) || !kwrite64(krwCtx, v88, v103 + 10) )
             return mach_port_with_a2;
 LABEL_280:
-          if ( v97 || v94 > 0x1F530F027FFFFFLL )
+          if ( v97 || v94 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           {
             mach_port_with_a2 = sub_3C450((__int64)krwCtx, mach_task_self_, 0, 0);
             if ( (_DWORD)mach_port_with_a2 )
@@ -45299,7 +45299,7 @@ LABEL_280:
             return mach_port_with_a2;
           if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
           {
-            if ( krwCtx->someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+            if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
             {
               v74 = sub_3A878((__int64)krwCtx);
               HIDWORD(krwCtx->gap191[694]) = v74;
@@ -45317,7 +45317,7 @@ LABEL_293:
           else
           {
 LABEL_291:
-            if ( krwCtx->someLargeNumber > 0x1C1B19145FFFFFLL )
+            if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
             {
               v73 = krwCtx->gap191[694];
               goto LABEL_293;
@@ -45339,14 +45339,14 @@ LABEL_291:
             return mach_port_with_a2;
           if ( v96 || !something )
             return 0;
-          v91 = krwCtx->someLargeNumber;
-          if ( v91 <= 0x27120F04B00002LL )
+          v91 = krwCtx->xnuVersionPacked;
+          if ( v91 <= XNU_VERSION_PACKED(10002, 60, 75, 0, 2) )
           {
-            if ( v91 <= 0x225C1E804FFFFFLL )
+            if ( v91 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) )
             {
-              if ( v91 <= 0x225C19804FFFFFLL )
+              if ( v91 <= XNU_VERSION_PACKED(8796, 102, 4, 1023, 1023) )
               {
-                if ( v91 <= 0x1F530F027FFFFFLL || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v91 <= 0x1F5418FFFFFFFFLL )
+                if ( v91 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v91 <= XNU_VERSION_PACKED(8020, 99, 1023, 1023, 1023) )
                 {
                   v92 = sub_1CF1C((__int64)krwCtx);
                   goto LABEL_350;
@@ -45405,12 +45405,12 @@ bool __fastcall sub_3E1D8(struct_krwCtx *a1, mach_port_t a2)
   int v19; // [xsp+24h] [xbp-2Ch] BYREF
   __int64 v20; // [xsp+28h] [xbp-28h] BYREF
 
-  v3 = a1->someLargeNumber;
+  v3 = a1->xnuVersionPacked;
   v4 = port_name_to_kaddr(a1, a2);
   if ( !v4 )
     return 0;
   v5 = 0;
-  v6 = v3 <= 0x18090A095FFFFFLL ? 56 : 48;
+  v6 = v3 <= XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) ? 56 : 48;
   v7 = a1->xnuMajorVersion;
   if ( v7 > 8791 )
   {
@@ -45422,7 +45422,7 @@ bool __fastcall sub_3E1D8(struct_krwCtx *a1, mach_port_t a2)
   else if ( (unsigned int)(v7 - 8019) < 2 )
   {
     v8 = 784;
-    if ( a1->someLargeNumber <= 0x1F530F027FFFFFLL )
+    if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v8 = 824;
     v9 = 352;
   }
@@ -45436,7 +45436,7 @@ bool __fastcall sub_3E1D8(struct_krwCtx *a1, mach_port_t a2)
     if ( v7 != 7195 )
       return v5;
     v8 = 832;
-    if ( a1->someLargeNumber <= 0x1C1B19145FFFFFLL )
+    if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
       v8 = 824;
     v9 = 10 * v6;
   }
@@ -45452,7 +45452,7 @@ bool __fastcall sub_3E1D8(struct_krwCtx *a1, mach_port_t a2)
   v18 = 0x7FFFFFFFFFFFFFFFLL;
   if ( !(unsigned int)kwritebuf_last_1((__int64)a1, v10 + 8, (__int64)&v18, 8) )
     return 0;
-  if ( v3 < 0x18090A09600000LL )
+  if ( v3 < XNU_VERSION_PACKED(6153, 40, 150, 0, 0) )
   {
     v17 = 0x7FFFFFFFFFFFFFFFLL;
     v11 = v10 + 16;
@@ -45473,7 +45473,7 @@ bool __fastcall sub_3E1D8(struct_krwCtx *a1, mach_port_t a2)
     return 0;
   v16 = 0;
   v14 = 48;
-  if ( v3 > 0x18090A095FFFFFLL )
+  if ( v3 > XNU_VERSION_PACKED(6153, 40, 149, 1023, 1023) )
     v14 = 40;
   return (unsigned int)kwritebuf_last_1((__int64)a1, v10 + v14, (__int64)&v16, 8) != 0;
 }
@@ -45619,7 +45619,7 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
     {
       if ( BYTE1(cmd) == 3 )
       {
-        if ( a1->someLargeNumber <= 0x1F52FFFFFFFFFFLL || a1->xnuMajorVersion > 8791 )
+        if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || a1->xnuMajorVersion > 8791 )
           goto LABEL_219;
         if ( cmd > 0x40000300 )
         {
@@ -46059,7 +46059,7 @@ LABEL_180:
               v6 = (unsigned int)v6;
             goto LABEL_219;
           }
-          if ( a1->someLargeNumber >> 43 >= 0x44B )
+          if ( a1->xnuVersionPacked >> 43 >= 0x44B )
           {
             v15 = sub_3FA2C(a1, v3 != 0);
             goto LABEL_79;
@@ -46098,7 +46098,7 @@ LABEL_84:
           goto LABEL_179;
         }
         v25 = v3 & 0xF;
-        if ( a1->someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+        if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
         {
           if ( v25 > 2 )
           {
@@ -46122,7 +46122,7 @@ LABEL_84:
           if ( cmd != -1073741557 )
             goto LABEL_179;
           v23 = *(_DWORD *)v3;
-          v24 = (*(_DWORD *)v3 & 1) != 0 && a1->someLargeNumber > 0x1F52FFFFFFFFFFLL && a1->xnuMajorVersion < 8792;
+          v24 = (*(_DWORD *)v3 & 1) != 0 && a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && a1->xnuMajorVersion < 8792;
           if ( (v23 & 4) != 0 )
           {
             if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
@@ -46147,7 +46147,7 @@ LABEL_84:
               v24 |= 2u;
             }
           }
-          if ( (v23 & 8) != 0 && a1->someLargeNumber <= 0x1F52FFFFFFFFFFLL )
+          if ( (v23 & 8) != 0 && a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
             v24 |= 8u;
           LODWORD(v6) = 0;
           *(_DWORD *)v3 = v24;
@@ -46155,7 +46155,7 @@ LABEL_84:
         }
         v16 = 0;
         LOBYTE(v51) = 0;
-        if ( a1->someLargeNumber >> 43 >= 0x44B )
+        if ( a1->xnuVersionPacked >> 43 >= 0x44B )
         {
           v16 = sub_3F9A0(a1, (bool *)&v51);
           LODWORD(v6) = 0;
@@ -46251,7 +46251,7 @@ LABEL_11:
     {
       if ( (v6 = *(_DWORD *)(a1 + 6444), (unsigned int)(v6 + 1) < 2)
         || v6 != mach_thread_self()
-        || ((v7 = mach_thread_self(), *(_QWORD *)(a1 + 344) > 0x1F530F027FFFFFuLL) ? (v8 = 1) : (v8 = 0x4000000),
+        || ((v7 = mach_thread_self(), *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)) ? (v8 = 1) : (v8 = 0x4000000),
             (unsigned int)set_flags_something_INEEDTOLOOK_sub_3F8C0(a1, v7, v8, 0)) )
       {
         if ( !*(_QWORD *)(a1 + 6416) || (unsigned int)sub_3A150(a1, *(_DWORD *)(a1 + 6416), *(_DWORD *)(a1 + 6420), 0) )
@@ -46353,7 +46353,7 @@ __int64 __fastcall sub_3F4BC(char *a1)
   }
   if ( *((_QWORD *)a1 + 5) )
     sub_26B00((__int64)a1, 1);
-  if ( *((_QWORD *)a1 + 43) >= 0x27120F04B00003uLL && (*a1 & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+  if ( *((_QWORD *)a1 + 43) >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (*a1 & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     sub_A9CC((__int64)a1);
   if ( *((_QWORD *)a1 + 937) )
   {
@@ -46505,7 +46505,7 @@ __int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(__int64 a1, unsigne
   int v10; // w2
   int v11; // [xsp+Ch] [xbp-34h] BYREF
 
-  if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
     v8 = sub_345D4(a1, a2);
     if ( !v8 )
@@ -46523,7 +46523,7 @@ __int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(__int64 a1, unsigne
   result = kread32_outptr(a1, v8, &v11);
   if ( !(_DWORD)result )
     return result;
-  if ( *(_QWORD *)(a1 + 344) <= 0x1F530F027FFFFFuLL )
+  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     v9 = 0xF0000000;
   else
     v9 = -2;
@@ -46742,7 +46742,7 @@ LABEL_40:
     result = 0;
     if ( sect[1] && sect[2] )
     {
-      if ( *(_QWORD *)(a1 + 344) < 0x225C192D100000uLL )
+      if ( *(_QWORD *)(a1 + 344) < XNU_VERSION_PACKED(8796, 100, 721, 0, 0) )
       {
         result = kernel_pattern_scan((__int64)sect, "09 FD 9F 08 C0 03 5F D6", 0);
         if ( !result )
@@ -46780,7 +46780,7 @@ void __fastcall sub_3FE68(__int64 a1, task_inspect_t a2, host_t *a3)
   v4 = *(_DWORD *)(a1 + 6432);
   if ( v4 + 1 >= 2 )
   {
-    if ( *(_QWORD *)(a1 + 344) >= 0x1C1B1914600000uLL )
+    if ( *(_QWORD *)(a1 + 344) >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
     {
       sub_3B7E0(a1, a2, v4);
       if ( !v6 )
@@ -47094,7 +47094,7 @@ unsigned __int64 __fastcall sub_403E0(__int64 a1, const char *a2)
   {
     if ( v4 != 7195 )
       return 0;
-    if ( *(_QWORD *)(a1 + 344) <= 0x1C1B19145FFFFFuLL )
+    if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
       v5 = 136;
     else
       v5 = 168;
@@ -47108,7 +47108,7 @@ unsigned __int64 __fastcall sub_403E0(__int64 a1, const char *a2)
   v7 = *(_QWORD *)(a1 + 6560);
   if ( v7 )
     goto LABEL_9;
-  if ( *(_QWORD *)(a1 + 344) <= 0x1C1B19145FFFFFuLL )
+  if ( *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
     v15 = "28 69 68 78 09 11 80 52";
   else
     v15 = "08 29 40 92 09 15 80 52";
@@ -47207,7 +47207,7 @@ __int64 __fastcall sub_4062C(struct_krwCtx *a1, __int64 a2)
 
   v2 = 708625;
   v21 = 0;
-  if ( a1->someLargeNumber < 0x1C1B1914600000LL )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
     return 708616;
   v4 = a1->xnuMajorVersion;
   if ( (unsigned int)(v4 - 8019) >= 2 && v4 != 8792 && v4 != 7195 )
@@ -47319,7 +47319,7 @@ __int64 __fastcall sub_4087C(
   v12 = 163855;
   memset(v37, 0, sizeof(v37));
   v13 = 32;
-  if ( a1->someLargeNumber > 0x1C1B19145FFFFFLL )
+  if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
     v13 = 40;
   if ( !kread64_outptr(a1, v13 + a2, (unsigned __int64 *)&v33) )
   {
@@ -47333,8 +47333,8 @@ __int64 __fastcall sub_4087C(
     v14 = 163857;
     goto LABEL_56;
   }
-  v15 = a1->someLargeNumber;
-  if ( v15 <= 0x1C1B19145FFFFFLL )
+  v15 = a1->xnuVersionPacked;
+  if ( v15 <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
   {
     v20 = a4 | 1;
   }
@@ -47357,7 +47357,7 @@ LABEL_13:
         goto LABEL_56;
       }
     }
-    v21 = v15 > 0x1F52FFFFFFFFFFLL;
+    v21 = v15 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023);
     v20 = v17 | 1;
     if ( v21 )
       v20 = v18;
@@ -47369,7 +47369,7 @@ LABEL_13:
   if ( !kwritebuf_last_0((__int64)a1, a4, v37, a3) )
     goto LABEL_55;
   v22 = sub_1F190();
-  if ( a1->someLargeNumber <= 0x1C1B19145FFFFFLL )
+  if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
   {
     if ( !kreadbuf_last_0((__int64)a1, v33 + (unsigned int)(a1->pageSizeOrSomething * v22), a1->int168, &v34) )
       goto LABEL_50;
@@ -47508,7 +47508,7 @@ __int64 __fastcall sub_40CBC(
   v30 = -1;
   v28 = 0;
   v12 = 32;
-  if ( a1->someLargeNumber > 0x1C1B19145FFFFFLL )
+  if ( a1->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
     v12 = 40;
   if ( !kread64_outptr(a1, v12 + a2, (unsigned __int64 *)&v27) )
   {
@@ -47524,7 +47524,7 @@ __int64 __fastcall sub_40CBC(
   if ( (_DWORD)v13 )
     goto LABEL_32;
   v14 = sub_1F190();
-  if ( a1->someLargeNumber <= 0x1C1B19145FFFFFLL )
+  if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
   {
     v13 = 708616;
     goto LABEL_32;
