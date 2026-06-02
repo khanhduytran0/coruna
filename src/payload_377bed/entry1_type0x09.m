@@ -747,7 +747,7 @@ __int64 _IOServiceSetAuthorizationID(void);
 __int64 __semwait_signal(void);
 int __ulock_wait(unsigned int operation, void *addr, unsigned __int64 value, unsigned int timeout);
 int __ulock_wake(unsigned int operation, void *addr, unsigned __int64 wake_value);
-__int64 necp_open(void);
+int necp_open(int flags);
 int necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size);
 int proc_pidinfo(int pid, int flavor, uint64_t arg, void *buffer, int buffersize);
 char *_CFProcessPath(void);
@@ -901,7 +901,7 @@ char *__cdecl mktemp(char *);
 // void *__cdecl mmap(void *, size_t, int, int, int, off_t);
 int __cdecl mount(const char *, const char *, int, void *);
 int necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size);
-__int64 necp_open();
+int necp_open(int flags);
 int open(const char *, int, ...);
 int open_dprotected_np(const char *, int, int, int, ...);
 kern_return_t __cdecl pid_for_task(mach_port_name_t t, int *x);
@@ -1145,7 +1145,7 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte);
 // void *__cdecl _mmap(void *, size_t, int, int, int, off_t);
 // int __cdecl _mount(const char *, const char *, int, void *);
 // int _necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size); weak
-// __int64 _necp_open(void); weak
+// int _necp_open(int flags); weak
 // int _open(const char *, int, ...);
 // int _open_dprotected_np(const char *, int, int, int, ...);
 // kern_return_t __cdecl _pid_for_task(mach_port_name_t t, int *x);
@@ -25644,7 +25644,7 @@ LABEL_42:
   else
   {
     v37 = 0;
-    v6 = necp_open();
+    v6 = necp_open(0);
     if ( v6 != -1 )
     {
       v7 = v6;
@@ -48718,11 +48718,11 @@ int necp_client_action(int fd, uint32_t action, const void *client_id, size_t cl
 // 485E0: using guessed type int _necp_client_action(int fd, uint32_t action, const void *client_id, size_t client_id_len, void *buffer, size_t buffer_size);
 
 //----- (00000000000419BC) ----------------------------------------------------
-__int64 necp_open()
+int necp_open(int flags)
 {
-  return _necp_open();
+  return _necp_open(flags);
 }
-// 485E8: using guessed type __int64 _necp_open(void);
+// 485E8: using guessed type int _necp_open(int flags);
 
 //----- (00000000000419CC) ----------------------------------------------------
 int open(const char *a1, int a2, ...)
