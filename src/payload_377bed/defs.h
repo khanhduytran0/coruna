@@ -105,65 +105,65 @@ typedef struct struct_krwCtx struct_krwCtx;
 /* 165 */
 struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo
 {
-  _BYTE gap0[80];
-  _QWORD qword50;
-  _QWORD qword58;
-  _QWORD qword60;
-  _QWORD qword68;
-  _DWORD ioPort;
+  uint8_t gap0[80];
+  uint64_t qword50;
+  uint64_t qword58;
+  uint64_t qword60;
+  uint64_t qword68;
+  uint32_t ioPort;
 };
 typedef struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo struct_IOKitConnInfo;
 
 /* 166 */
 struct __attribute__((packed)) __attribute__((aligned(8))) struct_xnuMajorVersion
 {
-  _OWORD majorVersion;
-  _OWORD oword10;
-  _QWORD qword20;
+  __int128 majorVersion;
+  __int128 oword10;
+  uint64_t qword20;
 };
 typedef struct __attribute__((packed)) __attribute__((aligned(8))) struct_xnuMajorVersion struct_xnuMajorVersion;
 
 /* 168 */
 struct __attribute__((packed)) __attribute__((aligned(2))) struct_v83
 {
-  _BYTE gap0[48];
-  _DWORD dword30;
-  _BYTE gap34[4];
-  _DWORD dword38;
-  _BYTE gap3C[52];
-  _OWORD xnuMajorVersion;
-  _OWORD oword80;
-  _QWORD qword90;
-  _DWORD dword98;
-  _BYTE gap9C[12];
-  _QWORD qwordA8;
-  _BYTE gapB0[81];
-  _BYTE byte101;
+  uint8_t gap0[48];
+  uint32_t dword30;
+  uint8_t gap34[4];
+  uint32_t dword38;
+  uint8_t gap3C[52];
+  __int128 xnuMajorVersion;
+  __int128 oword80;
+  uint64_t qword90;
+  uint32_t dword98;
+  uint8_t gap9C[12];
+  uint64_t qwordA8;
+  uint8_t gapB0[81];
+  uint8_t byte101;
 };
 typedef struct __attribute__((packed)) __attribute__((aligned(2))) struct_v83 struct_v83;
 
 /* 169 */
 struct __attribute__((packed)) __attribute__((aligned(8))) struct_a1
 {
-  _OWORD oword0;
-  _OWORD oword10;
-  _OWORD oword20;
-  _OWORD oword30;
-  _OWORD oword40;
-  _OWORD oword50;
-  _OWORD oword60;
-  _OWORD xnuMajorVersion;
-  _OWORD oword80;
-  _OWORD oword90;
-  _OWORD owordA0;
-  _OWORD owordB0;
-  _OWORD owordC0;
-  _OWORD owordD0;
-  _OWORD owordE0;
-  _OWORD owordF0;
-  _OWORD oword100;
-  _OWORD oword110;
-  _QWORD qword120;
+  __int128 oword0;
+  __int128 oword10;
+  __int128 oword20;
+  __int128 oword30;
+  __int128 oword40;
+  __int128 oword50;
+  __int128 oword60;
+  __int128 xnuMajorVersion;
+  __int128 oword80;
+  __int128 oword90;
+  __int128 owordA0;
+  __int128 owordB0;
+  __int128 owordC0;
+  __int128 owordD0;
+  __int128 owordE0;
+  __int128 owordF0;
+  __int128 oword100;
+  __int128 oword110;
+  uint64_t qword120;
 };
 typedef struct __attribute__((packed)) __attribute__((aligned(8))) struct_a1 struct_a1;
 

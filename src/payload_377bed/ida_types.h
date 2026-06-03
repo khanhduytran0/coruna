@@ -49,14 +49,7 @@ extern kern_return_t mach_vm_page_info(vm_map_t, mach_vm_address_t, vm_page_info
 #define __int32 int
 #define __int64 long long
 
-typedef uint8_t   _BYTE;
-typedef uint16_t  _WORD;
-typedef uint32_t  _DWORD;
-typedef uint64_t  _QWORD;
-typedef __int128  _OWORD;
 typedef uint8_t   _UNKNOWN;
-typedef int       _BOOL4;
-typedef uint64_t  _BOOL8;
 typedef union { __int128 o; uint64_t n128_u64[2]; double n128_f64[2]; } __n128;
 typedef __int128  xmmword;
 typedef char      kernel_version_t[512];
@@ -104,7 +97,7 @@ typedef struct _opaque_pthread_t _opaque_pthread_t;
 #define __break(x)       __builtin_trap()
 #define bswap32(x)       __builtin_bswap32(x)
 extern __int64 __chkstk_darwin();
-#define MEMORY ((volatile _QWORD *)0)
+#define MEMORY ((volatile uint64_t *)0)
 
 typedef unsigned int atomic_uint;
 typedef unsigned short atomic_ushort;
@@ -182,7 +175,7 @@ typedef struct IONotificationPort IONotificationPort;
 extern double dyldVersionNumber;
 
 /* _os_alloc_once */
-extern _QWORD _os_alloc_once_table[];
+extern uint64_t _os_alloc_once_table[];
 
 extern kern_return_t ida_import_IOConnectTrap4(
     io_connect_t connect,
