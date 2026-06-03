@@ -11,9 +11,9 @@
 #define __int64 long long
 
 typedef struct {
-    void    *field_0x00;   // [x21+0x00]: pointer (has +0x38 = int)
-    void    *base_ptr;   // [x21+0x08]: base pointer for result offset calc
-    void    *search_buf;   // [x21+0x10]: checked non-null
+    uint64_t field_0x00;   // [x21+0x00]: pointer (has +0x38 = int)
+    uint64_t base_ptr;   // [x21+0x08]: base pointer for result offset calc
+    uint64_t size;   // [x21+0x10]: checked non-null
     // ... other fields
 } SearchObj;
 
