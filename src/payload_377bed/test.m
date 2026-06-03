@@ -176,8 +176,8 @@ int main(int argc, char *argv[], char *envp[]) {
         fprintf(stderr, "dlopen failed: %s\n", dlerror());
         return 1;
     }
-    kread_buf_internal = (driver_kreadbuf)dlsym(handle, "kreadbuf_last_1");
-    kwrite_buf_internal = (driver_kwritebuf)dlsym(handle, "kwritebuf_last_1");
+    kread_buf_internal = (driver_kreadbuf)dlsym(handle, "krw_read_thunk");
+    kwrite_buf_internal = (driver_kwritebuf)dlsym(handle, "kwritebuf_universal");
     if (!kread_buf_internal || !kwrite_buf_internal) {
         fprintf(stderr, "dlsym rw failed: %s\n", dlerror());
         return 1;
@@ -224,7 +224,7 @@ int main(int argc, char *argv[], char *envp[]) {
     csops(pid, 0, &flags, sizeof(flags));
     printf("csops before modify: 0x%x\n", flags);
     
-    driver_task_csflags_kaddr task_csflags_kaddr = (driver_task_csflags_kaddr)dlsym(handle, "sub_34680");
+    driver_task_csflags_kaddr task_csflags_kaddr = (driver_task_csflags_kaddr)dlsym(handle, "get_task_csflags_kaddr");
     if (!task_csflags_kaddr) {
         fprintf(stderr, "dlsym task_csflags_kaddr failed: %s\n", dlerror());
         return 1;
