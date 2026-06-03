@@ -43752,6 +43752,9 @@ LABEL_18:
 //----- (000000000003B7E0) ----------------------------------------------------
 int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3)
 {
+    // FIXME: quite buggy and prone to panic, gotta ASAN later. However all we need is krw with PPL/SPTM bypass so just skip it
+    if(1)return 1;
+    
     // Check if task already has the right special port
     mach_port_t special_port = 0;
     kern_return_t kr = task_get_special_port(task, 2, &special_port);
@@ -43940,12 +43943,9 @@ int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3)
 
             cnt = 8;
             audit_token_t audit_token = {0};
-            printf("-------- before info ----------\n");
             if (task_info(task, 0xF, (task_info_t)&audit_token, &cnt)) {
-                printf("-------- failed info ----------\n");
                 return 0;
             }
-            printf("-------- successs info ----------\n");
 
             security_token_t sec_token = *(security_token_t *)task_info_out;
             // Copy audit_token to local (ldp q0,q1 / stp q0,q1)
@@ -45657,6 +45657,7 @@ LABEL_291:
           if ( v76 + 1 < 2 )
             return 708609;
           v104.st_dev = 0;
+          if (1) return 0;// FIXME: host_get_special_port doesn't work on Dopamine
           if ( host_get_special_port(v76, -1, 16, (mach_port_t *)&v104) )
             return 708619;
           if ( (unsigned int)(v104.st_dev + 1) >= 2 )
