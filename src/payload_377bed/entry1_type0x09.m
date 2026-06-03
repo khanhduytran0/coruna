@@ -554,7 +554,7 @@ unsigned __int64 __fastcall sub_33268(__int64 a1, unsigned int a2);
 __int64 __fastcall sub_33304(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_3338C(__int64);
 __int64 __fastcall krw_task_for_pid_0(struct_krwCtx *a1, __int64 a2, int pid);
-__int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char *a4);
+__int64 __fastcall krw_task_for_pid_or_name_ret_x0(struct_krwCtx *a1, __int64 a2, int pid, const char *a4);
 __int64 __fastcall krw_task_for_name(struct_krwCtx *a1, __int64 a2, const char *a3);
 __int64 __fastcall sub_336B8(struct_krwCtx *a1, __int64 a2, uint32_t *a3, uint32_t *a4);
 __int64 __fastcall sub_3382C(__int64 a1, mach_port_name_t task, uint32_t *a3, uint32_t *a4);
@@ -662,7 +662,7 @@ mach_vm_address_t __fastcall sub_3B49C(struct_krwCtx *a1, unsigned int a2, int a
 unsigned __int64 __fastcall sub_3B524(struct_krwCtx *a1, unsigned int a2, bool *a3, bool *a4, bool *a5);
 int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3);
 bool __fastcall krw_task_for_pid(__int64 a1, int a2, mach_port_name_t *a3);
-bool __fastcall krw_task_for_pid_or_name(__int64 a1, int victim_pid, const char *victim_process_name, mach_port_name_t *out_task);
+bool __fastcall krw_task_for_pid_or_name_ret_ptr(__int64 a1, int victim_pid, const char *victim_process_name, mach_port_name_t *out_task);
 bool __fastcall sub_3BE3C(struct_krwCtx *a1, int a2, thread_act_t a3, thread_state_flavor_t a4, natural_t *a5, mach_msg_type_number_t a6);
 __int64 __fastcall sub_3C25C(struct_krwCtx *a1, thread_act_t target_act, thread_state_flavor_t flavor, thread_state_t new_state, mach_msg_type_number_t new_stateCnt);
 unsigned __int64 __fastcall kernel_get_base_unslid(struct_krwCtx *a1);
@@ -2110,8 +2110,6 @@ void __fastcall sub_68F4(__int64 a1)
   }
   free(*(void **)(a1 + 8));
   free(*(void **)(a1 + 16));
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   free((void *)a1);
 }
 // 69A8: variable 'vars8' is possibly undefined
@@ -2336,8 +2334,6 @@ __int64 __fastcall sub_6EB8(uint64_t *a1, const void *a2, unsigned __int64 a3, s
   v10 = a1[176] + v7;
   memcpy(v9, a2, a4);
   v11 = mach_task_self_;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return vm_copy(v11, (vm_address_t)v9, a4 + 0x8000, v10);
 }
 // 6F58: variable 'vars8' is possibly undefined
@@ -2986,8 +2982,6 @@ uint64_t *__fastcall sub_7E84(uint64_t *a1)
   sub_7DA4(a1, (__int64)(a1 + 141));
   sub_7DA4(a1, (__int64)(a1 + 146));
   sub_7E08(a1, a1 + 151);
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return sub_7E08(a1, a1 + 155);
 }
 // 7ECC: variable 'vars8' is possibly undefined
@@ -3232,8 +3226,6 @@ int *__fastcall sub_8384(__int64 a1, __int64 a2)
   result = (int *)madvise((void *)(*(uint64_t *)(a1 + 32) + 49152LL), a2 << 14, 3);
   if ( (uint32_t)result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return __error();
   }
   return result;
@@ -3379,8 +3371,6 @@ void __fastcall sub_8710(uint64_t *a1)
   sub_8228((__int64)a1);
   sub_83C8(a1);
   sub_84F8((__int64)a1);
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   sub_85E4((__int64)a1);
 }
 // 8748: variable 'vars8' is possibly undefined
@@ -3739,8 +3729,6 @@ LABEL_7:
   }
   *a3 = v14;
   *a4 = v13;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   free(v8);
 }
 // 8F08: variable 'vars8' is possibly undefined
@@ -3789,8 +3777,6 @@ void __fastcall sub_8F18(uint64_t *a1, __int64 a2, int a3, uint64_t *a4)
     break;
   }
 LABEL_12:
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   free(v8);
 }
 // 9008: variable 'vars8' is possibly undefined
@@ -4336,8 +4322,6 @@ __int64 __fastcall sub_9F4C(__int64 a1)
   v3 = *(__int64 (__fastcall **)(__int64, __int64))(a1 + 1480);
   v4 = *(uint64_t *)(a1 + 1488);
   v5 = *(uint64_t *)(a1 + 1360);
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return v3(v4, v5);
 }
 // 9FE0: variable 'vars8' is possibly undefined
@@ -4359,8 +4343,6 @@ void __fastcall sub_9FF0(vm_address_t *a1)
   vm_deallocate(mach_task_self_, a1[175], 0xC000u);
   a1[175] = 0;
   bzero(a1, 0x5E8u);
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   free(a1);
 }
 // A090: variable 'vars8' is possibly undefined
@@ -9897,8 +9879,6 @@ __int64 __fastcall sub_109F8(__int64 a1, __int64 a2, __int64 a3, unsigned int a4
   bzero(*(void **)(a1 + 16), 0x800u);
   v17 = *(mach_msg_header_t **)(a1 + 16);
   v18 = *(uint32_t *)(a1 + 368);
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return mach_msg(v17, 2, 0, 0x400u, v18, 0, 0);
 }
 // 10AF8: variable 'vars8' is possibly undefined
@@ -10007,8 +9987,6 @@ __int64 __fastcall sub_10C2C(__int64 a1, __int64 a2, int a3, __int64 a4)
   sub_10B08((uint64_t *)a1, a2, *(uint32_t *)(a1 + 660), qword_48038, v7, (__int64)v16);
   v13 = *(uint64_t *)(a1 + 8);
   v14 = *(uint64_t *)(a1 + 664) + 61440LL;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return sub_10660(v13, v14);
 }
 // 48038: using guessed type __int64 qword_48038;
@@ -10078,8 +10056,6 @@ __int64 __fastcall sub_10EA8(__int64 a1, __int64 a2, __int64 a3)
   sub_10B90(a1, qword_48020, (__int64)&v7);
   v4 = *(uint64_t *)(a1 + 8);
   v5 = *(uint64_t *)(a1 + 664) + 61440LL;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return sub_10660(v4, v5);
 }
 // 48020: using guessed type __int64 qword_48020;
@@ -10134,8 +10110,6 @@ __int64 __fastcall sub_10F84(__int64 a1, __int64 a2, __int64 a3)
   sub_10B90(a1, qword_48028, (__int64)&v7);
   v4 = *(uint64_t *)(a1 + 8);
   v5 = *(uint64_t *)(a1 + 664) + 61696LL;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return sub_10660(v4, v5);
 }
 // 48028: using guessed type __int64 qword_48028;
@@ -10940,8 +10914,6 @@ __int64 __fastcall sub_12754(__int64 a1)
   while ( !**(uint64_t **)(a1 + 40) )
     ;
   v3 = *(uint32_t *)(v2 + 672);
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return thread_set_state(v3, 6, (thread_state_t)(v2 + 384), 0x44u);
 }
 // 127B0: variable 'vars8' is possibly undefined
@@ -11229,8 +11201,6 @@ void __fastcall sub_12DB0(const void *a1, __int64 a2)
       if ( !CFArrayContainsValue(v4, v7, a1) )
       {
         v5 = *(CFArrayRef **)(a2 + 8);
-        if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-          __break(0xC471u);
         CFArrayAppendValue(v5, a1);
       }
     }
@@ -11296,8 +11266,6 @@ void __fastcall sub_12EF8(struct_krwCtx *a1)
     || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
     && ((v3 = a1->xnuVersionPacked, v3 > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)) || v3 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001) )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     sub_15CC8((__int64)a1);
   }
   else if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
@@ -11308,8 +11276,6 @@ void __fastcall sub_12EF8(struct_krwCtx *a1)
       || (v5 = a1->xnuVersionPacked, v5 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023))
       && (v5 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) || a1->xnuMajorVersion >= 10002) )
     {
-      if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-        __break(0xC471u);
       nullsub_2(a1);
     }
   }
@@ -11868,8 +11834,6 @@ bool __fastcall ppl_kwritebuf_nocheck(
         {
           if ( (pplBypass & 1) != 0 )
           {
-            if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-              __break(0xC471u);
             return sub_13304((struct_krwCtx *)ctx, vaddr, newBytes, size, a6);
           }
           else
@@ -12835,8 +12799,6 @@ LABEL_16:
       free(v8);
     return v7;
   }
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return krw_inject_entitlements2_maybe(krwCtx, task, entitlementXml, 1);
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
@@ -13292,8 +13254,6 @@ void __fastcall sub_15CC8(__int64 a1)
   {
     *(uint64_t *)(a1 + 7512) = 0;
     bzero(v1, 0x520u);
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     free(v1);
   }
 }
@@ -16179,7 +16139,7 @@ __int64 __fastcall sub_193C0(__int64 a1, __int64 a2, int a3)
 // 43750: using guessed type __int128 xmmword_43750;
 
 //----- (000000000001972C) ----------------------------------------------------
-__int64 __fastcall sub_1972C(__int64 a1, __int64 a2)
+__int64 __fastcall validate_addr(__int64 a1, __int64 a2)
 {
   if ( (a2 & 7) != 0 || (unsigned __int64)(a2 + 0x1000000000000LL) >= 0xFFFFFFFFEFFFLL )
     return 0LL;
@@ -20502,7 +20462,7 @@ __int64 __fastcall fd_make_pipe(int a1[2])
 }
 
 //----- (000000000001F550) ----------------------------------------------------
-__int64 __fastcall test_read_fd(int *fd)
+__int64 __fastcall fd_read_test(int *fd)
 {
   int v3; // w19
   int v4; // w8
@@ -20530,8 +20490,6 @@ __int64 __fastcall setup_two_fds(int *a1)
   if ( !(uint32_t)result )
   {
     fd = a1[1];
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return setup_fd(fd);
   }
   return result;
@@ -21714,8 +21672,6 @@ __int64 __fastcall sub_20C64(__int64 a1, __int64 a2, __int64 a3, int *a4)
   }
   else
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return sub_20C00(a1, a2, a3, a4);
   }
   return result;
@@ -22017,8 +21973,6 @@ unsigned __int64 __fastcall sub_21388(struct_krwCtx *a1)
   result = sub_32D24((__int64)a1);
   if ( result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return sub_3492C(a1, result);
   }
   return result;
@@ -24478,7 +24432,7 @@ LABEL_11:
 }
 
 //----- (00000000000240CC) ----------------------------------------------------
-__int64 __fastcall sub_240CC(int a1)
+__int64 __fastcall check_sandboxed(int a1)
 {
   __int64 result; // x0
   int v3; // w0
@@ -25119,8 +25073,6 @@ const CFDictionaryRef *__fastcall sub_24D64(const char *a1)
   result = IOServiceMatching(a1);
   if ( result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return (const CFDictionaryRef *)IOServiceGetMatchingService(kIOMasterPortDefault, result);
   }
   return result;
@@ -25366,7 +25318,7 @@ __int64 __fastcall sub_251A4(__int64 a1, unsigned int a2, unsigned int a3)
 }
 
 //----- (0000000000025294) ----------------------------------------------------
-__int64 __fastcall sub_25294(int a1)
+__int64 __fastcall fd_close(int a1)
 {
   __int64 result; // x0
   int v2; // w19
@@ -25385,7 +25337,7 @@ __int64 __fastcall sub_25294(int a1)
 }
 
 //----- (00000000000252D4) ----------------------------------------------------
-__int64 __fastcall open_dev_null(int *fdOut)
+__int64 __fastcall fd_open_dev_null(int *fdOut)
 {
   int fd; // w0
   int fd_; // w8
@@ -29000,7 +28952,7 @@ LABEL_100:
 // 29554: variable 'v53' is possibly undefined
 
 //----- (00000000000295B4) ----------------------------------------------------
-bool __fastcall sub_295B4(__int64 krwCtx, unsigned __int64 vaddr, void *outBuf)
+bool __fastcall kread32_outptr(__int64 krwCtx, unsigned __int64 vaddr, void *outBuf)
 {
   __int64 (__fastcall *v3)(__int64, unsigned __int64, void *, unsigned int, __int64); // x8
   int v4; // w0
@@ -29387,8 +29339,6 @@ unsigned __int64 __fastcall sub_29CB0(struct_krwCtx *a1, __int64 a2)
 
   if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) || (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return a2;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return krw_xpac_vaddr(a1, a2);
 }
 // 29D08: variable 'vars8' is possibly undefined
@@ -29400,8 +29350,6 @@ unsigned __int64 __fastcall sub_29D2C(struct_krwCtx *a1, __int64 a2)
 
   if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
     return a2;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return krw_xpac_vaddr(a1, a2);
 }
 // 29D68: variable 'vars8' is possibly undefined
@@ -29778,13 +29726,13 @@ bool __fastcall kreadbuf_0(__int64 ctx, unsigned __int64 addr, mach_vm_size_t si
 }
 
 //----- (000000000002A488) ----------------------------------------------------
-bool __fastcall sub_2A488(__int64 a1, unsigned __int64 a2, const void *a3, mach_vm_size_t a4, int a5)
+bool __fastcall noppl_kwritebuf(__int64 a1, unsigned __int64 a2, const void *a3, mach_vm_size_t a4, int a5)
 {
   __int64 (__fastcall *v5)(__int64, unsigned __int64, const void *, mach_vm_size_t, int); // x8
   int v6; // w0
   int v7; // w0
 
-  TRACE_PORTS("sub_2A488 enter ctx=%llx addr=%llx buf=%llx size=%llx a5=%d fn=%llx sptm_fd=%d sptm_ctx=%llx shm_port=%d shm_u=%llx shm_k=%llx necp_r=%d necp_w=%d pipe0=%d pipe1=%d iosurface_fd=%d necp=%llx tfp=%d chunk=%u\n",
+  TRACE_PORTS("noppl_kwritebuf enter ctx=%llx addr=%llx buf=%llx size=%llx a5=%d fn=%llx sptm_fd=%d sptm_ctx=%llx shm_port=%d shm_u=%llx shm_k=%llx necp_r=%d necp_w=%d pipe0=%d pipe1=%d iosurface_fd=%d necp=%llx tfp=%d chunk=%u\n",
               (unsigned long long)a1,
               (unsigned long long)a2,
               (unsigned long long)a3,
@@ -29808,18 +29756,18 @@ bool __fastcall sub_2A488(__int64 a1, unsigned __int64 a2, const void *a3, mach_
   if ( v5 )
   {
     v6 = v5(a1, a2, a3, a4, a5);
-    TRACE_PORTS("sub_2A488 backend=custom raw=%x\n", v6);
+    TRACE_PORTS("noppl_kwritebuf backend=custom raw=%x\n", v6);
     goto LABEL_3;
   }
   if ( (unsigned int)(*(uint32_t *)(a1 + 172) + 1) >= 2 && *(uint64_t *)(a1 + 216) )
   {
     v6 = sub_28F90((struct_krwCtx *)a1, a2, (__int64)a3, a4, a5);
-    TRACE_PORTS("sub_2A488 backend=sptm raw=%x\n", v6);
+    TRACE_PORTS("noppl_kwritebuf backend=sptm raw=%x\n", v6);
   }
   else if ( (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2 && *(uint64_t *)(a1 + 248) && *(uint64_t *)(a1 + 256) )
   {
     v6 = sub_271B0(a1, a2, (__int64)a3, a4, a5);
-    TRACE_PORTS("sub_2A488 backend=ioconnect raw=%x\n", v6);
+    TRACE_PORTS("noppl_kwritebuf backend=ioconnect raw=%x\n", v6);
   }
   else
   {
@@ -29828,25 +29776,25 @@ bool __fastcall sub_2A488(__int64 a1, unsigned __int64 a2, const void *a3, mach_
     if ( *(uint32_t *)(a1 + 6464) != -1 && *(uint64_t *)(a1 + 536) )
     {
       v6 = sub_268F8(a1, a2, (__int64)a3, a4, a5);
-      TRACE_PORTS("sub_2A488 backend=necp raw=%x\n", v6);
+      TRACE_PORTS("noppl_kwritebuf backend=necp raw=%x\n", v6);
       goto LABEL_3;
     }
     if ( *(uint32_t *)(a1 + 6456) == -1 || *(uint32_t *)(a1 + 6460) == -1 )
     {
 LABEL_22:
       v7 = sub_2A7F4(*(uint32_t *)(a1 + 6424), a2, (__int64)a3, a4, *(uint32_t *)(a1 + 376));
-      TRACE_PORTS("sub_2A488 backend=tfp raw=%x ok=%d\n", v7, v7 == 0);
+      TRACE_PORTS("noppl_kwritebuf backend=tfp raw=%x ok=%d\n", v7, v7 == 0);
       return v7 == 0;
     }
     v6 = sub_25498((struct_krwCtx *)a1, a2, a3, a4, a5);
-    TRACE_PORTS("sub_2A488 backend=pipe raw=%x\n", v6);
+    TRACE_PORTS("noppl_kwritebuf backend=pipe raw=%x\n", v6);
   }
 LABEL_3:
   if ( v6 )
     v7 = 5;
   else
     v7 = 0;
-  TRACE_PORTS("sub_2A488 exit raw=%x ok=%d\n", v6, v7 == 0);
+  TRACE_PORTS("noppl_kwritebuf exit raw=%x ok=%d\n", v6, v7 == 0);
   return v7 == 0;
 }
 
@@ -29871,8 +29819,6 @@ mach_vm_address_t __fastcall ppl_kwrite32(struct_krwCtx *a1, mach_vm_address_t a
   if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
 LABEL_8:
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return noppl_kwrite32((__int64)a1, a2, a3);
   }
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
@@ -29938,8 +29884,6 @@ unsigned __int64 __fastcall kwritebuf_universal(
   {
     if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
-      if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-        __break(0xC471u);
       return ppl_kwritebuf((__int64)ctx_, vaddr_, (void *)newBytes, length);
     }
     result = sub_39090(ctx_, vaddr_);
@@ -29948,8 +29892,6 @@ unsigned __int64 __fastcall kwritebuf_universal(
     vaddr = result;
     a1 = &ctx_->flags;
   }
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return noppl_kwritebuf((__int64)a1, vaddr, newBytes, length, 1);
 }
 // 2A784: variable 'vars8' is possibly undefined
@@ -34094,8 +34036,6 @@ void __fastcall sub_2F9D4(uint32_t *a1)
     v2 = a1[1];
     if ( v2 )
       bzero(a1, bswap32(v2));
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     free(a1);
   }
 }
@@ -36334,8 +36274,6 @@ uint64_t *__fastcall sub_32538(struct_krwCtx *a1, unsigned int *a2)
   }
   else
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return (uint64_t *)sub_37210((__int64)a1, a2);
   }
   return result;
@@ -36362,8 +36300,6 @@ void __fastcall sub_325DC(unsigned int *a1)
     while ( v2 < *a1 );
   }
   free(*((void **)a1 + 1));
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   free(a1);
 }
 // 32640: variable 'vars8' is possibly undefined
@@ -36626,8 +36562,6 @@ __int64 __fastcall sub_32B10(__int64 a1)
   info_outCnt = 2;
   if ( *(uint8_t *)(a1 + 10) && getuid() )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return mach_host_self();
   }
   else
@@ -36712,8 +36646,6 @@ unsigned __int64 __fastcall port_name_to_kaddr(struct_krwCtx *a1, mach_port_t a2
   {
     if ( a2 == -1 )
     {
-      if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-        __break(0xC471u);
       return sub_32D24((__int64)a1);
     }
     else
@@ -37103,24 +37035,24 @@ __int64 __fastcall sub_3338C(__int64 a1)
 }
 
 //----- (0000000000033414) ----------------------------------------------------
-__int64 __fastcall sub_33414(struct_krwCtx *a1, __int64 a2, int pid)
+__int64 __fastcall krw_task_for_pid_0(struct_krwCtx *a1, __int64 a2, int pid)
 {
-  return sub_3341C(a1, a2, pid, 0);
+  return krw_task_for_pid_or_name_ret_x0(a1, a2, pid, 0);
 }
 
 //----- (000000000003341C) ----------------------------------------------------
-__int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char *a4)
+__int64 __fastcall krw_task_for_pid_or_name_ret_x0(struct_krwCtx *a1, __int64 a2, int pid, const char *a4)
 {
-  int v7; // w8
+  int xnuMajorVersion; // w8
   __int64 result; // x0
   __int64 v10; // x24
   __int64 v11; // x25
   int v16; // w0
   int v17; // w23
-  int v18; // w20
+  int stride168; // w20
   __int64 v19; // x0
-  unsigned __int64 v20; // x26
-  __int64 v21; // x8
+  unsigned __int64 base_ptr; // x26
+  __int64 size; // x8
   __int64 v22; // x27
   int v23; // w28
   __int64 v24; // x23
@@ -37131,39 +37063,35 @@ __int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char 
   __int64 v29; // x0
   int v31; // [xsp+4h] [xbp-8Ch] BYREF
   __int64 v32; // [xsp+8h] [xbp-88h] BYREF
-  union
-  {
-    uint64_t range[3];
-    char name[40];
-  } data_desc; // [xsp+10h] [xbp-80h] BYREF
+  SearchObj __s1; // [xsp+10h] [xbp-80h] BYREF
 
-  v7 = a1->xnuMajorVersion;
+  xnuMajorVersion = a1->xnuMajorVersion;
   result = 0;
   if ( a4 )
   {
-    if ( v7 == 8792 )
+    if ( xnuMajorVersion == 8792 )
     {
       v11 = 897;
       v10 = 0;
     }
     else
     {
-      if ( v7 != 10002 && v7 != 8796 )
+      if ( xnuMajorVersion != 10002 && xnuMajorVersion != 8796 )
         return result;
       v10 = 0;
       v11 = 1401;
     }
   }
-  else if ( v7 > 8791 )
+  else if ( xnuMajorVersion > 8791 )
   {
-    if ( v7 != 8792 && v7 != 10002 && v7 != 8796 )
+    if ( xnuMajorVersion != 8792 && xnuMajorVersion != 10002 && xnuMajorVersion != 8796 )
       return result;
     v11 = 0;
     v10 = 96;
   }
   else
   {
-    if ( (unsigned int)(v7 - 8019) >= 2 && v7 != 6153 && v7 != 7195 )
+    if ( (unsigned int)(xnuMajorVersion - 8019) >= 2 && xnuMajorVersion != 6153 && xnuMajorVersion != 7195 )
       return result;
     v10 = 104;
     v11 = 0;
@@ -37172,63 +37100,64 @@ __int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char 
   if ( !v16 )
     return 0;
   v17 = v16;
-  v18 = a1->stride168;
+  stride168 = a1->stride168;
   v19 = a1->gap1921[2];
   if ( v19 )
   {
-    sub_19B98("__DATA", data_desc.range, v19);
+    sub_19B98("__DATA", v19, &__s1);
     result = 0;
-    v20 = data_desc.range[1];
-    if ( !data_desc.range[1] )
+    base_ptr = __s1.base_ptr;
+    if ( !__s1.base_ptr )
       return result;
-    v21 = data_desc.range[2];
-    if ( !data_desc.range[2] )
+    size = __s1.size;
+    if ( !__s1.size )
       return result;
-    v22 = data_desc.range[0];
+    v22 = __s1.field_0x00;
   }
   else
   {
-    v21 = 0;
-    v20 = 0;
+    size = 0;
+    base_ptr = 0;
     v22 = 0;
   }
   v23 = 0;
-  v24 = (unsigned int)(v18 + v17);
-  v25 = v20 + v21;
+  v24 = (unsigned int)(stride168 + v17);
+  v25 = base_ptr + size;
   while ( 2 )
   {
     v32 = a2;
     v26 = a2;
     do
     {
-      v27 = sub_33304(a1, v26);
+      v27 = sub_33304((__int64)a1, v26);
       if ( v27 )
       {
         if ( a4 )
         {
-          if ( !(unsigned int)kreadbuf_last_1(a1, v27 + v11, 33, data_desc.name) )
-            return 0;
-          if ( !strncmp(data_desc.name, a4, 0x21u) )
+          char buf[40];
+          if ( !(unsigned int)kreadbuf_last_1((__int64)a1, v27 + v11, 33, (__int64)&buf) )
+            return 0LL;
+          if ( !strncmp((const char *)&buf, a4, 0x21u) )
             return v32;
         }
         else
         {
-          if ( !(unsigned int)kreadbuf_last_1(a1, v27 + v10, 4, &v31) )
+          if ( !(unsigned int)kreadbuf_last_1((__int64)a1, v27 + v10, 4, (__int64)&v31) )
             return 0;
           if ( v31 == pid )
             return v32;
         }
       }
-      if ( !kread64_outptr(a1, v32 + v24, (unsigned __int64 *)&v32) )
+      if ( !kread64_outptr(a1, v32 + v24, &v32) )
         return 0;
       v28 = validate_addr((__int64)a1, v32);
       v32 = v28;
       if ( !v28 )
         break;
       v26 = v28;
-      if ( v22 && v28 >= v20 && v28 < v25 )
+      if ( v22 && v28 >= base_ptr && v28 < v25 )
       {
-        if ( !kread64_outptr(a1, v28, (unsigned __int64 *)&v32) )
+        if ( !kread64_outptr(a1, v28, &v32) )
           return 0;
         v29 = validate_addr((__int64)a1, v32);
         v32 = v29;
@@ -37248,9 +37177,9 @@ __int64 __fastcall sub_3341C(struct_krwCtx *a1, __int64 a2, int pid, const char 
 }
 
 //----- (00000000000336AC) ----------------------------------------------------
-__int64 __fastcall sub_336AC(struct_krwCtx *a1, __int64 a2, const char *a3)
+__int64 __fastcall krw_task_for_name(struct_krwCtx *a1, __int64 a2, const char *a3)
 {
-  return sub_3341C(a1, a2, 0, a3);
+  return krw_task_for_pid_or_name_ret_x0(a1, a2, 0, a3);
 }
 
 //----- (00000000000336B8) ----------------------------------------------------
@@ -37353,7 +37282,7 @@ __int64 __fastcall sub_3382C(__int64 a1, mach_port_name_t task, uint32_t *a3, ui
     pid_then_addr[0] = 0;
     if ( !pid_for_task(task, pid_then_addr) )
     {
-      v14 = sub_3341C((struct_krwCtx *)a1, v12, pid_then_addr[0], 0);
+      v14 = krw_task_for_pid_or_name_ret_x0((struct_krwCtx *)a1, v12, pid_then_addr[0], 0);
       if ( v14 )
         goto LABEL_9;
     }
@@ -37643,8 +37572,6 @@ LABEL_19:
     return 0;
   }
 LABEL_20:
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return validate_addr(krwCtx, v10);
 }
 
@@ -37657,8 +37584,6 @@ unsigned __int64 __fastcall sub_33E8C(struct_krwCtx *a1, unsigned int a2)
   result = port_name_to_kaddr(a1, a2);
   if ( result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return sub_33304(a1, result);
   }
   return result;
@@ -37729,8 +37654,6 @@ unsigned __int64 __fastcall sub_33FFC(struct_krwCtx *a1, mach_port_t a2)
   result = port_name_to_kaddr(a1, a2);
   if ( result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return sub_33ED8(a1, result);
   }
   return result;
@@ -37776,8 +37699,6 @@ __int64 __fastcall sub_340D8(struct_krwCtx *a1, unsigned int a2, uint64_t *a3)
   result = port_name_to_kaddr(a1, a2);
   if ( result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return sub_34048(a1, result, a3);
   }
   return result;
@@ -38814,8 +38735,6 @@ unsigned __int64 __fastcall sub_354A4(struct_krwCtx *a1, unsigned int a2)
   result = task_get_ipc_port(a1, mach_task_self_, a2);
   if ( result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return sub_35420((__int64)a1, result);
   }
   return result;
@@ -39128,8 +39047,6 @@ int __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
     if ( v8 >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
     {
       v9 = a1->gap191[688] + a1->stride168 * (a2 + 1);
-      if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-        __break(0xC471u);
       return sub_2A63C(a1, v9, a3);
     }
     if ( a3 )
@@ -39204,8 +39121,6 @@ int __fastcall sub_35AE0(struct_krwCtx *a1, unsigned int a2, __int64 a3)
     a1 = v7;
     v12 = a3;
   LABEL_18:
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return kwrite64(a1, v13, v12);
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
@@ -41699,8 +41614,6 @@ LABEL_10:
   pthread_mutex_unlock(v6);
   if ( !a2 )
     return 0;
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return sub_36E4C(a1, a2, a3);
 }
 // 38D20: variable 'vars8' is possibly undefined
@@ -41716,8 +41629,6 @@ __int64 __fastcall sub_38D60(__int64 a1, unsigned __int64 a2, void *a3, unsigned
   v9 = *(__int64 (__fastcall **)(__int64, unsigned __int64, void *, unsigned int, int))(a1 + 56);
   if ( v9 )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return v9(a1, a2, a3, a4, a5);
   }
   result = 708609;
@@ -41750,8 +41661,6 @@ __int64 __fastcall physwritebuf_direct_mapped(
   v9 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, const void *, unsigned int, int))&krwCtx->gap4[68];
   if ( v9 )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return v9(krwCtx, paddr, buf, size, something);
   }
   result = 708609;
@@ -42737,8 +42646,6 @@ bool __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int 
   }
   else
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return set_flags_something_INEEDTOLOOK_sub_3F8C0((__int64)someCtx, a3, v5, 0);
   }
     return 0;
@@ -42998,8 +42905,6 @@ __int64 __fastcall sub_3A5F0(__int64 a1, task_name_t a2)
   v4 = 2;
   v5 = 3;
 LABEL_13:
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
   return sub_1CA3C(a1, a2, v4, 0, v5);
 }
 // 43740: using guessed type __int128 xmmword_43740;
@@ -44100,7 +44005,7 @@ int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3)
 //----- (000000000003BC88) ----------------------------------------------------
 bool __fastcall real_task_for_pid(__int64 a1, int a2, mach_port_name_t *a3)
 {
-  return krw_task_for_pid_or_name(a1, a2, 0, a3);
+  return krw_task_for_pid_or_name_ret_ptr(a1, a2, 0, a3);
 }
 
 //----- (000000000003BC94) ----------------------------------------------------
@@ -45957,8 +45862,6 @@ __int64 __fastcall sub_3E4D0(uint64_t *a1)
   result = a1[935];
   if ( result )
   {
-    if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-      __break(0xC471u);
     return sub_19854(result);
   }
   return result;
@@ -46334,7 +46237,7 @@ LABEL_48:
                   case 0xC0000022:
                     goto LABEL_216;
                   case 0xC000001D:
-                    v8[0] = krw_task_for_pid_or_name(a1, *(uint32_t *)v3, 0, (mach_port_name_t *)(v3 + 4));
+                    v8[0] = krw_task_for_pid_or_name_ret_ptr(a1, *(uint32_t *)v3, 0, (mach_port_name_t *)(v3 + 4));
                     goto LABEL_215;
                   case 0xC0000020:
                     v43 = *(uint32_t *)v3;
@@ -46695,7 +46598,7 @@ LABEL_11:
 // 3F4A0: variable 'v9' is possibly undefined
 
 //----- (000000000003F4BC) ----------------------------------------------------
-__int64 __fastcall sub_3F4BC(char *a1)
+__int64 __fastcall driver_close_internal(char *a1)
 {
   void (__fastcall *v2)(char *); // x8
   mach_port_name_t v3; // w1
@@ -49814,14 +49717,9 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte)
 #endif
 
 // Compatibility wrappers for names that were cleaned up during manual analysis.
-__int64 __fastcall validate_addr(__int64 a1, __int64 a2) { return sub_1972C(a1, a2); }
 __int64 __fastcall kwritebuf_last_1(__int64 ctx, __int64 address, const void *buf, mach_vm_size_t bufSize)
 {
   return kwritebuf_last_arg_1(ctx, address, buf, bufSize);
-}
-bool __fastcall noppl_kwritebuf(__int64 a1, unsigned __int64 a2, const void *a3, mach_vm_size_t a4, int a5)
-{
-  return sub_2A488(a1, a2, a3, a4, a5);
 }
 bool __fastcall kreadbuf_last_0(__int64 ctx, unsigned __int64 addr, mach_vm_size_t size, void *outBuf)
 {
@@ -49831,20 +49729,14 @@ bool __fastcall kread64_outptr(struct_krwCtx *a1, unsigned __int64 vaddr, unsign
 {
   return kread64(a1, vaddr, out);
 }
-bool __fastcall kread32_outptr(__int64 krwCtx, unsigned __int64 vaddr, void *outBuf)
-{
-  return sub_295B4(krwCtx, vaddr, outBuf);
-}
 __int64 __fastcall kread32(__int64 a1, unsigned __int64 a2) { return kread32_maybe(a1, a2); }
 unsigned __int64 __fastcall krw_xpac_vaddr(struct_krwCtx *a1, __int64 a2) { return sub_29D88(a1, a2); }
 bool __fastcall kwrite64_last_arg(__int64 a1, mach_vm_address_t address, __int64 newValue, int whatIsThis)
 {
   return this_is_the_kwrite64(a1, address, newValue, whatIsThis);
 }
-__int64 __fastcall krw_task_for_pid_0(struct_krwCtx *a1, __int64 a2, int pid) { return sub_33414(a1, a2, pid); }
-__int64 __fastcall krw_task_for_name(struct_krwCtx *a1, __int64 a2, const char *a3) { return sub_336AC(a1, a2, a3); }
 bool __fastcall krw_task_for_pid(__int64 a1, int a2, mach_port_name_t *a3) { return real_task_for_pid(a1, a2, a3); }
-bool __fastcall krw_task_for_pid_or_name(__int64 a1, int victim_pid, const char *victim_process_name, mach_port_name_t *out_task)
+bool __fastcall krw_task_for_pid_or_name_ret_ptr(__int64 a1, int victim_pid, const char *victim_process_name, mach_port_name_t *out_task)
 {
   return real_task_for_pid_or_name(a1, victim_pid, victim_process_name, out_task);
 }
@@ -49858,15 +49750,10 @@ __int64 __fastcall task_self_get_ipc_port_ptr(struct_krwCtx *a1, unsigned int a2
   return task_get_ipc_port_ptr(a1, mach_task_self_, a2);
 }
 
-__int64 __fastcall check_sandboxed(int a1) { return sub_240CC(a1); }
-__int64 __fastcall driver_close_internal(char *a1) { return sub_3F4BC(a1); }
 __int64 __fastcall driver_cmd_setup_untethered_persistence_maybe(struct_krwCtx *a1, int a2)
 {
   return setup_untethered_persistence_maybe(a1, a2);
 }
-__int64 __fastcall fd_close(int a1) { return sub_25294(a1); }
-__int64 __fastcall fd_open_dev_null(int *fdOut) { return open_dev_null(fdOut); }
-__int64 __fastcall fd_read_test(int *fd) { return test_read_fd(fd); }
 unsigned __int64 __fastcall kernel_get_variable_addr(__int64 a1, char *a2, const char *a3, char *a4)
 {
   return sub_1E3C4(a1, a2, a3, a4);
