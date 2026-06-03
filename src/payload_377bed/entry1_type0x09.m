@@ -236,7 +236,7 @@ typedef struct sub_197A8_result
   unsigned __int64 addr;
   unsigned __int64 size;
 } sub_197A8_result;
-sub_197A8_result __fastcall sub_197A8(__int64 **, int);
+sub_197A8_result sub_197A8(SearchObj *a1, int /*unused*/ a2);
 __int64 sub_1984C();
 __int64 __fastcall sub_19854(__int64 a1);
 __int64 __fastcall sub_198FC(__int64 a1, unsigned __int64 a2, unsigned __int64 a3, unsigned __int64 a4, char a5);
@@ -285,8 +285,8 @@ __int64 __fastcall sub_1D1B0(__int64 a1);
 unsigned int *__fastcall sub_1D4A0(__int64 a1);
 __int64 __fastcall sub_1D70C(__int64 a1, _DWORD *a2);
 mach_vm_address_t __fastcall sub_1D970(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, _QWORD *a7);
-__int64 __fastcall kernel_pattern_scan4(__int64 a1, char *__s1, int a3, __int64 a4);
-#define kernel_pattern_scan(a1, __s1, a3) kernel_pattern_scan4((a1), (__s1), (a3), 0)
+__int64 kernel_pattern_scan(SearchObj *obj, const char *pattern_str, uint32_t align_flag);
+//__int64 sub_1DE40(SearchObj *obj, int16_t *pattern, intptr_t pat_len, intptr_t anchor, uint32_t align_flag, uint32_t flags);
 __int64 __fastcall sub_1DE40(__int64 *a1, __int64 a2, __int64 a3, __int64 a4, int a5, __int64 a6);
 __int64 __fastcall sub_1E0C8(__int128 *a1, char *__s, int a3, char a4);
 unsigned __int64 __fastcall sub_1E1B8(__int64 *a1, __int64 a2, int a3);
@@ -382,7 +382,7 @@ __int64 __fastcall dmaFail_dbgwrap_halt_cpu(struct_krwCtx *a1, __int64 a2);
 uint32_t __fastcall dmaFail_dbgwrap_unhalt_cpu(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_23940(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall sub_239D8(struct_krwCtx *a1, _QWORD *a2, _DWORD *a3, _QWORD *a4, _DWORD *a5, int a6);
-void __fastcall sub_23D30(__int64 a1, char a2);
+mach_vm_address_t __fastcall sub_23D30(__int64 a1, char a2);
 __int64 __fastcall sub_23F78(__int64 a1, void (__fastcall *a2)(__int64), __int64 a3);
 __int64 __fastcall check_sandboxed(int a1);
 __int64 __fastcall another_sandbox_check(__int64 a1);
@@ -504,8 +504,8 @@ __int64 __fastcall sub_2D934(struct_krwCtx *a1, unsigned int a2);
 __int64 __fastcall sub_2DC40(struct_krwCtx *a1, unsigned int a2);
 mach_vm_address_t __fastcall sub_2DE64(struct_krwCtx *a1, unsigned int a2);
 mach_vm_address_t __fastcall sub_2DED4(struct_krwCtx *a1, unsigned int a2, int a3);
-void __fastcall sub_2E00C(__int64 a1, unsigned int a2);
-void __fastcall sub_2E310(__int64 a1, __int64 a2);
+mach_vm_address_t __fastcall sub_2E00C(__int64 a1, unsigned int a2);
+__int64 __fastcall sub_2E310(__int64 a1, __int64 a2);
 __int64 __fastcall sub_2E4E0(struct_krwCtx *a1, unsigned int a2, unsigned __int64 *a3);
 __int64 __fastcall sub_2E5C0(struct_krwCtx *a1, unsigned int a2, __int64 *a3, unsigned __int8 a4, __int64 a5);
 __int64 __fastcall sub_2EB4C(struct_krwCtx *a1, unsigned int a2, unsigned __int64 a3, bool *a4);
@@ -657,7 +657,7 @@ unsigned __int64 __fastcall sub_3A878(__int64 a1);
 __int64 __fastcall sub_3A8DC(__int64 a1, unsigned int a2);
 int __fastcall sub_3AA2C(__int64 a1, unsigned int a2, int a3);
 __int64 __fastcall sub_3AD2C(struct_krwCtx *a1, unsigned int a2);
-void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5);
+bool __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5);
 mach_vm_address_t __fastcall sub_3B49C(struct_krwCtx *a1, unsigned int a2, int a3);
 unsigned __int64 __fastcall sub_3B524(struct_krwCtx *a1, unsigned int a2, bool *a3, bool *a4, bool *a5);
 int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3);
@@ -1396,6 +1396,10 @@ __int128 xmmword_43350 = IDA_INT128_C(0x8B284528F9400000ULL, 0x90000000D34EFD08U
 __int128 xmmword_43364 = IDA_INT128_C(0xFFFFFFFFFFC00000ULL, 0x9F000000FFFFFFFFULL); // weak
 _QWORD qword_43378[3] = { 1073741824LL, 805306368LL, 536870912LL }; // weak
 unsigned int dword_43390[3] = { 2u, 2u, 0u }; // weak
+unsigned int dword_4339C[] = { 0, 1, 2, 3, 4, 5, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFFFFFFFF, 3, 0, 1, 2, 2, 0, 1, 4, 4,
+    5, 0 };
 _DWORD dword_43428[10] = { 17, 4, 3, 6, 7, 5, 40, 20, 2, 42 }; // weak
 __int128 xmmword_43450 = IDA_INT128_C(0x0000000000000002ULL, 0x0000000000000000ULL); // weak
 __int128 xmmword_43460 = 17230332160LL; // weak
@@ -16217,43 +16221,81 @@ unsigned __int64 __fastcall validate_addr_maybe2(struct_krwCtx *krwCtx, unsigned
 }
 
 //----- (00000000000197A8) ----------------------------------------------------
-sub_197A8_result __fastcall sub_197A8(__int64 **a1, int a2)
+sub_197A8_result sub_197A8(SearchObj *a1, int /*unused*/ a2)
 {
-  __int64 *v1; // x8
-  __int64 *v2; // x9
-  __int64 v3; // x12
-  __int64 v4; // x10
-  __int64 v5; // x10
-  __int64 v6; // x11
-  _QWORD *i; // x12
-  unsigned __int64 v8; // x8
-  unsigned __int64 v9; // x10
+    // ldp x9, x8, [x0]
+    void    *obj    = a1->field_0x00;   // x9: the search object
+    uint8_t *cursor = a1->base_ptr;   // x8: current search cursor (vm address)
 
-  __asm__ volatile("" : : "r"(a2));
-  v2 = *a1;
-  v1 = a1[1];
-  v3 = **a1;
-  v4 = v3 + 56LL * *((unsigned int *)*a1 + 50);
-  if ( (unsigned __int64)v1 - *(_QWORD *)(v4 + 32) >= *(_QWORD *)(v4 + 40) )
-  {
-    v5 = *((unsigned int *)v2 + 2);
-    if ( !(_DWORD)v5 )
-      return (sub_197A8_result){0, 0};
-    v6 = 0LL;
-    for ( i = (_QWORD *)(v3 + 40); (unsigned __int64)v1 - *(i - 1) >= *i; i += 7 )
-    {
-      if ( v5 == ++v6 )
-        return (sub_197A8_result){0, 0};
+    // ldr x12, [x9]  →  data array base pointer
+    uint8_t *data_base = *(uint8_t **)obj;  // x12
+
+    // Find current segment: index stored at [obj+0xc8]
+    // Entry i is at data_base + i*56, fields at +0x20 (start) and +0x28 (size)
+    uint32_t seg_idx = *(uint32_t *)((uint8_t *)obj + 0xc8);  // w10
+    uint8_t *seg_entry = data_base + (uint64_t)seg_idx * 56;
+
+    uint64_t seg_start = *(uint64_t *)(seg_entry + 0x20);  // ldp x11,x10,[x10+0x20]
+    uint64_t seg_size  = *(uint64_t *)(seg_entry + 0x28);
+
+    // Check if cursor is within current segment
+    if ((uint64_t)cursor - seg_start >= seg_size) {
+        // Current segment miss — search all segments
+        uint32_t seg_count = *(uint32_t *)((uint8_t *)obj + 0x8);  // [x9+0x8]
+        if (seg_count == 0)
+            return (sub_197A8_result){0, 0};
+
+        // Walk segment array starting at data_base+0x20
+        // Each entry: [base+0x20]=start, [base+0x28]=size, stride=0x38
+        uint8_t *entry = data_base + 0x20;  // x12 = data_base+0x28, ldp at -0x8
+        uint32_t i = 0;
+        for (;;) {
+            uint64_t s_start = *(uint64_t *)(entry - 0x8); // ldp x13,x14,[x12,-0x8]
+            uint64_t s_size  = *(uint64_t *)(entry);
+
+            if ((uint64_t)cursor - s_start < s_size) {
+                // Found containing segment
+                *(uint32_t *)((uint8_t *)obj + 0xc8) = i;  // str w11,[x9,#0xc8]
+                break;
+            }
+
+            i++;
+            entry += 0x38;  // next segment
+
+            if (i == seg_count)
+                return (sub_197A8_result){0, 0};
+        }
     }
-    *((_DWORD *)v2 + 50) = v6;
-  }
-  if ( *((_BYTE *)v2 + 257) )
-    v2 = (__int64 *)v2[21];
-  v8 = (unsigned __int64)v1 - v2[30];
-  v9 = v2[22];
-  if ( v9 > v8 || (unsigned __int64)a1[2] > v9 + v2[23] - v8 )
-    return (sub_197A8_result){0, 0};
-  return (sub_197A8_result){v8, (unsigned __int64)a1[2]};
+
+    // Optional indirection: if [obj+0x101] != 0, follow pointer at [obj+0xa8]
+    void *mapped_obj = obj;
+    if (*(uint8_t *)((uint8_t *)obj + 0x101)) {
+        mapped_obj = *(void **)((uint8_t *)obj + 0xa8);  // ldr x9,[x9,#0xa8]
+    }
+
+    // Compute offset of cursor within mapped region
+    // [mapped_obj+0xf0] = mapped base address
+    uint64_t mapped_base   = *(uint64_t *)((uint8_t *)mapped_obj + 0xf0);
+    uint64_t offset        = (uint64_t)cursor - mapped_base;  // sub x8,x8,x10
+
+    // [mapped_obj+0xb0] = minimum valid offset (start threshold)
+    uint64_t min_offset    = *(uint64_t *)((uint8_t *)mapped_obj + 0xb0);
+    if (min_offset > offset)
+        return (sub_197A8_result){0, 0};
+
+    // Check requested size fits within remaining mapped region
+    // a1[2] = requested size
+    uint64_t requested     = a1->search_buf;                  // ldr x1,[x0,#0x10]
+
+    // [mapped_obj+0xb8] = mapped region size
+    uint64_t mapped_size   = *(uint64_t *)((uint8_t *)mapped_obj + 0xb8);
+    uint64_t available     = min_offset + mapped_size - offset; // add+sub
+
+    if (requested > available)
+        return (sub_197A8_result){0, 0};
+
+    // Return: x0=offset (relative to mapped_base), x1=requested size
+    return (sub_197A8_result){offset, requested};
 }
 
 //----- (000000000001984C) ----------------------------------------------------
@@ -16366,21 +16408,11 @@ __int64 __fastcall sub_19AC4(__int64 a1, unsigned __int64 a2, unsigned __int64 a
 //----- (0000000000019ACC) ----------------------------------------------------
 unsigned int *__fastcall sub_19ACC(__int64 *a1, __int64 *a2)
 {
-  unsigned int *result; // x0
-  unsigned int *v4; // x20
-  __int64 *v5[3]; // [xsp+8h] [xbp-28h] BYREF
-  sub_197A8_result v6; // x0,x1
-
-  v5[0] = a1;
-  v5[1] = a2;
-  v5[2] = (_QWORD *)4;
-  v6 = sub_197A8(v5, 1);
-  result = (unsigned int *)v6.addr;
-  if ( result )
-  {
-    v4 = result;
+  SearchObj v5 = {a1, a2, 4};
+  unsigned int *result = (unsigned int *)sub_197A8(&v5, 1).addr;
+  if ( result ) {
     sub_198FC((__int64)a1, (unsigned __int64)result, 4u, 0, 0);
-    return (unsigned int *)*v4;
+    return (unsigned int *)*result;
   }
   return result;
 }
@@ -16389,23 +16421,13 @@ unsigned int *__fastcall sub_19ACC(__int64 *a1, __int64 *a2)
 //----- (0000000000019B30) ----------------------------------------------------
 unsigned __int64 __fastcall sub_19B30(__int64 *a1, __int64 *a2)
 {
-  unsigned __int64 result; // x0
-  unsigned __int64 v4; // x20
-  __int64 *v5[3]; // [xsp+8h] [xbp-28h] BYREF
-  sub_197A8_result v6; // x0,x1
-
-  v5[0] = a1;
-  v5[1] = a2;
-  v5[2] = (_QWORD *)8;
-  v6 = sub_197A8(v5, 1);
-  result = v6.addr;
-  if ( result )
-  {
-    v4 = result;
-    sub_198FC((__int64)a1, result, 8u, 0, 0);
-    return *(_QWORD *)v4;
-  }
-  return result;
+    SearchObj v5 = {a1, a2, 8};
+    unsigned int *result = (unsigned int *)sub_197A8(&v5, 1).addr;
+    if ( result ) {
+      sub_198FC((__int64)a1, (unsigned __int64)result, 8, 0, 0);
+      return (unsigned int *)*result;
+    }
+    return result;
 }
 // 8: using guessed type int dword_8;
 
@@ -19289,67 +19311,98 @@ LABEL_22:
 // 48940: using guessed type __int64 __fastcall __chkstk_darwin(_QWORD, _QWORD);
 
 //----- (000000000001DCA8) ----------------------------------------------------
-__int64 __fastcall kernel_pattern_scan4(__int64 a1, char *__s1, int a3, __int64 a4)
+__int64 kernel_pattern_scan(SearchObj *obj, const char *pattern_str, uint32_t align_flag)
 {
-  char *v5; // x0
-  char *v6; // x24
-  __int64 v7; // x22
-  __int64 v8; // x23
-  char *v9; // x19
-  char *__stringp[2]; // [xsp+10h] [xbp-180h] BYREF
-  __int64 scan_range[3]; // [xsp+10h] [xbp-180h] BYREF
-  char *__endptr; // [xsp+28h] [xbp-168h] BYREF
-  _WORD v14[128]; // [xsp+30h] [xbp-160h] BYREF
+    uint32_t flags = 0; // unsued
 
-  __endptr = 0;
-  if ( !__s1 )
-    return 0;
-  v5 = strdup(__s1);
-  if ( !v5 )
-    return 0;
-  v6 = v5;
-  v7 = 0;
-  v8 = 0;
-  __stringp[0] = v5;
-  while ( 1 )
-  {
-    v9 = strsep(__stringp, " ");
-    if ( strcmp(v9, "-") )
-      break;
-    v8 = v7;
-LABEL_14:
-    if ( !__stringp[0] )
-    {
-      free(v6);
-      scan_range[0] = *(_QWORD *)a1;
-      scan_range[1] = *(_QWORD *)(a1 + 8);
-      scan_range[2] = *(_QWORD *)(a1 + 16);
-      return sub_1DE40(scan_range, (__int64)v14, v7, v8, a3, a4);
+    // Zero the strtol endptr slot
+    // str xzr, [sp, #0x28]
+    char *strtol_end = NULL;
+
+    if (pattern_str == NULL)
+        return NULL;
+
+    // strdup the pattern so strsep can mutate it
+    char *buf = strdup(pattern_str);
+    if (buf == NULL)
+        return NULL;
+
+    char    *buf_saved = buf;          // x24, kept for free() later
+    char    *str_ptr   = buf;          // [sp+0x10], consumed by strsep
+    int16_t  pat[128];                 // [sp+0x30], x20 = sp+0x30
+    intptr_t pat_len   = 0;            // x22, count of tokens written
+    intptr_t anchor    = 0;            // x23, index of '-' separator
+
+    // String literals for token comparison
+    // x25 = " "   (space separator for strsep)
+    // x26 = "-"
+    // x27 = "+"
+    // x28 = ".."
+
+    char *token;
+    while ((token = strsep(&str_ptr, " ")) != NULL) {
+
+        if (strcmp(token, "-") == 0) {
+            // '-' marks the anchor point: anchor = current pat_len
+            anchor = pat_len;
+            // b → +276 (increment pat_len)
+
+        } else if (strcmp(token, "+") == 0) {
+            // '+' marks anchor+1
+            anchor = pat_len + 1;
+            // b → +276
+
+        } else if (strcmp(token, "..") == 0) {
+            // ".." = wildcard: store 0xFFFF (-1 as int16_t)
+            pat[pat_len] = (int16_t)0xFFFF;
+            // fall into +264: check pat_len <= 0x7e, then increment
+
+        } else {
+            // Hex byte token: parse with strtol base 16
+            // strtol(token, &strtol_end, 16)
+            long val = strtol(token, &strtol_end, 16);
+            pat[pat_len] = (int16_t)(val & 0xFF);  // and w8,w0,#0xff; strh
+
+            // Check if strtol consumed the whole token
+            // ldr x8, [sp,#0x28]; ldrb w8, [x8]
+            // cbz w8 → +264 (good, advance)
+            // else → +336 (error, free and return NULL)
+            if (*strtol_end != '\0') {
+                // Parse error — strtol stopped early
+                free(buf_saved);
+                return NULL;
+            }
+        }
+
+        // +264: guard against overflow (max 0x7f tokens)
+        if (pat_len > 0x7e) {
+            free(buf_saved);
+            return NULL;
+        }
+
+        pat_len++;  // add x22, x22, #1
+
+        // +276: loop back if str_ptr still has content
+        // cbnz x8 (=[sp+0x10]) → strsep loop
     }
-  }
-  if ( !strcmp(v9, "+") )
-  {
-    v8 = v7 + 1;
-    goto LABEL_14;
-  }
-  if ( !strcmp(v9, "..") )
-  {
-    v14[v7] = -1;
-  }
-  else
-  {
-    v14[v7] = (unsigned __int8)strtol(v9, &__endptr, 16);
-    if ( *__endptr )
-      goto LABEL_16;
-  }
-  if ( v7 <= 126 )
-  {
-    ++v7;
-    goto LABEL_14;
-  }
-LABEL_16:
-  free(v6);
-  return 0;
+
+    // Done parsing — free the strdup'd buffer
+    free(buf_saved);
+
+    // Copy obj into local snapshot (24 bytes: q0 + x8)
+    // ldr q0,[x21]; str q0,[sp+0x10]
+    // ldr x8,[x21+0x10]; str x8,[sp+0x20]
+    SearchObj local_obj;
+    memcpy(&local_obj, obj, 0x18);
+
+    // Call sub_1DE40 with parsed pattern
+    // x0 = &local_obj
+    // x1 = pat          (int16_t array at sp+0x30)
+    // x2 = pat_len      (x22)
+    // x3 = anchor       (x23)
+    // w4 = align_flag   (w20, from ldp w4,w5,[sp+0x8])
+    // w5 = flags        (w19, from ldp w4,w5,[sp+0x8])
+    return sub_1DE40(&local_obj, pat, pat_len, anchor, align_flag, flags);
 }
 
 //----- (000000000001DE40) ----------------------------------------------------
@@ -19772,7 +19825,7 @@ char *__fastcall sub_1E728(__int64 *a1)
   _QWORD v5[3]; // [xsp+8h] [xbp-48h] BYREF
 
   sub_19D10((__int64)a1, v5);
-  result = (char *)kernel_pattern_scan4((__int64)v5, "E0 03 15 AA .. .. .. .. FE 03 13 AA", 0, 1);
+  result = (char *)kernel_pattern_scan((__int64)v5, "E0 03 15 AA .. .. .. .. FE 03 13 AA", 0);
   if ( result )
   {
     result = sub_1E800(a1, (__int64 *)(result + 4));
@@ -24259,14 +24312,13 @@ LABEL_58:
 }
 
 //----- (0000000000023D30) ----------------------------------------------------
-void __fastcall sub_23D30(__int64 a1, char a2)
+mach_vm_address_t __fastcall sub_23D30(__int64 a1, char a2)
 {
-  int v4; // w0
+  mach_vm_address_t result; // x0
   unsigned __int64 v5; // x1
   int v6; // w20
   mach_vm_address_t v7; // x0
   __int64 v8; // x2
-  int v9; // w0
   __int64 v10; // [xsp+0h] [xbp-70h] BYREF
   unsigned int v11; // [xsp+Ch] [xbp-64h] BYREF
   void *v12; // [xsp+10h] [xbp-60h] BYREF
@@ -24274,84 +24326,88 @@ void __fastcall sub_23D30(__int64 a1, char a2)
   void *v14; // [xsp+20h] [xbp-50h] BYREF
   _QWORD v15[4]; // [xsp+28h] [xbp-48h] BYREF
 
-  if ( (unsigned int)sub_34D14(a1, mach_task_self_) )
+  result = sub_34D14(a1, mach_task_self_);
+  if ( !(_DWORD)result )
+    return result;
+  if ( (a2 & 1) != 0 )
   {
-    if ( (a2 & 1) != 0 )
+    if ( validate_addr(a1, *(_QWORD *)(a1 + 920))
+      && !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
     {
-      if ( validate_addr(a1, *(_QWORD *)(a1 + 920)) )
+      result = sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), 0);
+      if ( (_DWORD)result )
       {
-        if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
+        v5 = *(_QWORD *)(a1 + 6368);
+        if ( !v5 )
         {
-          if ( sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), 0) )
+          v15[0] = 0;
+          v5 = sub_340D8((struct_krwCtx *)a1, mach_task_self_, v15);
+          *(_QWORD *)(a1 + 6368) = v5;
+          *(_QWORD *)(a1 + 6376) = v15[0];
+        }
+        sub_35ECC((struct_krwCtx *)a1, v5, 10);
+        if ( *(int *)(a1 + 320) < 7195 )
+        {
+          v14 = 0;
+          v13 = 0;
+          v12 = 0;
+          v11 = 0;
+          if ( (unsigned int)sub_239D8((struct_krwCtx *)a1, &v14, &v13, &v12, &v11, 1) )
           {
-            v5 = *(_QWORD *)(a1 + 6368);
-            if ( !v5 )
+            if ( (unsigned int)sub_24368(a1, (__int16 *)v14, v13) )
             {
-              v15[0] = 0;
-              v5 = sub_340D8((struct_krwCtx *)a1, mach_task_self_, v15);
-              *(_QWORD *)(a1 + 6368) = v5;
-              *(_QWORD *)(a1 + 6376) = v15[0];
-            }
-            sub_35ECC((struct_krwCtx *)a1, v5, 10);
-            if ( *(int *)(a1 + 320) < 7195 )
-            {
-              v14 = 0;
-              v13 = 0;
-              v12 = 0;
-              v11 = 0;
-              if ( (unsigned int)sub_239D8((struct_krwCtx *)a1, &v14, &v13, &v12, &v11, 1) )
-              {
-                if ( (unsigned int)sub_24368(a1, (__int16 *)v14, v13) )
-                {
-                  v10 = 0x786F62646E6153LL;
-                  v15[0] = v14;
-                  v15[1] = v13;
-                  v15[2] = v12;
-                  v15[3] = v11;
-                  v6 = sub_40FB0((__int64)&v10, 0, (__int64)v15);
-                }
-                else
-                {
-                  v6 = -1;
-                }
-                if ( v14 )
-                  free(v14);
-                if ( v12 )
-                  free(v12);
-              }
-              else
-              {
-                v6 = -1;
-              }
+              v10 = 0x786F62646E6153LL;
+              v15[0] = v14;
+              v15[1] = v13;
+              v15[2] = v12;
+              v15[3] = v11;
+              v6 = sub_40FB0((__int64)&v10, 0, (__int64)v15);
             }
             else
             {
-              strcpy((char *)v15, "MobileBackup");
-              v6 = sub_23940((struct_krwCtx *)a1, (__int64)v15);
+              v6 = -1;
             }
-            if ( !sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), *(_QWORD *)(a1 + 936)) )
-              krw_ctx_set_flag((_DWORD *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
+            if ( v14 )
+              free(v14);
+            if ( v12 )
+              free(v12);
+          }
+          else
+          {
+            v6 = -1;
           }
         }
-      }
-    }
-    else if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
-    {
-      v7 = sub_33FFC((struct_krwCtx *)a1, mach_task_self_);
-      if ( v7 )
-      {
-        v8 = *(_QWORD *)(a1 + 6376);
-        if ( v8 )
+        else
         {
-          if ( sub_2A63C((struct_krwCtx *)a1, v7, v8) )
-            sub_36088((_DWORD *)a1, 4);
+          strcpy((char *)v15, "MobileBackup");
+          v6 = sub_23940((struct_krwCtx *)a1, (__int64)v15);
         }
+        sub_35AE0((struct_krwCtx *)a1, *(_DWORD *)(a1 + 892), *(_QWORD *)(a1 + 936));
+        if ( !v6 )
+          krw_ctx_set_flag((_DWORD *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
+        return v6 == 0;
       }
+      return result;
+    }
+    return 1;
+  }
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
+    return 1;
+  v7 = sub_33FFC((struct_krwCtx *)a1, mach_task_self_);
+  if ( v7 )
+  {
+    v8 = *(_QWORD *)(a1 + 6376);
+    if ( !v8 )
+      return 0;
+    result = sub_2A63C((struct_krwCtx *)a1, v7, v8);
+    if ( (_DWORD)result )
+    {
+      sub_36088((_DWORD *)a1, 4);
+      return 1;
     }
   }
+  return result;
 }
-// 23DA8: variable 'v4' is possibly undefined
-// 23E54: variable 'v9' is possibly undefined
 
 //----- (0000000000023F78) ----------------------------------------------------
 __int64 __fastcall sub_23F78(__int64 a1, void (__fastcall *a2)(__int64), __int64 a3)
@@ -28378,7 +28434,7 @@ LABEL_29:
           scan_range[0] = text_range[0];
           scan_range[1] = text_range[1] + text_range[2] - 0x20000;
           scan_range[2] = 0x20000;
-          v24 = kernel_pattern_scan4((__int64)scan_range, "E8 0B 80 52", 0, 1);
+          v24 = kernel_pattern_scan((__int64)scan_range, "E8 0B 80 52", 0);
           if ( !v24 )
             return 708625;
           v25 = (unsigned __int16)((unsigned int)sub_19ACC((__int64 *)text_range[0], (__int64 *)(v24 - 8)) >> 5);
@@ -29834,38 +29890,35 @@ LABEL_8:
 }
 
 //----- (000000000002A63C) ----------------------------------------------------
-int __fastcall sub_2A63C(struct_krwCtx *a1, mach_vm_address_t address, __int64 newValue)
+int sub_2A63C(struct_krwCtx *ctx, mach_vm_address_t address, __int64 new_value)
 {
-  mach_vm_address_t v4; // x21
-  __int64 v5; // x20
-  int v6; // w3
-  __int64 v7; // x0
-  __int64 vars8; // [xsp+28h] [xbp+8h]
+    // Version threshold: XNU_VERSION_PACKED(8019, 60, 40, 0, 0)
+    // = 0x001F530F02800000
+    if (ctx->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0)) {
 
-  v4 = address;
-  v5 = (__int64)a1;
-  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
-  {
-    v6 = a1->gap4[8];
-  }
-  else
-  {
-    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
-    {
-      if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-        __break(0xC471u);
-      return sub_13D9C((struct_krwCtx *)v5, v4, newValue);
+        // New path: check for specific CPU/capability flag 0x05184001
+        if (krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK)) {
+            // Tail call — PAC-authenticated branch to sub_13D9C
+            return sub_13D9C(ctx, address, new_value);
+        }
+
+        // Translate address via sub_39090
+        uint64_t translated = sub_39090(ctx, address);
+        if (!translated)
+            return 0;  // retab with no value set → returns 0
+
+        // Use translated address, fall through to kwrite64_last_arg
+        address = translated;
+        // fall through
+
     }
-    v7 = sub_39090((struct_krwCtx *)v5, v4);
-    if ( !v7 )
-      return 0;
-    address = v7;
-    v6 = *(unsigned __int8 *)(v5 + 12);
-    a1 = (struct_krwCtx *)v5;
-  }
-  if ( ((vars8 ^ (2 * vars8)) & 0x4000000000000000LL) != 0 )
-    __break(0xC471u);
-  return kwrite64_last_arg(a1, address, newValue, v6);
+
+    // Old path (and new path fallthrough):
+    // ldrb w3, [x20, #0xc]  →  4th arg = ctx->byte_0x0c
+    uint8_t arg3 = *(uint8_t *)((uint8_t *)ctx + 0x0c);
+
+    // Tail call
+    return kwrite64_last_arg(ctx, address, new_value, arg3);
 }
 // 2A6A4: variable 'vars8' is possibly undefined
 
@@ -32665,22 +32718,20 @@ mach_vm_address_t __fastcall sub_2DED4(struct_krwCtx *a1, unsigned int a2, int a
 }
 
 //----- (000000000002E00C) ----------------------------------------------------
-void __fastcall sub_2E00C(__int64 a1, unsigned int a2)
+mach_vm_address_t __fastcall sub_2E00C(__int64 a1, unsigned int a2)
 {
+  mach_vm_address_t result; // x0
   mach_vm_address_t v4; // x0
   unsigned __int64 v5; // x8
   mach_vm_address_t v6; // x0
-  int v7; // w0
   unsigned __int64 v8; // x8
   __int64 v9; // x8
-  int v10; // w0
   unsigned __int64 v11; // x1
   __int64 v12; // x2
   unsigned __int64 *v13; // x8
   unsigned __int64 v14; // x8
   unsigned __int64 v15; // x8
   bool v16; // zf
-  int v17; // w0
   _OWORD v18[6]; // [xsp+0h] [xbp-1F0h] BYREF
   __int64 v19; // [xsp+60h] [xbp-190h]
   unsigned __int64 v20; // [xsp+68h] [xbp-188h] BYREF
@@ -32693,26 +32744,31 @@ void __fastcall sub_2E00C(__int64 a1, unsigned int a2)
   _OWORD v27[11]; // [xsp+F0h] [xbp-100h] BYREF
   __int64 v28; // [xsp+1A0h] [xbp-50h]
 
-  v4 = sub_34FF8(a1, a2, &v21);
-  if ( v4 && ((v21 & 0x400) != 0 || noppl_kwrite32(a1, v4, v21 | 0x400)) )
+  result = sub_34FF8(a1, a2, &v21);
+  if ( result )
   {
-    if ( (v5 = *(_QWORD *)(a1 + 344), v5 <= XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023))
-      && (v5 < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) || *(int *)(a1 + 320) > 8791)
-      || (v6 = sub_34F5C((struct_krwCtx *)a1, a2, 1, &v21)) != 0
-      && ((v21 & 0x400) != 0 || (unsigned int)ppl_kwrite32((struct_krwCtx *)a1, v6, v21 | 0x400)) )
+    v4 = result;
+    if ( (v21 & 0x400) != 0 || (result = noppl_kwrite32(a1, v4, v21 | 0x400), (_DWORD)result) )
     {
-      if ( (unsigned int)sub_2C2F8((struct_krwCtx *)a1, a2, (__int64)v22) )
+      if ( (v5 = *(_QWORD *)(a1 + 344), v5 <= XNU_VERSION_PACKED(8792, 40, 107, 1023, 1023))
+        && (v5 < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) || *(int *)(a1 + 320) > 8791)
+        || (result = sub_34F5C((struct_krwCtx *)a1, a2, 1, &v21)) != 0
+        && ((v21 & 0x400) != 0 || (result = ppl_kwrite32((struct_krwCtx *)a1, result, v21 | 0x400), (_DWORD)result)) )
       {
-        sub_2E310(a1, (__int64)v22);
-        if ( v7 )
+        result = sub_2C2F8((struct_krwCtx *)a1, a2, (__int64)v22);
+        if ( (_DWORD)result )
         {
-          v8 = *(_QWORD *)(a1 + 344);
-          if ( v8 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v8 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0)) )
+          result = sub_2E310(a1, (__int64)v22);
+          if ( (_DWORD)result )
           {
-            if ( v24 )
+            v8 = *(_QWORD *)(a1 + 344);
+            if ( v8 >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) && ((*(_DWORD *)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v8 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0)) )
             {
-              if ( kread64_outptr((struct_krwCtx *)a1, v24, &v20) )
+              if ( v24 )
               {
+                result = kread64_outptr((struct_krwCtx *)a1, v24, &v20);
+                if ( !(_DWORD)result )
+                  return result;
                 v11 = v20;
                 if ( v20 )
                 {
@@ -32737,36 +32793,43 @@ void __fastcall sub_2E00C(__int64 a1, unsigned int a2)
                       v19 = 0;
                       v18[0] = __PAIR128__(v20, 0);
                       memset(&v18[1], 0, 80);
-                      sub_2E310(a1, (__int64)v18);
-                      if ( !v17 )
+                      if ( !(unsigned int)sub_2E310(a1, (__int64)v18) )
                         break;
                     }
-                    if ( !kread64_outptr((struct_krwCtx *)a1, v20, &v20) )
-                      break;
+                    result = kread64_outptr((struct_krwCtx *)a1, v20, &v20);
+                    if ( !(_DWORD)result )
+                      return result;
                     v11 = v20;
                     if ( !v20 )
                       goto LABEL_16;
                   }
                 }
               }
+              return 0;
             }
-          }
-          else
-          {
 LABEL_16:
             sub_2CB54((__int64)v22);
-            if ( (unsigned int)sub_2E4E0((struct_krwCtx *)a1, a2, (unsigned __int64 *)v18)
-              && (unsigned int)sub_2E5C0((struct_krwCtx *)a1, a2, (__int64 *)v18, 0, (__int64)v22) )
+            result = sub_2E4E0((struct_krwCtx *)a1, a2, (unsigned __int64 *)v18);
+            if ( (_DWORD)result )
             {
-              v9 = 72;
-              if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
-                v9 = 88;
-              if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v9 + v23, 20, &v26)
-                && sub_22464(a1, (__int64)&v26, 20) )
+              result = sub_2E5C0((struct_krwCtx *)a1, a2, (__int64 *)v18, 0, (__int64)v22);
+              if ( (_DWORD)result )
               {
-                sub_2E310(a1, (__int64)v22);
-                if ( v10 )
-                  sub_2CB54((__int64)v22);
+                v9 = 72;
+                if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
+                  v9 = 88;
+                if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v9 + v23, 20, &v26)
+                  && sub_22464(a1, (__int64)&v26, 20) )
+                {
+                  result = sub_2E310(a1, (__int64)v22);
+                  if ( (_DWORD)result )
+                  {
+                    sub_2CB54((__int64)v22);
+                    return 1;
+                  }
+                  return result;
+                }
+                return 0;
               }
             }
           }
@@ -32774,21 +32837,19 @@ LABEL_16:
       }
     }
   }
+  return result;
 }
-// 2E100: variable 'v7' is possibly undefined
-// 2E1D4: variable 'v10' is possibly undefined
-// 2E2B0: variable 'v17' is possibly undefined
 
 //----- (000000000002E310) ----------------------------------------------------
-void __fastcall sub_2E310(__int64 a1, __int64 a2)
+__int64 __fastcall sub_2E310(__int64 a1, __int64 a2)
 {
   unsigned __int64 v4; // x8
   __int64 v5; // x22
+  __int64 result; // x0
   __int64 v6; // x22
   int v7; // w8
   int v8; // w9
   __int64 v9; // x21
-  int v10; // w0
   unsigned __int64 v11; // [xsp+0h] [xbp-30h] BYREF
   int v12; // [xsp+8h] [xbp-28h] BYREF
   int v13; // [xsp+Ch] [xbp-24h] BYREF
@@ -32820,13 +32881,17 @@ void __fastcall sub_2E310(__int64 a1, __int64 a2)
   {
     v5 = 172;
   }
-  if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, *(_QWORD *)(a2 + 8) + v5, 1, &v13) )
+  result = kreadbuf_last_1((struct_krwCtx *)a1, *(_QWORD *)(a2 + 8) + v5, 1, &v13);
+  if ( (_DWORD)result )
   {
     if ( (v13 & 1) != 0
-      || (v13 |= 1u, (unsigned int)kwritebuf_universal((_QWORD *)a1, *(_QWORD *)(a2 + 8) + v5, &v13, 1u)) )
+      || (v13 |= 1u,
+          result = kwritebuf_universal((_QWORD *)a1, *(_QWORD *)(a2 + 8) + v5, &v13, 1u),
+          (_DWORD)result) )
     {
       v6 = *(_QWORD *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 16LL : 32LL;
-      if ( (unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v6 + *(_QWORD *)(a2 + 8), 4, &v12) )
+      result = kreadbuf_last_1((struct_krwCtx *)a1, v6 + *(_QWORD *)(a2 + 8), 4, &v12);
+      if ( (_DWORD)result )
       {
         v7 = v12;
         if ( (~v12 & 0x4004000) != 0 )
@@ -32835,8 +32900,9 @@ void __fastcall sub_2E310(__int64 a1, __int64 a2)
           v12 |= v8;
           if ( (v8 | v7) != v7 )
           {
-            if ( !(unsigned int)kwritebuf_universal((_QWORD *)a1, *(_QWORD *)(a2 + 8) + v6, &v12, 4u) )
-              return;
+            result = kwritebuf_universal((_QWORD *)a1, *(_QWORD *)(a2 + 8) + v6, &v12, 4u);
+            if ( !(_DWORD)result )
+              return result;
             *(_DWORD *)a2 = v12;
           }
         }
@@ -32844,16 +32910,20 @@ void __fastcall sub_2E310(__int64 a1, __int64 a2)
           v9 = 128;
         else
           v9 = 136;
-        if ( kread64_outptr((struct_krwCtx *)a1, v9 + *(_QWORD *)(a2 + 8), &v11) )
+        result = kread64_outptr((struct_krwCtx *)a1, v9 + *(_QWORD *)(a2 + 8), &v11);
+        if ( (_DWORD)result )
         {
-          if ( !v11 || (sub_2A63C((struct_krwCtx *)a1, *(_QWORD *)(a2 + 8) + v9, 0), v10) )
+          if ( !v11 || (result = sub_2A63C((struct_krwCtx *)a1, *(_QWORD *)(a2 + 8) + v9, 0), (_DWORD)result) )
+          {
             *(_DWORD *)(a2 + 80) = 0;
+            return 1;
+          }
         }
       }
     }
   }
+  return result;
 }
-// 2E4C0: variable 'v10' is possibly undefined
 
 //----- (000000000002E4E0) ----------------------------------------------------
 __int64 __fastcall sub_2E4E0(struct_krwCtx *a1, unsigned int a2, unsigned __int64 *a3)
@@ -34938,7 +35008,7 @@ LABEL_433:
         if ( !v151
           || v58 != 0
           || (size_4a = 163856, !(unsigned int)sub_38F6C(v2, v104, v204))
-          && (sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), v145), v137) )
+          && (unsigned int)sub_35AE0((struct_krwCtx *)v2, *(_DWORD *)(v2 + 888), v145) )
         {
           size_4a = 0;
         }
@@ -43253,7 +43323,7 @@ LABEL_19:
 }
 
 //----- (000000000003AE94) ----------------------------------------------------
-void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5)
+bool __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5)
 {
   unsigned __int64 v10; // x0
   unsigned __int64 v11; // x22
@@ -43304,14 +43374,14 @@ void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5)
   v50 = 0;
   v10 = sub_349C8((struct_krwCtx *)a1, a2);
   if ( !v10 )
-    return;
+    return 0;
   v11 = v10;
   if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
       if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11) )
-        return;
+        return 0;
       v26 = *(_DWORD *)(a1 + 320);
       if ( v26 <= 8791 )
       {
@@ -43320,7 +43390,7 @@ void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5)
           if ( v26 <= 7194 )
           {
             if ( v26 < 6153 )
-              return;
+              return 0;
             v27 = 239;
             if ( *(_QWORD *)(a1 + 344) > XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
               v27 = 231;
@@ -43346,7 +43416,7 @@ void __fastcall sub_3AE94(__int64 a1, unsigned int a2, int a3, int a4, int a5)
         if ( HIDWORD(v50) != a5 )
           kwritebuf_last_1(a1, v43, (__int64)&v50, 1);
       }
-      return;
+      return 0;
     }
     v20 = *(_DWORD *)(a1 + 320);
     if ( v20 >= 10002 )
@@ -43396,7 +43466,7 @@ LABEL_34:
           if ( !a3 )
             v33 = 0;
           LODWORD(v50) = v32 | v33 | a5 | v34;
-          if ( HIDWORD(v50) == (_DWORD)v50 || (sub_130B4(a1, v28, (__int64)&v50, 4), v35) )
+          if ( HIDWORD(v50) == (_DWORD)v50 || sub_130B4(a1, v28, (__int64)&v50, 4) )
           {
             if ( *(int *)(a1 + 320) <= 8018 )
               a4 |= a3 ^ 1;
@@ -43404,7 +43474,7 @@ LABEL_34:
               goto LABEL_54;
           }
         }
-        return;
+        return 0;
       }
       v23 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14);
       v24 = 263;
@@ -43422,31 +43492,31 @@ LABEL_32:
     goto LABEL_34;
   }
   if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v11 + 146, 1, &v48) )
-    return;
+    return 0;
   if ( v48 == a5 )
     goto LABEL_17;
   v49 = a5;
   if ( !(unsigned int)kwritebuf_last_1(a1, v11 + 146, (__int64)&v49, 1) )
-    return;
+    return 0;
   if ( !a5 )
   {
 LABEL_17:
     if ( !kread64_outptr((struct_krwCtx *)a1, v11 + 176, v51) )
-      return;
+      return 0;
     if ( !validate_addr(a1, v51[0]) )
-      return;
+      return 0;
     if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v51[0] + 32, 1, &v54) )
-      return;
+      return 0;
     v49 = a4;
     if ( (unsigned __int8)v54 != a4 && !(unsigned int)ppl_kwritebuf(a1, v51[0] + 32, &v49, 1) )
-      return;
+      return 0;
 LABEL_54:
     if ( dyldVersionNumber >= 851.0 )
       sub_3B49C((struct_krwCtx *)a1, a2, a4);
-    return;
+    return 1;
   }
   if ( !kread64_outptr((struct_krwCtx *)a1, v11 + *(int *)(a1 + 360), (unsigned __int64 *)&v47) )
-    return;
+    return 0;
   v46 = v47;
   v12 = *(_QWORD *)(a1 + 7472);
   if ( v12 )
@@ -43502,7 +43572,7 @@ LABEL_9:
         if ( !v40 )
         {
           if ( !(unsigned int)kreadbuf_last_1((struct_krwCtx *)a1, v38 + 8, 8, &v54) )
-            return;
+            return 0;
           if ( v54 == 0x6F74616C75676572LL )
           {
             v41 = 0;
@@ -43533,7 +43603,7 @@ LABEL_9:
                     }
                   }
                 }
-                return;
+                return 0;
               }
               v41 += *(unsigned int *)(a1 + 384);
             }
@@ -43545,6 +43615,7 @@ LABEL_9:
       while ( v36 < *(unsigned int *)(a1 + 6304) );
     }
   }
+  return 0;
 }
 // 3B1C4: variable 'v35' is possibly undefined
 // 19B94: using guessed type __int64 __fastcall sub_19B94(_QWORD, _QWORD);
@@ -46262,7 +46333,7 @@ LABEL_189:
                     v46 = mach_task_self_;
                     *(_DWORD *)v3 = mach_task_self_;
                   }
-                  sub_3AE94(
+                  v8[0] = sub_3AE94(
                     (__int64)a1,
                     v46,
                     *(unsigned __int8 *)(v3 + 4),
@@ -46509,11 +46580,9 @@ __int64 __fastcall sub_3F2E0(__int64 a1)
 {
   __int64 v2; // x20
   unsigned int v4; // w1
-  int v5; // w0
   int v6; // w22
   mach_port_t v7; // w1
   int v8; // w2
-  int v9; // w0
   int v10; // [xsp+Ch] [xbp-24h] BYREF
 
   *(_OWORD *)(a1 + 6328) = 0u;
@@ -46543,7 +46612,7 @@ __int64 __fastcall sub_3F2E0(__int64 a1)
     }
   }
 LABEL_11:
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) || (sub_23D30(a1, 0), v5) )
+  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) || (unsigned int)sub_23D30(a1, 0) )
   {
     if ( !*(_QWORD *)(a1 + 6400)
       || (unsigned int)sub_39CC0((struct_krwCtx *)a1, mach_task_self_, 2, (const void *)(a1 + 6408), 8) )
@@ -46557,7 +46626,7 @@ LABEL_11:
         {
           if ( mach_host_self() == *(_DWORD *)(a1 + 6440)
             || krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_HOST_PORT_READY)
-            || (sub_3B7E0(a1, mach_task_self_, *(_DWORD *)(a1 + 6440)), v9) )
+            || (unsigned int)sub_3B7E0(a1, mach_task_self_, *(_DWORD *)(a1 + 6440)) )
           {
             sub_3E4D0((_QWORD *)a1);
             return 0;

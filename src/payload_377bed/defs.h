@@ -10,6 +10,12 @@
 #define __int32 int
 #define __int64 long long
 
+typedef struct {
+    void    *field_0x00;   // [x21+0x00]: pointer (has +0x38 = int)
+    void    *base_ptr;   // [x21+0x08]: base pointer for result offset calc
+    void    *search_buf;   // [x21+0x10]: checked non-null
+    // ... other fields
+} SearchObj;
 
 /* 160 */
 enum CPUFamily : uint32_t

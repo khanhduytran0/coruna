@@ -62,7 +62,6 @@ typedef __int128  xmmword;
 typedef char      kernel_version_t[512];
 typedef mach_port_t io_master_t;
 typedef struct _opaque_pthread_t _opaque_pthread_t;
-#define dword_4339C (dword_43390 + 3)
 
 /* ---- IDA calling conventions (no-ops) ---- */
 #define __fastcall
