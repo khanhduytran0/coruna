@@ -47441,9 +47441,7 @@ __int64 __fastcall find_kfunc_ptr_in_kernel_data(struct_krwCtx *a1, __int64 a2)
   __int64 v14; // x0
   unsigned __int64 v15; // x0
   int v16; // w22
-  __int64 v18; // [xsp+8h] [xbp-78h] BYREF
-  unsigned __int64 v19; // [xsp+10h] [xbp-70h]
-  __int64 v20; // [xsp+18h] [xbp-68h]
+  uint64_t dataSect[3]; // [xsp+8h] [xbp-78h] BYREF
   __int64 v21; // [xsp+20h] [xbp-60h] BYREF
   __int64 v22; // [xsp+28h] [xbp-58h] BYREF
 
@@ -47464,14 +47462,14 @@ __int64 __fastcall find_kfunc_ptr_in_kernel_data(struct_krwCtx *a1, __int64 a2)
     else
       return 163878;
   }
-  macho_getsectbyname("__DATA", a1->gap1921[2], "__data", &v18);
-  v9 = v19;
-  if ( !v19 || !v20 )
+  macho_getsectbyname("__DATA", a1->gap1921[2], "__data", dataSect);
+  v9 = dataSect[1];
+  if ( !dataSect[1] || !dataSect[2] )
     return 163855;
-  v10 = v19 + v20 - 256;
-  if ( v19 < v10 )
+  v10 = dataSect[1] + dataSect[2] - 256;
+  if ( dataSect[1] < v10 )
   {
-    v11 = v18;
+    v11 = dataSect[0];
     while ( 1 )
     {
       v12 = macho_read_u64_thunk(v11, v9);
