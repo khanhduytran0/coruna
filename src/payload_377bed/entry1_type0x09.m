@@ -25912,14 +25912,16 @@ __int64 __fastcall get_page_size_for_kaddr(__int64 a1)
 //----- (0000000000025DE8) ----------------------------------------------------
 bool __fastcall has_valid_krw_path(__int64 a1)
 {
-  return *(uint32_t *)(a1 + 6448) != -1
-      && *(uint32_t *)(a1 + 6452) != -1
-      && *(uint32_t *)(a1 + 6464) != -1
-      && *(uint64_t *)(a1 + 536)
-      || (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2
-      && *(uint64_t *)(a1 + 248)
-      && *(uint64_t *)(a1 + 256)
-      && *(int *)(a1 + 320) < 10002;
+  bool hasFdKrw = *(uint32_t *)(a1 + 6448) != -1
+               && *(uint32_t *)(a1 + 6452) != -1
+               && *(uint32_t *)(a1 + 6464) != -1
+               && *(uint64_t *)(a1 + 536);
+  bool hasMappedPortKrw = (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2
+                       && *(uint64_t *)(a1 + 248)
+                       && *(uint64_t *)(a1 + 256)
+                       && *(int *)(a1 + 320) < 10002;
+
+  return hasFdKrw || hasMappedPortKrw;
 }
 
 //----- (0000000000025E54) ----------------------------------------------------
