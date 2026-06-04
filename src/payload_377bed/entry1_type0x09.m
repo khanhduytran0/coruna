@@ -262,7 +262,7 @@ __int64 __fastcall macho_find_loadcmd_by_name(__int64 a1, char *__s2, unsigned _
 double __fastcall krw_ctx_zero_fields(struct_a1 *a1, __int64 a2);
 __int64 __fastcall free_macho_image_vm(__int64 a1);
 bool __fastcall map_macho_image_vm(__int64 a1);
-uint32_t *__fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2);
+bool __fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2);
 bool __fastcall iosurface_physmap_setup_bool(__int64 a1, int a2, __int64 a3, unsigned int a4);
 void *__fastcall iosurface_physmap_setup(__int64 a1, int a2, __int64 a3, unsigned int a4);
 bool __fastcall iosurface_physmap_setup_alt(__int64 a1, int a2, __int64 a3, int a4);
@@ -16609,9 +16609,8 @@ bool __fastcall map_macho_image_vm(__int64 a1)
 }
 
 //----- (0000000000019F2C) ----------------------------------------------------
-uint32_t *__fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
+bool __fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
 {
-  uint32_t *result; // x0
   unsigned __int64 v5; // x21
   uint32_t *v6; // x22
   char v7; // w8
@@ -16624,20 +16623,16 @@ uint32_t *__fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
   uint64_t *v14; // x9
   uint32_t v15[8]; // [xsp+0h] [xbp-50h] BYREF
 
-  result = calloc(0x48u, 1u);
-  *(uint64_t *)(a1 + 208) = result;
-  if ( result )
+  *(uint64_t *)(a1 + 208) = (uint64_t)calloc(0x48u, 1u);
+  if ( *(uint64_t *)(a1 + 208) )
   {
-    result = (uint32_t *)krw_read_thunk(*(struct_krwCtx **)(a1 + 280), a2, 32, v15);
-    if ( (uint32_t)result )
+    if ( krw_read_thunk(*(struct_krwCtx **)(a1 + 280), a2, 32, v15) )
     {
       v5 = v15[5] + 32LL;
-      result = calloc(v5, 1u);
-      if ( result )
+      v6 = calloc(v5, 1u);
+      if ( v6 )
       {
-        v6 = result;
-        result = (uint32_t *)krw_read_thunk(*(struct_krwCtx **)(a1 + 280), a2, v5, result);
-        if ( (uint32_t)result )
+        if ( krw_read_thunk(*(struct_krwCtx **)(a1 + 280), a2, v5, v6) )
         {
           **(uint64_t **)(a1 + 208) = v6;
           if ( *v6 == -17958194 )
@@ -16647,18 +16642,18 @@ uint32_t *__fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
           else
           {
             if ( *v6 != -17958193 )
-              return 0;
+              return false;
             v7 = 8;
           }
           *(uint8_t *)(a1 + 52) = v7;
           v8 = (unsigned int)v6[5];
           if ( v5 < (unsigned int)(v8 + 32) )
-            return 0;
+            return false;
           v9 = (char *)(v6 + 8);
           v10 = (char *)v6 + v8 + 32;
           if ( v9 >= v10 )
           {
-            return &def_3E8F0 + 1;
+            return true;
           }
           else
           {
@@ -16671,10 +16666,8 @@ uint32_t *__fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
               v12 += *((unsigned int *)v12 + 1);
             }
             while ( v12 < v10 );
-            result = &def_3E8F0 + 1;
             if ( v11 && v9 < v10 )
             {
-              result = &def_3E8F0 + 1;
               do
               {
                 if ( *(uint32_t *)v9 == 25 )
@@ -16697,12 +16690,13 @@ uint32_t *__fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
               }
               while ( v9 < v10 );
             }
+            return true;
           }
         }
       }
     }
   }
-  return result;
+  return false;
 }
 // 0: using guessed type int def_3E8F0;
 
