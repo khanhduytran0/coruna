@@ -293,7 +293,7 @@ __int64 __fastcall mementry_iosurface_port_alloc(struct_krwCtx *a1, unsigned int
 __int64 __fastcall alloc_vm_page_v2(__int64 a1);
 unsigned __int64 __fastcall krw_setup_voucher(struct_krwCtx *a1);
 __int64 __fastcall krw_setup_physmap(__int64 a1);
-unsigned int *__fastcall krw_setup_iosurface(__int64 a1);
+bool __fastcall krw_setup_iosurface(__int64 a1);
 __int64 __fastcall krw_setup_iosurface_v2(__int64 a1, uint32_t *a2);
 mach_vm_address_t __fastcall build_kernel_vtable(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, uint64_t *a7);
 __int64 kernel_pattern_scan(SearchObj *obj, const char *pattern_str, uint32_t align_flag);
@@ -18895,10 +18895,10 @@ __int64 __fastcall krw_setup_physmap(__int64 a1)
 }
 
 //----- (000000000001D4A0) ----------------------------------------------------
-unsigned int *__fastcall krw_setup_iosurface(__int64 a1)
+bool __fastcall krw_setup_iosurface(__int64 a1)
 {
   vm_size_t v1; // x20
-  unsigned int *result; // x0
+  mach_port_name_t *result; // x0
   int v4; // w8
   kern_return_t memory_entry; // w8
   kern_return_t v6; // w8
@@ -18918,38 +18918,35 @@ unsigned int *__fastcall krw_setup_iosurface(__int64 a1)
   address = 0;
   size = vm_page_size;
   if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
-    return 0;
-  result = (unsigned int *)iosurface_enum_mach_port(a1, 0);
+    return false;
+  result = (mach_port_name_t *)iosurface_enum_mach_port(a1, 0);
   if ( !result )
-    return result;
+    return false;
   if ( *result + 1 > 1 )
-    return (unsigned int *)(&def_3E8F0 + 1);
+    return true;
   if ( (unsigned int)(*(uint32_t *)(a1 + 172) + 1) < 2
     || !*(uint64_t *)(a1 + 216)
     || (unsigned int)(*(uint32_t *)(a1 + 88) + 1) < 2 )
   {
-    return 0;
+    return false;
   }
   v17[0] = *(uint32_t *)(a1 + 88);
   v4 = setup_physmap_krw(a1, 0);
-  result = 0;
   if ( v4 )
-    return result;
+    return false;
   if ( !*(uint64_t *)(a1 + 6608)
     || !*(uint64_t *)(a1 + 128)
     || !*(uint32_t *)(a1 + 136)
     || !*(uint64_t *)(a1 + 160)
     || !*(uint32_t *)(a1 + 168) )
   {
-    return 0;
+    return false;
   }
   memory_entry = mach_make_memory_entry(mach_task_self_, &size, 0, 131075, &object_handle, 0);
-  result = 0;
   if ( !memory_entry )
   {
     v17[1] = object_handle;
     v6 = vm_map(mach_task_self_, &address, v1, 0, 1, object_handle, 0, 0, 3, 3, 2u);
-    result = 0;
     if ( !v6 )
     {
       bzero((void *)address, v1);
@@ -18967,28 +18964,28 @@ unsigned int *__fastcall krw_setup_iosurface(__int64 a1)
       while ( 1 )
       {
         v11 = v10;
-        result = (unsigned int *)iosurface_enum_mach_port(a1, v9);
+        result = (mach_port_name_t *)iosurface_enum_mach_port(a1, v9);
         if ( !result )
           break;
         v12 = result;
         v13 = v17[v9];
-        result = (unsigned int *)task_self_get_ipc_port((struct_krwCtx *)a1, v13);
-        if ( !result )
+        v8 = task_self_get_ipc_port((struct_krwCtx *)a1, v13);
+        if ( !v8 )
           break;
-        if ( (unsigned int)kread_and_vm_attr_double(a1, (__int64)result) )
-          return 0;
+        if ( (unsigned int)kread_and_vm_attr_double(a1, v8) )
+          return false;
         v8 = mach_port_mod_refs(mach_task_self_, v13, 0, 0xFFFF);
         if ( (uint32_t)v8 )
-          return 0;
+          return false;
         v10 = 0;
         *v12 = v13;
         v9 = 1;
         if ( (v11 & 1) == 0 )
-          return (unsigned int *)((unsigned int)iosurface_check_and_alloc_port((struct_krwCtx *)a1) == 0);
+          return iosurface_check_and_alloc_port((struct_krwCtx *)a1) == 0;
       }
     }
   }
-  return result;
+  return false;
 }
 // 0: using guessed type int def_3E8F0;
 
@@ -45610,7 +45607,7 @@ LABEL_350:
             return 0;
           }
 LABEL_349:
-          v92 = (unsigned int)krw_setup_iosurface((__int64)krwCtx);
+          v92 = krw_setup_iosurface((__int64)krwCtx);
           goto LABEL_350;
         }
         return 163843;
