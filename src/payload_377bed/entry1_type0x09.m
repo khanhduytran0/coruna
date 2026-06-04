@@ -11250,32 +11250,26 @@ const void *__fastcall cfarray_contains_check(const void *result, __int64 a2)
 //----- (0000000000012EF8) ----------------------------------------------------
 void __fastcall necp_dispatch_by_version(struct_krwCtx *a1)
 {
-  unsigned __int64 v2; // x8
-  unsigned __int64 v3; // x8
-  unsigned __int64 v4; // x8
-  unsigned __int64 v5; // x8
-  __int64 vars8; // [xsp+18h] [xbp+8h]
+  unsigned __int64 xnuVersionPacked; // x8
+  bool a13PlusUsesNewNecpPath; // w0
+  bool a15PlusUsesNewNecpPath; // w0
 
-  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
-    && ((v2 = a1->xnuVersionPacked, v2 > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023)) || v2 > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002)
-    || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
-    && ((v3 = a1->xnuVersionPacked, v3 > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)) || v3 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001) )
+  xnuVersionPacked = a1->xnuVersionPacked;
+  a13PlusUsesNewNecpPath = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
+                         && (xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023)
+                          || (xnuVersionPacked > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002));
+  a15PlusUsesNewNecpPath = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
+                         && (xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)
+                          || (xnuVersionPacked > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001));
+  if ( a13PlusUsesNewNecpPath || a15PlusUsesNewNecpPath )
   {
     necp_send_msg_2((__int64)a1);
   }
-  else if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
-         || (v4 = a1->xnuVersionPacked, v4 <= XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023))
-         && (v4 <= XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) || a1->xnuMajorVersion >= 10002) )
+  else
   {
-    if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
-      || (v5 = a1->xnuVersionPacked, v5 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023))
-      && (v5 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) || a1->xnuMajorVersion >= 10002) )
-    {
-      nullsub_2(a1);
-    }
+    nullsub_2(a1);
   }
 }
-// 12F90: variable 'vars8' is possibly undefined
 // 22D68: using guessed type __int64 __fastcall nullsub_2(uint64_t);
 
 //----- (000000000001308C) ----------------------------------------------------
@@ -11685,48 +11679,40 @@ bool __fastcall physmap_table_write_versioned(struct_krwCtx *a1, unsigned __int6
 bool __fastcall check_physmap_range_necp(struct_krwCtx *a1, unsigned __int64 a2, int a3)
 {
   unsigned __int64 xnuVersionPacked; // x8
-  unsigned __int64 v7; // x8
   int v8; // w0
-  unsigned __int64 v10; // x8
+  bool a13PlusUsesNewNecpPath; // w0
+  bool a15PlusUsesNewNecpPath; // w0
+  bool a13PlusUsesIogpuPath; // w0
+  bool a15PlusUsesIogpuPath; // w0
 
-  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
-    && ((xnuVersionPacked = a1->xnuVersionPacked, xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023))
-     || xnuVersionPacked > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002)
-    || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
-    && ((v7 = a1->xnuVersionPacked, v7 > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)) || v7 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001) )
+  xnuVersionPacked = a1->xnuVersionPacked;
+  a13PlusUsesNewNecpPath = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
+                         && (xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023)
+                          || (xnuVersionPacked > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002));
+  a15PlusUsesNewNecpPath = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
+                         && (xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)
+                          || (xnuVersionPacked > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001));
+  if ( a13PlusUsesNewNecpPath || a15PlusUsesNewNecpPath )
   {
     v8 = pgtable_locked_kwrite32_retry((__int64)a1, a2, a3);
     return v8 == 0;
   }
-  if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
+
+  a13PlusUsesIogpuPath = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK)
+                       && (xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023)
+                        || (xnuVersionPacked > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002));
+  a15PlusUsesIogpuPath = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK)
+                       && (xnuVersionPacked > XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023)
+                        || (xnuVersionPacked > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion < 10002));
+  if ( a13PlusUsesIogpuPath || a15PlusUsesIogpuPath )
   {
-    v10 = a1->xnuVersionPacked;
-    if ( v10 > XNU_VERSION_PACKED(10002, 0, 198, 1023, 1023) )
-      goto LABEL_17;
-    if ( v10 > XNU_VERSION_PACKED(8796, 142, 0, 1023, 1023) && a1->xnuMajorVersion < 10002 )
-      goto LABEL_21;
-  }
-  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A15_A16_A17_MASK) )
-  {
-LABEL_22:
-    v8 = dmaFail_physwrite32(a1, a2, a3);
-    return v8 == 0;
-  }
-  v10 = a1->xnuVersionPacked;
-  if ( v10 <= XNU_VERSION_PACKED(10002, 0, 115, 1023, 1023) )
-  {
-    if ( v10 > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion < 10002 )
-      goto LABEL_21;
-    goto LABEL_22;
-  }
-LABEL_17:
-  if ( v10 <= XNU_VERSION_PACKED(10002, 42, 7, 1023, 1023) )
-  {
-LABEL_21:
+    if ( xnuVersionPacked > XNU_VERSION_PACKED(10002, 42, 7, 1023, 1023) )
+      return 0;
     v8 = iogpu_kernel_read_op((__int64)a1, a2, a3);
     return v8 == 0;
   }
-  return 0;
+  v8 = dmaFail_physwrite32(a1, a2, a3);
+  return v8 == 0;
 }
 
 //----- (0000000000013AE4) ----------------------------------------------------
