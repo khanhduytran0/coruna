@@ -284,8 +284,8 @@ __int64 __fastcall iosurface_id_to_index(unsigned int);
 __int64 __fastcall get_iosurface_mem_entry(__int64 a1, unsigned int a2, mach_port_name_t *a3);
 __int64 __fastcall alloc_vm_page_mem_entry(__int64 a1, unsigned int a2, vm_size_t size, vm_address_t *address);
 __int64 __fastcall alloc_vm_page(__int64 a1);
-bool __fastcall krw_setup_with_stat(__int64 a1, int *a2);
-bool __fastcall krw_setup_ports_vm(__int64 a1, int *a2);
+bool __fastcall krw_setup_with_stat(__int64 a1, uint32_t *a2);
+bool __fastcall krw_setup_ports_vm(__int64 a1, uint32_t *a2);
 __int64 __fastcall setup_voucher_exploit_ctx(struct_krwCtx *a1, unsigned int *a2, unsigned int a3);
 __int64 __fastcall alloc_iosurface_mach_port(struct_krwCtx *a1, unsigned int a2, unsigned int a3);
 __int64 __fastcall insert_mach_port_send_right(__int64 a1, task_name_t a2, unsigned int a3, __int64 a4, unsigned int a5);
@@ -18023,7 +18023,7 @@ __int64 __fastcall alloc_vm_page(__int64 a1)
 }
 
 //----- (000000000001C0C8) ----------------------------------------------------
-bool __fastcall krw_setup_with_stat(__int64 a1, int *a2)
+bool __fastcall krw_setup_with_stat(__int64 a1, uint32_t *a2)
 {
   unsigned __int64 v4; // x8
   __int64 v5; // x24
@@ -18154,7 +18154,7 @@ LABEL_13:
 }
 
 //----- (000000000001C3EC) ----------------------------------------------------
-bool __fastcall krw_setup_ports_vm(__int64 a1, int *a2)
+bool __fastcall krw_setup_ports_vm(__int64 a1, uint32_t *a2)
 {
   vm_size_t v4; // x20
   int v5; // w8
@@ -44811,7 +44811,7 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   mach_port_name_t *v93; // [xsp+8h] [xbp-168h]
   unsigned __int64 v94; // [xsp+10h] [xbp-160h]
   int v95; // [xsp+18h] [xbp-158h]
-  int v96; // [xsp+20h] [xbp-150h] BYREF
+  uint32_t v96; // [xsp+20h] [xbp-150h] BYREF
   char v97; // [xsp+27h] [xbp-149h] BYREF
   __int64 v98; // [xsp+28h] [xbp-148h] BYREF
   struct_xnuMajorVersion xnuVersion; // [xsp+30h] [xbp-140h] BYREF
