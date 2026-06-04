@@ -8702,13 +8702,13 @@ LABEL_427:
     }
     break;
   }
-  pgtable_walk_wrapper(v5, v315 & ~v207, (__int64)&name);
+  v209 = pgtable_walk_wrapper(v5, v315 & ~v207, &name);
   v10 = 163878;
   if ( !v209 )
     return v10;
   __handlee = v311;
   v210 = *(uint64_t *)(v5 + 392);
-  pgtable_walk_wrapper(v5, kobject & ~v210, (__int64)&name);
+  v211 = pgtable_walk_wrapper(v5, kobject & ~v210, &name);
   if ( !v211 )
     return v10;
   v212 = v311;
