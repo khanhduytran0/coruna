@@ -18901,17 +18901,18 @@ bool __fastcall krw_setup_physmap(__int64 a1)
 bool __fastcall krw_setup_iosurface(__int64 a1)
 {
   vm_size_t v1; // x20
-  mach_port_name_t *result; // x0
+  mach_port_name_t *portSlot; // x0
   int v4; // w8
   kern_return_t memory_entry; // w8
   kern_return_t v6; // w8
   uint64_t *v7; // x1
-  __int64 v8; // x0
+  kern_return_t status; // w0
   __int64 v9; // x21
   char v10; // w8
   char v11; // w24
   unsigned int *v12; // x20
   unsigned int v13; // w21
+  __int64 portKaddr; // x0
   mem_entry_name_port_t object_handle; // [xsp+Ch] [xbp-54h] BYREF
   vm_address_t address; // [xsp+10h] [xbp-50h] BYREF
   vm_size_t size; // [xsp+18h] [xbp-48h] BYREF
@@ -18922,10 +18923,10 @@ bool __fastcall krw_setup_iosurface(__int64 a1)
   size = vm_page_size;
   if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
     return false;
-  result = (mach_port_name_t *)iosurface_enum_mach_port(a1, 0);
-  if ( !result )
+  portSlot = (mach_port_name_t *)iosurface_enum_mach_port(a1, 0);
+  if ( !portSlot )
     return false;
-  if ( *result + 1 > 1 )
+  if ( *portSlot + 1 > 1 )
     return true;
   if ( (unsigned int)(*(uint32_t *)(a1 + 172) + 1) < 2
     || !*(uint64_t *)(a1 + 216)
@@ -18961,24 +18962,24 @@ bool __fastcall krw_setup_iosurface(__int64 a1)
       v7[7] = *(unsigned int *)(a1 + 136);
       v7[8] = *(uint64_t *)(a1 + 160);
       v7[9] = *(unsigned int *)(a1 + 168);
-      v8 = vm_deallocate(mach_task_self_, (vm_address_t)v7, v1);
+      status = vm_deallocate(mach_task_self_, (vm_address_t)v7, v1);
       v9 = 0;
       v10 = 1;
       while ( 1 )
       {
         v11 = v10;
-        result = (mach_port_name_t *)iosurface_enum_mach_port(a1, v9);
-        if ( !result )
+        portSlot = (mach_port_name_t *)iosurface_enum_mach_port(a1, v9);
+        if ( !portSlot )
           break;
-        v12 = result;
+        v12 = portSlot;
         v13 = v17[v9];
-        v8 = task_self_get_ipc_port((struct_krwCtx *)a1, v13);
-        if ( !v8 )
+        portKaddr = task_self_get_ipc_port((struct_krwCtx *)a1, v13);
+        if ( !portKaddr )
           break;
-        if ( (unsigned int)kread_and_vm_attr_double(a1, v8) )
+        if ( (unsigned int)kread_and_vm_attr_double(a1, portKaddr) )
           return false;
-        v8 = mach_port_mod_refs(mach_task_self_, v13, 0, 0xFFFF);
-        if ( (uint32_t)v8 )
+        status = mach_port_mod_refs(mach_task_self_, v13, 0, 0xFFFF);
+        if ( status )
           return false;
         v10 = 0;
         *v12 = v13;
