@@ -823,6 +823,13 @@ static bool krw_has_any_ready_method(struct_krwCtx *krwCtx)
   return hasThreadStateKrw || hasIOConnectKrw || hasPipePairKrw || hasTargetPortKrw;
 }
 
+static uint64_t driver_dispatch_finish(uint64_t status, bool commandSucceeded)
+{
+  if ( (uint32_t)status || commandSucceeded )
+    return (uint32_t)status;
+  return 163843;
+}
+
 __int64 __fastcall j__fileport_makeport(int a1, mach_port_t *a2);
 int __fastcall j__fileport_makefd(mach_port_t);
 __int64 __fastcall __mac_syscall(__int64 a1, __int64 a2, __int64 a3);
@@ -46269,10 +46276,7 @@ LABEL_189:
 LABEL_215:
                   LODWORD(v6) = 0;
 LABEL_216:
-                  if ( (unsigned int)v6 | v8[0] )
-                    v6 = (unsigned int)v6;
-                  else
-                    v6 = 163843;
+                  v6 = driver_dispatch_finish(v6, v8[0]);
                   break;
                 }
               }
@@ -46350,10 +46354,7 @@ LABEL_79:
 LABEL_179:
             v26 = v14 == 0;
 LABEL_180:
-            if ( (uint32_t)v6 == 0 && v26 )
-              v6 = 163843;
-            else
-              v6 = (unsigned int)v6;
+            v6 = driver_dispatch_finish(v6, !v26);
             goto LABEL_219;
           }
           if ( a1->xnuVersionPacked >> 43 >= 0x44B )
