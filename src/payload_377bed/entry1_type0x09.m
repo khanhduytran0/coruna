@@ -688,9 +688,9 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
 __int64 __fastcall reinit_and_refresh_krw_ctx(__int64 a1);
 __int64 __fastcall driver_close_internal(char *a1);
 __int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(__int64 a1, unsigned int a2, int a3, int a4);
-__int64 __fastcall check_krw_necp_state(struct_krwCtx *a1, bool *a2);
-__int64 __fastcall check_dispatch_krw_state(struct_krwCtx *a1, int a2);
-__int64 __fastcall find_kernel_text_exec_section(__int64 a1, __int64 *a2, __int64 *a3);
+bool __fastcall check_krw_necp_state(struct_krwCtx *a1, bool *a2);
+bool __fastcall check_dispatch_krw_state(struct_krwCtx *a1, int a2);
+bool __fastcall find_kernel_text_exec_section(__int64 a1, __int64 *a2, __int64 *a3);
 int __fastcall update_physmap_table_entry_count(__int64 a1, task_inspect_t a2, host_t *a3);
 uint64_t *__fastcall alloc_kobj_snapshot_buf(__int64 a1, __int64 a2);
 __int64 __fastcall read_u32_from_kobj_snapshot(__int64, uint64_t *, __int64);
@@ -46777,9 +46777,9 @@ __int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(__int64 a1, unsigne
 }
 
 //----- (000000000003F9A0) ----------------------------------------------------
-__int64 __fastcall check_krw_necp_state(struct_krwCtx *a1, bool *a2)
+bool __fastcall check_krw_necp_state(struct_krwCtx *a1, bool *a2)
 {
-  __int64 result; // x0
+  bool result; // w0
   unsigned __int8 v5; // [xsp+Fh] [xbp-21h] BYREF
   __int64 v6; // [xsp+10h] [xbp-20h] BYREF
   __int64 address; // [xsp+18h] [xbp-18h] BYREF
@@ -46793,20 +46793,20 @@ __int64 __fastcall check_krw_necp_state(struct_krwCtx *a1, bool *a2)
     if ( (unsigned int)krw_read_thunk(a1, address, 1, &v5) && v5 <= 1u )
     {
       *a2 = v5 != 0;
-      return 1;
+      return true;
     }
     else
     {
-      return 0;
+      return false;
     }
   }
   return result;
 }
 
 //----- (000000000003FA2C) ----------------------------------------------------
-__int64 __fastcall check_dispatch_krw_state(struct_krwCtx *a1, int a2)
+bool __fastcall check_dispatch_krw_state(struct_krwCtx *a1, int a2)
 {
-  __int64 result; // x0
+  bool result; // w0
   unsigned __int64 v5; // x22
   unsigned __int64 v6; // x21
   int v7; // w8
@@ -46825,64 +46825,66 @@ __int64 __fastcall check_dispatch_krw_state(struct_krwCtx *a1, int a2)
     {
       v5 = v12;
       if ( !(unsigned int)krw_read_thunk(a1, v12, 1, &v10) )
-        return 0;
+        return false;
       if ( v10 > 1u )
-        return 0;
+        return false;
       v6 = v11;
       if ( !(unsigned int)krw_read_thunk(a1, v11, 1, &v9) )
-        return 0;
+        return false;
       v7 = v9;
       if ( v9 > 1u )
-        return 0;
+        return false;
       if ( v10 != a2 )
       {
         v10 = a2;
         if ( !(unsigned int)ppl_kwritebuf((__int64)a1, v5, &v10, 1) )
-          return 0;
+          return false;
         v7 = v9;
       }
       if ( v7 != a2 )
       {
         v9 = a2;
         if ( !(unsigned int)ppl_kwritebuf((__int64)a1, v6, &v9, 1) )
-          return 0;
+          return false;
       }
     }
     else
     {
       v8 = v11;
       if ( !(unsigned int)krw_read_thunk(a1, v11, 1, &v10) )
-        return 0;
+        return false;
       if ( v10 > 1u )
-        return 0;
+        return false;
       if ( v10 != a2 )
       {
         v10 = a2;
         if ( !(unsigned int)kwrite_with_retry((__int64)a1, v8, (__int64)&v10, 1) )
-          return 0;
+          return false;
       }
     }
-    return 1;
+    return true;
   }
   return result;
 }
 
 //----- (000000000003FB84) ----------------------------------------------------
-__int64 __fastcall find_kernel_text_exec_section(__int64 a1, __int64 *a2, __int64 *a3)
+bool __fastcall find_kernel_text_exec_section(__int64 a1, __int64 *a2, __int64 *a3)
 {
   __int64 v6; // x8
   __int64 v7; // x22
   __int64 v8; // x23
-  __int64 result; // x0
   __int64 v10; // x22
   int v11; // w22
   char *v12; // x1
   __int64 v13; // x23
   __int64 v15; // x8
+  unsigned __int64 pattern; // x0
+  unsigned __int64 func; // x0
   __int64 sect[3]; // [xsp+0h] [xbp-50h] BYREF
   __int64 v19; // [xsp+18h] [xbp-38h] BYREF
 
   v19 = 0;
+  v8 = 0;
   v6 = *(uint64_t *)(a1 + 280);
   if ( v6 && *(uint64_t *)(a1 + 288) )
   {
@@ -46891,118 +46893,95 @@ __int64 __fastcall find_kernel_text_exec_section(__int64 a1, __int64 *a2, __int6
     if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && v7 )
     {
       *a2 = v7;
-      return 1;
+      return true;
     }
     v8 = *(uint64_t *)(*(uint64_t *)(a1 + 280) + 320LL);
     if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && v7 && v8 != 0 )
     {
       *a2 = v7;
       *a3 = v8;
-      return 1;
+      return true;
     }
-  }
-  else
-  {
-    v8 = 0;
   }
   if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     macho_getsectbyname("__TEXT_EXEC", *(uint64_t *)(a1 + 6648), "__text", sect);
-    result = 0;
-    if ( sect[1] )
-    {
-      if ( sect[2] )
-      {
-        result = kernel_pattern_scan((__int64)sect, "08 01 40 39 08 01 00 12", 0);
-        if ( result )
-        {
-          result = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(result - 12));
-          if ( result )
-          {
-            result = kread_physmap_decorated((struct_krwCtx *)a1, result, (unsigned __int64 *)&v19);
-            if ( (uint32_t)result )
-            {
-              result = v19;
-              *a2 = v19;
-              v10 = result - 1;
-              goto LABEL_40;
-            }
-          }
-        }
-      }
-    }
+    if ( !sect[1] || !sect[2] )
+      return false;
+    pattern = kernel_pattern_scan((__int64)sect, "08 01 40 39 08 01 00 12", 0);
+    if ( !pattern )
+      return false;
+    func = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(pattern - 12));
+    if ( !func )
+      return false;
+    if ( !kread_physmap_decorated((struct_krwCtx *)a1, func, (unsigned __int64 *)&v19) )
+      return false;
+    *a2 = v19;
+    v10 = v19 - 1;
+    goto LABEL_40;
   }
   else if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
   {
     v11 = *(uint32_t *)(a1 + 320);
     resolve_kernel_text_range((uint64_t *)sect, (struct_krwCtx *)a1);
-    result = 0;
-    if ( sect[1] && sect[2] )
-    {
-      v12 = v11 <= 8795 ? "6A 00 00 37 40 00 00 34" : "6B 00 00 37 40 00 00 34";
-      result = kernel_pattern_scan((__int64)sect, v12, 0);
-      if ( result )
-      {
-        v13 = result;
-        result = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(result - 16));
-        if ( result )
-        {
-          v10 = result;
-          result = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(v13 - 8));
-          v19 = result;
-          if ( result )
-          {
-            *a2 = result;
-            v8 = v10;
+    if ( !sect[1] || !sect[2] )
+      return false;
+    v12 = v11 <= 8795 ? "6A 00 00 37 40 00 00 34" : "6B 00 00 37 40 00 00 34";
+    pattern = kernel_pattern_scan((__int64)sect, v12, 0);
+    if ( !pattern )
+      return false;
+    v13 = pattern;
+    func = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(pattern - 16));
+    if ( !func )
+      return false;
+    v10 = func;
+    func = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(v13 - 8));
+    if ( !func )
+      return false;
+    v19 = func;
+    *a2 = func;
+    v8 = v10;
 LABEL_40:
-            *a3 = v10;
-            v15 = *(uint64_t *)(a1 + 280);
-            if ( v15 )
-            {
-              if ( *(uint64_t *)(a1 + 288) )
-              {
-                *(uint64_t *)(v15 + 320) = v8;
-                *(uint64_t *)(v15 + 328) = result;
-              }
-            }
-            return 1;
-          }
-        }
-      }
+    *a3 = v10;
+    v15 = *(uint64_t *)(a1 + 280);
+    if ( v15 && *(uint64_t *)(a1 + 288) )
+    {
+      *(uint64_t *)(v15 + 320) = v8;
+      *(uint64_t *)(v15 + 328) = v19;
     }
+    return true;
   }
   else
   {
     resolve_kernel_text_range((uint64_t *)sect, (struct_krwCtx *)a1);
-    result = 0;
     if ( sect[1] && sect[2] )
     {
       if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8796, 100, 721, 0, 0) )
       {
-        result = kernel_pattern_scan((__int64)sect, "09 FD 9F 08 C0 03 5F D6", 0);
-        if ( !result )
-          return result;
-        result = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(result - 12));
+        pattern = kernel_pattern_scan((__int64)sect, "09 FD 9F 08 C0 03 5F D6", 0);
+        if ( !pattern )
+          return false;
+        func = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(pattern - 12));
       }
       else
       {
-        result = kernel_pattern_scan((__int64)sect, "09 01 00 39 C0 03 5F D6", 0);
-        if ( !result )
-          return result;
-        result = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(result - 12));
-        if ( !result )
-          return result;
-        result = macho_read_u64_thunk(*(uint64_t *)(a1 + 6648), result);
+        pattern = kernel_pattern_scan((__int64)sect, "09 01 00 39 C0 03 5F D6", 0);
+        if ( !pattern )
+          return false;
+        func = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(pattern - 12));
+        if ( !func )
+          return false;
+        func = macho_read_u64_thunk(*(uint64_t *)(a1 + 6648), func);
       }
-      v19 = result;
-      if ( !result )
-        return result;
+      v19 = func;
+      if ( !func )
+        return false;
       v10 = 0;
-      *a2 = result;
+      *a2 = func;
       goto LABEL_40;
     }
   }
-  return result;
+  return false;
 }
 // 19B94: using guessed type __int64 __fastcall macho_read_u64_thunk(uint64_t, uint64_t);
 
