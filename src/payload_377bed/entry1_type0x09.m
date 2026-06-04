@@ -27115,143 +27115,112 @@ __int64 __fastcall cleanup_ioconnect_resources(__int64 a1)
 //----- (0000000000027504) ----------------------------------------------------
 __int64 __fastcall setup_physmap_krw(__int64 a1, char a2)
 {
-  __int64 v4; // x23
-  bool v5; // zf
-  __int64 v6; // x21
-  __int64 v7; // x0
-  __int64 v8; // x21
-  unsigned __int64 v9; // x22
-  unsigned __int64 v10; // x25
-  unsigned __int64 v11; // x0
-  unsigned __int64 v12; // x23
-  __int64 v13; // x0
-  int v14; // w8
-  __int64 base_ptr; // x20
-  int size; // w22
-  __int64 v17; // x0
-  unsigned __int64 v18; // x0
-  unsigned __int64 v19; // x20
-  __int64 v20; // x0
-  int v21; // w8
-  __int64 v23; // [xsp+8h] [xbp-88h] BYREF
-  SearchObj v24; // [xsp+10h] [xbp-80h] BYREF
-  SearchObj v25; // [xsp+28h] [xbp-68h] BYREF
+  enum
+  {
+    ERR_BAD_INPUT = 708609,
+    ERR_NOT_FOUND = 708625,
+    ERR_BAD_BRANCH = 708628,
+    ERR_KREAD = 163855,
+    ERR_INVALID_KADDR = 163878,
+  };
+  SearchObj textRange; // [xsp+28h] [xbp-68h] BYREF
+  SearchObj scanRange; // [xsp+10h] [xbp-80h] BYREF
+  uint64_t physmapEndKaddr; // [xsp+8h] [xbp-88h] BYREF
+  uint64_t percpuGlobalValue;
 
-  v4 = 708625;
-  if ( *(uint64_t *)(a1 + 128) )
-    v5 = *(uint32_t *)(a1 + 136) == 0;
-  else
-    v5 = 1;
-  if ( !v5 )
-    goto LABEL_23;
-  if ( (a2 & 1) != 0 )
-    return 708609;
-  macho_find_text_section(*(uint64_t *)(a1 + 6648), &v25.field_0x00);
-  v25.base_ptr = v25.base_ptr + v25.size - 0x20000;
-  v25.size = 0x20000;
-  *(__int128 *)&v24.field_0x00 = *(__int128 *)&v25.field_0x00;
-  v24.size = 0x20000;
-  v7 = kernel_pattern_scan(&v24, "88 91 00 B9 9F 0D 00 B9", 0);
-  if ( !v7 )
-    return 708625;
-  v8 = v7;
-  v9 = 0;
-  v10 = -4;
-  while ( 1 )
+  if ( !*(uint64_t *)(a1 + 128) || !*(uint32_t *)(a1 + 136) )
   {
-    if ( (macho_read_u32(*(__int64 **)(a1 + 6648), (__int64 *)(v8 + v10 + 4)) & 0x9F000000) != 0x90000000
-      || (macho_read_u32(*(__int64 **)(a1 + 6648), (__int64 *)(v8 + v10 + 8)) & 0xBFC00000) != 0xB9400000 )
+    if ( (a2 & 1) != 0 )
+      return ERR_BAD_INPUT;
+
+    macho_find_text_section(*(uint64_t *)(a1 + 6648), &textRange.field_0x00);
+    textRange.base_ptr += textRange.size - 0x20000;
+    textRange.size = 0x20000;
+    scanRange = textRange;
+
+    uint64_t patternHit = kernel_pattern_scan(&scanRange, "88 91 00 B9 9F 0D 00 B9", 0);
+    if ( !patternHit )
+      return ERR_NOT_FOUND;
+
+    uint64_t firstGlobalRef = 0;
+    uint64_t secondGlobalRef = 0;
+    for ( int64_t off = -4; off < 0xFC; off += 4 )
     {
-      goto LABEL_15;
-    }
-    v11 = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(v8 + v10 + 4));
-    if ( !v11 )
-      return 708625;
-    v12 = v11;
-    if ( v9 )
-      break;
-    v9 = v11;
-LABEL_15:
-    v10 += 4LL;
-    if ( v10 >= 0xFC )
-      return 708625;
-  }
-  v6 = 163878;
-  if ( !kread_physmap_decorated((struct_krwCtx *)a1, v9, &v24.field_0x00) )
-    return 163855;
-  if ( !validate_kaddr_range(a1, v24.field_0x00) )
-    return v6;
-  if ( !kread_physmap_decorated((struct_krwCtx *)a1, v12, &v23) )
-    return 163855;
-  if ( validate_kaddr_range(a1, v23) )
-  {
-    v13 = kaddr_to_phys_v1(a1, v24.field_0x00);
-    if ( v13 )
-    {
-      v14 = v23 - LODWORD(v24.field_0x00);
-      *(uint64_t *)(a1 + 128) = v13;
-      *(uint32_t *)(a1 + 136) = v14;
-      v4 = 708625;
-LABEL_23:
-      v6 = *(uint64_t *)(a1 + 160) != 0 && *(uint32_t *)(a1 + 168) != 0 ? 0LL : 708609LL;
-      if ( (*(uint64_t *)(a1 + 160) == 0 || *(uint32_t *)(a1 + 168) == 0) && (a2 & 1) == 0 )
+      uint32_t adrpInsn = macho_read_u32(*(__int64 **)(a1 + 6648), (__int64 *)(patternHit + off + 4));
+      uint32_t ldrInsn = macho_read_u32(*(__int64 **)(a1 + 6648), (__int64 *)(patternHit + off + 8));
+      if ( (adrpInsn & 0x9F000000) != 0x90000000 || (ldrInsn & 0xBFC00000) != 0xB9400000 )
+        continue;
+
+      uint64_t globalRef = find_kernel_func(*(__int64 **)(a1 + 6648), (__int64 *)(patternHit + off + 4));
+      if ( !globalRef )
+        return ERR_NOT_FOUND;
+      if ( firstGlobalRef )
       {
-        macho_getsectbyname("__DATA", *(uint64_t *)(a1 + 6648), "__percpu", &v25.field_0x00);
-        base_ptr = v25.base_ptr;
-        if ( v25.base_ptr )
-        {
-          size = v25.size;
-          if ( v25.size )
-          {
-            macho_find_text_section(*(uint64_t *)(a1 + 6648), &v25.field_0x00);
-            if ( v25.base_ptr )
-            {
-              if ( v25.size )
-              {
-                v25.base_ptr = v25.base_ptr + v25.size - 0x20000;
-                v25.size = 0x20000;
-                v17 = kernel_pattern_scan(&v25, ".. 02 00 F9 E1 03 13 AA", 0);
-                if ( v17 )
-                {
-                  v18 = find_kernel_func_by_branch(*(__int64 **)(a1 + 6648), (__int64 *)(v17 - 8), 0);
-                  if ( v18 )
-                  {
-                    v4 = 163878;
-                    if ( kread64_internal(a1, v18, &v24) )
-                    {
-                      v19 = v24.field_0x00 + base_ptr;
-                      if ( validate_kaddr_range(a1, v19) )
-                      {
-                        v20 = kaddr_to_phys_v1(a1, v19);
-                        if ( v20 )
-                        {
-                          v6 = 0;
-                          v21 = (*(uint32_t *)(a1 + 392) + size) & ~*(uint32_t *)(a1 + 392);
-                          *(uint64_t *)(a1 + 160) = v20;
-                          *(uint32_t *)(a1 + 168) = v21;
-                          return v6;
-                        }
-                      }
-                    }
-                    else
-                    {
-                      return 163855;
-                    }
-                  }
-                  else
-                  {
-                    return 708628;
-                  }
-                }
-              }
-            }
-          }
-        }
-        return v4;
+        secondGlobalRef = globalRef;
+        break;
       }
+      firstGlobalRef = globalRef;
     }
+    if ( !secondGlobalRef )
+      return ERR_NOT_FOUND;
+
+    if ( !kread_physmap_decorated((struct_krwCtx *)a1, firstGlobalRef, &scanRange.field_0x00) )
+      return ERR_KREAD;
+    uint64_t physmapBaseKaddr = scanRange.field_0x00;
+    if ( !validate_kaddr_range(a1, physmapBaseKaddr) )
+      return ERR_INVALID_KADDR;
+    if ( !kread_physmap_decorated((struct_krwCtx *)a1, secondGlobalRef, &physmapEndKaddr) )
+      return ERR_KREAD;
+    if ( !validate_kaddr_range(a1, physmapEndKaddr) )
+      return ERR_INVALID_KADDR;
+
+    uint64_t physmapBasePhys = kaddr_to_phys_v1(a1, physmapBaseKaddr);
+    if ( !physmapBasePhys )
+      return ERR_INVALID_KADDR;
+
+    *(uint64_t *)(a1 + 128) = physmapBasePhys;
+    *(uint32_t *)(a1 + 136) = (uint32_t)(physmapEndKaddr - physmapBaseKaddr);
   }
-  return v6;
+
+  if ( *(uint64_t *)(a1 + 160) && *(uint32_t *)(a1 + 168) )
+    return 0;
+  if ( (a2 & 1) != 0 )
+    return ERR_BAD_INPUT;
+
+  macho_getsectbyname("__DATA", *(uint64_t *)(a1 + 6648), "__percpu", &textRange.field_0x00);
+  uint64_t percpuBase = textRange.base_ptr;
+  uint32_t percpuSize = (uint32_t)textRange.size;
+  if ( !percpuBase || !percpuSize )
+    return ERR_NOT_FOUND;
+
+  macho_find_text_section(*(uint64_t *)(a1 + 6648), &textRange.field_0x00);
+  if ( !textRange.base_ptr || !textRange.size )
+    return ERR_NOT_FOUND;
+  textRange.base_ptr += textRange.size - 0x20000;
+  textRange.size = 0x20000;
+
+  uint64_t percpuPattern = kernel_pattern_scan(&textRange, ".. 02 00 F9 E1 03 13 AA", 0);
+  if ( !percpuPattern )
+    return ERR_NOT_FOUND;
+  uint64_t percpuGlobalRef = find_kernel_func_by_branch(*(__int64 **)(a1 + 6648), (__int64 *)(percpuPattern - 8), 0);
+  if ( !percpuGlobalRef )
+    return ERR_BAD_BRANCH;
+
+  if ( !kread64_internal(a1, percpuGlobalRef, &percpuGlobalValue) )
+    return ERR_KREAD;
+
+  uint64_t percpuKaddr = percpuGlobalValue + percpuBase;
+  if ( !validate_kaddr_range(a1, percpuKaddr) )
+    return ERR_INVALID_KADDR;
+
+  uint64_t percpuPhys = kaddr_to_phys_v1(a1, percpuKaddr);
+  if ( !percpuPhys )
+    return ERR_INVALID_KADDR;
+
+  uint32_t pageMask = *(uint32_t *)(a1 + 392);
+  *(uint64_t *)(a1 + 160) = percpuPhys;
+  *(uint32_t *)(a1 + 168) = (pageMask + percpuSize) & ~pageMask;
+  return 0;
 }
 
 //----- (0000000000027808) ----------------------------------------------------
