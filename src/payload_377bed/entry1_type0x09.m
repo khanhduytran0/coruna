@@ -708,6 +708,34 @@ unsigned __int64 __fastcall kernel_cstring_pattern_scan(__int64 a1, const char *
 __int64 __fastcall find_kfunc_ptr_in_kernel_data(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall scan_kernel_page_for_pattern(struct_krwCtx *a1, __int64 a2, mach_vm_size_t a3, unsigned __int64 a4, __int64 (__fastcall *a5)(__int64, __int64), __int64 a6);
 __int64 __fastcall resolve_kfunc_via_page_dispatch(struct_krwCtx *a1, __int64 a2, unsigned int a3, __int64 *a4, __int64 (__fastcall *a5)(__int64, __int64), __int64 a6);
+
+typedef enum krw_setup_path {
+  KRW_SETUP_PATH_VOUCHER = 0,
+  KRW_SETUP_PATH_PORTS_VM = 1,
+  KRW_SETUP_PATH_IOSURFACE = 2,
+  KRW_SETUP_PATH_IOGPU = 3,
+} krw_setup_path_t;
+
+static krw_setup_path_t krw_select_setup_path(struct_krwCtx *krwCtx)
+{
+  uint64_t xnuVersionPacked = krwCtx->xnuVersionPacked;
+  uint32_t flags = krwCtx->flags;
+  bool isA12ToA17 = (flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0;
+
+  if ( xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) )
+    return (flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 ? KRW_SETUP_PATH_IOGPU : KRW_SETUP_PATH_IOSURFACE;
+  if ( xnuVersionPacked > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) )
+    return KRW_SETUP_PATH_IOSURFACE;
+  if ( xnuVersionPacked > XNU_VERSION_PACKED(8796, 102, 4, 1023, 1023) )
+    return isA12ToA17 && (flags & KRW_CTX_FLAG_CPU_A12) == 0 ? KRW_SETUP_PATH_PORTS_VM : KRW_SETUP_PATH_IOSURFACE;
+  if ( xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)
+    && (isA12ToA17 || xnuVersionPacked > XNU_VERSION_PACKED(8020, 99, 1023, 1023, 1023)) )
+  {
+    return KRW_SETUP_PATH_PORTS_VM;
+  }
+  return KRW_SETUP_PATH_VOUCHER;
+}
+
 __int64 __fastcall j__fileport_makeport(int a1, mach_port_t *a2);
 int __fastcall j__fileport_makefd(mach_port_t);
 __int64 __fastcall __mac_syscall(__int64 a1, __int64 a2, __int64 a3);
@@ -44742,7 +44770,6 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   int v35; // w8
   int v36; // w9
   uint64_t *gap192; // x26
-  unsigned __int64 v38; // x8
   int v39; // w0
   unsigned __int64 v40; // x9
   unsigned __int64 v41; // x22
@@ -44794,8 +44821,8 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   unsigned __int64 v88; // x22
   unsigned __int64 v89; // x0
   mach_vm_address_t v90; // x23
-  unsigned __int64 v91; // x8
   unsigned int v92; // w0
+  krw_setup_path_t setupPath; // w8
   mach_port_name_t *v93; // [xsp+8h] [xbp-168h]
   unsigned __int64 v94; // [xsp+10h] [xbp-160h]
   int v95; // [xsp+18h] [xbp-158h]
@@ -45089,52 +45116,39 @@ LABEL_96:
   gap192 = (uint64_t *)krwCtx->gap1911;
   if ( something )
   {
-    v38 = krwCtx->xnuVersionPacked;
-    if ( v38 <= XNU_VERSION_PACKED(10002, 60, 75, 0, 2) )
+    setupPath = krw_select_setup_path(krwCtx);
+    switch ( setupPath )
     {
-      if ( v38 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) )
-      {
-        if ( v38 <= XNU_VERSION_PACKED(8796, 102, 4, 1023, 1023) )
-        {
-          if ( v38 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v38 <= XNU_VERSION_PACKED(8020, 99, 1023, 1023, 1023) )
-          {
-            v39 = krw_setup_with_stat((__int64)krwCtx, &v96);
-            goto LABEL_122;
-          }
-        }
-        else if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12) != 0 )
-        {
-          goto LABEL_121;
-        }
+      case KRW_SETUP_PATH_VOUCHER:
+        v39 = krw_setup_with_stat((__int64)krwCtx, &v96);
+        break;
+      case KRW_SETUP_PATH_PORTS_VM:
         v39 = krw_setup_ports_vm((__int64)krwCtx, &v96);
-        goto LABEL_122;
-      }
+        break;
+      case KRW_SETUP_PATH_IOGPU:
+        v39 = iogpu_krw_ctx_setup((__int64)krwCtx, &v96) == 0;
+        break;
+      case KRW_SETUP_PATH_IOSURFACE:
+      default:
+        v39 = krw_setup_iosurface_v2((__int64)krwCtx, &v96);
+        break;
     }
-    else if ( (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+    if ( !v39 )
+      return 163869;
+    bool hasThreadStateKrw = krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->gap42[40];
+    bool hasIOConnectKrw = (unsigned int)(*(uint32_t *)&krwCtx->gap42[56] + 1) >= 2
+                        && *(uint64_t *)&krwCtx->gap42[72]
+                        && *(uint64_t *)&krwCtx->gap42[80];
+    bool hasPipePairKrw = *(uint32_t *)gap192 != -1
+                       && krwCtx->gap1911[1] != -1
+                       && ((krwCtx->gap1915 != -1 && krwCtx->gap190u)
+                        || (krwCtx->gap1913 != -1 && krwCtx->gap1914 != -1));
+    bool hasTargetPortKrw = (unsigned int)(LODWORD(krwCtx->gap191[693]) + 1) >= 2;
+    if ( v96 && (hasThreadStateKrw || hasIOConnectKrw || hasPipePairKrw || hasTargetPortKrw) )
     {
-      v39 = iogpu_krw_ctx_setup((__int64)krwCtx, &v96) == 0;
-LABEL_122:
-      if ( !v39 )
-        return 163869;
-      if ( v96
-        && (krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->gap42[40]
-         || (unsigned int)(*(uint32_t *)&krwCtx->gap42[56] + 1) >= 2
-         && *(uint64_t *)&krwCtx->gap42[72]
-         && *(uint64_t *)&krwCtx->gap42[80]
-         || *(uint32_t *)gap192 != -1
-         && krwCtx->gap1911[1] != -1
-         && (krwCtx->gap1915 != -1 && krwCtx->gap190u || krwCtx->gap1913 != -1 && krwCtx->gap1914 != -1)
-         || (unsigned int)(LODWORD(krwCtx->gap191[693]) + 1) >= 2) )
-      {
-        krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_KRW_METHODS_READY);
-      }
-      goto LABEL_148;
+      krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_KRW_METHODS_READY);
     }
-LABEL_121:
-    v39 = krw_setup_iosurface_v2((__int64)krwCtx, &v96);
-    goto LABEL_122;
   }
-LABEL_148:
   v41 = krwCtx->xnuVersionPacked;
   if ( v41 >> 43 <= 0x44A )
     v42 = 128;
@@ -45564,38 +45578,26 @@ LABEL_291:
             return mach_port_with_a2;
           if ( v96 || !something )
             return 0;
-          v91 = krwCtx->xnuVersionPacked;
-          if ( v91 <= XNU_VERSION_PACKED(10002, 60, 75, 0, 2) )
+          setupPath = krw_select_setup_path(krwCtx);
+          switch ( setupPath )
           {
-            if ( v91 <= XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) )
-            {
-              if ( v91 <= XNU_VERSION_PACKED(8796, 102, 4, 1023, 1023) )
-              {
-                if ( v91 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 && v91 <= XNU_VERSION_PACKED(8020, 99, 1023, 1023, 1023) )
-                {
-                  v92 = krw_setup_voucher((__int64)krwCtx);
-                  goto LABEL_350;
-                }
-              }
-              else if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12) != 0 )
-              {
-                goto LABEL_349;
-              }
+            case KRW_SETUP_PATH_VOUCHER:
+              v92 = krw_setup_voucher((__int64)krwCtx);
+              break;
+            case KRW_SETUP_PATH_PORTS_VM:
               v92 = krw_setup_physmap((__int64)krwCtx);
-              goto LABEL_350;
-            }
+              break;
+            case KRW_SETUP_PATH_IOGPU:
+              v92 = iogpu_physmap_init((__int64)krwCtx) == 0;
+              break;
+            case KRW_SETUP_PATH_IOSURFACE:
+            default:
+              v92 = krw_setup_iosurface((__int64)krwCtx);
+              break;
           }
-          else if ( (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
-          {
-            v92 = iogpu_physmap_init((__int64)krwCtx) == 0;
-LABEL_350:
-            if ( !v92 )
-              return 163868;
-            return 0;
-          }
-LABEL_349:
-          v92 = krw_setup_iosurface((__int64)krwCtx);
-          goto LABEL_350;
+          if ( !v92 )
+            return 163868;
+          return 0;
         }
         return 163843;
       }
