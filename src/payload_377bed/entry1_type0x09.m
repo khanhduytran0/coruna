@@ -430,7 +430,7 @@ bool __fastcall krw_ctx_has_read_caps(struct_krwCtx *ctx);
 __int64 __fastcall setup_krw_engine(struct_krwCtx *ctx);
 __int64 __fastcall teardown_krw_thread(struct_krwCtx *ctx);
 __int64 __fastcall get_page_size_for_kaddr(__int64);
-bool __fastcall has_valid_krw_path(__int64);
+bool __fastcall has_valid_krw_path(struct_krwCtx *ctx);
 __int64 __fastcall kreadbuf_via_dev_null_only(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5);
 __int64 __fastcall necp_semaphore_kread(__int64 a1, __int64 a2, char *a3, mach_msg_type_number_t a4);
 __int64 __fastcall necp_fd_verify_roundtrip(__int64 a1, __int64 a2);
@@ -728,6 +728,14 @@ enum
 {
   KRW_CTX_OLD_PTRAUTH_BASE_OFFSET = 0x228,
   KRW_CTX_OLD_SELF_TASK_IPC_OFFSET = 0x230,
+  KRW_CTX_NECP_TRIGGER_ADDR_OFFSET = 0x218,
+  KRW_CTX_PPL_DATA_CONST_PTR_OFFSET = 0x220,
+  KRW_CTX_SHARED_MEM_PORT_OFFSET = 0xE8,
+  KRW_CTX_SHARED_MEM_USER_ADDR_OFFSET = 0xF8,
+  KRW_CTX_SHARED_MEM_KERN_ADDR_OFFSET = 0x100,
+  KRW_CTX_PIPE_READ_FD_OFFSET = 0x1930,
+  KRW_CTX_PIPE_WRITE_FD_OFFSET = 0x1934,
+  KRW_CTX_IOSURFACE_FD_OFFSET = 0x1940,
   KRW_CTX_NECP_FD_OFFSET = 0x1944,
   KRW_CTX_NECP_UUID_OFFSET = 0x1948,
   KRW_CTX_NECP_PORT_SET_KADDR_OFFSET = 0x1958,
@@ -16363,7 +16371,7 @@ __int64 __fastcall macho_walk_segment_by_name_impl(__int64 a1, unsigned __int64 
       if ( v16 <= v15 )
         return 0;
     }
-    if ( has_valid_krw_path(*(uint64_t *)(v9 + 280))
+    if ( has_valid_krw_path((struct_krwCtx *)*(uint64_t *)(v9 + 280))
       && krw_ctx_has_read_caps((struct_krwCtx *)*(uint64_t *)(v9 + 280))
       && (unsigned int)get_page_size_for_kaddr(*(uint64_t *)(v9 + 280)) > *(uint32_t *)(v9 + 56)
       && v16 - v15 < (unsigned int)get_page_size_for_kaddr(*(uint64_t *)(v9 + 280))
@@ -25950,16 +25958,16 @@ __int64 __fastcall get_page_size_for_kaddr(__int64 a1)
 }
 
 //----- (0000000000025DE8) ----------------------------------------------------
-bool __fastcall has_valid_krw_path(__int64 a1)
+bool __fastcall has_valid_krw_path(struct_krwCtx *ctx)
 {
-  bool hasFdKrw = *(uint32_t *)(a1 + 6448) != -1
-               && *(uint32_t *)(a1 + 6452) != -1
-               && *(uint32_t *)(a1 + 6464) != -1
-               && *(uint64_t *)(a1 + 536);
-  bool hasMappedPortKrw = (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2
-                       && *(uint64_t *)(a1 + 248)
-                       && *(uint64_t *)(a1 + 256)
-                       && *(int *)(a1 + 320) < 10002;
+  bool hasFdKrw = KRW_CTX_AT(ctx, uint32_t, KRW_CTX_PIPE_READ_FD_OFFSET) != -1
+               && KRW_CTX_AT(ctx, uint32_t, KRW_CTX_PIPE_WRITE_FD_OFFSET) != -1
+               && KRW_CTX_AT(ctx, uint32_t, KRW_CTX_IOSURFACE_FD_OFFSET) != -1
+               && KRW_CTX_AT(ctx, uint64_t, KRW_CTX_NECP_TRIGGER_ADDR_OFFSET);
+  bool hasMappedPortKrw = (unsigned int)(KRW_CTX_AT(ctx, uint32_t, KRW_CTX_SHARED_MEM_PORT_OFFSET) + 1) >= 2
+                       && KRW_CTX_AT(ctx, uint64_t, KRW_CTX_SHARED_MEM_USER_ADDR_OFFSET)
+                       && KRW_CTX_AT(ctx, uint64_t, KRW_CTX_SHARED_MEM_KERN_ADDR_OFFSET)
+                       && ctx->xnuMajorVersion < 10002;
 
   return hasFdKrw || hasMappedPortKrw;
 }
@@ -45193,7 +45201,7 @@ LABEL_96:
     if ( (uint32_t)mach_port_with_a2 )
       return mach_port_with_a2;
   }
-  if ( has_valid_krw_path((__int64)krwCtx) )
+  if ( has_valid_krw_path(krwCtx) )
   {
     if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && krwCtx->gap4[7] )
     {
