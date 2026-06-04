@@ -59,7 +59,15 @@ typedef struct {
 __int64 __fastcall driver(uint64_t *a1);
 __int64 __fastcall driver_free(__int128 *a1);
 __int64 __fastcall driver_init(__int64 vtable, char something, struct_krwCtx **krwCtxOut);
-__int64 __fastcall driver_dispatch_command(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, __int64 a7, __int64 a8);
+__int64 __fastcall driver_dispatch_command(
+        __int64 vtable,
+        struct_krwCtx *krwCtx,
+        int cmd,
+        __int64 arg0,
+        __int64 arg1,
+        __int64 arg2,
+        __int64 arg3,
+        __int64 arg4);
 __int64 __fastcall krw_teardown_dispatch(__int64 a1, __int64 a2);
 __int64 __fastcall driver_close(__int64 a1, char *a2);
 __int64 __fastcall krw_get_conn_port(__int64, __int64, uint32_t *);
@@ -683,8 +691,17 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something);
 bool __fastcall validate_ipc_kobject_read(struct_krwCtx *a1, mach_port_t a2);
 __int64 __fastcall driver_init2(struct_krwCtx **krwCtxOut, char something);
 __int64 __fastcall free_decompressed_macho(uint64_t *a1);
-__int64 __fastcall driver_dispatch_command2(struct_krwCtx *a1, int a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, __int64 a7, __int64 a8, __int64 a9);
-__int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 inoutValue);
+__int64 __fastcall driver_dispatch_command2(
+        struct_krwCtx *krwCtx,
+        int cmd,
+        __int64 cmdMirror,
+        __int64 arg0,
+        __int64 arg1,
+        __int64 arg2,
+        __int64 arg3,
+        __int64 arg4,
+        __int64 inoutValue);
+__int64 __fastcall driver_dispatch_command3(struct_krwCtx *krwCtx, int cmd, __int64 inoutValue);
 __int64 __fastcall reinit_and_refresh_krw_ctx(__int64 a1);
 __int64 __fastcall driver_close_internal(char *a1);
 __int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(__int64 a1, unsigned int a2, int a3, int a4);
@@ -1704,17 +1721,17 @@ __int64 __fastcall driver_init(__int64 vtable, char something, struct_krwCtx **k
 
 //----- (0000000000006030) ----------------------------------------------------
 __int64 __fastcall driver_dispatch_command(
-        __int64 a1,
-        __int64 a2,
-        __int64 a3,
-        __int64 a4,
-        __int64 a5,
-        __int64 a6,
-        __int64 a7,
-        __int64 a8)
+        __int64 vtable,
+        struct_krwCtx *krwCtx,
+        int cmd,
+        __int64 arg0,
+        __int64 arg1,
+        __int64 arg2,
+        __int64 arg3,
+        __int64 arg4)
 {
-  if ( a1 && a2 )
-    return driver_dispatch_command2(a2, a3, a3, a4, a5, a6, a7, a8, a4);
+  if ( vtable && krwCtx )
+    return driver_dispatch_command2(krwCtx, cmd, cmd, arg0, arg1, arg2, arg3, arg4, arg0);
   else
     return 708609;
 }
@@ -45823,17 +45840,17 @@ __int64 __fastcall free_decompressed_macho(uint64_t *a1)
 
 //----- (000000000003E550) ----------------------------------------------------
 __int64 __fastcall driver_dispatch_command2(
-        struct_krwCtx *a1,
-        int a2,
-        __int64 a3,
-        __int64 a4,
-        __int64 a5,
-        __int64 a6,
-        __int64 a7,
-        __int64 a8,
-        __int64 a9)
+        struct_krwCtx *krwCtx,
+        int cmd,
+        __int64 cmdMirror,
+        __int64 arg0,
+        __int64 arg1,
+        __int64 arg2,
+        __int64 arg3,
+        __int64 arg4,
+        __int64 inoutValue)
 {
-  return driver_dispatch_command3(a1, a2, a9);
+  return driver_dispatch_command3(krwCtx, cmd, inoutValue);
 }
 
 //----- (000000000003E580) ----------------------------------------------------
