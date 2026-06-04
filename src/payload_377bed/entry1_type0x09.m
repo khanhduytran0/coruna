@@ -264,7 +264,7 @@ __int64 __fastcall free_macho_image_vm(__int64 a1);
 bool __fastcall map_macho_image_vm(__int64 a1);
 bool __fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2);
 bool __fastcall iosurface_physmap_setup_bool(__int64 a1, int a2, __int64 a3, unsigned int a4);
-void *__fastcall iosurface_physmap_setup(__int64 a1, int a2, __int64 a3, unsigned int a4);
+bool __fastcall iosurface_physmap_setup(__int64 a1, int a2, __int64 a3, unsigned int a4);
 bool __fastcall iosurface_physmap_setup_alt(__int64 a1, int a2, __int64 a3, int a4);
 void __fastcall free_kernel_image_resources(__int64 a1);
 __int64 __fastcall krw_ctx_setup_physmap(__int64 a1, uint64_t **a2, __int64 a3);
@@ -16703,13 +16703,13 @@ bool __fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
 //----- (000000000001A0D4) ----------------------------------------------------
 bool __fastcall iosurface_physmap_setup_bool(__int64 a1, int a2, __int64 a3, unsigned int a4)
 {
-  return (unsigned int)iosurface_physmap_setup(a1, a2, a3, a4) != 0;
+  return iosurface_physmap_setup(a1, a2, a3, a4);
 }
 
 //----- (000000000001A0F4) ----------------------------------------------------
-void *__fastcall iosurface_physmap_setup(__int64 a1, int a2, __int64 a3, unsigned int a4)
+bool __fastcall iosurface_physmap_setup(__int64 a1, int a2, __int64 a3, unsigned int a4)
 {
-  void *result; // x0
+  bool result; // w0
   __int64 v9; // x23
   int *v10; // x9
   __int64 v11; // x24
@@ -16742,11 +16742,12 @@ void *__fastcall iosurface_physmap_setup(__int64 a1, int a2, __int64 a3, unsigne
   unsigned __int64 v41; // x9
   bool v42; // cf
   unsigned __int64 v43; // x9
+  void *segments; // x0
   __int64 v44; // [xsp+0h] [xbp-70h]
   uint64_t v45[3]; // [xsp+8h] [xbp-68h] BYREF
 
   result = alloc_kernel_offset_table(a1, a3);
-  if ( !(uint32_t)result )
+  if ( !result )
     return result;
   *(uint32_t *)(a1 + 216) = a2;
   *(uint8_t *)(a1 + 256) = 1;
@@ -16810,16 +16811,16 @@ LABEL_27:
   if ( !v16 )
     return 0;
   *(uint32_t *)(a1 + 8) = v16;
-  result = malloc(56LL * v16);
-  *(uint64_t *)a1 = result;
-  if ( !result )
-    return result;
+  segments = malloc(56LL * v16);
+  *(uint64_t *)a1 = (uint64_t)segments;
+  if ( !segments )
+    return false;
   *(uint64_t *)(a1 + 272) = "__TEXT";
   v20 = v9 + 32;
   v21 = v9 + 32 + v11;
   if ( v9 + 32 < v21 )
   {
-    v22 = (__int64)result;
+    v22 = (__int64)segments;
     do
     {
       if ( *(uint32_t *)v20 == 25 )
@@ -16860,7 +16861,7 @@ LABEL_27:
     }
   }
   if ( (a4 & 0x40) != 0 )
-    return &def_3E8F0 + 1;
+    return true;
   v26 = **(int8x16_t ***)(a1 + 208);
   v27 = v26 + 2;
   v28 = v26[1].u32[1];
@@ -16919,7 +16920,7 @@ LABEL_54:
       continue;
     break;
   }
-  result = 0;
+  result = false;
   if ( ((v31 == 0) & (a4 >> 8)) == 0 && v30 )
   {
     if ( (~a4 & 0x500) == 0 && *(uint64_t *)(a1 + 160) )
@@ -16934,7 +16935,7 @@ LABEL_54:
     {
       *(uint64_t *)(a1 + 224) = v40;
       *(uint64_t *)(a1 + 232) = v43;
-      return (void *)map_macho_image_vm(a1);
+      return map_macho_image_vm(a1) != 0;
     }
     else
     {
@@ -16948,7 +16949,7 @@ LABEL_54:
 //----- (000000000001A4FC) ----------------------------------------------------
 bool __fastcall iosurface_physmap_setup_alt(__int64 a1, int a2, __int64 a3, int a4)
 {
-  return (unsigned int)iosurface_physmap_setup(a1, a2, a3, a4 | 0x100u) != 0;
+  return iosurface_physmap_setup(a1, a2, a3, a4 | 0x100u);
 }
 
 //----- (000000000001A520) ----------------------------------------------------
