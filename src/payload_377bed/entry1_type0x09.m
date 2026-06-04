@@ -916,6 +916,51 @@ static uint64_t driver_dispatch_finish(uint64_t status, bool commandSucceeded)
 #define DRIVER_CMD_STAGE1_NECP_CAPABILITIES ((int)0xC000010Bu)
 #define DRIVER_CMD_STAGE1_PHYSMAP_ENTRY_CHECK ((int)0x4000010Au)
 
+static uint64_t driver_dispatch_stage3_command(struct_krwCtx *krwCtx, int cmd, uint64_t inoutValue)
+{
+  if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || krwCtx->xnuMajorVersion > 8791 )
+    return 708616;
+
+  if ( cmd > 0x40000300 )
+  {
+    switch ( cmd )
+    {
+      case DRIVER_CMD_STAGE3_SETUP_UNTETHERED:
+        return driver_cmd_setup_untethered_persistence_maybe(krwCtx, *(uint32_t *)inoutValue);
+      case DRIVER_CMD_STAGE3_KCALL_1ARG:
+        return krw_dispatch_call_1arg((__int64)krwCtx, *(uint32_t *)(inoutValue + 12));
+      case DRIVER_CMD_STAGE3_KCALL_6ARGS:
+        return krw_dispatch_call_6args(
+          (__int64)krwCtx,
+          *(uint32_t *)inoutValue,
+          *(uint64_t *)(inoutValue + 8),
+          *(uint64_t *)(inoutValue + 16),
+          *(uint32_t *)(inoutValue + 24),
+          *(uint64_t *)(inoutValue + 32));
+      case DRIVER_CMD_STAGE3_PHYSMAP_CHECK_RANGE:
+        return physmap_check_range_wrapper((__int64)krwCtx, inoutValue, 20);
+      default:
+        return 708616;
+    }
+  }
+
+  switch ( cmd )
+  {
+    case DRIVER_CMD_STAGE3_GET_ROOT_MOUNT_INFO:
+      return get_root_mount_info((__int64)krwCtx, (uint32_t *)inoutValue, (char *)(inoutValue + 16));
+    case DRIVER_CMD_STAGE3_KCALL_3ARGS:
+      return krw_dispatch_call_3args(
+        (__int64)krwCtx,
+        *(uint64_t *)inoutValue,
+        *(uint32_t *)(inoutValue + 8),
+        inoutValue + 12);
+    case DRIVER_CMD_STAGE3_GET_MOUNT_POINT:
+      return get_mount_point_via_dispatch((__int64)krwCtx);
+    default:
+      return 708616;
+  }
+}
+
 __int64 __fastcall j__fileport_makeport(int a1, mach_port_t *a2);
 int __fastcall j__fileport_makefd(mach_port_t);
 __int64 __fastcall __mac_syscall(__int64 a1, __int64 a2, __int64 a3);
@@ -45927,7 +45972,6 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
   int xnuMajorVersion; // w8
   __int64 v11; // x22
   __int64 v12; // x8
-  __int64 v13; // x0
   int v14; // w23
   int v15; // w0
   int v16; // w0
@@ -45980,51 +46024,7 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
     {
       if ( BYTE1(cmd) == 3 )
       {
-        if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || a1->xnuMajorVersion > 8791 )
-          goto LABEL_219;
-        if ( cmd > 0x40000300 )
-        {
-          switch ( cmd )
-          {
-            case DRIVER_CMD_STAGE3_SETUP_UNTETHERED:
-              v13 = driver_cmd_setup_untethered_persistence_maybe(a1, *(uint32_t *)v3);
-              goto LABEL_90;
-            case DRIVER_CMD_STAGE3_KCALL_1ARG:
-              v13 = krw_dispatch_call_1arg((__int64)a1, *(uint32_t *)(v3 + 12));
-              goto LABEL_90;
-            case DRIVER_CMD_STAGE3_KCALL_6ARGS:
-              v13 = krw_dispatch_call_6args(
-                      (__int64)a1,
-                      *(uint32_t *)v3,
-                      *(uint64_t *)(v3 + 8),
-                      *(uint64_t *)(v3 + 16),
-                      *(uint32_t *)(v3 + 24),
-                      *(uint64_t *)(v3 + 32));
-              goto LABEL_90;
-            case DRIVER_CMD_STAGE3_PHYSMAP_CHECK_RANGE:
-              v13 = physmap_check_range_wrapper((__int64)a1, v3, 20);
-              goto LABEL_90;
-            default:
-              goto LABEL_219;
-          }
-          goto LABEL_219;
-        }
-        switch ( cmd )
-        {
-          case DRIVER_CMD_STAGE3_GET_ROOT_MOUNT_INFO:
-            v13 = get_root_mount_info((__int64)a1, (uint32_t *)v3, (char *)(v3 + 16));
-            break;
-          case DRIVER_CMD_STAGE3_KCALL_3ARGS:
-            v13 = krw_dispatch_call_3args((__int64)a1, *(uint64_t *)v3, *(uint32_t *)(v3 + 8), v3 + 12);
-            break;
-          case DRIVER_CMD_STAGE3_GET_MOUNT_POINT:
-            v13 = get_mount_point_via_dispatch((__int64)a1);
-            break;
-          default:
-            goto LABEL_219;
-        }
-LABEL_90:
-        v6 = v13;
+        v6 = driver_dispatch_stage3_command(a1, cmd, v3);
         goto LABEL_219;
       }
       if ( BYTE1(cmd) != 1 )
