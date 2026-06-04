@@ -6,6 +6,7 @@
 
 #include <defs.h>
 #include <sys/syscall.h>
+#include <stdarg.h>
 @import Foundation;
 
 #ifndef RECOMP_TRACE_DMAFAIL
@@ -48522,7 +48523,26 @@ void *__cdecl dlsym(void *__handle, const char *__symbol)
 //----- (000000000004161C) ----------------------------------------------------
 int fcntl(int a1, int a2, ...)
 {
-  return _fcntl(a1, a2);
+  va_list ap;
+  int result;
+
+  switch ( a2 )
+  {
+    case 2:
+    case 4:
+    case 5:
+    case 6:
+    case 50:
+    case 59:
+    case 61:
+    case 73:
+      va_start(ap, a2);
+      result = _fcntl(a1, a2, va_arg(ap, long));
+      va_end(ap);
+      return result;
+    default:
+      return _fcntl(a1, a2);
+  }
 }
 
 //----- (000000000004162C) ----------------------------------------------------
@@ -48646,7 +48666,13 @@ kern_return_t __cdecl host_security_set_task_token(
 //----- (000000000004173C) ----------------------------------------------------
 int ioctl(int a1, unsigned __int64 a2, ...)
 {
-  return _ioctl(a1, a2);
+  va_list ap;
+  void *arg;
+
+  va_start(ap, a2);
+  arg = va_arg(ap, void *);
+  va_end(ap);
+  return _ioctl(a1, a2, arg);
 }
 
 //----- (000000000004174C) ----------------------------------------------------
@@ -48972,13 +48998,29 @@ int necp_open(int flags)
 //----- (00000000000419CC) ----------------------------------------------------
 int open(const char *a1, int a2, ...)
 {
-  return _open(a1, a2);
+  va_list ap;
+  mode_t mode;
+
+  if ( (a2 & 0x200) == 0 )
+    return _open(a1, a2);
+  va_start(ap, a2);
+  mode = (mode_t)va_arg(ap, int);
+  va_end(ap);
+  return _open(a1, a2, mode);
 }
 
 //----- (00000000000419DC) ----------------------------------------------------
 int open_dprotected_np(const char *a1, int a2, int a3, int a4, ...)
 {
-  return _open_dprotected_np(a1, a2, a3, a4);
+  va_list ap;
+  mode_t mode;
+
+  if ( (a2 & 0x200) == 0 )
+    return _open_dprotected_np(a1, a2, a3, a4);
+  va_start(ap, a4);
+  mode = (mode_t)va_arg(ap, int);
+  va_end(ap);
+  return _open_dprotected_np(a1, a2, a3, a4, mode);
 }
 
 //----- (00000000000419EC) ----------------------------------------------------
@@ -49235,7 +49277,13 @@ int __cdecl setsockopt(int a1, int a2, int a3, const void *a4, socklen_t a5)
 //----- (0000000000041C7C) ----------------------------------------------------
 int snprintf(char *__str, size_t __size, const char *__format, ...)
 {
-  return _snprintf(__str, __size, __format);
+  va_list ap;
+  int result;
+
+  va_start(ap, __format);
+  result = vsnprintf(__str, __size, __format, ap);
+  va_end(ap);
+  return result;
 }
 
 //----- (0000000000041C8C) ----------------------------------------------------
@@ -49319,7 +49367,23 @@ __int64 __cdecl strtol(const char *__str, char **__endptr, int __base)
 //----- (0000000000041D6C) ----------------------------------------------------
 int syscall(int a1, ...)
 {
-  return _syscall(a1);
+  va_list ap;
+  __int64 a2;
+  __int64 a3;
+  __int64 a4;
+  __int64 a5;
+  __int64 a6;
+  __int64 a7;
+
+  va_start(ap, a1);
+  a2 = va_arg(ap, __int64);
+  a3 = va_arg(ap, __int64);
+  a4 = va_arg(ap, __int64);
+  a5 = va_arg(ap, __int64);
+  a6 = va_arg(ap, __int64);
+  a7 = va_arg(ap, __int64);
+  va_end(ap);
+  return _syscall(a1, a2, a3, a4, a5, a6, a7);
 }
 
 //----- (0000000000041D7C) ----------------------------------------------------
