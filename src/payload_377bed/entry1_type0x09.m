@@ -862,6 +862,8 @@ static uint64_t driver_dispatch_finish(uint64_t status, bool commandSucceeded)
   return 163843;
 }
 
+char *_CFProcessPath(void);
+
 #define DRIVER_CMD_PATCH_PARENT_CSFLAGS 1
 #define DRIVER_CMD_GET_SELF_TASK_PORT_OFFSET 2
 #define DRIVER_CMD_INJECT_TFP0_ENTITLEMENT 3
@@ -959,6 +961,194 @@ static uint64_t driver_dispatch_stage3_command(struct_krwCtx *krwCtx, int cmd, u
     default:
       return 708616;
   }
+}
+
+static uint64_t driver_dispatch_stage1_command(struct_krwCtx *a1, int cmd, uint64_t inoutValue)
+{
+  uint64_t v3; // x20
+  uint64_t v6; // x21
+  int v14; // w23
+  int v15; // w0
+  int v16; // w0
+  int v21; // w0
+  int v22; // w22
+  int v23; // w21
+  int v24; // w22
+  unsigned int v25; // w1
+  bool v26; // w8
+  int v27; // w20
+  int v28; // w8
+  __int64 v50; // [xsp+0h] [xbp-40h] BYREF
+  int v51; // [xsp+8h] [xbp-38h] BYREF
+  int v52; // [xsp+Ch] [xbp-34h] BYREF
+
+  v3 = inoutValue;
+  v6 = 708616;
+  v14 = 0;
+  v50 = 0;
+  LODWORD(v50) = v3;
+  v52 = 0;
+  if ( cmd > 264 )
+  {
+    if ( cmd > 268 )
+    {
+      if ( cmd != DRIVER_CMD_STAGE1_CHECK_DISPATCH_KRW )
+      {
+        if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_ENTRY_CHECK )
+        {
+          v15 = physmap_entry_check((__int64)a1, *(uint32_t *)v3, *(uint32_t *)(v3 + 4), *(uint64_t *)(v3 + 16));
+          goto LABEL_79;
+        }
+        if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_SINGLE_CHECK )
+        {
+          v15 = physmap_single_check((__int64)a1, v3, 20);
+LABEL_79:
+          v14 = v15;
+          LODWORD(v6) = 0;
+        }
+LABEL_179:
+        v26 = v14 == 0;
+LABEL_180:
+        return driver_dispatch_finish(v6, !v26);
+      }
+      if ( a1->xnuVersionPacked >> 43 >= 0x44B )
+      {
+        v15 = check_dispatch_krw_state(a1, v3 != 0);
+        goto LABEL_79;
+      }
+LABEL_84:
+      v14 = 0;
+      goto LABEL_179;
+    }
+    if ( cmd != DRIVER_CMD_STAGE1_CHECK_MOUNT_THREAD )
+    {
+      if ( cmd == DRIVER_CMD_STAGE1_WALK_CSBLOB_FOR_PATH )
+      {
+        if ( !v3 )
+          v3 = _CFProcessPath();
+        v21 = open((const char *)v3, 0, v50);
+        if ( v21 == -1 )
+        {
+          v27 = errno;
+          v14 = 0;
+          v28 = errno;
+          if ( v27 < 0 )
+            v28 = -v28;
+          LODWORD(v6) = v28 | 0x40000000;
+        }
+        else
+        {
+          v22 = v21;
+          if ( v3 )
+            LODWORD(v6) = 0;
+          else
+            LODWORD(v6) = 708609;
+          v14 = walk_csblob_chain_for_offset(a1, v21);
+          close(v22);
+        }
+      }
+      goto LABEL_179;
+    }
+    v25 = v3 & 0xF;
+    if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
+    {
+      if ( v25 > 2 )
+      {
+        v14 = 0;
+        LODWORD(v6) = 708609;
+        goto LABEL_179;
+      }
+      v15 = check_mount_thread_info(a1, v25);
+      goto LABEL_79;
+    }
+    if ( v25 == 1 )
+      LODWORD(v6) = 708616;
+    else
+      LODWORD(v6) = 0;
+    goto LABEL_178;
+  }
+  if ( cmd > -2147483380 )
+  {
+    if ( cmd != DRIVER_CMD_STAGE1_CHECK_KRW_NECP_STATE )
+    {
+      if ( cmd != DRIVER_CMD_STAGE1_NECP_CAPABILITIES )
+        goto LABEL_179;
+      v23 = *(uint32_t *)v3;
+      v24 = (*(uint32_t *)v3 & 1) != 0 && a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && a1->xnuMajorVersion < 8792;
+      if ( (v23 & 4) != 0 )
+      {
+        if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
+        {
+          if ( check_necp_flag(a1) )
+            v24 |= 4u;
+        }
+        else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11) && a1->xnuMajorVersion > 6152 )
+        {
+          v24 |= 4u;
+        }
+      }
+      if ( (v23 & 2) != 0 )
+      {
+        if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
+        {
+          if ( check_necp_flag(a1) )
+            v24 |= 2u;
+        }
+        else
+        {
+          v24 |= 2u;
+        }
+      }
+      if ( (v23 & 8) != 0 && a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
+        v24 |= 8u;
+      LODWORD(v6) = 0;
+      *(uint32_t *)v3 = v24;
+      goto LABEL_178;
+    }
+    v16 = 0;
+    LOBYTE(v51) = 0;
+    if ( a1->xnuVersionPacked >> 43 >= 0x44B )
+    {
+      v16 = check_krw_necp_state(a1, (bool *)&v51);
+      LODWORD(v6) = 0;
+      if ( v16 )
+        LODWORD(v50) = (unsigned __int8)v51;
+    }
+  }
+  else
+  {
+    if ( cmd == DRIVER_CMD_STAGE1_GET_ROOT_PREFIX )
+    {
+      v51 = 1024;
+      if ( !(unsigned int)get_root_prefix_path((__int64)a1, (void *)(v3 + 16), (uint32_t *)&v51, (int *)&v52) )
+      {
+        LODWORD(v6) = 0;
+        goto LABEL_84;
+      }
+      if ( v52 )
+        *(uint32_t *)v3 = 1;
+      LODWORD(v6) = 0;
+      if ( v51 )
+        *(uint32_t *)v3 |= 2u;
+LABEL_178:
+      v14 = 1;
+      goto LABEL_179;
+    }
+    if ( cmd != DRIVER_CMD_STAGE1_GET_ROOT_STATFS )
+      goto LABEL_179;
+    v16 = get_root_statfs((__int64)a1, (int *)&v50);
+    LODWORD(v6) = 0;
+  }
+  if ( v16 )
+  {
+    v26 = 0;
+    *(uint32_t *)v3 = v50;
+  }
+  else
+  {
+    v26 = 1;
+  }
+  goto LABEL_180;
 }
 
 __int64 __fastcall j__fileport_makeport(int a1, mach_port_t *a2);
@@ -45972,21 +46162,10 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
   int xnuMajorVersion; // w8
   __int64 v11; // x22
   __int64 v12; // x8
-  int v14; // w23
-  int v15; // w0
-  int v16; // w0
   task_name_t v17; // w1
   struct_krwCtx *v18; // x0
   int v19; // w2
   __int64 *v20; // x3
-  int v21; // w0
-  int v22; // w22
-  int v23; // w21
-  int v24; // w22
-  unsigned int v25; // w1
-  bool v26; // w8
-  int v27; // w20
-  int v28; // w8
   task_inspect_t v29; // w1
   mach_port_t v30; // w1
   mach_port_t v31; // w20
@@ -46009,7 +46188,6 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
   unsigned __int64 v48; // x20
   int v49; // w22
   __int64 v50; // [xsp+0h] [xbp-40h] BYREF
-  int v51; // [xsp+8h] [xbp-38h] BYREF
   int v52; // [xsp+Ch] [xbp-34h] BYREF
 
   v3 = inoutValue;
@@ -46386,171 +46564,8 @@ LABEL_219:
         free_decompressed_macho(a1);
         return v6;
       }
-      v14 = 0;
-      LODWORD(v50) = v3;
-      v52 = 0;
-      if ( cmd > 264 )
-      {
-        if ( cmd > 268 )
-        {
-          if ( cmd != DRIVER_CMD_STAGE1_CHECK_DISPATCH_KRW )
-          {
-            if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_ENTRY_CHECK )
-            {
-              v15 = physmap_entry_check((__int64)a1, *(uint32_t *)v3, *(uint32_t *)(v3 + 4), *(uint64_t *)(v3 + 16));
-              goto LABEL_79;
-            }
-            if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_SINGLE_CHECK )
-            {
-              v15 = physmap_single_check((__int64)a1, v3, 20);
-LABEL_79:
-              v14 = v15;
-              LODWORD(v6) = 0;
-            }
-LABEL_179:
-            v26 = v14 == 0;
-LABEL_180:
-            v6 = driver_dispatch_finish(v6, !v26);
-            goto LABEL_219;
-          }
-          if ( a1->xnuVersionPacked >> 43 >= 0x44B )
-          {
-            v15 = check_dispatch_krw_state(a1, v3 != 0);
-            goto LABEL_79;
-          }
-LABEL_84:
-          v14 = 0;
-          goto LABEL_179;
-        }
-        if ( cmd != DRIVER_CMD_STAGE1_CHECK_MOUNT_THREAD )
-        {
-          if ( cmd == DRIVER_CMD_STAGE1_WALK_CSBLOB_FOR_PATH )
-          {
-            if ( !v3 )
-              v3 = _CFProcessPath();
-            v21 = open((const char *)v3, 0, v50);
-            if ( v21 == -1 )
-            {
-              v27 = errno;
-              v14 = 0;
-              v28 = errno;
-              if ( v27 < 0 )
-                v28 = -v28;
-              LODWORD(v6) = v28 | 0x40000000;
-            }
-            else
-            {
-              v22 = v21;
-              if ( v3 )
-                LODWORD(v6) = 0;
-              else
-                LODWORD(v6) = 708609;
-              v14 = walk_csblob_chain_for_offset(a1, v21);
-              close(v22);
-            }
-          }
-          goto LABEL_179;
-        }
-        v25 = v3 & 0xF;
-        if ( a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
-        {
-          if ( v25 > 2 )
-          {
-            v14 = 0;
-            LODWORD(v6) = 708609;
-            goto LABEL_179;
-          }
-          v15 = check_mount_thread_info(a1, v25);
-          goto LABEL_79;
-        }
-        if ( v25 == 1 )
-          LODWORD(v6) = 708616;
-        else
-          LODWORD(v6) = 0;
-        goto LABEL_178;
-      }
-      if ( cmd > -2147483380 )
-      {
-        if ( cmd != DRIVER_CMD_STAGE1_CHECK_KRW_NECP_STATE )
-        {
-          if ( cmd != DRIVER_CMD_STAGE1_NECP_CAPABILITIES )
-            goto LABEL_179;
-          v23 = *(uint32_t *)v3;
-          v24 = (*(uint32_t *)v3 & 1) != 0 && a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && a1->xnuMajorVersion < 8792;
-          if ( (v23 & 4) != 0 )
-          {
-            if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
-            {
-              if ( check_necp_flag(a1) )
-                v24 |= 4u;
-            }
-            else if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11) && a1->xnuMajorVersion > 6152 )
-            {
-              v24 |= 4u;
-            }
-          }
-          if ( (v23 & 2) != 0 )
-          {
-            if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
-            {
-              if ( check_necp_flag(a1) )
-                v24 |= 2u;
-            }
-            else
-            {
-              v24 |= 2u;
-            }
-          }
-          if ( (v23 & 8) != 0 && a1->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
-            v24 |= 8u;
-          LODWORD(v6) = 0;
-          *(uint32_t *)v3 = v24;
-          goto LABEL_178;
-        }
-        v16 = 0;
-        LOBYTE(v51) = 0;
-        if ( a1->xnuVersionPacked >> 43 >= 0x44B )
-        {
-          v16 = check_krw_necp_state(a1, (bool *)&v51);
-          LODWORD(v6) = 0;
-          if ( v16 )
-            LODWORD(v50) = (unsigned __int8)v51;
-        }
-      }
-      else
-      {
-        if ( cmd == DRIVER_CMD_STAGE1_GET_ROOT_PREFIX )
-        {
-          v51 = 1024;
-          if ( !(unsigned int)get_root_prefix_path((__int64)a1, (void *)(v3 + 16), &v51, (int *)&v52) )
-          {
-            LODWORD(v6) = 0;
-            goto LABEL_84;
-          }
-          if ( v52 )
-            *(uint32_t *)v3 = 1;
-          LODWORD(v6) = 0;
-          if ( v51 )
-            *(uint32_t *)v3 |= 2u;
-LABEL_178:
-          v14 = 1;
-          goto LABEL_179;
-        }
-        if ( cmd != DRIVER_CMD_STAGE1_GET_ROOT_STATFS )
-          goto LABEL_179;
-        v16 = get_root_statfs((__int64)a1, (int *)&v50);
-        LODWORD(v6) = 0;
-      }
-      if ( v16 )
-      {
-        v26 = 0;
-        *(uint32_t *)v3 = v50;
-      }
-      else
-      {
-        v26 = 1;
-      }
-      goto LABEL_180;
+      v6 = driver_dispatch_stage1_command(a1, cmd, v3);
+      goto LABEL_219;
     }
   }
   return result;
