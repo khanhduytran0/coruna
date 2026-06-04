@@ -47,6 +47,11 @@
 #endif
 
 
+typedef struct {
+  uint64_t packed_info;
+  uint64_t object_id;
+} vm_region_nesting_result;
+
 //-------------------------------------------------------------------------
 // Function declarations
 
@@ -61,7 +66,7 @@ __int64 __fastcall krw_read_iogpu(__int64 a1, __int64 *a2, __int64 a3, unsigned 
 __int64 __fastcall parse_kernel_version(__int64 a1, __int64 a2);
 vm_address_t __fastcall vm_remap_new_target(vm_address_t src_address, vm_size_t size, boolean_t copy);
 __int64 __fastcall vm_remap_inplace(vm_address_t src_address, vm_size_t size, boolean_t copy); // idb
-unsigned __int64 __fastcall query_vm_region_nesting(vm_address_t a1);
+vm_region_nesting_result __fastcall query_vm_region_nesting(vm_address_t a1);
 __int64 __fastcall compare_entry_by_offset(__int64, __int64);
 __int64 __fastcall compare_entry_unsigned(__int64, __int64);
 __int64 setup_thread_policy();
@@ -1813,12 +1818,9 @@ __int64 __fastcall vm_remap_inplace(vm_address_t src_address, vm_size_t size, bo
 }
 
 //----- (0000000000006448) ----------------------------------------------------
-unsigned __int64 __fastcall query_vm_region_nesting(vm_address_t a1)
+vm_region_nesting_result __fastcall query_vm_region_nesting(vm_address_t a1)
 {
-  __int128 v2; // [xsp+0h] [xbp-70h] BYREF
-  __int128 v3; // [xsp+10h] [xbp-60h]
-  __int128 v4; // [xsp+20h] [xbp-50h]
-  uint32_t v5[7]; // [xsp+30h] [xbp-40h] BYREF
+  uint32_t info[19]; // [xsp+0h] [xbp-70h] BYREF
   vm_size_t size; // [xsp+58h] [xbp-18h] BYREF
   vm_address_t address; // [xsp+60h] [xbp-10h] BYREF
   mach_msg_type_number_t infoCnt; // [xsp+68h] [xbp-8h] BYREF
@@ -1826,14 +1828,14 @@ unsigned __int64 __fastcall query_vm_region_nesting(vm_address_t a1)
 
   size = 0;
   address = a1;
-  v4 = 0u;
-  memset(v5, 0, sizeof(v5));
-  v2 = 0u;
-  v3 = 0u;
+  memset(info, 0, sizeof(info));
   infoCnt = 19;
   nesting_depth = 1;
-  vm_region_recurse_64(mach_task_self_, &address, &size, &nesting_depth, (vm_region_recurse_info_t)&v2, &infoCnt);
-  return DWORD2(v3) | ((unsigned __int64)DWORD2(v4) << 32);
+  vm_region_recurse_64(mach_task_self_, &address, &size, &nesting_depth, (vm_region_recurse_info_t)info, &infoCnt);
+  return (vm_region_nesting_result){
+    info[6] | ((unsigned __int64)info[10] << 32),
+    *(uint64_t *)&info[17],
+  };
 }
 
 //----- (00000000000064B8) ----------------------------------------------------
@@ -1997,9 +1999,9 @@ void __fastcall grow_vm_region_list(uint64_t *a1)
   }
   for ( j = 0; j != 1024000; j += 16 )
   {
-    query_vm_region_nesting(*(uint64_t *)&v5[j]);
+    vm_region_nesting_result nesting = query_vm_region_nesting(*(uint64_t *)&v5[j]);
     v5 = (char *)v2[1];
-    *(uint64_t *)&v5[j + 8] = v8;
+    *(uint64_t *)&v5[j + 8] = nesting.object_id;
   }
   v9 = (int (__cdecl *)(const void *, const void *))nullsub_1(compare_entry_by_offset);
   qsort(v5, 0xFA00u, 0x10u, v9);
@@ -2219,8 +2221,7 @@ __int64 __fastcall request_physmap_page(uint64_t *a1, __int64 a2)
   unsigned __int64 v16; // x8
   mach_port_name_t v17; // w1
   memory_object_size_t size; // [xsp+10h] [xbp-60h] BYREF
-  mem_entry_name_port_t object[2]; // [xsp+18h] [xbp-58h] BYREF
-  __int64 v20; // [xsp+20h] [xbp-50h]
+  mem_entry_name_port_t object[4]; // [xsp+18h] [xbp-50h] BYREF
 
   v4 = (vm_address_t *)get_vm_region_slot(a1);
   thread_switch(0, 2, 0);
@@ -2228,7 +2229,7 @@ __int64 __fastcall request_physmap_page(uint64_t *a1, __int64 a2)
   v5 = 0;
   *v4 = 0;
   *(uint64_t *)object = 0;
-  v20 = 0;
+  *(uint64_t *)&object[2] = 0;
   do
   {
     size = 0x4000;
@@ -2237,13 +2238,14 @@ __int64 __fastcall request_physmap_page(uint64_t *a1, __int64 a2)
   while ( v5 != 4 );
   size = 0;
   vm_map(mach_task_self_, &size, 0x4000u, 0, 1, object[0], 0, 0, 1, 1, 1u);
-  v6 = query_vm_region_nesting(size);
-  if ( v7 != v4[1] )
+  vm_region_nesting_result nesting = query_vm_region_nesting(size);
+  v6 = nesting.packed_info;
+  if ( nesting.object_id != v4[1] )
     goto LABEL_6;
-  v8 = v7;
+  v8 = nesting.object_id;
   v9 = (unsigned int)(HIDWORD(v6) + 1);
   v10 = start_physmap_worker_thread((__int64)a1, object);
-  v11 = query_vm_region_nesting(size);
+  v11 = query_vm_region_nesting(size).packed_info;
   if ( v9 == HIDWORD(v11) )
   {
     mach_port_deallocate(mach_task_self_, v10);
@@ -2701,8 +2703,7 @@ void *__fastcall alloc_physmap_page_entry(uint64_t *a1)
   *((uint32_t *)v2 + 8) = 0;
   v3 = *((uint64_t *)v2 + 7);
   vm_remap_inplace(v3, 0xC000u, 0);
-  query_vm_region_nesting(v3);
-  if ( v4 != *((uint64_t *)v2 + 2) )
+  if ( query_vm_region_nesting(v3).object_id != *((uint64_t *)v2 + 2) )
   {
     vm_deallocate(mach_task_self_, v3, 0xC000u);
     *((uint64_t *)v2 + 7) = 0;
@@ -2750,8 +2751,7 @@ void *__fastcall physmap_page_entry_alloc(uint64_t *a1, int a2)
   mach_port_deallocate(mach_task_self_, *((uint32_t *)v4 + 8));
   *((uint32_t *)v4 + 8) = 0;
   **((uint8_t **)v4 + 17) = 65;
-  query_vm_region_nesting(*((uint64_t *)v4 + 17));
-  if ( v5 != *((uint64_t *)v4 + 2) )
+  if ( query_vm_region_nesting(*((uint64_t *)v4 + 17)).object_id != *((uint64_t *)v4 + 2) )
   {
     v23 = 1;
 LABEL_23:
@@ -2769,8 +2769,7 @@ LABEL_23:
   mach_port_deallocate(mach_task_self_, *((uint32_t *)v4 + 18));
   *((uint32_t *)v4 + 18) = 0;
   *(uint8_t *)(*((uint64_t *)v4 + 18) + 0x10000LL) = 65;
-  query_vm_region_nesting(*((uint64_t *)v4 + 18));
-  if ( v7 != *((uint64_t *)v4 + 7) )
+  if ( query_vm_region_nesting(*((uint64_t *)v4 + 18)).object_id != *((uint64_t *)v4 + 7) )
   {
     v23 = 2;
     goto LABEL_23;
@@ -2786,8 +2785,7 @@ LABEL_23:
   mach_port_deallocate(mach_task_self_, *((uint32_t *)v4 + 28));
   *((uint32_t *)v4 + 28) = 0;
   *(uint8_t *)(*((uint64_t *)v4 + 19) + 0x8000LL) = 65;
-  query_vm_region_nesting(*((uint64_t *)v4 + 19));
-  if ( v9 != *((uint64_t *)v4 + 12) )
+  if ( query_vm_region_nesting(*((uint64_t *)v4 + 19)).object_id != *((uint64_t *)v4 + 12) )
   {
     v23 = 3;
     goto LABEL_23;
@@ -2816,8 +2814,7 @@ LABEL_23:
   *((uint64_t *)v4 + 19) = 0;
   v11 = *((uint64_t *)v4 + 21) + 0x8000LL;
   vm_protect(mach_task_self_, v11, 0x4000u, 0, 1);
-  query_vm_region_nesting(v11);
-  v13 = v12;
+  v13 = query_vm_region_nesting(v11).object_id;
   vm_protect(mach_task_self_, v11, 0x4000u, 0, 3);
   if ( v13 != *((uint64_t *)v4 + 2) )
   {
@@ -2838,8 +2835,7 @@ LABEL_23:
   *((uint64_t *)v4 + 8) = 0;
   *(uint8_t *)(*((uint64_t *)v4 + 24) + 0x4000LL) = 65;
   *((uint64_t *)v4 + 25) = vm_remap_new_target(*((uint64_t *)v4 + 24), 0x10000u, 0);
-  query_vm_region_nesting(*((uint64_t *)v4 + 24));
-  if ( v15 != *((uint64_t *)v4 + 7) )
+  if ( query_vm_region_nesting(*((uint64_t *)v4 + 24)).object_id != *((uint64_t *)v4 + 7) )
   {
     v23 = 5;
     goto LABEL_23;
@@ -2865,8 +2861,7 @@ LABEL_23:
   *((uint64_t *)v4 + 29) = vm_remap_new_target(v17, 0x10000u, 0);
   v18 = *((uint64_t *)v4 + 28);
   vm_protect(mach_task_self_, v18, 0x4000u, 0, 1);
-  query_vm_region_nesting(v18);
-  v20 = v19;
+  v20 = query_vm_region_nesting(v18).object_id;
   vm_protect(mach_task_self_, v18, 0x4000u, 0, 3);
   if ( v20 != *((uint64_t *)v4 + 7) )
   {
@@ -3190,13 +3185,13 @@ unsigned __int64 __fastcall run_physmap_worker_threads(__int64 a1)
     while ( (v9 & 1) == 0 );
   }
   usleep(0x1388u);
-  query_vm_region_nesting(*(uint64_t *)(a1 + 1088));
+  vm_region_nesting_result nesting = query_vm_region_nesting(*(uint64_t *)(a1 + 1088));
   v11 = 0;
   v12 = 1;
   while ( 1 )
   {
     v13 = v12;
-    if ( v10 == *(uint64_t *)(*(uint64_t *)(a1 + 8 * v11 + 1128) + 16LL) )
+    if ( nesting.object_id == *(uint64_t *)(*(uint64_t *)(a1 + 8 * v11 + 1128) + 16LL) )
       break;
     v12 = 0;
     v11 = 1;
@@ -3209,7 +3204,7 @@ LABEL_14:
   for ( i = 1; ; i = 0 )
   {
     v16 = i;
-    result = query_vm_region_nesting(*(uint64_t *)(*(uint64_t *)(a1 + 8 * v14 + 1168) + 56LL));
+    result = query_vm_region_nesting(*(uint64_t *)(*(uint64_t *)(a1 + 8 * v14 + 1168) + 56LL)).packed_info;
     if ( (uint32_t)result == 2 )
       break;
     v14 = 1;
@@ -3342,7 +3337,8 @@ void __fastcall validate_physmap_range_2(__int64 a1)
   do
   {
     v6 = *(uint64_t *)(*(uint64_t *)(a1 + 48) + 8 * v5);
-    if ( query_vm_region_nesting(v6) >> 32 )
+    vm_region_nesting_result nesting = query_vm_region_nesting(v6);
+    if ( nesting.packed_info >> 32 )
     {
       vm_deallocate(mach_task_self_, v6, 0x4000u);
       ++v5;
@@ -3354,7 +3350,7 @@ void __fastcall validate_physmap_range_2(__int64 a1)
       ++v5;
       v8 = a1 + 16 * v4;
       *(uint64_t *)(v8 + 56) = v6;
-      *(uint64_t *)(v8 + 64) = v7;
+      *(uint64_t *)(v8 + 64) = nesting.object_id;
       ++v4;
     }
   }
@@ -4252,8 +4248,7 @@ void __fastcall cleanup_physmap_context(__int64 a1)
       1);
     if ( v4 == (vm_address_t **)v16 )
     {
-      query_vm_region_nesting(v6[26]);
-      v14 = v13 - *(uint64_t *)(a1 + 1344);
+      v14 = query_vm_region_nesting(v6[26]).object_id - *(uint64_t *)(a1 + 1344);
       memset(v19, 0, sizeof(v19));
       (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v14, v19, 256, 1);
       DWORD2(v19[2]) = 2;
