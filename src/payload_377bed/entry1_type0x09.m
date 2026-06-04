@@ -42957,8 +42957,7 @@ __int64 __fastcall kread_proc_kobj_entitlement_data(__int64 a1, unsigned int a2)
                   v6 = v13 + 40;
                   v7 = &v10;
                 }
-                necp_kread_region(a1, v6, (__int64)v7, 8);
-                if ( !v8 )
+                if ( !necp_kread_region(a1, v6, (__int64)v7, 8) )
                   return 0;
               }
             }
@@ -43014,8 +43013,7 @@ int __fastcall necp_send_msg_3(__int64 a1, unsigned int a2, int a3)
       {
         *(uint64_t *)(a1 + 296) = v21;
         v21 = 0;
-        necp_kread_region(a1, v22 + 80, (__int64)&v21, *(unsigned int *)(a1 + 360));
-        if ( !v8 )
+        if ( !necp_kread_region(a1, v22 + 80, (__int64)&v21, *(unsigned int *)(a1 + 360)) )
           return 0;
       }
       goto LABEL_3;
@@ -43046,11 +43044,9 @@ LABEL_38:
             v21 = 0;
             if ( (vm_page_mask & v22) != 0 )
               return 0;
-            necp_kread_region(a1, v18, (__int64)&v21, 8);
-            if ( !v19 )
+            if ( !necp_kread_region(a1, v18, (__int64)&v21, 8) )
               return 0;
-            necp_kread_region(a1, v18 + 8, (__int64)&v21, 8);
-            if ( !v20 )
+            if ( !necp_kread_region(a1, v18 + 8, (__int64)&v21, 8) )
               return 0;
           }
           goto LABEL_3;
