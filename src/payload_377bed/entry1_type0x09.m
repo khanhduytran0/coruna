@@ -25973,7 +25973,7 @@ bool __fastcall has_valid_krw_path(struct_krwCtx *ctx)
 }
 
 //----- (0000000000025E54) ----------------------------------------------------
-__int64 __fastcall sub_25E54(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
+__int64 __fastcall kreadbuf_via_dev_null_only(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
 {
   __int64 v5; // x21
   __int64 test; // x26
@@ -49729,10 +49729,6 @@ __int64 __fastcall kreadbuf_via_dev_null_simple(
         int a5)
 {
   return sub_25334(a1, a2, a3, a4, a5);
-}
-__int64 __fastcall kreadbuf_via_dev_null_only(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
-{
-  return sub_25E54(a1, a2, a3, a4, a5);
 }
 uint32_t *__fastcall krw_ctx_set_flag(uint32_t *result, int a2) { return sub_36078(result, a2); }
 __int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *a1, __int64 task, char *entitlementXml, char a4)
