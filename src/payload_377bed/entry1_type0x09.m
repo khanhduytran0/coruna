@@ -100,9 +100,9 @@ __int64 __fastcall thread_realtime_vm_copy(__int64 a1);
 __int64 __fastcall scan_physmap_for_region(__int64 a1, unsigned __int64 a2);
 __int64 __fastcall get_physmap_region_ptr(__int64 a1, int a2);
 unsigned __int64 __fastcall run_physmap_worker_threads(__int64 a1);
-int *__fastcall physmap_madvise_free(__int64 a1, __int64 a2);
+uintptr_t __fastcall physmap_madvise_free(__int64 a1, __int64 a2);
 __int64 __fastcall puaf_vmregion_race_trigger(uint64_t *a1);
-int *__fastcall puaf_vm_region_scan_1(__int64 a1);
+uintptr_t __fastcall puaf_vm_region_scan_1(__int64 a1);
 void __fastcall validate_physmap_range_2(__int64 a1);
 void __fastcall run_physmap_setup_sequence(uint64_t *a1);
 __int64 __fastcall validate_physmap_range_3(vm_address_t *a1);
@@ -3219,20 +3219,15 @@ LABEL_14:
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
 
 //----- (0000000000008384) ----------------------------------------------------
-int *__fastcall physmap_madvise_free(__int64 a1, __int64 a2)
+uintptr_t __fastcall physmap_madvise_free(__int64 a1, __int64 a2)
 {
-  int *result; // x0
-  __int64 vars8; // [xsp+8h] [xbp+8h]
+  int status; // w0
 
-  result = (int *)madvise((void *)(*(uint64_t *)(a1 + 32) + 49152LL), a2 << 14, 3);
-  if ( (uint32_t)result )
-  {
-    return __error();
-  }
-  return result;
+  status = madvise((void *)(*(uint64_t *)(a1 + 32) + 49152LL), a2 << 14, 3);
+  if ( status )
+    return (uintptr_t)__error();
+  return 0;
 }
-// 83B0: variable 'vars8' is possibly undefined
-
 //----- (00000000000083C8) ----------------------------------------------------
 __int64 __fastcall puaf_vmregion_race_trigger(uint64_t *a1)
 {
@@ -3270,13 +3265,13 @@ __int64 __fastcall puaf_vmregion_race_trigger(uint64_t *a1)
 }
 
 //----- (00000000000084F8) ----------------------------------------------------
-int *__fastcall puaf_vm_region_scan_1(__int64 a1)
+uintptr_t __fastcall puaf_vm_region_scan_1(__int64 a1)
 {
   __int64 v2; // x9
   vm_address_t v3; // x21
   __int64 v4; // x21
   __int64 v5; // x21
-  int *result; // x0
+  int status; // w0
   vm_address_t address; // [xsp+8h] [xbp-28h] BYREF
 
   v2 = *(uint64_t *)(a1 + 32);
@@ -3301,11 +3296,11 @@ int *__fastcall puaf_vm_region_scan_1(__int64 a1)
   v5 = *(uint64_t *)(a1 + 1208);
   vm_deallocate(mach_task_self_, *(uint64_t *)(v5 + 160), 0x4000u);
   *(uint64_t *)(v5 + 160) = 0;
-  result = (int *)pthread_join(*(pthread_t *)(a1 + 1272), 0);
-  if ( (uint32_t)result )
-    result = __error();
+  status = pthread_join(*(pthread_t *)(a1 + 1272), 0);
+  if ( status )
+    return (uintptr_t)__error();
   *(uint64_t *)(a1 + 1272) = 0;
-  return result;
+  return 0;
 }
 
 //----- (00000000000085E4) ----------------------------------------------------
