@@ -5225,11 +5225,10 @@ __int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2)
   __int128 v19; // [xsp+20h] [xbp-80h]
   int v20; // [xsp+3Ch] [xbp-64h] BYREF
   vm_address_t address; // [xsp+40h] [xbp-60h] BYREF
-  mem_entry_name_port_t object[2]; // [xsp+48h] [xbp-58h]
-  __int64 v23; // [xsp+50h] [xbp-50h]
+  mem_entry_name_port_t object[4]; // [xsp+48h] [xbp-50h]
 
   *(uint64_t *)object = 0;
-  v23 = 0;
+  *(uint64_t *)&object[2] = 0;
   address = 0;
   v2 = vm_page_size;
   v20 = -1;
@@ -5268,7 +5267,7 @@ __int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2)
                 {
                   *(uint32_t *)(a1 + 6304) = v16;
                   v18 = 0;
-                  v6 = iogpu_init_private_ctx(a1, &v18, object[1], v23, HIDWORD(v23), v15);
+                  v6 = iogpu_init_private_ctx(a1, &v18, object[1], object[2], object[3], v15);
                   if ( !v6 )
                   {
                     v17 = v18;
