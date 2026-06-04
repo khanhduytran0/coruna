@@ -830,6 +830,60 @@ static uint64_t driver_dispatch_finish(uint64_t status, bool commandSucceeded)
   return 163843;
 }
 
+#define DRIVER_CMD_PATCH_PARENT_CSFLAGS 1
+#define DRIVER_CMD_GET_SELF_TASK_PORT_OFFSET 2
+#define DRIVER_CMD_INJECT_TFP0_ENTITLEMENT 3
+#define DRIVER_CMD_PATCH_CSBLOB 6
+#define DRIVER_CMD_SET_THREAD_KOBJ_DISPATCH 7
+#define DRIVER_CMD_GET_OR_SET_SELF_UID_CRED 8
+#define DRIVER_CMD_SET_SELF_SPECIAL_PORT 9
+#define DRIVER_CMD_SETUP_SANDBOX_BYPASS 10
+#define DRIVER_CMD_CHECK_SELF_DYLD_INFO 11
+#define DRIVER_CMD_KREAD_SET_VM_ATTR 12
+#define DRIVER_CMD_NECP_SEND_SELF 13
+#define DRIVER_CMD_PGTABLE_KREAD_VM_ATTR 15
+#define DRIVER_CMD_PGTABLE_KREAD_VM_ATTR_NO_PATCH 19
+#define DRIVER_CMD_INJECT_CSBLOB_ENTITLEMENT 20
+#define DRIVER_CMD_GET_TASK_PORT_PID_OFFSET 21
+#define DRIVER_CMD_NECP_SEND_TASK 22
+#define DRIVER_CMD_VALIDATE_IPC_KOBJECT_READ 23
+#define DRIVER_CMD_SET_TASK_SPECIAL_PORT 26
+#define DRIVER_CMD_PHYSMAP_KREAD_AND_REFRESH 31
+#define DRIVER_CMD_INSERT_TASK_SEND_RIGHT 34
+#define DRIVER_CMD_KREAD_PROC_ENTITLEMENT_DATA 38
+#define DRIVER_CMD_GET_PROC_EXEC_FLAGS ((int)0xC000001Bu)
+#define DRIVER_CMD_UNSUPPORTED_1C ((int)0xC000001Cu)
+#define DRIVER_CMD_TASK_FOR_PID_OR_NAME_RET_PTR ((int)0xC000001Du)
+#define DRIVER_CMD_UNSUPPORTED_1E ((int)0xC000001Eu)
+#define DRIVER_CMD_UNSUPPORTED_1F ((int)0xC000001Fu)
+#define DRIVER_CMD_UPDATE_PHYSMAP_TABLE_SELF ((int)0x8000001Cu)
+#define DRIVER_CMD_UPDATE_PHYSMAP_TABLE_TASK ((int)0xC0000020u)
+#define DRIVER_CMD_UNSUPPORTED_21 ((int)0xC0000021u)
+#define DRIVER_CMD_UNSUPPORTED_22 ((int)0xC0000022u)
+#define DRIVER_CMD_KREAD_VERSION_CHECK ((int)0xC0000023u)
+#define DRIVER_CMD_CHECK_TASK_DYLD_INFO_8 ((int)0x40000018u)
+#define DRIVER_CMD_CHECK_TASK_DYLD_INFO_32 ((int)0x40000019u)
+#define DRIVER_CMD_KREAD_PROC_ENTITLEMENT_FULL ((int)0x4000001Bu)
+#define DRIVER_CMD_SET_THREAD_STATE_VERSIONED ((int)0x4000001Eu)
+#define DRIVER_CMD_MACH_VM_WIRE ((int)0x40000021u)
+#define DRIVER_CMD_KWRITE_VERSION_CHECK ((int)0x40000023u)
+#define DRIVER_CMD_STAGE3_GET_MOUNT_POINT 0x302
+#define DRIVER_CMD_STAGE3_SETUP_UNTETHERED ((int)0x40000301u)
+#define DRIVER_CMD_STAGE3_KCALL_3ARGS ((int)0xC0000303u)
+#define DRIVER_CMD_STAGE3_KCALL_1ARG ((int)0x40000304u)
+#define DRIVER_CMD_STAGE3_KCALL_6ARGS ((int)0x40000305u)
+#define DRIVER_CMD_STAGE3_GET_ROOT_MOUNT_INFO ((int)0x80000306u)
+#define DRIVER_CMD_STAGE3_PHYSMAP_CHECK_RANGE ((int)0x40000306u)
+#define DRIVER_CMD_STAGE1_GET_ROOT_PREFIX ((int)0x80000108u)
+#define DRIVER_CMD_STAGE1_GET_ROOT_STATFS ((int)0x80000109u)
+#define DRIVER_CMD_STAGE1_CHECK_KRW_NECP_STATE ((int)0x8000010Du)
+#define DRIVER_CMD_STAGE1_CHECK_MOUNT_THREAD 265
+#define DRIVER_CMD_STAGE1_WALK_CSBLOB_FOR_PATH 268
+#define DRIVER_CMD_STAGE1_CHECK_DISPATCH_KRW 269
+#define DRIVER_CMD_STAGE1_PHYSMAP_SINGLE_CHECK ((int)0x40000105u)
+#define DRIVER_CMD_STAGE1_NECP_CAPABILITIES ((int)0xC000010Bu)
+#define DRIVER_CMD_STAGE1_PHYSMAP_ENTRY_CHECK ((int)0x4000010Au)
+
 __int64 __fastcall j__fileport_makeport(int a1, mach_port_t *a2);
 int __fastcall j__fileport_makefd(mach_port_t);
 __int64 __fastcall __mac_syscall(__int64 a1, __int64 a2, __int64 a3);
@@ -45930,13 +45984,13 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
         {
           switch ( cmd )
           {
-            case 0x40000301:
+            case DRIVER_CMD_STAGE3_SETUP_UNTETHERED:
               v13 = driver_cmd_setup_untethered_persistence_maybe(a1, *(uint32_t *)v3);
               goto LABEL_90;
-            case 0x40000304:
+            case DRIVER_CMD_STAGE3_KCALL_1ARG:
               v13 = krw_dispatch_call_1arg((__int64)a1, *(uint32_t *)(v3 + 12));
               goto LABEL_90;
-            case 0x40000305:
+            case DRIVER_CMD_STAGE3_KCALL_6ARGS:
               v13 = krw_dispatch_call_6args(
                       (__int64)a1,
                       *(uint32_t *)v3,
@@ -45945,7 +45999,7 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
                       *(uint32_t *)(v3 + 24),
                       *(uint64_t *)(v3 + 32));
               goto LABEL_90;
-            case 0x40000306:
+            case DRIVER_CMD_STAGE3_PHYSMAP_CHECK_RANGE:
               v13 = physmap_check_range_wrapper((__int64)a1, v3, 20);
               goto LABEL_90;
             default:
@@ -45955,13 +46009,13 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *a1, int cmd, __int64 
         }
         switch ( cmd )
         {
-          case 0x80000306:
+          case DRIVER_CMD_STAGE3_GET_ROOT_MOUNT_INFO:
             v13 = get_root_mount_info((__int64)a1, (uint32_t *)v3, (char *)(v3 + 16));
             break;
-          case 0xC0000303:
+          case DRIVER_CMD_STAGE3_KCALL_3ARGS:
             v13 = krw_dispatch_call_3args((__int64)a1, *(uint64_t *)v3, *(uint32_t *)(v3 + 8), v3 + 12);
             break;
-          case 0x302:
+          case DRIVER_CMD_STAGE3_GET_MOUNT_POINT:
             v13 = get_mount_point_via_dispatch((__int64)a1);
             break;
           default:
@@ -45980,7 +46034,7 @@ LABEL_90:
           {
             switch ( cmd )
             {
-              case 1:
+              case DRIVER_CMD_PATCH_PARENT_CSFLAGS:
                 LODWORD(v50) = 0;
                 v52 = 0;
                 *(uint64_t *)v8 = kread_task_struct(a1, mach_task_self_);
@@ -46053,10 +46107,10 @@ LABEL_90:
                   }
                 }
                 break;
-              case 2:
+              case DRIVER_CMD_GET_SELF_TASK_PORT_OFFSET:
                 v30 = mach_task_self_;
                 goto LABEL_124;
-              case 3:
+              case DRIVER_CMD_INJECT_TFP0_ENTITLEMENT:
                 v8[0] = krw_inject_entitlements_maybe(
                           (__int64)a1,
                           mach_task_self_,
@@ -46080,10 +46134,10 @@ LABEL_90:
               case 36:
               case 37:
                 goto LABEL_216;
-              case 6:
+              case DRIVER_CMD_PATCH_CSBLOB:
                 setup_pgtable_and_patch_csblob((__int64)a1, mach_task_self_);
                 goto LABEL_215;
-              case 7:
+              case DRIVER_CMD_SET_THREAD_KOBJ_DISPATCH:
                 v31 = mach_thread_self();
                 v32 = HIDWORD(a1->gap191[693]);
                 if ( !v32 )
@@ -46094,33 +46148,33 @@ LABEL_90:
                 if ( a1->gap1910 + 1 <= 1 )
                   a1->gap1910 = v31;
                 goto LABEL_146;
-              case 8:
+              case DRIVER_CMD_GET_OR_SET_SELF_UID_CRED:
                 v8[0] = get_or_set_uid_cred_in_task((__int64)a1, 0, 0, 0);
                 goto LABEL_215;
-              case 9:
+              case DRIVER_CMD_SET_SELF_SPECIAL_PORT:
                 v33 = mach_task_self_;
                 goto LABEL_136;
-              case 10:
+              case DRIVER_CMD_SETUP_SANDBOX_BYPASS:
                 setup_sandbox_bypass((__int64)a1, 1);
                 goto LABEL_215;
-              case 11:
+              case DRIVER_CMD_CHECK_SELF_DYLD_INFO:
                 v50 = 0x100000000LL;
                 v17 = mach_task_self_;
                 v20 = &v50;
                 v18 = a1;
                 v19 = 2;
                 goto LABEL_105;
-              case 12:
+              case DRIVER_CMD_KREAD_SET_VM_ATTR:
                 if ( (uint32_t)v3 )
                   v35 = v3;
                 else
                   v35 = mach_task_self_;
                 v8[0] = kread_and_set_vm_attr(a1, v35);
                 goto LABEL_215;
-              case 13:
+              case DRIVER_CMD_NECP_SEND_SELF:
                 v36 = mach_task_self_;
                 goto LABEL_128;
-              case 15:
+              case DRIVER_CMD_PGTABLE_KREAD_VM_ATTR:
                 if ( (uint32_t)v3 )
                   v37 = v3;
                 else
@@ -46128,7 +46182,7 @@ LABEL_90:
                 v38 = a1;
                 v39 = 1;
                 goto LABEL_119;
-              case 19:
+              case DRIVER_CMD_PGTABLE_KREAD_VM_ATTR_NO_PATCH:
                 if ( (uint32_t)v3 )
                   v37 = v3;
                 else
@@ -46138,10 +46192,10 @@ LABEL_90:
 LABEL_119:
                 v8[0] = pgtable_kread_vm_attr_loop(v38, v37, v39);
                 goto LABEL_215;
-              case 20:
+              case DRIVER_CMD_INJECT_CSBLOB_ENTITLEMENT:
                 v8[0] = csblob_inject_entitlement(a1, mach_task_self_, (const char *)v3);
                 goto LABEL_215;
-              case 21:
+              case DRIVER_CMD_GET_TASK_PORT_PID_OFFSET:
                 if ( (uint32_t)v3 )
                   v30 = v3;
                 else
@@ -46149,7 +46203,7 @@ LABEL_119:
 LABEL_124:
                 v8[0] = get_task_port_pid_field_offset(a1, v30);
                 goto LABEL_215;
-              case 22:
+              case DRIVER_CMD_NECP_SEND_TASK:
                 if ( (uint32_t)v3 )
                   v36 = v3;
                 else
@@ -46157,14 +46211,14 @@ LABEL_124:
 LABEL_128:
                 v8[0] = necp_send_msg_3((__int64)a1, v36, 0);
                 goto LABEL_215;
-              case 23:
+              case DRIVER_CMD_VALIDATE_IPC_KOBJECT_READ:
                 if ( (uint32_t)v3 )
                   v40 = v3;
                 else
                   v40 = mach_task_self_;
                 v8[0] = validate_ipc_kobject_read((__int64)a1, v40);
                 goto LABEL_215;
-              case 26:
+              case DRIVER_CMD_SET_TASK_SPECIAL_PORT:
                 if ( (uint32_t)v3 )
                   v33 = v3;
                 else
@@ -46172,14 +46226,14 @@ LABEL_128:
 LABEL_136:
                 v8[0] = set_task_special_port_and_patch_uid((__int64)a1, v33, a1->gap191[694]);
                 goto LABEL_215;
-              case 31:
+              case DRIVER_CMD_PHYSMAP_KREAD_AND_REFRESH:
                 if ( !(uint32_t)v3 )
                   LODWORD(v3) = mach_task_self_;
                 v41 = physmap_kread(a1, v3);
                 if ( !v41 )
                   v41 = refresh_target_task_port((__int64)a1, v3, 0, 0);
                 goto LABEL_145;
-              case 34:
+              case DRIVER_CMD_INSERT_TASK_SEND_RIGHT:
                 if ( (uint32_t)v3 )
                   v42 = v3;
                 else
@@ -46190,13 +46244,13 @@ LABEL_145:
 LABEL_146:
                 v8[0] = 1;
                 goto LABEL_216;
-              case 38:
+              case DRIVER_CMD_KREAD_PROC_ENTITLEMENT_DATA:
                 v8[0] = kread_proc_kobj_entitlement_data(a1, mach_task_self_);
                 goto LABEL_215;
               default:
                 switch ( cmd )
                 {
-                  case 0xC000001B:
+                  case DRIVER_CMD_GET_PROC_EXEC_FLAGS:
                     if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
                       goto LABEL_48;
                     v8[0] = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11);
@@ -46207,25 +46261,25 @@ LABEL_146:
 LABEL_48:
                     v8[0] = get_proc_kobj_exec_flags((__int64)a1, *(uint32_t *)v3, (bool *)(v3 + 4), (bool *)(v3 + 6), (bool *)(v3 + 5));
                     break;
-                  case 0xC000001C:
-                  case 0xC000001E:
-                  case 0xC000001F:
-                  case 0xC0000021:
-                  case 0xC0000022:
+                  case DRIVER_CMD_UNSUPPORTED_1C:
+                  case DRIVER_CMD_UNSUPPORTED_1E:
+                  case DRIVER_CMD_UNSUPPORTED_1F:
+                  case DRIVER_CMD_UNSUPPORTED_21:
+                  case DRIVER_CMD_UNSUPPORTED_22:
                     goto LABEL_216;
-                  case 0xC000001D:
+                  case DRIVER_CMD_TASK_FOR_PID_OR_NAME_RET_PTR:
                     v8[0] = krw_task_for_pid_or_name_ret_ptr(a1, *(uint32_t *)v3, 0, (mach_port_name_t *)(v3 + 4));
                     goto LABEL_215;
-                  case 0xC0000020:
+                  case DRIVER_CMD_UPDATE_PHYSMAP_TABLE_TASK:
                     v43 = *(uint32_t *)v3;
                     v3 += 4;
                     v29 = v43;
                     goto LABEL_150;
-                  case 0xC0000023:
+                  case DRIVER_CMD_KREAD_VERSION_CHECK:
                     v8[0] = krw_read_with_version_check(a1, *(uint32_t *)v3, *(uint64_t *)(v3 + 8), (bool *)(v3 + 24));
                     goto LABEL_215;
                   default:
-                    if ( cmd != 0x8000001C )
+                    if ( cmd != DRIVER_CMD_UPDATE_PHYSMAP_TABLE_SELF )
                       goto LABEL_216;
                     v29 = mach_task_self_;
 LABEL_150:
@@ -46238,7 +46292,7 @@ LABEL_150:
           }
           switch ( cmd )
           {
-            case 1073741848:
+            case DRIVER_CMD_CHECK_TASK_DYLD_INFO_8:
               v17 = *(uint32_t *)v3;
               v18 = a1;
               v19 = 1;
@@ -46246,7 +46300,7 @@ LABEL_150:
 LABEL_105:
               v34 = 8;
               goto LABEL_153;
-            case 1073741849:
+            case DRIVER_CMD_CHECK_TASK_DYLD_INFO_32:
               v17 = *(uint32_t *)v3;
               v18 = a1;
               v19 = 3;
@@ -46255,7 +46309,7 @@ LABEL_105:
 LABEL_153:
               v8[0] = check_task_dyld_info_versioned(v18, v17, v19, v20, v34);
               goto LABEL_215;
-            case 1073741851:
+            case DRIVER_CMD_KREAD_PROC_ENTITLEMENT_FULL:
               if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
               {
                 if ( check_necp_flag(a1) )
@@ -46291,7 +46345,7 @@ LABEL_216:
 LABEL_188:
               v8[0] = 0;
               goto LABEL_216;
-            case 1073741854:
+            case DRIVER_CMD_SET_THREAD_STATE_VERSIONED:
               v44 = *(uint32_t *)v3;
               if ( !*(uint32_t *)v3 )
               {
@@ -46306,7 +46360,7 @@ LABEL_188:
                         *(natural_t **)(v3 + 16),
                         *(uint32_t *)(v3 + 24));
               goto LABEL_215;
-            case 1073741857:
+            case DRIVER_CMD_MACH_VM_WIRE:
               if ( *(uint8_t *)(v3 + 28) )
               {
                 v45 = *(uint32_t *)(v3 + 24);
@@ -46319,7 +46373,7 @@ LABEL_188:
               LODWORD(v6) = 0;
               v8[0] = mach_vm_wire(a1->gap191[694], *(uint32_t *)v3, *(uint64_t *)(v3 + 8), *(uint64_t *)(v3 + 16), v45) == 0;
               goto LABEL_216;
-            case 1073741859:
+            case DRIVER_CMD_KWRITE_VERSION_CHECK:
               v8[0] = kwrite_with_version_check(a1, *(uint32_t *)v3, *(uint64_t *)(v3 + 8), *(unsigned __int8 *)(v3 + 24));
               goto LABEL_215;
             default:
@@ -46337,14 +46391,14 @@ LABEL_219:
       {
         if ( cmd > 268 )
         {
-          if ( cmd != 269 )
+          if ( cmd != DRIVER_CMD_STAGE1_CHECK_DISPATCH_KRW )
           {
-            if ( cmd == 1073742090 )
+            if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_ENTRY_CHECK )
             {
               v15 = physmap_entry_check((__int64)a1, *(uint32_t *)v3, *(uint32_t *)(v3 + 4), *(uint64_t *)(v3 + 16));
               goto LABEL_79;
             }
-            if ( cmd == 1073742085 )
+            if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_SINGLE_CHECK )
             {
               v15 = physmap_single_check((__int64)a1, v3, 20);
 LABEL_79:
@@ -46366,9 +46420,9 @@ LABEL_84:
           v14 = 0;
           goto LABEL_179;
         }
-        if ( cmd != 265 )
+        if ( cmd != DRIVER_CMD_STAGE1_CHECK_MOUNT_THREAD )
         {
-          if ( cmd == 268 )
+          if ( cmd == DRIVER_CMD_STAGE1_WALK_CSBLOB_FOR_PATH )
           {
             if ( !v3 )
               v3 = _CFProcessPath();
@@ -46415,9 +46469,9 @@ LABEL_84:
       }
       if ( cmd > -2147483380 )
       {
-        if ( cmd != -2147483379 )
+        if ( cmd != DRIVER_CMD_STAGE1_CHECK_KRW_NECP_STATE )
         {
-          if ( cmd != -1073741557 )
+          if ( cmd != DRIVER_CMD_STAGE1_NECP_CAPABILITIES )
             goto LABEL_179;
           v23 = *(uint32_t *)v3;
           v24 = (*(uint32_t *)v3 & 1) != 0 && a1->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && a1->xnuMajorVersion < 8792;
@@ -46463,7 +46517,7 @@ LABEL_84:
       }
       else
       {
-        if ( cmd == -2147483384 )
+        if ( cmd == DRIVER_CMD_STAGE1_GET_ROOT_PREFIX )
         {
           v51 = 1024;
           if ( !(unsigned int)get_root_prefix_path((__int64)a1, (void *)(v3 + 16), &v51, (int *)&v52) )
@@ -46480,7 +46534,7 @@ LABEL_178:
           v14 = 1;
           goto LABEL_179;
         }
-        if ( cmd != -2147483383 )
+        if ( cmd != DRIVER_CMD_STAGE1_GET_ROOT_STATFS )
           goto LABEL_179;
         v16 = get_root_statfs((__int64)a1, (int *)&v50);
         LODWORD(v6) = 0;
