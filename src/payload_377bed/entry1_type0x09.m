@@ -418,7 +418,7 @@ __int64 __fastcall buf_ensure_capacity(__int64 a1, unsigned int a2);
 __int64 __fastcall krw_ctx_buf_append_entry(__int64 a1, __int64 a2, int a3);
 __int64 __fastcall buf_append_data(__int64 a1, const void *a2, unsigned int a3);
 __int64 __fastcall send_mach_msg_from_ctx(__int64 a1, mach_port_t a2, mach_port_t a3, mach_msg_id_t a4);
-double __fastcall parse_xnu_version_string(__int64 a1);
+int __fastcall parse_xnu_version_string(__int64 a1);
 const CFDictionaryRef *__fastcall ioservice_get_matching(const char *a1);
 __int64 __fastcall ioservice_notification_send(unsigned int a1, __int64 a2, __int64 a3, unsigned int a4, unsigned int a5, const void *a6, int a7);
 __int64 __fastcall register_ioservice_publish_notify(__int64 a1, unsigned int a2, mach_port_name_t *a3);
@@ -5809,6 +5809,11 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
   char v35; // [xsp+C4h] [xbp-2ECh]
   unsigned __int64 v36; // [xsp+D0h] [xbp-2E0h]
 
+  memset(v26, 0, sizeof(v26));
+  memset(v27, 0, sizeof(v27));
+  memset(v34, 0, sizeof(v34));
+  v35 = 0;
+  v36 = 0;
   v6 = 708619;
   if ( !(unsigned int)acquire_write_semaphore_lock(krwCtx, 7u, 0x2710u) )
   {
@@ -5825,7 +5830,7 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
     v30[2] = v31;
     v34[0] = off_448E0;
     v34[1] = v31;
-    parse_xnu_version_string((__int64)&qword_480D8);
+    v12 = parse_xnu_version_string((__int64)&qword_480D8);
     if ( !v12 )
     {
       v7 = 163878;
@@ -5854,10 +5859,10 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
               goto LABEL_27;
             }
             v9 = v15;
-            pgtable_walk_wrapper(krwCtx, v15, (__int64)v27);
+            v16 = pgtable_walk_wrapper(krwCtx, v15, v27);
             if ( !v16 )
               goto LABEL_27;
-            pgtable_walk_wrapper(krwCtx, v9 + *(unsigned int *)(krwCtx + 384), (__int64)v26);
+            v17 = pgtable_walk_wrapper(krwCtx, v9 + *(unsigned int *)(krwCtx + 384), v26);
             if ( !v17 )
               goto LABEL_27;
             v18 = map_physpage_for_kobj((struct_krwCtx *)krwCtx, v26[0]);
@@ -5867,7 +5872,7 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
             v20 = *(uint64_t *)(krwCtx + 392);
             v21 = v27[4];
             v22 = v27[0];
-            pgtable_walk_wrapper(krwCtx, v27[0] & ~v20, (__int64)v34);
+            v23 = pgtable_walk_wrapper(krwCtx, v27[0] & ~v20, v34);
             if ( v23 && (v36 & 0xFFFFFFFFC000LL) != 0 )
             {
               v30[0] = (uint64_t *)MEMORY[0x400000008];
@@ -25425,11 +25430,11 @@ __int64 __fastcall send_mach_msg_from_ctx(__int64 a1, mach_port_t a2, mach_port_
 }
 
 //----- (0000000000024BC0) ----------------------------------------------------
-double __fastcall parse_xnu_version_string(__int64 a1)
+int __fastcall parse_xnu_version_string(__int64 a1)
 {
   char *v2; // x0
   char *v3; // x0
-  double result; // d0
+  int result; // w0
   __int64 v5; // x8
   unsigned __int64 v6; // x22
   int v7; // w8
@@ -25476,8 +25481,12 @@ double __fastcall parse_xnu_version_string(__int64 a1)
       v8 = 72;
     }
     *(uint32_t *)(a1 + 32) = v8;
-    *(uint64_t *)&result = 0x30000000060LL;
     *(__int128 *)(a1 + 16) = xmmword_43690;
+    result = 0;
+  }
+  else
+  {
+    result = 1;
   }
   return result;
 }
