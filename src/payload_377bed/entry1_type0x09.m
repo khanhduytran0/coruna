@@ -823,6 +823,38 @@ static bool krw_has_any_ready_method(struct_krwCtx *krwCtx)
   return hasThreadStateKrw || hasIOConnectKrw || hasPipePairKrw || hasTargetPortKrw;
 }
 
+static bool krw_prepare_selected_setup_path(struct_krwCtx *krwCtx, krw_setup_path_t setupPath, uint32_t *needsSecondStage)
+{
+  switch ( setupPath )
+  {
+    case KRW_SETUP_PATH_VOUCHER:
+      return krw_setup_with_stat((__int64)krwCtx, needsSecondStage);
+    case KRW_SETUP_PATH_PORTS_VM:
+      return krw_setup_ports_vm((__int64)krwCtx, needsSecondStage);
+    case KRW_SETUP_PATH_IOGPU:
+      return iogpu_krw_ctx_setup((__int64)krwCtx, needsSecondStage) == 0;
+    case KRW_SETUP_PATH_IOSURFACE:
+    default:
+      return krw_setup_iosurface_v2((__int64)krwCtx, needsSecondStage);
+  }
+}
+
+static bool krw_finish_selected_setup_path(struct_krwCtx *krwCtx, krw_setup_path_t setupPath)
+{
+  switch ( setupPath )
+  {
+    case KRW_SETUP_PATH_VOUCHER:
+      return krw_setup_voucher(krwCtx);
+    case KRW_SETUP_PATH_PORTS_VM:
+      return krw_setup_physmap((__int64)krwCtx);
+    case KRW_SETUP_PATH_IOGPU:
+      return iogpu_physmap_init((__int64)krwCtx) == 0;
+    case KRW_SETUP_PATH_IOSURFACE:
+    default:
+      return krw_setup_iosurface((__int64)krwCtx);
+  }
+}
+
 static uint64_t driver_dispatch_finish(uint64_t status, bool commandSucceeded)
 {
   if ( (uint32_t)status || commandSucceeded )
@@ -45268,22 +45300,7 @@ LABEL_96:
   if ( something )
   {
     setupPath = krw_select_setup_path(krwCtx);
-    switch ( setupPath )
-    {
-      case KRW_SETUP_PATH_VOUCHER:
-        v39 = krw_setup_with_stat((__int64)krwCtx, &v96);
-        break;
-      case KRW_SETUP_PATH_PORTS_VM:
-        v39 = krw_setup_ports_vm((__int64)krwCtx, &v96);
-        break;
-      case KRW_SETUP_PATH_IOGPU:
-        v39 = iogpu_krw_ctx_setup((__int64)krwCtx, &v96) == 0;
-        break;
-      case KRW_SETUP_PATH_IOSURFACE:
-      default:
-        v39 = krw_setup_iosurface_v2((__int64)krwCtx, &v96);
-        break;
-    }
+    v39 = krw_prepare_selected_setup_path(krwCtx, setupPath, &v96);
     if ( !v39 )
       return 163869;
     if ( v96 && krw_has_any_ready_method(krwCtx) )
@@ -45714,22 +45731,7 @@ LABEL_291:
           if ( v96 || !something )
             return 0;
           setupPath = krw_select_setup_path(krwCtx);
-          switch ( setupPath )
-          {
-            case KRW_SETUP_PATH_VOUCHER:
-              v92 = krw_setup_voucher((__int64)krwCtx);
-              break;
-            case KRW_SETUP_PATH_PORTS_VM:
-              v92 = krw_setup_physmap((__int64)krwCtx);
-              break;
-            case KRW_SETUP_PATH_IOGPU:
-              v92 = iogpu_physmap_init((__int64)krwCtx) == 0;
-              break;
-            case KRW_SETUP_PATH_IOSURFACE:
-            default:
-              v92 = krw_setup_iosurface((__int64)krwCtx);
-              break;
-          }
+          v92 = krw_finish_selected_setup_path(krwCtx, setupPath);
           if ( !v92 )
             return 163868;
           return 0;
