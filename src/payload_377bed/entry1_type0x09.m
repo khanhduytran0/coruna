@@ -2175,9 +2175,11 @@ __int64 __fastcall parse_kernel_version(__int64 a1, __int64 a2)
   kern_return_t v7; // w0
   kern_return_t v8; // w20
   char *v9; // x0
-  size_t v10; // [xsp+18h] [xbp-238h] BYREF
-  int v11; // [xsp+20h] [xbp-230h] BYREF
-  int v12[2]; // [xsp+28h] [xbp-228h] BYREF
+  size_t kernel_version_len; // [xsp+18h] [xbp-238h] BYREF
+  uint32_t xnu_patch; // [xsp+20h] [xbp-230h] BYREF
+  uint32_t xnu_major; // [xsp+28h] [xbp-228h] BYREF
+  uint32_t xnu_minor; // [xsp+2Ch] [xbp-224h] BYREF
+  int sysctl_mib[2]; // [xsp+28h] [xbp-228h] BYREF
   kernel_version_t kernel_version; // [xsp+30h] [xbp-220h] BYREF
 
   v3 = 708628;
@@ -2192,9 +2194,10 @@ __int64 __fastcall parse_kernel_version(__int64 a1, __int64 a2)
       v8 = v7;
       if ( v7 != 53 )
         return v8 | 0x80000000;
-      *(uint64_t *)v12 = 0x400000001LL;
-      v10 = 512;
-      if ( sysctl(v12, 2u, kernel_version, &v10, 0, 0) )
+      sysctl_mib[0] = 1;
+      sysctl_mib[1] = 4;
+      kernel_version_len = 512;
+      if ( sysctl(sysctl_mib, 2u, kernel_version, &kernel_version_len, 0, 0) )
         return v8 | 0x80000000;
     }
     if ( !strstr(kernel_version, "RELEASE") )
@@ -2202,13 +2205,14 @@ __int64 __fastcall parse_kernel_version(__int64 a1, __int64 a2)
     v9 = strstr(kernel_version, "xnu-");
     if ( v9 )
     {
-      v11 = 0;
-      v10 = 0;
-      if ( sscanf(v9, "xnu-%u.%u.%u%*s", &v10, (char *)&v10 + 4, &v11) == 3 )
+      xnu_major = 0;
+      xnu_minor = 0;
+      xnu_patch = 0;
+      if ( sscanf(v9, "xnu-%u.%u.%u%*s", &xnu_major, &xnu_minor, &xnu_patch) == 3 )
       {
         v3 = 0;
-        *(uint64_t *)a2 = v10;
-        *(uint32_t *)(a2 + 8) = v11;
+        *(uint64_t *)a2 = ((uint64_t)xnu_minor << 32) | xnu_major;
+        *(uint32_t *)(a2 + 8) = xnu_patch;
       }
     }
     return v3;
@@ -23434,73 +23438,11 @@ __int64 __fastcall get_iodevicetree_chosen_data(char **a1, unsigned int a2)
   int v14; // t1
   char *v15; // x0
   __int64 v16; // x19
-  char __str[16]; // [xsp+10h] [xbp-350h] BYREF
-  __int128 v19; // [xsp+20h] [xbp-340h]
-  __int128 v20; // [xsp+30h] [xbp-330h]
-  __int128 v21; // [xsp+40h] [xbp-320h]
-  __int128 v22; // [xsp+50h] [xbp-310h]
-  __int128 v23; // [xsp+60h] [xbp-300h]
-  __int128 v24; // [xsp+70h] [xbp-2F0h]
-  __int128 v25; // [xsp+80h] [xbp-2E0h]
-  __int128 v26; // [xsp+90h] [xbp-2D0h]
-  __int128 v27; // [xsp+A0h] [xbp-2C0h]
-  __int128 v28; // [xsp+B0h] [xbp-2B0h]
-  __int128 v29; // [xsp+C0h] [xbp-2A0h]
-  __int128 v30; // [xsp+D0h] [xbp-290h]
-  __int128 v31; // [xsp+E0h] [xbp-280h]
-  __int128 v32; // [xsp+F0h] [xbp-270h]
-  __int128 v33; // [xsp+100h] [xbp-260h]
-  __int128 v34; // [xsp+110h] [xbp-250h]
-  __int128 v35; // [xsp+120h] [xbp-240h]
-  __int128 v36; // [xsp+130h] [xbp-230h]
-  __int128 v37; // [xsp+140h] [xbp-220h]
-  __int128 v38; // [xsp+150h] [xbp-210h]
-  __int128 v39; // [xsp+160h] [xbp-200h]
-  __int128 v40; // [xsp+170h] [xbp-1F0h]
-  __int128 v41; // [xsp+180h] [xbp-1E0h]
-  __int128 v42; // [xsp+190h] [xbp-1D0h]
-  __int128 v43; // [xsp+1A0h] [xbp-1C0h]
-  __int128 v44; // [xsp+1B0h] [xbp-1B0h]
-  __int128 v45; // [xsp+1C0h] [xbp-1A0h]
-  __int128 v46; // [xsp+1D0h] [xbp-190h]
-  __int128 v47; // [xsp+1E0h] [xbp-180h]
-  __int128 v48; // [xsp+1F0h] [xbp-170h]
-  __int128 v49; // [xsp+200h] [xbp-160h]
+  char __str[512]; // [xsp+10h] [xbp-350h] BYREF
   __int128 v50[16]; // [xsp+210h] [xbp-150h] BYREF
 
   memset(v50, 0, sizeof(v50));
-  v48 = 0u;
-  v49 = 0u;
-  v46 = 0u;
-  v47 = 0u;
-  v44 = 0u;
-  v45 = 0u;
-  v42 = 0u;
-  v43 = 0u;
-  v40 = 0u;
-  v41 = 0u;
-  v38 = 0u;
-  v39 = 0u;
-  v36 = 0u;
-  v37 = 0u;
-  v34 = 0u;
-  v35 = 0u;
-  v32 = 0u;
-  v33 = 0u;
-  v30 = 0u;
-  v31 = 0u;
-  v28 = 0u;
-  v29 = 0u;
-  v26 = 0u;
-  v27 = 0u;
-  v24 = 0u;
-  v25 = 0u;
-  v22 = 0u;
-  v23 = 0u;
-  v20 = 0u;
-  v21 = 0u;
-  *(__int128 *)__str = 0u;
-  v19 = 0u;
+  memset(__str, 0, sizeof(__str));
   v4 = IORegistryEntryFromPath(kIOMasterPortDefault, "IODeviceTree:/chosen");
   if ( !v4 )
     return 0;
@@ -25441,26 +25383,32 @@ int __fastcall parse_xnu_version_string(__int64 a1)
   unsigned __int64 v6; // x22
   int v7; // w8
   int v8; // w8
-  char v9; // [xsp+30h] [xbp-560h] BYREF
-  char v10; // [xsp+34h] [xbp-55Ch] BYREF
-  __int64 v11; // [xsp+38h] [xbp-558h] BYREF
-  __int64 v12; // [xsp+40h] [xbp-550h] BYREF
+  int ignored_component1; // [xsp+30h] [xbp-560h] BYREF
+  int ignored_component2; // [xsp+34h] [xbp-55Ch] BYREF
+  int xnu_parts[4]; // [xsp+38h] [xbp-558h] BYREF
   struct utsname v13; // [xsp+48h] [xbp-548h] BYREF
 
   uname(&v13);
   *(uint64_t *)a1 = strdup(v13.version);
-  v11 = 0;
-  v12 = 0;
+  memset(xnu_parts, 0, sizeof(xnu_parts));
   v2 = strstr(v13.version, "xnu-");
-  if ( sscanf(v2, "xnu-%d.%d.%d~%d", &v11, (char *)&v11 + 4, &v12, (char *)&v12 + 4) == 4
+  if ( sscanf(v2, "xnu-%d.%d.%d~%d", &xnu_parts[0], &xnu_parts[1], &xnu_parts[2], &xnu_parts[3]) == 4
     || (v3 = strstr(v13.version, "xnu-"),
-        sscanf(v3, "xnu-%d.%d.%d.%d.%d~%d", &v11, (char *)&v11 + 4, &v12, &v9, &v10, (char *)&v12 + 4) == 6) )
+        sscanf(
+          v3,
+          "xnu-%d.%d.%d.%d.%d~%d",
+          &xnu_parts[0],
+          &xnu_parts[1],
+          &xnu_parts[2],
+          &ignored_component1,
+          &ignored_component2,
+          &xnu_parts[3]) == 6) )
   {
     v5 = 0;
     v6 = 0;
     do
     {
-      v6 = *(int *)((char *)&v11 + v5) + 1000 * v6;
+      v6 = xnu_parts[v5 / 4] + 1000 * v6;
       v5 += 4;
     }
     while ( v5 != 16 );
