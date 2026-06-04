@@ -8702,6 +8702,7 @@ LABEL_427:
     }
     break;
   }
+  v311 = 0;
   v209 = pgtable_walk_wrapper(v5, v315 & ~v207, &name);
   v10 = 163878;
   if ( !v209 )
@@ -13708,6 +13709,7 @@ __int64 __fastcall pgtable_locked_kwrite32_retry(__int64 a1, __int64 a2, int a3)
   __int64 v20; // [xsp+38h] [xbp-48h]
 
   v18 = a3;
+  v20 = 0;
   v5 = *(uint64_t *)(a1 + 7512);
   v6 = *(uint64_t *)(a1 + 392);
   if ( !(unsigned int)acquire_write_semaphore_lock(a1, 8u, 0x3A98u) )
@@ -13721,7 +13723,7 @@ __int64 __fastcall pgtable_locked_kwrite32_retry(__int64 a1, __int64 a2, int a3)
     }
     if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, a2, 4, v17) )
     {
-      pgtable_walk_wrapper(a1, a2 & ~*(uint64_t *)(a1 + 392), (__int64)v19);
+      v8 = pgtable_walk_wrapper(a1, a2 & ~*(uint64_t *)(a1 + 392), v19);
       v7 = 0xFFFFFFFFLL;
       if ( !v8 )
         goto LABEL_19;
@@ -29911,9 +29913,10 @@ __int64 __fastcall pgtable_walk_and_physmap_remap(struct_krwCtx *a1, __int64 a2,
   __int128 v13[3]; // [xsp+30h] [xbp-60h] BYREF
   __int64 v14; // [xsp+60h] [xbp-30h]
 
+  v12 = 0;
   v14 = 0;
   memset(v13, 0, sizeof(v13));
-  pgtable_walk_wrapper((__int64)a1, a2 & ~a1->pageMask, (__int64)v11);
+  v6 = pgtable_walk_wrapper((__int64)a1, a2 & ~a1->pageMask, v11);
   if ( !v6 )
     return 0;
   v7 = physmap_map_cached(a1, v12 & 0xFFFFFFFFC000LL, (__int64)v13);
