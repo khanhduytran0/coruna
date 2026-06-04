@@ -18877,7 +18877,7 @@ __int64 __fastcall krw_setup_physmap(__int64 a1)
         }
         else
         {
-          result = iosurface_enum_mach_port(result, v9);
+          result = iosurface_enum_mach_port(a1, v9);
           if ( !result )
             return result;
           v11 = (unsigned int *)result;
@@ -18972,7 +18972,7 @@ unsigned int *__fastcall krw_setup_iosurface(__int64 a1)
       while ( 1 )
       {
         v11 = v10;
-        result = (unsigned int *)iosurface_enum_mach_port(v8, v9);
+        result = (unsigned int *)iosurface_enum_mach_port(a1, v9);
         if ( !result )
           break;
         v12 = result;
@@ -19040,7 +19040,7 @@ __int64 __fastcall krw_setup_iosurface_v2(__int64 a1, uint32_t *a2)
   while ( 1 )
   {
     v10 = v8;
-    v11 = (mach_port_name_t *)iosurface_enum_mach_port(v5, v7);
+    v11 = (mach_port_name_t *)iosurface_enum_mach_port(a1, v7);
     if ( !v11 )
       break;
     v12 = *v11;
