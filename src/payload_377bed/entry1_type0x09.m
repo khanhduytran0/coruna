@@ -726,6 +726,7 @@ typedef struct krw_thread_state_mapping {
 
 enum
 {
+  KRW_CTX_SIZE = 0x1D60,
   KRW_CTX_OLD_PTRAUTH_BASE_OFFSET = 0x228,
   KRW_CTX_OLD_SELF_TASK_IPC_OFFSET = 0x230,
   KRW_CTX_NECP_TRIGGER_ADDR_OFFSET = 0x218,
@@ -45764,14 +45765,12 @@ bool __fastcall validate_ipc_kobject_read(struct_krwCtx *a1, mach_port_t a2)
 //----- (000000000003E42C) ----------------------------------------------------
 __int64 __fastcall driver_init2(struct_krwCtx **krwCtxOut, char something)
 {
-  struct_krwCtx *krwCtx; // x0 MAPDST
-  __int64 v6; // x21
-
-  krwCtx = (struct_krwCtx *)calloc(0x1D60u, 1u);
+  struct_krwCtx *krwCtx = (struct_krwCtx *)calloc(KRW_CTX_SIZE, 1u);
   if ( !krwCtx )
     return 0xAD009;
-  v6 = driver_init2_1(krwCtx, (something & 1) == 0);
-  if ( !(uint32_t)v6 )
+
+  uint64_t initResult = driver_init2_1(krwCtx, (something & 1) == 0);
+  if ( !(uint32_t)initResult )
   {
     if ( (unsigned int)get_root_statfs((__int64)krwCtx, &krwCtx->isRW) )
     {
@@ -45780,10 +45779,11 @@ __int64 __fastcall driver_init2(struct_krwCtx **krwCtxOut, char something)
       return 0;
     }
     free_decompressed_macho(krwCtx);
-    v6 = 163873;
+    initResult = 163873;
   }
+
   free(krwCtx);
-  return v6;
+  return initResult;
 }
 
 //----- (000000000003E4D0) ----------------------------------------------------
