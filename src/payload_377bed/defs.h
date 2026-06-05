@@ -115,6 +115,7 @@ typedef struct struct_krwCtx struct_krwCtx;
 @end
 #define KRWCTX_FROM_UINTPTR(value) ((__bridge struct_krwCtx *)(void *)(uintptr_t)(value))
 #endif
+#define KRWCTX_FROM_RAW_FIELD(base, offset) KRWCTX_FROM_UINTPTR(*(uint64_t *)((char *)(base) + (offset)))
 
 /* 165 */
 struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo
