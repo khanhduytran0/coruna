@@ -5060,7 +5060,7 @@ __int64 __fastcall read_task_kobject_physmap(struct_krwCtx *a1, unsigned __int64
   __int64 result; // x0
   unsigned __int64 v4; // x20
   bool v5; // zf
-  __int64 v6; // [xsp+8h] [xbp-18h] BYREF
+  uint64_t v6; // [xsp+8h] [xbp-18h] BYREF
 
   result = traverse_sptm_pgtable_chain(a1, mach_task_self_, a2);
   if ( result )
@@ -5082,7 +5082,7 @@ __int64 __fastcall get_read_task_port_kobject(struct_krwCtx *a1, mach_port_t a2)
 {
   __int64 result; // x0
   unsigned __int64 v4; // x20
-  __int64 v5; // [xsp+8h] [xbp-18h] BYREF
+  uint64_t v5; // [xsp+8h] [xbp-18h] BYREF
 
   result = get_task_kobject_addr(a1, a2);
   if ( result )
@@ -5611,7 +5611,7 @@ __int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2)
   uint64_t *v15; // x5
   __int64 v16; // x8
   __int64 v17; // x8
-  __int64 v18; // [xsp+18h] [xbp-88h] BYREF
+  uint64_t v18; // [xsp+18h] [xbp-88h] BYREF
   __int128 v19; // [xsp+20h] [xbp-80h]
   int v20; // [xsp+3Ch] [xbp-64h] BYREF
   vm_address_t address; // [xsp+40h] [xbp-60h] BYREF
