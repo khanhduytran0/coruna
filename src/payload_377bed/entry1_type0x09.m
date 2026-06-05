@@ -4237,64 +4237,24 @@ void *__fastcall setup_physmap_copy_structure(uint64_t *a1)
   __int64 v8; // [xsp+8h] [xbp-1F8h] BYREF
   unsigned __int64 v9; // [xsp+10h] [xbp-1F0h] BYREF
   unsigned __int64 v10; // [xsp+18h] [xbp-1E8h] BYREF
-  __int128 v11[4]; // [xsp+20h] [xbp-1E0h] BYREF
-  __int128 v12; // [xsp+60h] [xbp-1A0h]
-  __int128 v13; // [xsp+70h] [xbp-190h]
-  __int128 v14; // [xsp+80h] [xbp-180h]
-  __int128 v15; // [xsp+90h] [xbp-170h]
-  __int128 v16; // [xsp+A0h] [xbp-160h]
-  __int128 v17; // [xsp+B0h] [xbp-150h]
-  __int128 v18; // [xsp+C0h] [xbp-140h]
-  __int128 v19; // [xsp+D0h] [xbp-130h]
-  __int128 v20; // [xsp+E0h] [xbp-120h]
-  __int128 v21; // [xsp+F0h] [xbp-110h]
-  __int128 v22[4]; // [xsp+100h] [xbp-100h] BYREF
-  __int128 v23; // [xsp+140h] [xbp-C0h]
-  __int128 v24; // [xsp+150h] [xbp-B0h]
-  __int128 v25; // [xsp+160h] [xbp-A0h]
-  __int128 v26; // [xsp+170h] [xbp-90h]
-  __int128 v27; // [xsp+180h] [xbp-80h]
-  __int128 v28; // [xsp+190h] [xbp-70h]
-  __int128 v29; // [xsp+1A0h] [xbp-60h]
-  __int128 v30; // [xsp+1B0h] [xbp-50h]
-  __int128 v31; // [xsp+1C0h] [xbp-40h]
-  __int128 v32; // [xsp+1D0h] [xbp-30h]
+  uint8_t iogpuDesc[0xE0]; // [xsp+20h] [xbp-1E0h] BYREF
+  uint8_t physmapDesc[0xE0]; // [xsp+100h] [xbp-100h] BYREF
   unsigned __int64 v33; // [xsp+1E0h] [xbp-20h] BYREF
-  int v34; // [xsp+1ECh] [xbp-14h] BYREF
+  uint32_t v34; // [xsp+1ECh] [xbp-14h] BYREF
 
   v34 = 0;
   physmap_read_dword(a1, a1[181], &v34);
   v33 = 0;
   scan_physmap_addr_range(a1, a1[180], v34, &v33);
-  v31 = 0u;
-  v32 = 0u;
-  v29 = 0u;
-  v30 = 0u;
-  v27 = 0u;
-  v28 = 0u;
-  v25 = 0u;
-  v26 = 0u;
-  v23 = 0u;
-  v24 = 0u;
-  memset(v22, 0, sizeof(v22));
-  physmap_read_aligned(a1, v33, v22, 0xE0u);
-  v2 = v23;
-  a1[164] = *((uint64_t *)&v22[0] + 1);
+  memset(physmapDesc, 0, sizeof(physmapDesc));
+  physmap_read_aligned(a1, v33, physmapDesc, sizeof(physmapDesc));
+  v2 = *(int16_t *)&physmapDesc[0x40];
+  a1[164] = *(uint64_t *)&physmapDesc[0x08];
   a1[165] = a1[182];
-  v20 = 0u;
-  v21 = 0u;
-  v18 = 0u;
-  v19 = 0u;
-  v16 = 0u;
-  v17 = 0u;
-  v14 = 0u;
-  v15 = 0u;
-  v12 = 0u;
-  v13 = 0u;
-  memset(v11, 0, sizeof(v11));
-  iogpu_kread_loop(a1, v2, (char *)v11, 0xE0u);
-  v3 = *((uint64_t *)&v12 + 1);
-  a1[166] = *((uint64_t *)&v12 + 1);
+  memset(iogpuDesc, 0, sizeof(iogpuDesc));
+  iogpu_kread_loop(a1, v2, (char *)iogpuDesc, sizeof(iogpuDesc));
+  v3 = *(uint64_t *)&iogpuDesc[0x48];
+  a1[166] = v3;
   v9 = 0;
   v10 = 0;
   scan_physmap_overlap(a1, v3, &v10, &v9);
