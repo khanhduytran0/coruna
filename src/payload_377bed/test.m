@@ -205,7 +205,7 @@ int main(int argc, char *argv[], char *envp[]) {
     printf("Driver initialized, ctx: %p\n", global_ctx);
     
     
-    printf("slideMaybe=0x%x\n", global_ctx->slideMaybe);
+    printf("slideMaybe=0x%llx\n", global_ctx->slideMaybe);
     
     kernelbase = global_ctx->machHeaderPlus0x8000 - 0x8000;
     slide = kernelbase - 0xfffffff007004000;
