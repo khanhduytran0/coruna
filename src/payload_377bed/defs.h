@@ -110,6 +110,8 @@ struct struct_krwCtx
 typedef struct struct_krwCtx struct_krwCtx;
 #else
 @end
+@implementation struct_krwCtx
+@end
 #endif
 
 /* 165 */
