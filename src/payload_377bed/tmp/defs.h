@@ -18,24 +18,24 @@
  typedef struct struct_krwCtx // sizeof=0x1D50
  {
      _DWORD flags;
-     _BYTE gap4[168];
+     _BYTE gap_0x4[168];
      uint32_t threadForKernelRead;
-     _BYTE gap42[144];
+     _BYTE gap_0xB0[144];
      int xnuMajorVersion;
-     _BYTE gap144[20];
+     _BYTE gap_0x144[20];
      _QWORD someLargeNumber;
-     _BYTE gap160[8];
-     int stride168;
-     int gap16C[7];
+     _BYTE gap_0x160[8];
+     int stride_0x168;
+     int gap_0x16C[7];
      _QWORD pageMask;
-     _BYTE gap190[200];
+     _BYTE gap_0x190[200];
      int isRW;
      struct mach_timebase_info timebase;
      mach_port_t semaphore;
      pthread_mutex_t someMutex;
      uint32_t someInt1;
      uint32_t someInt2;
-     uint64_t gap191[851];
+     uint64_t gap_0x370[851];
      _QWORD IOKitConnInfo;
  } struct_krwCtx;
 
