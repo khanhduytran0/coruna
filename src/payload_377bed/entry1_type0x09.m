@@ -25233,80 +25233,54 @@ __int64 __fastcall ioservice_notification_send(
   mach_port_t msgh_remote_port; // w10
   mach_msg_size_t msgh_size; // w8
   char v22; // w9
-  mach_msg_header_t v24[2]; // [xsp+0h] [xbp-170h] BYREF
-  __int128 v25; // [xsp+30h] [xbp-140h]
-  __int128 v26; // [xsp+40h] [xbp-130h]
-  __int128 v27; // [xsp+50h] [xbp-120h]
-  __int128 v28; // [xsp+60h] [xbp-110h]
-  __int128 v29; // [xsp+70h] [xbp-100h]
-  __int128 v30; // [xsp+80h] [xbp-F0h]
-  __int128 v31; // [xsp+90h] [xbp-E0h]
-  __int128 v32; // [xsp+A0h] [xbp-D0h]
-  __int128 v33; // [xsp+B0h] [xbp-C0h]
-  __int128 v34; // [xsp+C0h] [xbp-B0h]
-  __int128 v35; // [xsp+D0h] [xbp-A0h]
-  __int128 v36; // [xsp+E0h] [xbp-90h]
-  __int128 v37; // [xsp+F0h] [xbp-80h]
-  __int128 v38; // [xsp+100h] [xbp-70h]
+  uint64_t msgStorage[0x110 / sizeof(uint64_t)]; // [xsp+0h] [xbp-170h] BYREF
+  mach_msg_header_t *msg; // x24
 
-  v37 = 0u;
-  v38 = 0u;
-  v35 = 0u;
-  v36 = 0u;
-  v33 = 0u;
-  v34 = 0u;
-  v31 = 0u;
-  v32 = 0u;
-  v29 = 0u;
-  v30 = 0u;
-  v27 = 0u;
-  v28 = 0u;
-  v25 = 0u;
-  v26 = 0u;
-  memset(v24, 0, sizeof(v24));
+  memset(msgStorage, 0, sizeof(msgStorage));
+  msg = (mach_msg_header_t *)msgStorage;
   reply_port = mig_get_reply_port();
   if ( reply_port )
   {
     v14 = reply_port;
-    v24[0].msgh_bits = -2147478253;
-    *(uint64_t *)&v24[0].msgh_remote_port = __PAIR64__(reply_port, a1);
-    *(uint64_t *)&v24[0].msgh_id = 0x200000B36LL;
-    *(uint64_t *)&v24[1].msgh_size = a3;
-    v24[1].msgh_local_port = 0x1000000;
-    *(uint64_t *)&v24[1].msgh_voucher_port = __PAIR64__(a5, a4);
-    DWORD1(v25) = 1310720;
-    *((NDR_record_t *)&v25 + 1) = NDR_record;
-    v15 = __strlcpy_chk((char *)&v26 + 8, (const char *)a2, 0x80u, 0x80u);
+    msg[0].msgh_bits = -2147478253;
+    *(uint64_t *)&msg[0].msgh_remote_port = __PAIR64__(reply_port, a1);
+    *(uint64_t *)&msg[0].msgh_id = 0x200000B36LL;
+    *(uint64_t *)&msg[1].msgh_size = a3;
+    msg[1].msgh_local_port = 0x1000000;
+    *(uint64_t *)&msg[1].msgh_voucher_port = __PAIR64__(a5, a4);
+    *(uint32_t *)((char *)msgStorage + 0x34) = 1310720;
+    *(NDR_record_t *)((char *)msgStorage + 0x38) = NDR_record;
+    v15 = __strlcpy_chk((char *)msgStorage + 0x48, (const char *)a2, 0x80u, 0x80u);
     v16 = v15 + 1;
     v17 = 8 - ((v15 + 1) & 7);
     if ( ((v15 + 1) & 7) == 0 )
       v17 = 0;
     v18 = v17 + v16;
-    DWORD1(v26) = v17 + v16;
-    v19 = (mach_msg_bits_t *)((char *)&v24[0].msgh_bits + (unsigned int)(v17 + v16));
+    *(uint32_t *)((char *)msgStorage + 0x44) = v17 + v16;
+    v19 = (mach_msg_bits_t *)((char *)msgStorage + (unsigned int)(v17 + v16));
     v19[18] = a4;
     v19[19] = a7;
     memcpy(v19 + 20, a6, (unsigned int)(8 * a7));
-    if ( mach_msg(v24, 3, v18 + 8 * a7 + 80, 0x110u, v14, 0, 0) )
+    if ( mach_msg(msg, 3, v18 + 8 * a7 + 80, 0x110u, v14, 0, 0) )
     {
       mig_dealloc_reply_port(v14);
       msgh_remote_port = 0;
       msgh_size = 0;
       v22 = 0;
     }
-    else if ( v24[0].msgh_id == 2970 )
+    else if ( msg[0].msgh_id == 2970 )
     {
-      if ( (v24[0].msgh_bits & 0x80000000) != 0 && v24[1].msgh_bits == 1 )
+      if ( (msg[0].msgh_bits & 0x80000000) != 0 && msg[1].msgh_bits == 1 )
       {
         msgh_remote_port = 0;
         v22 = 1;
-        msgh_size = v24[1].msgh_size;
+        msgh_size = msg[1].msgh_size;
       }
       else
       {
         msgh_size = 0;
         v22 = 1;
-        msgh_remote_port = v24[1].msgh_remote_port;
+        msgh_remote_port = msg[1].msgh_remote_port;
       }
     }
     else
