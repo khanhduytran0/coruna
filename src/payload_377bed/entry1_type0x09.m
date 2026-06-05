@@ -641,7 +641,7 @@ unsigned __int64 __fastcall alloc_physmap_scratch_page(__int64 a1, uint32_t *a2)
 __int64 __fastcall kwrite_task_kobj_field_via_physmap(struct_krwCtx *a1, unsigned int a2, int a3, int a4, __int16 a5);
 __int64 __fastcall check_krw_capabilities_version(int *, int *, int *, int *, int *);
 __int64 __fastcall get_proc_kobj_pair_cached(__int64 a1, int a2, uint64_t *a3);
-__int64 __fastcall port_table_lookup_v1(int *a1, __int64 a2, int a3, int a4, __int16 a5);
+__int64 __fastcall port_table_lookup_v1(struct_krwCtx *a1, __int64 a2, int a3, int a4, __int16 a5);
 __int64 __fastcall map_physpage_with_ports(struct_krwCtx *a1, __int64 a2, int a3, int a4, __int16 a5);
 unsigned __int64 __fastcall translate_physmap_addr_via_segments(__int64 a1, __int64 a2, __int64 a3, unsigned __int64 a4);
 __int64 __fastcall init_or_get_kread_pattern_table(__int64 a1);
@@ -28488,7 +28488,7 @@ LABEL_29:
           {
             if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
             {
-              v26 = port_table_lookup_v1((int *)KRWCTX_RAW_PTR(a1), v6[4], 1, 1, 96);
+              v26 = port_table_lookup_v1(a1, v6[4], 1, 1, 96);
 LABEL_47:
               v3 = v26;
               if ( (uint32_t)v26 )
@@ -41055,7 +41055,7 @@ __int64 __fastcall get_proc_kobj_pair_cached(__int64 a1, int a2, uint64_t *a3)
 }
 
 //----- (0000000000038034) ----------------------------------------------------
-__int64 __fastcall port_table_lookup_v1(int *a1, __int64 a2, int a3, int a4, __int16 a5)
+__int64 __fastcall port_table_lookup_v1(struct_krwCtx *a1, __int64 a2, int a3, int a4, __int16 a5)
 {
   __int64 v10; // x21
   __int64 v11; // x24
@@ -41068,18 +41068,18 @@ __int64 __fastcall port_table_lookup_v1(int *a1, __int64 a2, int a3, int a4, __i
   __int64 v19; // [xsp+18h] [xbp-38h] BYREF
 
   v19 = 0;
-  if ( (*a1 & KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
+  if ( (a1->flags & KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return 708616;
   v10 = check_krw_capabilities_version(a1, (int *)&v18, (int *)&v17, (int *)&v16, (int *)&v15);
   if ( !(uint32_t)v10 )
   {
-    v10 = get_proc_kobj_pair_cached((__int64)a1, a3, &v19);
+    v10 = get_proc_kobj_pair_cached(a1, a3, &v19);
     if ( !(uint32_t)v10 )
     {
       v10 = 163857;
       v11 = v18;
       v12 = *(uint64_t *)(a2 + v18);
-      if ( v12 && !validate_kaddr_range((__int64)a1, v12) )
+      if ( v12 && !validate_kaddr_range(a1, v12) )
         return 163878;
       *(uint64_t *)(a2 + v11) = v19;
       if ( a4 )
