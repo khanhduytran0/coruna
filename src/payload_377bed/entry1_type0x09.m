@@ -2537,7 +2537,6 @@ void __fastcall deallocate_physmap_pages(__int64 a1)
   unsigned __int64 v5; // x21
   __int64 v6; // x22
   __int64 v7; // x23
-  __int64 vars8; // [xsp+38h] [xbp+8h]
 
   for ( i = 0; i != 1024000; i += 16 )
   {
@@ -2779,7 +2778,6 @@ __int64 __fastcall physmap_write_aligned(uint64_t *a1, const void *a2, unsigned 
   void *v9; // x23
   vm_address_t v10; // x21
   vm_map_t v11; // w0
-  __int64 vars8; // [xsp+48h] [xbp+8h]
 
   v7 = a3 & 0x3FFF;
   v8 = a1[169];
@@ -3425,7 +3423,6 @@ uint64_t *__fastcall dequeue_physmap_page_entry(uint64_t *a1, uint64_t *a2)
 //----- (0000000000007E84) ----------------------------------------------------
 uint64_t *__fastcall dequeue_multiple_physmap_entries(uint64_t *a1)
 {
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   fill_physmap_page_entries(a1, (__int64)(a1 + 141));
   fill_physmap_page_entries(a1, (__int64)(a1 + 146));
@@ -3810,7 +3807,6 @@ void __fastcall validate_physmap_range_2(__int64 a1)
 //----- (0000000000008710) ----------------------------------------------------
 void __fastcall run_physmap_setup_sequence(uint64_t *a1)
 {
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   run_physmap_worker_threads((__int64)a1);
   puaf_vmregion_race_trigger(a1);
@@ -4131,7 +4127,6 @@ void __fastcall scan_physmap_overlap(uint64_t *a1, __int64 a2, unsigned __int64 
   unsigned __int64 v14; // x8
   char *v15; // x9
   unsigned __int64 v16; // x12
-  __int64 vars8; // [xsp+38h] [xbp+8h]
 
   v8 = (char *)malloc(0x4000u);
   v9 = -(__int64)vm_page_size & a2;
@@ -4188,7 +4183,6 @@ void __fastcall scan_physmap_addr_range(uint64_t *a1, __int64 a2, int a3, uint64
   unsigned __int64 v13; // x8
   unsigned __int64 v14; // x9
   unsigned __int64 v15; // x8
-  __int64 vars8; // [xsp+48h] [xbp+8h]
 
   v8 = (char *)malloc(0x4000u);
   if ( a2 == 0x10000000000LL )
@@ -4702,7 +4696,6 @@ __int64 __fastcall free_vm_page_array_list(__int64 a1)
   __int64 (__fastcall *v3)(__int64, __int64); // x2
   __int64 v4; // x0
   __int64 v5; // x1
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   v2 = *(uint64_t **)a1;
   if ( v2 )
@@ -4732,7 +4725,6 @@ __int64 __fastcall free_vm_page_array_list(__int64 a1)
 //----- (0000000000009FF0) ----------------------------------------------------
 void __fastcall teardown_iogpu_vm_copy(vm_address_t *a1)
 {
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   a1[176] = 0;
   vm_deallocate(mach_task_self_, a1[169], 0xC000u);
@@ -10261,7 +10253,6 @@ __int64 __fastcall setup_kernel_exploit_msg(__int64 a1, __int64 a2, __int64 a3, 
   __int64 v16; // x9
   mach_msg_header_t *v17; // x0
   mach_port_name_t v18; // w4
-  __int64 vars8; // [xsp+48h] [xbp+8h]
 
   v14 = *(uint64_t *)(a1 + 16);
   *(uint32_t *)(v14 + 1032) = *(uint32_t *)(v14 + 8);
@@ -11202,7 +11193,6 @@ __int64 __fastcall trigger_thread_state_mod(__int64 a1)
 {
   __int64 v2; // x20
   thread_act_t v3; // w0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   v2 = *(uint64_t *)(a1 + 32);
   __semwait_signal();
@@ -11483,7 +11473,6 @@ void __fastcall cfarray_add_unique(const void *a1, __int64 a2)
 {
   const CFArrayRef *v4; // x21
   CFArrayRef *v5; // x0
-  __int64 vars8; // [xsp+28h] [xbp+8h]
   CFRange v7; // 0:x1.16
 
   if ( a2 && !*(uint32_t *)a2 )
@@ -11959,7 +11948,6 @@ bool __fastcall physmap_table_write_versioned(struct_krwCtx *a1, unsigned __int6
     int v8; // [xsp+1Ch] [xbp-24h] BYREF
     unsigned __int64 v7; // [xsp+10h] [xbp-30h] BYREF
     unsigned int v6; // [xsp+Ch] [xbp-34h] BYREF
-    __int64 vars8; // [xsp+48h] [xbp+8h]
 
     v8 = a3;
     v7 = 0;
@@ -12101,7 +12089,6 @@ bool __fastcall ppl_kwritebuf_nocheck(
     unsigned __int8 gap15[11];
     __int64 flags;
   } regionInfo; // [xsp+8h] [xbp-58h] BYREF
-  __int64 vars8; // [xsp+68h] [xbp+8h]
 
   if ( vaddr )
   {
@@ -12944,7 +12931,6 @@ __int64 __fastcall krw_inject_entitlements_maybe(struct_krwCtx *krwCtx, __int64 
   int v29; // [xsp+38h] [xbp-D8h]
   pthread_t v30; // [xsp+40h] [xbp-D0h] BYREF
   pthread_attr_t v31; // [xsp+48h] [xbp-C8h] BYREF
-  __int64 vars8; // [xsp+118h] [xbp+8h]
 
   v4 = task;
   format = kCFPropertyListXMLFormat_v1_0;
@@ -13528,7 +13514,6 @@ __int64 test_appsepmanager_presence()
 void __fastcall necp_send_msg_2(__int64 a1)
 {
   void *v1; // x19
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   v1 = *(void **)(a1 + 7512);
   if ( v1 )
@@ -20761,7 +20746,6 @@ __int64 __fastcall setup_two_fds(int *a1)
 {
   __int64 result; // x0
   int fd; // w0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   result = setup_fd(*a1);
   if ( !(uint32_t)result )
@@ -21931,7 +21915,6 @@ __int64 __fastcall append_buf_and_wait_port(__int64 a1, __int64 a2, __int64 a3, 
   __int64 result; // x0
   integer_t port_info_out; // [xsp+8h] [xbp-28h] BYREF
   mach_msg_type_number_t port_info_outCnt; // [xsp+Ch] [xbp-24h] BYREF
-  __int64 vars8; // [xsp+38h] [xbp+8h]
 
   if ( *(uint8_t *)(a2 + 64) )
   {
@@ -22245,7 +22228,6 @@ uint64_t __fastcall update_timer_lru_cache(__int64 a1)
 unsigned __int64 __fastcall krw_lookup_and_process_entry(struct_krwCtx *a1)
 {
   unsigned __int64 result; // x0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   result = lookup_or_resolve_kaddr((__int64)a1);
   if ( result )
@@ -25293,7 +25275,6 @@ int __fastcall parse_xnu_version_string(__int64 a1)
 const CFDictionaryRef *__fastcall ioservice_get_matching(const char *a1)
 {
   const CFDictionaryRef *result; // x0
-  __int64 vars8; // [xsp+8h] [xbp+8h]
 
   result = IOServiceMatching(a1);
   if ( result )
@@ -29520,7 +29501,6 @@ LABEL_3:
 //----- (0000000000029CB0) ----------------------------------------------------
 unsigned __int64 __fastcall maybe_sptm_translate_kaddr(struct_krwCtx *a1, __int64 a2)
 {
-  __int64 vars8; // [xsp+28h] [xbp+8h]
 
   if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) || (a1->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return a2;
@@ -29531,7 +29511,6 @@ unsigned __int64 __fastcall maybe_sptm_translate_kaddr(struct_krwCtx *a1, __int6
 //----- (0000000000029D2C) ----------------------------------------------------
 unsigned __int64 __fastcall sub_29D2C(struct_krwCtx *a1, __int64 a2)
 {
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
     return a2;
@@ -29997,7 +29976,6 @@ mach_vm_address_t __fastcall ppl_kwrite32(struct_krwCtx *a1, mach_vm_address_t a
   struct_krwCtx *v5; // x19
   mach_vm_address_t result; // x0
   int newBytes; // [xsp+Ch] [xbp-24h] BYREF
-  __int64 vars8; // [xsp+38h] [xbp+8h]
 
   v4 = a2;
   v5 = a1;
@@ -30062,7 +30040,6 @@ unsigned __int64 __fastcall kwritebuf_universal(
   unsigned __int64 vaddr_; // x22
   struct_krwCtx *ctx_; // x21
   unsigned __int64 result; // x0
-  __int64 vars8; // [xsp+28h] [xbp+8h]
 
   vaddr_ = vaddr;
   ctx_ = (struct_krwCtx *)a1;
@@ -34215,7 +34192,6 @@ void *__fastcall csblob_dup_entry(unsigned int *a1)
 void __fastcall csblob_bzero_and_free(uint32_t *a1)
 {
   unsigned int v2; // w8
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   if ( a1 )
   {
@@ -36444,7 +36420,6 @@ uint64_t *__fastcall alloc_physmap_page_aligned(struct_krwCtx *a1, unsigned int 
   unsigned int v7; // w9
   unsigned int v8; // w21
   uint64_t *result; // x0
-  __int64 vars8; // [xsp+28h] [xbp+8h]
 
   if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && (v4 = *a2, *a2 >= 0x1FF9) )
   {
@@ -36471,7 +36446,6 @@ void __fastcall csblob_free_array(unsigned int *a1)
 {
   unsigned __int64 v2; // x20
   __int64 v3; // x21
-  __int64 vars8; // [xsp+28h] [xbp+8h]
 
   if ( *a1 )
   {
@@ -36742,7 +36716,6 @@ __int64 __fastcall get_privileged_host_port(__int64 a1)
   integer_t info_out; // [xsp+10h] [xbp-20h] BYREF
   host_t host; // [xsp+18h] [xbp-18h] BYREF
   processor_set_name_t default_set; // [xsp+1Ch] [xbp-14h] BYREF
-  __int64 vars8; // [xsp+38h] [xbp+8h]
 
   host = 0;
   info_outCnt = 2;
@@ -36825,7 +36798,6 @@ unsigned __int64 __fastcall get_task_kobject_addr(struct_krwCtx *a1, mach_port_t
   mach_port_t v4; // w21
   unsigned __int64 result; // x0
   bool v6; // zf
-  __int64 vars8; // [xsp+28h] [xbp+8h]
 
   v4 = mach_task_self_;
   if ( mach_task_self_ != a2 || (result = *(uint64_t *)&a1->gap190[32]) == 0 )
@@ -37664,7 +37636,6 @@ unsigned __int64 __fastcall scan_and_validate_kaddr(__int64 krwCtx, unsigned int
   __int64 v13; // x0
   unsigned __int64 v14; // x1
   uint64_t v15[2]; // [xsp+0h] [xbp-30h] BYREF
-  __int64 vars8; // [xsp+38h] [xbp+8h]
 
   if ( !krw_ctx_has_flag((struct_krwCtx *)krwCtx, KRW_CTX_FLAG_SELF_TASK_PORT_CLEARED) )
   {
@@ -37730,7 +37701,6 @@ LABEL_20:
 unsigned __int64 __fastcall kread_task_struct(struct_krwCtx *a1, unsigned int a2)
 {
   unsigned __int64 result; // x0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   result = get_task_kobject_addr(a1, a2);
   if ( result )
@@ -37800,7 +37770,6 @@ __int64 __fastcall walk_task_kaddr_chain(struct_krwCtx *a1, __int64 a2)
 unsigned __int64 __fastcall get_task_kobj_and_walk_chain(struct_krwCtx *a1, mach_port_t a2)
 {
   unsigned __int64 result; // x0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   result = get_task_kobject_addr(a1, a2);
   if ( result )
@@ -37845,7 +37814,6 @@ unsigned __int64 __fastcall resolve_task_kobj_kaddr(struct_krwCtx *a1, __int64 a
 __int64 __fastcall get_kobj_and_resolve_kaddr(struct_krwCtx *a1, unsigned int a2, uint64_t *a3)
 {
   __int64 result; // x0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   result = get_task_kobject_addr(a1, a2);
   if ( result )
@@ -38881,7 +38849,6 @@ __int64 __fastcall get_task_version_field(__int64 a1, __int64 a2)
 unsigned __int64 __fastcall get_mach_task_port_slot(struct_krwCtx *a1, unsigned int a2)
 {
   unsigned __int64 result; // x0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   result = task_get_ipc_port(a1, mach_task_self_, a2);
   if ( result )
@@ -39189,7 +39156,6 @@ int __fastcall necp_set_opt_string_7(struct_krwCtx *a1, unsigned int a2, __int64
     unsigned int v24; // [xsp+Ch] [xbp-74h]
     pthread_t v25; // [xsp+10h] [xbp-70h] BYREF
     pthread_attr_t v26; // [xsp+18h] [xbp-68h] BYREF
-    __int64 vars8; // [xsp+88h] [xbp+8h]
 
     if ( a2 > 6 )
       return 0LL;
@@ -41732,7 +41698,6 @@ __int64 __fastcall append_kaddr_to_physmem_table(__int64 a1, __int64 a2, __int64
   int v8; // w8
   __int64 v10; // x8
   __int64 *v11; // x9
-  __int64 vars8; // [xsp+28h] [xbp+8h]
 
   v6 = (pthread_mutex_t *)(a1 + 616);
   v7 = pthread_mutex_lock((pthread_mutex_t *)(a1 + 616));
@@ -41775,7 +41740,6 @@ __int64 __fastcall read_via_mapped_physmem_region(__int64 a1, unsigned __int64 a
   __int64 (__fastcall *v9)(__int64, unsigned __int64, void *, unsigned int, int); // x5
   __int64 result; // x0
   uint64_t v10[7]; // [xsp+8h] [xbp-58h] BYREF
-  __int64 vars8; // [xsp+68h] [xbp+8h]
 
   v9 = *(__int64 (__fastcall **)(__int64, unsigned __int64, void *, unsigned int, int))(a1 + 56);
   if ( v9 )
@@ -41807,7 +41771,6 @@ __int64 __fastcall physwritebuf_direct_mapped(
   __int64 (__fastcall *v9)(struct_krwCtx *, unsigned __int64, const void *, unsigned int, int); // x5
   __int64 result; // x0
   uint64_t v10[7]; // [xsp+8h] [xbp-58h] BYREF
-  __int64 vars8; // [xsp+68h] [xbp+8h]
 
   v9 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, const void *, unsigned int, int))&krwCtx->gap4[68];
   if ( v9 )
@@ -42765,7 +42728,6 @@ bool __fastcall kwrite_task_dispatch_via_kobj(struct_krwCtx *someCtx, unsigned i
   unsigned __int64 v8; // x0
   mach_vm_address_t address; // x23
   __int64 v10; // [xsp+8h] [xbp-38h] BYREF
-  __int64 vars8; // [xsp+48h] [xbp+8h]
 
   if ( someCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     v5 = 1;
@@ -43032,7 +42994,6 @@ __int64 __fastcall insert_task_port_send_right_versioned(__int64 a1, task_name_t
   unsigned int v5; // w4
   bool v6; // zf
   __int128 v7; // [xsp+0h] [xbp-20h] BYREF
-  __int64 vars8; // [xsp+28h] [xbp+8h]
 
   v2 = *(uint64_t *)(a1 + 344);
   if ( v2 < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) )
@@ -45917,7 +45878,6 @@ __int64 __fastcall free_decompressed_macho(uint64_t *a1)
   __int64 v5; // x0
   __int64 v6; // x0
   __int64 result; // x0
-  __int64 vars8; // [xsp+18h] [xbp+8h]
 
   v2 = a1[831];
   if ( v2 )
