@@ -108,10 +108,12 @@ struct struct_krwCtx
 };
 #if !RECOMP_TEMP_FAKE_OBJC_CLASS
 typedef struct struct_krwCtx struct_krwCtx;
+#define KRWCTX_FROM_UINTPTR(value) ((struct_krwCtx *)(uintptr_t)(value))
 #else
 @end
 @implementation struct_krwCtx
 @end
+#define KRWCTX_FROM_UINTPTR(value) ((__bridge struct_krwCtx *)(void *)(uintptr_t)(value))
 #endif
 
 /* 165 */

