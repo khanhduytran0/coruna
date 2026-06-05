@@ -36162,30 +36162,17 @@ __int64 __fastcall spinlock_acquire_clear_bit(__int64 a1)
 __int64 __fastcall dyld_fcntl59_mmap_setup(__int64 a1, int *a2)
 {
   int v2; // w8
-  __int64 v4; // [xsp+10h] [xbp-B0h] BYREF
-  __int128 v5; // [xsp+18h] [xbp-A8h]
-  __int64 v6; // [xsp+28h] [xbp-98h]
-  __int64 v7; // [xsp+30h] [xbp-90h]
-  __int128 v8; // [xsp+38h] [xbp-88h]
-  __int128 v9; // [xsp+48h] [xbp-78h]
-  __int128 v10; // [xsp+58h] [xbp-68h]
-  __int128 v11; // [xsp+68h] [xbp-58h]
-  __int64 v12; // [xsp+78h] [xbp-48h]
+  uint64_t payload[112 / sizeof(uint64_t)]; // [xsp+10h] [xbp-B0h] BYREF
   uint64_t v13[7]; // [xsp+80h] [xbp-40h] BYREF
 
   v2 = *a2;
-  v7 = 0x22000000000LL;
-  v12 = 0;
-  v11 = 0u;
-  v10 = 0u;
-  v9 = 0u;
-  v8 = 0u;
-  v4 = 0x70000000020CDEFALL;
-  v5 = 0x20200u;
-  HIBYTE(v7) = vm_page_shift;
-  v6 = 0;
+  memset(payload, 0, sizeof(payload));
+  payload[0] = 0x70000000020CDEFALL;
+  payload[1] = 0x20200u;
+  payload[4] = 0x22000000000LL;
+  *((uint8_t *)payload + 0x27) = vm_page_shift;
   v13[0] = (unsigned int)(0x20000000 - *(uint32_t *)(a1 + 384));
-  v13[1] = &v4;
+  v13[1] = (uint64_t)payload;
   v13[2] = 112;
   if ( fcntl(v2, 59, v13) && errno == 1 )
     __error();
