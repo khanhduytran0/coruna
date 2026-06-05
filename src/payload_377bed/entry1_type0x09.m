@@ -10434,43 +10434,13 @@ __int64 __fastcall setup_notification_extra_args(__int64 a1, __int64 a2, __int64
 {
   __int64 v4; // x0
   __int64 v5; // x1
-  __int64 v7; // [xsp+8h] [xbp-118h] BYREF
-  __int128 v8; // [xsp+10h] [xbp-110h]
-  __int128 v9; // [xsp+20h] [xbp-100h]
-  __int128 v10; // [xsp+30h] [xbp-F0h]
-  __int128 v11; // [xsp+40h] [xbp-E0h]
-  __int128 v12; // [xsp+50h] [xbp-D0h]
-  __int128 v13; // [xsp+60h] [xbp-C0h]
-  __int128 v14; // [xsp+70h] [xbp-B0h]
-  __int128 v15; // [xsp+80h] [xbp-A0h]
-  __int128 v16; // [xsp+90h] [xbp-90h]
-  __int128 v17; // [xsp+A0h] [xbp-80h]
-  __int128 v18; // [xsp+B0h] [xbp-70h]
-  __int128 v19; // [xsp+C0h] [xbp-60h]
-  __int128 v20; // [xsp+D0h] [xbp-50h]
-  __int128 v21; // [xsp+E0h] [xbp-40h]
-  __int64 v22; // [xsp+F0h] [xbp-30h]
-  __int64 vars8; // [xsp+128h] [xbp+8h]
+  uint64_t payload[30]; // [xsp+8h] [xbp-118h] BYREF
 
-  v14 = 0u;
-  v15 = 0u;
-  v16 = 0u;
-  v22 = 0;
-  v21 = 0u;
-  v20 = 0u;
-  v19 = 0u;
-  v18 = 0u;
-  v17 = 0u;
-  v12 = 0u;
-  v13 = 0u;
-  v10 = 0u;
-  v11 = 0u;
-  v8 = 0u;
-  v9 = 0u;
-  v7 = *(uint64_t *)(a1 + 664) + 61696LL;
-  *((uint64_t *)&v15 + 1) = a2;
-  *(uint64_t *)&v16 = a3;
-  query_phys_page_info(a1, qword_48028, (__int64)&v7);
+  memset(payload, 0, sizeof(payload));
+  payload[0] = *(uint64_t *)(a1 + 664) + 61696LL;
+  payload[16] = a2;
+  payload[17] = a3;
+  query_phys_page_info(a1, qword_48028, (__int64)payload);
   v4 = *(uint64_t *)(a1 + 8);
   v5 = *(uint64_t *)(a1 + 664) + 61696LL;
   return kread_u64_value(v4, v5);
