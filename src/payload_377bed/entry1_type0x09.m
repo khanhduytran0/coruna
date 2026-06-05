@@ -5830,7 +5830,7 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
             if ( v23 && (v36 & 0xFFFFFFFFC000LL) != 0 )
             {
               v30[0] = (uint64_t *)MEMORY[0x400000008];
-              kernelScanCtx[0] = MEMORY[0x400000008] & 0xFFFF000000003FFFLL | (v36 & 0xFFFFFFFFC000LL);
+              kernelScanCtx[0] = (MEMORY[0x400000008] & 0xFFFF000000003FFFLL) | (v36 & 0xFFFFFFFFC000LL);
               MEMORY[0x400000008] = kernelScanCtx[0];
               memory_barrier_dsb_isb();
               semaphore_timedwait_ns(krwCtx, 0x2710u);
@@ -23351,7 +23351,7 @@ bool __fastcall getattrlist_check_file(const char *a1)
   v4[2] = 0;
   memset(v3, 0, 76);
   v1 = getattrlist(a1, v4, v3, 0x4Cu, 0x20u);
-  return (v1 | DWORD2(v3[0]) & 0x20000) != 0;
+  return (v1 | (DWORD2(v3[0]) & 0x20000)) != 0;
 }
 
 //----- (00000000000228E4) ----------------------------------------------------
@@ -29400,7 +29400,9 @@ unsigned __int64 __fastcall sub_29D88(struct_krwCtx *a1, __int64 a2)
   v2 = a2;
   if ( a2 && (a2 & 0x80000000000000LL) != 0 )
   {
-    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) || krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16_A17_MASK) && a1->xnuVersionPacked >= XNU_VERSION_PACKED(8792, 40, 108, 0, 0) )
+    if ( krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER)
+      || (krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A16_A17_MASK)
+       && a1->xnuVersionPacked >= XNU_VERSION_PACKED(8792, 40, 108, 0, 0)) )
       return v2 | 0xFFFF800000000000LL;
     else
       return v2 | 0xFFFFFF8000000000LL;
@@ -33561,7 +33563,7 @@ LABEL_68:
                     {
                       if ( (WORD6(v66) & 0x140) == 0 )
                         goto LABEL_66;
-                      v31 = a7 ? HIDWORD(v66) & ~v58 : HIDWORD(v66) & v57 | v58;
+                      v31 = a7 ? HIDWORD(v66) & ~v58 : (HIDWORD(v66) & v57) | v58;
                       if ( !noppl_kwrite32(a1, v61 + 44, v31) )
                         goto LABEL_66;
                       v27[(v29 - v60) / v23] = v61;
@@ -34721,7 +34723,9 @@ LABEL_39:
   v198 = -1;
   if ( !*((uint8_t *)v3 + 96)
     && *((uint64_t *)v3 + 5) >> 29
-    && (v3[19] != v192 || (v3[21] != v191 && !v187) || v3[22] != v187 && *(uint64_t *)(v2 + 344) > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
+    && (v3[19] != v192
+     || (v3[21] != v191 && !v187)
+     || (v3[22] != v187 && *(uint64_t *)(v2 + 344) > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023))) )
   {
     goto LABEL_451;
   }
