@@ -44442,48 +44442,15 @@ __int64 __fastcall refresh_target_task_port(__int64 a1, unsigned int a2, int a3,
   int has_flag; // w0
   int v21; // w9
   int v22; // w10
-  __int128 v23; // q0
   int v24; // w0
   __int64 v25; // x24
   unsigned __int64 v26; // x24
-  __int128 v27; // q0
   int v28; // w0
   uint32_t length[3]; // [xsp+4h] [xbp-28Ch] BYREF
   int v31; // [xsp+10h] [xbp-280h] BYREF
   int v32; // [xsp+14h] [xbp-27Ch] BYREF
   __int64 address; // [xsp+18h] [xbp-278h] BYREF
-  __int128 newBytes; // [xsp+20h] [xbp-270h] BYREF
-  __int128 v35; // [xsp+30h] [xbp-260h]
-  __int128 v36; // [xsp+40h] [xbp-250h]
-  __int128 v37; // [xsp+50h] [xbp-240h]
-  __int128 v38; // [xsp+60h] [xbp-230h]
-  __int128 v39; // [xsp+70h] [xbp-220h]
-  __int128 v40; // [xsp+80h] [xbp-210h]
-  __int128 v41; // [xsp+90h] [xbp-200h]
-  __int128 v42; // [xsp+A0h] [xbp-1F0h]
-  __int128 v43; // [xsp+B0h] [xbp-1E0h]
-  __int128 v44; // [xsp+C0h] [xbp-1D0h]
-  __int128 v45; // [xsp+D0h] [xbp-1C0h]
-  __int128 v46; // [xsp+E0h] [xbp-1B0h]
-  __int128 v47; // [xsp+F0h] [xbp-1A0h]
-  __int128 v48; // [xsp+100h] [xbp-190h]
-  __int128 v49; // [xsp+110h] [xbp-180h]
-  __int128 v50; // [xsp+120h] [xbp-170h]
-  __int128 v51; // [xsp+130h] [xbp-160h]
-  __int128 v52; // [xsp+140h] [xbp-150h]
-  __int128 v53; // [xsp+150h] [xbp-140h]
-  __int128 v54; // [xsp+160h] [xbp-130h]
-  __int128 v55; // [xsp+170h] [xbp-120h]
-  __int128 v56; // [xsp+180h] [xbp-110h]
-  __int128 v57; // [xsp+190h] [xbp-100h]
-  __int128 v58; // [xsp+1A0h] [xbp-F0h]
-  __int128 v59; // [xsp+1B0h] [xbp-E0h]
-  __int128 v60; // [xsp+1C0h] [xbp-D0h]
-  __int128 v61; // [xsp+1D0h] [xbp-C0h]
-  __int128 v62; // [xsp+1E0h] [xbp-B0h]
-  __int128 v63; // [xsp+1F0h] [xbp-A0h]
-  __int128 v64; // [xsp+200h] [xbp-90h]
-  __int128 v65; // [xsp+210h] [xbp-80h]
+  uint8_t newBytes[0x200]; // [xsp+20h] [xbp-270h] BYREF
 
   v8 = 163855;
   address = 0;
@@ -44558,41 +44525,8 @@ __int64 __fastcall refresh_target_task_port(__int64 a1, unsigned int a2, int a3,
     return 163878;
   if ( length[0] )
   {
-    *(uint64_t *)&v23 = -1;
-    *((uint64_t *)&v23 + 1) = -1;
-    v64 = v23;
-    v65 = v23;
-    v62 = v23;
-    v63 = v23;
-    v60 = v23;
-    v61 = v23;
-    v58 = v23;
-    v59 = v23;
-    v56 = v23;
-    v57 = v23;
-    v54 = v23;
-    v55 = v23;
-    v52 = v23;
-    v53 = v23;
-    v50 = v23;
-    v51 = v23;
-    v48 = v23;
-    v49 = v23;
-    v46 = v23;
-    v47 = v23;
-    v44 = v23;
-    v45 = v23;
-    v42 = v23;
-    v43 = v23;
-    v41 = v23;
-    v39 = v23;
-    v40 = v23;
-    v37 = v23;
-    v38 = v23;
-    v35 = v23;
-    v36 = v23;
-    newBytes = v23;
-    if ( !(unsigned int)kwritebuf_universal((uint64_t *)a1, address, &newBytes, length[0]) )
+    memset(newBytes, 0xFF, length[0]);
+    if ( !(unsigned int)kwritebuf_universal((uint64_t *)a1, address, newBytes, length[0]) )
       return 163856;
     goto LABEL_58;
   }
@@ -44619,8 +44553,8 @@ LABEL_47:
       return v8;
     if ( (unsigned int)(v32 - 17) > 0x1DF )
       return 163857;
-    __memset_chk(&newBytes, 0xFF, (unsigned int)(v32 - 16), 0x200u);
-    if ( !(unsigned int)kwrite_with_retry(a1, address, (__int64)&newBytes, (unsigned int)(v32 - 16)) )
+    memset(newBytes, 0xFF, (unsigned int)(v32 - 16));
+    if ( !(unsigned int)kwrite_with_retry(a1, address, (__int64)newBytes, (unsigned int)(v32 - 16)) )
       return 163856;
   }
   else
@@ -44647,41 +44581,8 @@ LABEL_58:
     return 163878;
   if ( length[0] )
   {
-    *(uint64_t *)&v27 = -1;
-    *((uint64_t *)&v27 + 1) = -1;
-    v64 = v27;
-    v65 = v27;
-    v62 = v27;
-    v63 = v27;
-    v60 = v27;
-    v61 = v27;
-    v58 = v27;
-    v59 = v27;
-    v56 = v27;
-    v57 = v27;
-    v54 = v27;
-    v55 = v27;
-    v52 = v27;
-    v53 = v27;
-    v50 = v27;
-    v51 = v27;
-    v48 = v27;
-    v49 = v27;
-    v46 = v27;
-    v47 = v27;
-    v44 = v27;
-    v45 = v27;
-    v42 = v27;
-    v43 = v27;
-    v41 = v27;
-    v39 = v27;
-    v40 = v27;
-    v37 = v27;
-    v38 = v27;
-    v35 = v27;
-    v36 = v27;
-    newBytes = v27;
-    if ( !(unsigned int)kwritebuf_universal((uint64_t *)a1, address, &newBytes, length[0]) )
+    memset(newBytes, 0xFF, length[0]);
+    if ( !(unsigned int)kwritebuf_universal((uint64_t *)a1, address, newBytes, length[0]) )
       return 163856;
     goto LABEL_85;
   }
@@ -44715,8 +44616,8 @@ LABEL_74:
     return v8;
   if ( (unsigned int)(v32 - 17) > 0x1DF )
     return 163857;
-  __memset_chk(&newBytes, 0xFF, (unsigned int)(v32 - 16), 0x200u);
-  if ( !(unsigned int)kwrite_with_retry(a1, address, (__int64)&newBytes, (unsigned int)(v32 - 16)) )
+  memset(newBytes, 0xFF, (unsigned int)(v32 - 16));
+  if ( !(unsigned int)kwrite_with_retry(a1, address, (__int64)newBytes, (unsigned int)(v32 - 16)) )
     return 163856;
 LABEL_85:
   if ( mach_task_self_ == a2 && (!a4 || !*a4) )
