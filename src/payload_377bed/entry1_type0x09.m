@@ -12816,62 +12816,29 @@ LABEL_19:
 //----- (0000000000014EC4) ----------------------------------------------------
 __int64 __fastcall get_kernel_load_addr_bsm(__int64 a1, const char *a2, unsigned int a3)
 {
-  uint64_t v4[2]; // [xsp+0h] [xbp-140h] BYREF
-  __int128 v5; // [xsp+10h] [xbp-130h]
-  __int128 v6; // [xsp+20h] [xbp-120h]
-  __int128 v7; // [xsp+30h] [xbp-110h]
-  __int128 v8; // [xsp+40h] [xbp-100h]
-  __int128 v9; // [xsp+50h] [xbp-F0h]
-  __int128 v10; // [xsp+60h] [xbp-E0h]
-  __int128 v11; // [xsp+70h] [xbp-D0h]
-  __int128 v12; // [xsp+80h] [xbp-C0h]
-  __int128 v13; // [xsp+90h] [xbp-B0h]
-  __int128 v14; // [xsp+A0h] [xbp-A0h]
-  __int128 v15; // [xsp+B0h] [xbp-90h]
-  __int128 v16; // [xsp+C0h] [xbp-80h]
-  __int128 v17; // [xsp+D0h] [xbp-70h]
-  __int128 v18; // [xsp+E0h] [xbp-60h]
-  __int128 v19; // [xsp+F0h] [xbp-50h]
-  __int128 v20; // [xsp+100h] [xbp-40h]
-  __int128 v21; // [xsp+110h] [xbp-30h]
-  __int64 v22; // [xsp+120h] [xbp-20h]
+  struct apfs_mount_args
+  {
+    uint64_t device;
+    uint64_t flags;
+    uint8_t reserved[0x118];
+  } args = {0};
 
-  v22 = 0;
-  v20 = 0u;
-  v21 = 0u;
-  v18 = 0u;
-  v19 = 0u;
-  v16 = 0u;
-  v17 = 0u;
-  v14 = 0u;
-  v15 = 0u;
-  v12 = 0u;
-  v13 = 0u;
-  v10 = 0u;
-  v11 = 0u;
-  v8 = 0u;
-  v9 = 0u;
-  v6 = 0u;
-  v7 = 0u;
-  v5 = 0u;
-  v4[0] = a1;
-  v4[1] = a3;
-  return mount("apfs", a2, a3, v4);
+  args.device = a1;
+  args.flags = a3;
+  return mount("apfs", a2, a3, &args);
 }
 
 //----- (0000000000014F5C) ----------------------------------------------------
 __int64 __fastcall remount_hfs(__int64 a1, const char *a2, int a3)
 {
-  __int64 v4; // [xsp+0h] [xbp-30h] BYREF
-  __int128 v5; // [xsp+8h] [xbp-28h]
-  __int128 v6; // [xsp+18h] [xbp-18h]
-  __int64 v7; // [xsp+28h] [xbp-8h]
+  struct hfs_mount_args
+  {
+    uint64_t device;
+    uint8_t reserved[0x28];
+  } args = {0};
 
-  v7 = 0;
-  v6 = 0u;
-  v5 = 0u;
-  v4 = a1;
-  return mount("hfs", a2, a3, &v4);
+  args.device = a1;
+  return mount("hfs", a2, a3, &args);
 }
 
 //----- (0000000000014F9C) ----------------------------------------------------
