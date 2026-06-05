@@ -109,13 +109,16 @@ struct struct_krwCtx
 #if !RECOMP_TEMP_FAKE_OBJC_CLASS
 typedef struct struct_krwCtx struct_krwCtx;
 #define KRWCTX_FROM_UINTPTR(value) ((struct_krwCtx *)(uintptr_t)(value))
+#define KRWCTX_RAW_PTR(ctx) ((char *)(ctx))
 #else
 @end
 @implementation struct_krwCtx
 @end
 #define KRWCTX_FROM_UINTPTR(value) ((__bridge struct_krwCtx *)(void *)(uintptr_t)(value))
+#define KRWCTX_RAW_PTR(ctx) ((char *)(__bridge void *)(ctx))
 #endif
 #define KRWCTX_FROM_RAW_FIELD(base, offset) KRWCTX_FROM_UINTPTR(*(uint64_t *)((char *)(base) + (offset)))
+#define KRWCTX_FIELD_U64(ctx, offset) (*(uint64_t *)(KRWCTX_RAW_PTR(ctx) + (offset)))
 
 /* 165 */
 struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo

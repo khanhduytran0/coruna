@@ -194,21 +194,21 @@ __int64 __fastcall get_ppnum_via_kread(__int64 a1);
 __int64 __fastcall compare_cfdict_entries(const void *a1, const void *a2);
 void __fastcall iterate_cftype_values(const void *a1, CFTypeRef cf, __int64 a3);
 __int64 __fastcall merge_cfdict_entries(const void *a1, const void *a2);
-void __fastcall apply_cfdict_update(void *key, const CFArrayRef *a2, __int64 a3);
+void __fastcall apply_cfdict_update(void *key, CFTypeRef value, __int64 a3);
 void __fastcall cfarray_add_unique(const void *a1, __int64 a2);
 const void *__fastcall check_cfstring_type(const void *result, uint8_t *a2);
 const void *__fastcall cfarray_contains_check(const void *result, __int64 a2);
 void __fastcall necp_dispatch_by_version(struct_krwCtx *a1);
 bool __fastcall check_necp_flag(struct_krwCtx *a1);
-bool __fastcall necp_kread_region(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4);
+bool __fastcall necp_kread_region(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3, unsigned int a4);
 bool __fastcall ppl_physmap_table_patch_write(struct_krwCtx *ctx, mach_vm_address_t vaddr, __int64 newBytes, __int64 size, int a5);
 bool __fastcall get_kwrite_fn(__int64 a1, __int64 *a2, int *a3);
 bool __fastcall pgtable_walk_for_physmap(struct_krwCtx *a1, unsigned __int64 a2, unsigned __int64 a3);
 bool __fastcall physmap_table_write_versioned(struct_krwCtx *a1, unsigned __int64 a2, int a3);
 bool __fastcall check_physmap_range_necp(struct_krwCtx *a1, unsigned __int64 a2, int a3);
-__int64 __fastcall ppl_kwritebuf(__int64 ctx, unsigned __int64 vaddr, void *newBytes, int size);
-bool __fastcall kaddr_need_ppl_bypass(__int64 ctx, unsigned __int64 vaddr);
-bool __fastcall ppl_kwritebuf_nocheck(__int64 ctx, mach_vm_address_t vaddr, __int64 newBytes, __int64 size, char pplBypass, int);
+__int64 __fastcall ppl_kwritebuf(struct_krwCtx *ctx, unsigned __int64 vaddr, void *newBytes, int size);
+bool __fastcall kaddr_need_ppl_bypass(struct_krwCtx *ctx, unsigned __int64 vaddr);
+bool __fastcall ppl_kwritebuf_nocheck(struct_krwCtx *ctx, mach_vm_address_t vaddr, __int64 newBytes, __int64 size, char pplBypass, int);
 bool __fastcall ppl_kwrite_physmap_checked(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3);
 __int64 __fastcall kwrite_something(struct_krwCtx *a1, mach_vm_address_t a2, __int64 a3, __int64 a4, int a5);
 __int64 __fastcall get_root_statfs(__int64 ctx, int *outIsReadWrite);
@@ -623,8 +623,8 @@ __int64 __fastcall kread_and_vm_attr_double(struct_krwCtx *a1, __int64 a2);
 __int64 __fastcall vm_attr_increment_offset_bounded(struct_krwCtx *a1, unsigned __int64 a2, int a3);
 __int64 __fastcall vm_attr_increment_offset_check(struct_krwCtx *a1, unsigned __int64 a2);
 __int64 __fastcall vm_attr_field_offset_add4_check(__int64 a1, __int64 a2);
-uint32_t *__fastcall krw_ctx_set_flag(uint32_t *result, int);
-uint32_t *__fastcall krw_ctx_clr_flag(uint32_t *result, int);
+struct_krwCtx *__fastcall krw_ctx_set_flag(struct_krwCtx *result, int);
+struct_krwCtx *__fastcall krw_ctx_clr_flag(struct_krwCtx *result, int);
 bool __fastcall krw_ctx_has_flag(struct_krwCtx *krwCtx, int flag);
 __int64 __fastcall get_task_struct_offset_cached(__int64 a1);
 __int64 __fastcall lookup_physmap_page_slot(struct_krwCtx *a1, unsigned int a2, __int64 *a3);
@@ -11223,7 +11223,7 @@ __int64 __fastcall get_ppnum_via_kread(__int64 a1)
   __int128 v14; // [xsp+10h] [xbp-60h]
 
   v2 = *(uint64_t *)(a1 + 8);
-  v3 = *(struct_krwCtx **)(v2 + 32);
+  v3 = KRWCTX_FROM_RAW_FIELD(v2, 32);
   v4 = kread_u64_value(v2, *(uint64_t *)(v2 + 16) + 40LL);
   v5 = krw_xpac_vaddr_2(v3, v4);
   v6 = kread_u64_value(*(uint64_t *)(a1 + 8), v5 + 24);
@@ -11417,7 +11417,7 @@ __int64 __fastcall merge_cfdict_entries(const void *a1, const void *a2)
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
 
 //----- (0000000000012C98) ----------------------------------------------------
-void __fastcall apply_cfdict_update(void *key, const CFArrayRef *a2, __int64 a3)
+void __fastcall apply_cfdict_update(void *key, CFTypeRef valueToCompare, __int64 a3)
 {
   CFTypeID v5; // x21
   CFIndex Count; // x21
@@ -11430,7 +11430,7 @@ void __fastcall apply_cfdict_update(void *key, const CFArrayRef *a2, __int64 a3)
 
   if ( a3 && !*(uint32_t *)a3 )
   {
-    if ( key && a2 )
+    if ( key && valueToCompare )
     {
       value = 0;
       if ( !CFDictionaryGetValueIfPresent(*(CFDictionaryRef *)(a3 + 8), key, (const void **)&value) )
@@ -11439,23 +11439,23 @@ void __fastcall apply_cfdict_update(void *key, const CFArrayRef *a2, __int64 a3)
         goto LABEL_14;
       }
       v5 = CFGetTypeID(value);
-      if ( CFGetTypeID(a2) == v5 )
+      if ( CFGetTypeID(valueToCompare) == v5 )
       {
         if ( CFArrayGetTypeID() == v5 )
         {
           context = 0;
           v10 = value;
-          Count = CFArrayGetCount(a2);
+          Count = CFArrayGetCount(valueToCompare);
           v7 = (void (__cdecl *)(const void *, void *))nullsub_1(cfarray_contains_check);
           v12.location = 0;
           v12.length = Count;
-          CFArrayApplyFunction(a2, v12, v7, &context);
+          CFArrayApplyFunction(valueToCompare, v12, v7, &context);
           v8 = context;
 LABEL_14:
           *(uint32_t *)a3 = v8;
           return;
         }
-        if ( CFEqual(a2, value) )
+        if ( CFEqual(valueToCompare, value) )
         {
           *(uint32_t *)a3 = 0;
           return;
@@ -11473,20 +11473,20 @@ LABEL_14:
 //----- (0000000000012DB0) ----------------------------------------------------
 void __fastcall cfarray_add_unique(const void *a1, __int64 a2)
 {
-  const CFArrayRef *v4; // x21
-  CFArrayRef *v5; // x0
+  CFArrayRef v4; // x21
+  CFMutableArrayRef v5; // x0
   CFRange v7; // 0:x1.16
 
   if ( a2 && !*(uint32_t *)a2 )
   {
     if ( a1 )
     {
-      v4 = *(const CFArrayRef **)(a2 + 8);
+      v4 = *(CFArrayRef *)(a2 + 8);
       v7.length = CFArrayGetCount(v4);
       v7.location = 0;
       if ( !CFArrayContainsValue(v4, v7, a1) )
       {
-        v5 = *(CFArrayRef **)(a2 + 8);
+        v5 = *(CFMutableArrayRef *)(a2 + 8);
         CFArrayAppendValue(v5, a1);
       }
     }
@@ -11516,7 +11516,7 @@ const void *__fastcall cfarray_contains_check(const void *result, __int64 a2)
 {
   const void *v3; // x20
   int v4; // w22
-  const CFArrayRef *v5; // x21
+  CFArrayRef v5; // x21
   CFRange v6; // 0:x1.16
 
   if ( a2 && !*(uint32_t *)a2 )
@@ -11525,7 +11525,7 @@ const void *__fastcall cfarray_contains_check(const void *result, __int64 a2)
     v4 = 708609;
     if ( result )
     {
-      v5 = *(const CFArrayRef **)(a2 + 8);
+      v5 = *(CFArrayRef *)(a2 + 8);
       v6.length = CFArrayGetCount(v5);
       v6.location = 0;
       result = (const void *)CFArrayContainsValue(v5, v6, v3);
@@ -11570,7 +11570,7 @@ bool __fastcall check_necp_flag(struct_krwCtx *a1)
 }
 
 //----- (00000000000130B4) ----------------------------------------------------
-bool __fastcall necp_kread_region(__int64 a1, unsigned __int64 a2, __int64 a3, unsigned int a4)
+bool __fastcall necp_kread_region(struct_krwCtx *a1, unsigned __int64 a2, __int64 a3, unsigned int a4)
 {
     __int64 v11; // x8
     unsigned __int64 v12; // x23
@@ -11592,62 +11592,62 @@ bool __fastcall necp_kread_region(__int64 a1, unsigned __int64 a2, __int64 a3, u
     v230=0; v231=0;
     v24 = 0;
     v25 = 0;
-    if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK)) return 0;
+    if ( !krw_ctx_has_flag(a1, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK)) return 0;
     if (!a2 || !a3 || !a4 ) return 0;
-    if ( *(uint64_t *)(a1 + 344) >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) ) {
-        return !!ppl_physmap_table_patch_write((struct_krwCtx *)a1, a2, a3, a4, 0);
+    if ( a1->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) ) {
+        return !!ppl_physmap_table_patch_write(a1, a2, a3, a4, 0);
     }
-    if ( get_kwrite_fn(a1, (__int64 *)&v24, &v231) )
+    if ( get_kwrite_fn((__int64)a1, (__int64 *)&v24, &v231) )
     {
         if ( v24 <= a2 )
         {
             if ( a2 + a4 <= v24 + v231 )
             {
-                if ( (unsigned int)lookup_physmap_page_slot((struct_krwCtx *)a1, 3u, &v25) )
+                if ( (unsigned int)lookup_physmap_page_slot(a1, 3u, &v25) )
                 {
                     if ( v25 )
                         goto LABEL_13;
                     v16 = (unsigned int)v231 > 0x8C000
-                    || (unsigned __int64)(*(uint64_t *)(a1 + 344) - XNU_VERSION_PACKED(6153, 40, 121, 0, 0)) > 0xF788FFFFFLL;
+                    || (unsigned __int64)(a1->xnuVersionPacked - XNU_VERSION_PACKED(6153, 40, 121, 0, 0)) > 0xF788FFFFFLL;
                     v17 = v231 + 8;
                     if ( !v16 )
                         v17 = 573448;
-                    v18 = *(unsigned int *)(a1 + 384);
+                    v18 = a1->pageSizeOrSomething;
                     v19 = v17 % v18;
                     v20 = v18 - v17 % v18;
                     if ( !v19 )
                         v20 = 0;
                     v230 = v17 + v20;
-                    v21 = alloc_physmap_scratch_page(a1, &v230);
+                    v21 = alloc_physmap_scratch_page((__int64)a1, &v230);
                     v25 = v21;
                     if ( v21 )
                     {
-                        if ( (unsigned int)cache_physmap_page_slot(a1, 3u, v21) )
+                        if ( (unsigned int)cache_physmap_page_slot((__int64)a1, 3u, v21) )
                         {
                         LABEL_13:
-                            v11 = *(uint64_t *)(a1 + 392);
+                            v11 = a1->pageMask;
                             v12 = a2 & ~v11;
                             v13 = (a2 + a4 - 1) & ~v11;
                             if ( v12 > v13 )
                             {
                             LABEL_19:
-                                return (unsigned int)kwrite_with_retry(a1, a2 - v24 + v25, a3, a4) != 0;
+                                return (unsigned int)kwrite_with_retry((__int64)a1, a2 - v24 + v25, a3, a4) != 0;
                             }
                             else
                             {
-                                while ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, v25 + v231, 8, &v22) )
+                                while ( (unsigned int)krw_read_thunk(a1, v25 + v231, 8, &v22) )
                                 {
                                     v14 = 1 << ((v12 - v24) >> 14);
                                     if ( (v22 & v14) == 0 )
                                     {
-                                        v15 = pgtable_walk_for_physmap((struct_krwCtx *)a1, v25 + v12 - v24, v12);
+                                        v15 = pgtable_walk_for_physmap(a1, v25 + v12 - v24, v12);
                                         if ( !v15 )
                                             break;
                                         v22 |= v14;
-                                        if ( !(unsigned int)kwrite_with_retry(a1, v25 + v231, (__int64)&v22, 8) )
+                                        if ( !(unsigned int)kwrite_with_retry((__int64)a1, v25 + v231, (__int64)&v22, 8) )
                                             break;
                                     }
-                                    v12 += *(unsigned int *)(a1 + 384);
+                                    v12 += a1->pageSizeOrSomething;
                                     if ( v12 > v13 )
                                         goto LABEL_19;
                                 }
@@ -11960,7 +11960,7 @@ bool __fastcall physmap_table_write_versioned(struct_krwCtx *a1, unsigned __int6
     if ( !get_kwrite_fn((__int64)a1, (__int64 *)&v7, (int *)&v6) )
         return 0;
     if ( v7 <= a2 && a2 + 4 <= v7 + v6 ) {
-        return necp_kread_region((__int64)a1, a2, (__int64)&v8, 4);
+        return necp_kread_region(a1, a2, (__int64)&v8, 4);
     }
     return check_physmap_range_necp(a1, a2, a3);
 }
@@ -12006,7 +12006,7 @@ bool __fastcall check_physmap_range_necp(struct_krwCtx *a1, unsigned __int64 a2,
 }
 
 //----- (0000000000013AE4) ----------------------------------------------------
-__int64 __fastcall ppl_kwritebuf(__int64 ctx, unsigned __int64 vaddr, void *newBytes, int size)
+__int64 __fastcall ppl_kwritebuf(struct_krwCtx *ctx, unsigned __int64 vaddr, void *newBytes, int size)
 {
   __int64 v8; // x20
   char v9; // w23
@@ -12019,16 +12019,16 @@ __int64 __fastcall ppl_kwritebuf(__int64 ctx, unsigned __int64 vaddr, void *newB
   int v16; // w0
   vm_address_t address; // [xsp+8h] [xbp-58h] BYREF
 
-  if ( vm_allocate(mach_task_self_, &address, *(unsigned int *)(ctx + 384), 1) )
+  if ( vm_allocate(mach_task_self_, &address, ctx->pageSizeOrSomething, 1) )
     return 0;
   v9 = kaddr_need_ppl_bypass(ctx, vaddr);
   v10 = 0;
   while ( 1 )
   {
     vaddr_ = vaddr + v10;
-    v12 = *(uint32_t *)(ctx + 384) - (vaddr_ & *(uint32_t *)(ctx + 392));
+    v12 = ctx->pageSizeOrSomething - (vaddr_ & (uint32_t)ctx->pageMask);
     size_ = size - v10 <= v12 ? size - v10 : v12;
-    if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)ctx, vaddr + v10, size_, (void *)address) )
+    if ( !(unsigned int)krw_read_thunk(ctx, vaddr + v10, size_, (void *)address) )
       break;
     v14 = v10;
     newBytes_ = (char *)newBytes + v10;
@@ -12047,22 +12047,22 @@ __int64 __fastcall ppl_kwritebuf(__int64 ctx, unsigned __int64 vaddr, void *newB
   }
   v8 = 0;
 LABEL_13:
-  vm_deallocate(mach_task_self_, address, *(unsigned int *)(ctx + 384));
+  vm_deallocate(mach_task_self_, address, ctx->pageSizeOrSomething);
   return v8;
 }
 // 13BC4: variable 'v16' is possibly undefined
 
 //----- (0000000000013C14) ----------------------------------------------------
-bool __fastcall kaddr_need_ppl_bypass(__int64 ctx, unsigned __int64 vaddr)
+bool __fastcall kaddr_need_ppl_bypass(struct_krwCtx *ctx, unsigned __int64 vaddr)
 {
   uint64_t result; // x0
   __int64 v5; // x8
   unsigned __int64 v6; // x9
 
   result = 1;
-  if ( !map_physpage_to_user(ctx, vaddr, 0, vaddr) )
+  if ( !map_physpage_to_user((__int64)ctx, vaddr, 0, vaddr) )
   {
-    v5 = *(uint64_t *)(ctx + 6648);
+    v5 = KRWCTX_FIELD_U64(ctx, 6648);
     if ( !v5 )
       return 0;
     v6 = *(uint64_t *)(v5 + 224);
@@ -12074,7 +12074,7 @@ bool __fastcall kaddr_need_ppl_bypass(__int64 ctx, unsigned __int64 vaddr)
 
 //----- (0000000000013C78) ----------------------------------------------------
 bool __fastcall ppl_kwritebuf_nocheck(
-        __int64 ctx,
+        struct_krwCtx *ctx,
         mach_vm_address_t vaddr,
         __int64 newBytes,
         __int64 size,
@@ -12098,26 +12098,26 @@ bool __fastcall ppl_kwritebuf_nocheck(
     {
       if ( (uint32_t)size )
       {
-        v10 = *(uint64_t *)(ctx + 392);
+        v10 = ctx->pageMask;
         v11 = vaddr & ~v10;
         if ( v11 == ((vaddr + (unsigned int)size - 1) & ~v10) )
         {
           if ( (pplBypass & 1) != 0 )
           {
-            return ppl_physmap_table_patch_write((struct_krwCtx *)ctx, vaddr, newBytes, size, a6);
+            return ppl_physmap_table_patch_write(ctx, vaddr, newBytes, size, a6);
           }
           else
           {
             memset(&regionInfo, 0, sizeof(regionInfo));
-            if ( pgtable_walk_wrapper(ctx, v11, &regionInfo) && (regionInfo.prot | 2) == 3 )
+            if ( pgtable_walk_wrapper((__int64)ctx, v11, &regionInfo) && (regionInfo.prot | 2) == 3 )
             {
               if ( (regionInfo.flags & 0x80) != 0 )
               {
-                if ( !physmap_table_write_versioned((struct_krwCtx *)ctx, regionInfo.base, regionInfo.flags & 0xFFFFFF7F) )
+                if ( !physmap_table_write_versioned(ctx, regionInfo.base, regionInfo.flags & 0xFFFFFF7F) )
                   return 0;
-                semaphore_timedwait_ns(ctx, 0x2710u);
+                semaphore_timedwait_ns((__int64)ctx, 0x2710u);
               }
-              return (unsigned int)kwrite_something((struct_krwCtx *)ctx, vaddr, newBytes, size, a6) != 0;
+              return (unsigned int)kwrite_something(ctx, vaddr, newBytes, size, a6) != 0;
             }
           }
         }
@@ -12139,8 +12139,8 @@ bool __fastcall ppl_kwrite_physmap_checked(struct_krwCtx *a1, unsigned __int64 a
     {
         if ( v7 == a3 )
             return true;
-        v6 = kaddr_need_ppl_bypass((__int64)a1, a2);
-        return ppl_kwritebuf_nocheck((__int64)a1, a2, (__int64)&v8, (unsigned int)a1->stride168, v6, 1);
+        v6 = kaddr_need_ppl_bypass(a1, a2);
+        return ppl_kwritebuf_nocheck(a1, a2, (__int64)&v8, (unsigned int)a1->stride168, v6, 1);
     }
     return false;
 }
@@ -12235,7 +12235,7 @@ bool __fastcall check_iogpu_krw_ready_3(struct_krwCtx *a1, char *a2)
   if ( v6 < 0 )
     return 0;
   v7 = v6;
-  v8 = ((__int64 (__fastcall *)(uint32_t *))get_kernel_base_physmap)(a1);
+  v8 = get_kernel_base_physmap(a1, v7);
   v11 = v8;
   if ( v8
     && kread_physmap_decorated(a1, v8 + v5, (unsigned __int64 *)&v11)
@@ -39233,16 +39233,16 @@ __int64 __fastcall vm_attr_field_offset_add4_check(__int64 a1, __int64 a2)
 }
 
 //----- (0000000000036078) ----------------------------------------------------
-uint32_t *__fastcall sub_36078(uint32_t *result, int a2)
+struct_krwCtx *__fastcall sub_36078(struct_krwCtx *result, int a2)
 {
-  *result |= a2;
+  result->flags |= a2;
   return result;
 }
 
 //----- (0000000000036088) ----------------------------------------------------
-uint32_t *__fastcall krw_ctx_clr_flag(uint32_t *result, int a2)
+struct_krwCtx *__fastcall krw_ctx_clr_flag(struct_krwCtx *result, int a2)
 {
-  *result &= ~a2;
+  result->flags &= ~a2;
   return result;
 }
 
@@ -49363,7 +49363,7 @@ __int64 __fastcall kreadbuf_via_dev_null_simple(
 {
   return sub_25334(a1, a2, a3, a4, a5);
 }
-uint32_t *__fastcall krw_ctx_set_flag(uint32_t *result, int a2) { return sub_36078(result, a2); }
+struct_krwCtx *__fastcall krw_ctx_set_flag(struct_krwCtx *result, int a2) { return sub_36078(result, a2); }
 __int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *a1, __int64 task, char *entitlementXml, char a4)
 {
   return sub_2CBA4(a1, task, entitlementXml, a4);
