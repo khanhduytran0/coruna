@@ -7480,7 +7480,7 @@ __int64 __fastcall kext_image_scan_trampoline_0(uint64_t x0, uint64_t x1)
   CFMutableDictionaryRef theDictb; // [xsp+98h] [xbp-10B8h]
   CFMutableDictionaryRef theDictc; // [xsp+98h] [xbp-10B8h]
   CFMutableDictionaryRef theDictd; // [xsp+98h] [xbp-10B8h]
-  CFDictionaryRef *theDicte; // [xsp+98h] [xbp-10B8h]
+  CFMutableDictionaryRef theDicte; // [xsp+98h] [xbp-10B8h]
   unsigned __int64 kobject; // [xsp+A0h] [xbp-10B0h]
   unsigned __int64 v293; // [xsp+A0h] [xbp-10B0h]
   int8x8_t *v294; // [xsp+A8h] [xbp-10A8h]
@@ -7493,6 +7493,7 @@ __int64 __fastcall kext_image_scan_trampoline_0(uint64_t x0, uint64_t x1)
   unsigned __int64 __handlec; // [xsp+B0h] [xbp-10A0h]
   void *__handled; // [xsp+B0h] [xbp-10A0h]
   unsigned __int64 __handlee; // [xsp+B0h] [xbp-10A0h]
+  struct_krwCtx *krwCtx;
   char *v304; // [xsp+B8h] [xbp-1098h]
   unsigned int v305; // [xsp+B8h] [xbp-1098h]
   vm_size_t size; // [xsp+C0h] [xbp-1090h] BYREF
@@ -7546,6 +7547,7 @@ __int64 __fastcall kext_image_scan_trampoline_0(uint64_t x0, uint64_t x1)
 
   v4 = x1;
   v5 = x0;
+  krwCtx = KRWCTX_FROM_UINTPTR(v5);
   v6 = 708625;
   _Static_assert(sizeof(outputScratch) == 0xF60, "kext_image_scan_trampoline_0 output scratch size mismatch");
   address = 0;
@@ -7646,7 +7648,7 @@ LABEL_15:
   {
     if ( (*(uint8_t *)v5 & 0x20) != 0 )
     {
-      v10 = setup_kernel_region_via_flags((struct_krwCtx *)v5);
+      v10 = setup_kernel_region_via_flags(krwCtx);
       if ( (uint32_t)v10 )
         return v10;
       v23 = get_iogpu_physmap_base(v5);
@@ -7654,7 +7656,7 @@ LABEL_15:
       {
         v24 = v23;
         v25 = getpid();
-        addr_v24 = krw_task_for_pid_0(v5, v24, v25);
+        addr_v24 = krw_task_for_pid_0(krwCtx, v24, v25);
         *(uint64_t *)(v4 + 11280) = addr_v24;
         goto LABEL_207;
       }
@@ -7685,7 +7687,7 @@ LABEL_40:
   if ( !v29 )
     return 708609;
   madvise((void *)(v29 + v28 - vm_page_size), vm_page_size, 3);
-  if ( krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && !krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
+  if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
     v57 = 0;
     v334 = 0u;
@@ -8228,12 +8230,12 @@ LABEL_207:
   v10 = 163878;
   if ( !validate_kaddr_range(v5, addr_v24) )
     return v10;
-  v109 = kreadptr((struct_krwCtx *)v5, addr_v24);
+  v109 = kreadptr(krwCtx, addr_v24);
   if ( !v109 )
     return v10;
   *(uint64_t *)(v5 + 416) = v109;
   v110 = mach_host_self();
-  ipc_port = task_self_get_ipc_port((struct_krwCtx *)v5, v110);
+  ipc_port = task_self_get_ipc_port(krwCtx, v110);
   if ( !ipc_port )
     return 163854;
   *(uint64_t *)(v5 + 424) = ipc_port;
@@ -8249,10 +8251,10 @@ LABEL_207:
   if ( *(int *)(v5 + 320) <= 8791 )
     v112 = 16;
   v295 = v112;
-  v115 = read_kaddr_at_task_offset((struct_krwCtx *)v5, addr_v24);
+  v115 = read_kaddr_at_task_offset(krwCtx, addr_v24);
   if ( !v115 )
     return 163878;
-  if ( !kread_physmap_decorated((struct_krwCtx *)v5, v113 + v115, (unsigned __int64 *)&outputStruct[0].msgh_bits) )
+  if ( !kread_physmap_decorated(krwCtx, v113 + v115, (unsigned __int64 *)&outputStruct[0].msgh_bits) )
     return v305;
   v116 = *(uint64_t *)&outputStruct[0].msgh_bits;
   if ( !*(uint64_t *)&outputStruct[0].msgh_bits )
@@ -8270,7 +8272,7 @@ LABEL_207:
       goto LABEL_228;
     }
     if ( !kread_physmap_decorated(
-            (struct_krwCtx *)v5,
+            krwCtx,
             *(uint64_t *)&outputStruct[0].msgh_bits + v113,
             (unsigned __int64 *)&name.msgh_bits) )
       goto LABEL_245;
@@ -8278,7 +8280,7 @@ LABEL_207:
     if ( *(uint64_t *)&outputStruct[0].msgh_bits == *(uint64_t *)&name.msgh_bits )
       break;
 LABEL_228:
-    v118 = kread_physmap_decorated((struct_krwCtx *)v5, v117 + v113, (unsigned __int64 *)&outputStruct[0].msgh_bits);
+    v118 = kread_physmap_decorated(krwCtx, v117 + v113, (unsigned __int64 *)&outputStruct[0].msgh_bits);
     if ( v118 )
       v10 = (unsigned int)v10;
     else
@@ -8292,7 +8294,7 @@ LABEL_228:
     goto LABEL_247;
   }
   if ( !kread_physmap_decorated(
-          (struct_krwCtx *)v5,
+          krwCtx,
           *(uint64_t *)&outputStruct[0].msgh_bits + v295,
           (unsigned __int64 *)&name.msgh_bits) )
     goto LABEL_245;
@@ -8305,7 +8307,7 @@ LABEL_244:
     v24 = *(uint64_t *)&name.msgh_bits;
     goto LABEL_247;
   }
-  if ( kread_physmap_decorated((struct_krwCtx *)v5, *(uint64_t *)&name.msgh_bits + 8LL, (unsigned __int64 *)&name.msgh_bits) )
+  if ( kread_physmap_decorated(krwCtx, *(uint64_t *)&name.msgh_bits + 8LL, (unsigned __int64 *)&name.msgh_bits) )
   {
     if ( validate_kaddr_range(v5, *(__int64 *)&name.msgh_bits) )
       goto LABEL_244;
@@ -8321,7 +8323,7 @@ LABEL_247:
   if ( (uint32_t)v10 )
     return v10;
   *(uint64_t *)(v5 + 6616) = v24;
-  v10 = check_iogpu_krw_ready_type2(v5, 0, *(uint64_t *)(v5 + 424), (unsigned __int64 *)(v5 + 6608));
+  v10 = check_iogpu_krw_ready_type2(krwCtx, 0, *(uint64_t *)(v5 + 424), (unsigned __int64 *)(v5 + 6608));
   if ( (uint32_t)v10 )
     return v10;
   v10 = init_pgtable_walk_ctx(v5, 0);
@@ -8339,7 +8341,7 @@ LABEL_247:
       if ( (uint32_t)v10 )
         return v10;
       *(uint64_t *)(v5 + 48) = 0;
-      v10 = krw_write_validation((struct_krwCtx *)v5);
+      v10 = krw_write_validation(krwCtx);
       if ( (uint32_t)v10 )
         return v10;
       v121 = (uint64_t *)(v5 + 64);
@@ -8358,7 +8360,7 @@ LABEL_372:
     memory_entry = mach_make_memory_entry(mach_task_self_, (vm_size_t *)&outputStruct[0].msgh_bits, 0, 131075, v319, 0);
     if ( !memory_entry )
     {
-      v175 = get_task_kobject_addr((struct_krwCtx *)v5, v319[0]);
+      v175 = get_task_kobject_addr(krwCtx, v319[0]);
       v10 = 163878;
       if ( !v175 )
         return v10;
@@ -8367,7 +8369,7 @@ LABEL_372:
       if ( !v177 )
         return v10;
       v178 = v177;
-      v179 = walk_kaddr_chain_to_target((struct_krwCtx *)v5, v176, 0);
+      v179 = walk_kaddr_chain_to_target(krwCtx, v176, 0);
       v10 = 163878;
       if ( !v179 )
         return v10;
@@ -8439,7 +8441,7 @@ LABEL_372:
                 return v10;
               *(uint64_t *)(v5 + 80) = 0;
               *(uint64_t *)(v5 + 48) = 0;
-              v10 = krw_write_validation((struct_krwCtx *)v5);
+              v10 = krw_write_validation(krwCtx);
               if ( (uint32_t)v10 )
                 return v10;
               goto LABEL_257;
@@ -8469,7 +8471,7 @@ LABEL_372:
     return v10;
   v187 = v186;
   if ( IOServiceOpen(v186, mach_task_self_, 0, (io_connect_t *)a1)
-    || (v297 = task_self_get_ipc_port((struct_krwCtx *)v5, a1[0])) == 0 )
+    || (v297 = task_self_get_ipc_port(krwCtx, a1[0])) == 0 )
   {
     v188 = 0;
     v297 = 0;
@@ -8480,7 +8482,7 @@ LABEL_372:
     v215 = 0;
     while ( 1 )
     {
-      kobject = maybe_ipc_port_get_kobject((struct_krwCtx *)v5, v297);
+      kobject = maybe_ipc_port_get_kobject(krwCtx, v297);
       if ( !kobject )
       {
         v188 = 0;
@@ -8505,7 +8507,7 @@ LABEL_372:
       }
       if ( IOServiceOpen(v187, mach_task_self_, 0, (io_connect_t *)&a1[v215 + 1]) )
         break;
-      v216 = task_self_get_ipc_port((struct_krwCtx *)v5, a1[++v215]);
+      v216 = task_self_get_ipc_port(krwCtx, a1[++v215]);
       v297 = v216;
       if ( !v216 )
       {
@@ -8630,19 +8632,19 @@ LABEL_427:
     dlclose(__handled);
     if ( (uint32_t)v10 )
       return v10;
-    if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)v5, v273, 8, &v313) )
+    if ( !(unsigned int)krw_read_thunk(krwCtx, v273, 8, &v313) )
       return 163855;
     if ( v313 <= (unsigned int)v285 )
       return 163857;
-    if ( !kread_physmap_decorated((struct_krwCtx *)v5, v270, (unsigned __int64 *)&v317) )
+    if ( !kread_physmap_decorated(krwCtx, v270, (unsigned __int64 *)&v317) )
       return 163855;
     if ( !validate_kaddr_range(v5, v317) )
       return 163878;
-    if ( !kread_physmap_decorated((struct_krwCtx *)v5, v317 + (unsigned int)(8 * v285), (unsigned __int64 *)&v316) )
+    if ( !kread_physmap_decorated(krwCtx, v317 + (unsigned int)(8 * v285), (unsigned __int64 *)&v316) )
       return 163855;
     if ( !validate_kaddr_range(v5, v316) )
       return 163878;
-    if ( !kread_physmap_decorated((struct_krwCtx *)v5, v316 + 64, (unsigned __int64 *)&v315) )
+    if ( !kread_physmap_decorated(krwCtx, v316 + 64, (unsigned __int64 *)&v315) )
       return 163855;
     if ( !validate_kaddr_range(v5, v315) )
       return 163878;
@@ -8671,7 +8673,7 @@ LABEL_427:
   if ( (uint32_t)v10 )
     return v10;
   v10 = iokit_kwrite_via_port(
-          (struct_krwCtx *)v5,
+          krwCtx,
           *(uint64_t *)(v4 + 11288),
           *(uint64_t *)(v4 + 13560),
           0,
@@ -8695,7 +8697,7 @@ LABEL_427:
   if ( memory_entry )
     return memory_entry | 0x80000000;
   v10 = iokit_kwrite_via_port(
-          (struct_krwCtx *)v5,
+          krwCtx,
           *(uint64_t *)(v4 + 11288),
           *(uint64_t *)(v4 + 13560),
           1,
@@ -8719,7 +8721,7 @@ LABEL_427:
   v10 = 163841;
   if ( v188 + 1 < 2 || !v214 || !v280 )
     return v10;
-  if ( !(unsigned int)kread_modify_u32_with_delta(v5, v297, 16) )
+  if ( !(unsigned int)kread_modify_u32_with_delta(krwCtx, v297, 16) )
     return 163856;
   *(uint64_t *)(v5 + 80) = 0;
   v121 = (uint64_t *)(v5 + 48);
@@ -8752,20 +8754,20 @@ LABEL_269:
     }
     break;
   }
-  v127 = get_task_kobject_addr((struct_krwCtx *)v5, *(uint32_t *)(v125 + 4 * v124));
+  v127 = get_task_kobject_addr(krwCtx, *(uint32_t *)(v125 + 4 * v124));
   if ( !v127 )
   {
     v10 = 163848;
     goto LABEL_271;
   }
-  v128 = walk_kaddr_chain_to_target((struct_krwCtx *)v5, v127, 1);
+  v128 = walk_kaddr_chain_to_target(krwCtx, v127, 1);
   if ( !v128 )
   {
     v10 = 163878;
     goto LABEL_271;
   }
   v129 = v128 + 56;
-  if ( !kread64_internal((struct_krwCtx *)v5, v128 + 56, outputStruct) )
+  if ( !kread64_internal(krwCtx, v128 + 56, (uint64_t *)outputStruct) )
   {
     v10 = 163855;
     goto LABEL_271;
@@ -8800,13 +8802,13 @@ LABEL_271:
           v133 = *(uint32_t *)(v4 + 688 * v130 + 52);
           if ( v133 + 1 >= 2 )
           {
-            v136 = get_task_kobject_addr((struct_krwCtx *)v5, v133);
+            v136 = get_task_kobject_addr(krwCtx, v133);
             if ( !v136 )
             {
               v10 = 163848;
               break;
             }
-            v137 = walk_kaddr_chain_to_target((struct_krwCtx *)v5, v136, 1);
+            v137 = walk_kaddr_chain_to_target(krwCtx, v136, 1);
             if ( !v137 )
             {
 LABEL_488:
@@ -8814,7 +8816,7 @@ LABEL_488:
               break;
             }
             v138 = v137 + 56;
-            if ( !kread64_internal((struct_krwCtx *)v5, v137 + 56, outputStruct) )
+            if ( !kread64_internal(krwCtx, v137 + 56, (uint64_t *)outputStruct) )
             {
 LABEL_487:
               v10 = 163855;
@@ -8829,14 +8831,14 @@ LABEL_370:
           }
           else
           {
-            v134 = traverse_sptm_pgtable_chain((uint32_t *)v5, mach_task_self_, v293);
+            v134 = traverse_sptm_pgtable_chain(krwCtx, mach_task_self_, v293);
             if ( !v134 )
             {
               v10 = 163857;
               break;
             }
             v135 = v134 + 56;
-            if ( !kread64_internal((struct_krwCtx *)v5, v134 + 56, outputStruct) )
+            if ( !kread64_internal(krwCtx, v134 + 56, (uint64_t *)outputStruct) )
               goto LABEL_487;
             if ( *(uint64_t *)&outputStruct[0].msgh_bits && !kwrite_physmap_with_a3_ptr(v5, v135, 0) )
               goto LABEL_370;
@@ -8844,10 +8846,10 @@ LABEL_370:
               *(uint32_t *)(v284 + v293) = 0;
           }
         }
-        if ( !krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
+        if ( !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
         {
           outputStructCnt = 0;
-          has_flag = krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A8);
+          has_flag = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A8);
           if ( has_flag )
           {
             v265 = 0xFFFFFFFFF000LL;
@@ -8868,7 +8870,7 @@ LABEL_370:
           }
           else
           {
-            resolve_kernel_text_range(&name, (struct_krwCtx *)v5);
+            resolve_kernel_text_range(&name, krwCtx);
             outputStruct[0] = name;
             if ( has_flag )
               v152 = "29 01 00 8A .. .. .. .. .. .. .. .. 29 01 0A CB";
@@ -8881,7 +8883,7 @@ LABEL_370:
             *(uint64_t *)a1 = v154;
             if ( !v154 )
               goto LABEL_499;
-            if ( !kread64_internal((struct_krwCtx *)v5, v154, a1) )
+            if ( !kread64_internal(krwCtx, v154, (uint64_t *)a1) )
               goto LABEL_495;
             if ( !*(uint64_t *)a1
               || (v155 = find_kernel_func(*(__int64 **)(v5 + 6648), (__int64 *)(v153 + 20)), (*(uint64_t *)v319 = v155) == 0) )
@@ -8889,7 +8891,7 @@ LABEL_370:
               v6 = 163878;
               goto LABEL_499;
             }
-            if ( !kread_physmap_decorated((struct_krwCtx *)v5, v155, (unsigned __int64 *)v319) )
+            if ( !kread_physmap_decorated(krwCtx, v155, (unsigned __int64 *)v319) )
             {
 LABEL_495:
               v6 = 163855;
@@ -8915,7 +8917,7 @@ LABEL_499:
               if ( v157 && (v157 & (unsigned __int64)v267) + 8 < v277 )
               {
                 v157 += 8;
-                if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)v5, v157, 8, &v317) )
+                if ( !(unsigned int)krw_read_thunk(krwCtx, v157, 8, &v317) )
                   goto LABEL_487;
                 v158 = v317;
               }
@@ -8923,15 +8925,15 @@ LABEL_499:
               {
                 *(uint64_t *)&outputStruct[0].msgh_bits = 0;
                 *(uint64_t *)&name.msgh_bits = 0;
-                v159 = krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A8);
+                v159 = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A8);
                 v160 = 0xFFFFFFFFF000LL;
                 if ( !v159 )
                   v160 = 0xFFFFFFFFC000LL;
                 v269 = v160;
-                v161 = task_struct_field_kread((struct_krwCtx *)v5, mach_task_self_);
+                v161 = task_struct_field_kread(krwCtx, mach_task_self_);
                 if ( !v161 )
                   goto LABEL_488;
-                if ( !kread_physmap_decorated((struct_krwCtx *)v5, v161, (unsigned __int64 *)&outputStruct[0].msgh_bits) )
+                if ( !kread_physmap_decorated(krwCtx, v161, (unsigned __int64 *)&outputStruct[0].msgh_bits) )
                   goto LABEL_487;
                 if ( (!*(uint64_t *)(v5 + 6256) || !*(uint64_t *)(v5 + 6264)) && !(unsigned int)init_kread_pattern_addrs((uint64_t *)v5) )
                 {
@@ -8947,13 +8949,13 @@ LABEL_499:
                 }
                 else
                 {
-                  v165 = krw_ctx_has_flag((struct_krwCtx *)v5, KRW_CTX_FLAG_CPU_A16_A17_MASK | KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
+                  v165 = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A16_A17_MASK | KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
                   v163 = 2047;
                   if ( !v165 )
                     v163 = 7;
                   v164 = valuea >> 36;
                 }
-                if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)v5, v162 + 8 * (v163 & v164), 8, &name) )
+                if ( !(unsigned int)krw_read_thunk(krwCtx, v162 + 8 * (v163 & v164), 8, &name) )
                   goto LABEL_487;
                 if ( (~LOBYTE(name.msgh_bits) & 3) != 0 )
                   goto LABEL_363;
@@ -8963,7 +8965,7 @@ LABEL_499:
                 v167 = (valuea >> 21) & 0x1FF;
                 if ( !v159 )
                   v167 = (valuea >> 25) & 0x7FF;
-                if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)v5, v166 + 8 * v167, 8, &name) )
+                if ( !(unsigned int)krw_read_thunk(krwCtx, v166 + 8 * v167, 8, &name) )
                   goto LABEL_487;
                 if ( (~LOBYTE(name.msgh_bits) & 3) != 0 )
                 {
@@ -8979,7 +8981,7 @@ LABEL_363:
                 if ( !v159 )
                   v169 = (valuea >> 14) & 0x7FF;
                 v157 = v168 + 8 * v169;
-                if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)v5, v157, 8, &name) )
+                if ( !(unsigned int)krw_read_thunk(krwCtx, v157, 8, &name) )
                   goto LABEL_487;
                 v158 = *(uint64_t *)&name.msgh_bits;
                 v317 = *(uint64_t *)&name.msgh_bits;
@@ -8990,7 +8992,7 @@ LABEL_363:
               if ( !v170 )
                 goto LABEL_364;
               if ( !(unsigned int)krw_read_thunk(
-                                    (struct_krwCtx *)v5,
+                                    krwCtx,
                                     8LL * (unsigned int)((unsigned __int64)(v170 - *(uint64_t *)a1) >> vm_page_shift)
                                   + *(uint64_t *)v319,
                                     8,
@@ -9144,18 +9146,18 @@ LABEL_500:
         pipe = fd_make_pipe((int *)v319);
         if ( !pipe )
         {
-          v236 = kread_task_struct((struct_krwCtx *)v5, mach_task_self_);
+          v236 = kread_task_struct(krwCtx, mach_task_self_);
           if ( v236 )
           {
             v237 = v236;
-            pipe = read_ipc_port_table_entry((uint32_t *)v5, v236, a1[0], (__int64 *)outputStruct);
+            pipe = read_ipc_port_table_entry(krwCtx, v236, a1[0], (unsigned __int64 *)outputStruct);
             if ( !pipe )
             {
-              pipe = read_ipc_port_table_entry((uint32_t *)v5, v237, v319[0], (__int64 *)&name);
+              pipe = read_ipc_port_table_entry(krwCtx, v237, v319[0], (unsigned __int64 *)&name);
               if ( !pipe )
               {
                 if ( kwrite64(
-                       (struct_krwCtx *)v5,
+                       krwCtx,
                        *(uint64_t *)&outputStruct[0].msgh_bits + 16LL,
                        *(__int64 *)&name.msgh_bits) )
                 {
@@ -9170,16 +9172,16 @@ LABEL_500:
                   *(uint32_t *)(v5 + 6460) = v241;
                   if ( v238 != -1 && v239 != -1 && v240 != -1 && v241 != -1 )
                   {
-                    pipe = fileport_kobj_vm_attr_check((struct_krwCtx *)v5, v238);
+                    pipe = fileport_kobj_vm_attr_check(krwCtx, v238);
                     if ( !pipe )
                     {
-                      pipe = fileport_kobj_vm_attr_check((struct_krwCtx *)v5, *(uint32_t *)(v5 + 6452));
+                      pipe = fileport_kobj_vm_attr_check(krwCtx, *(uint32_t *)(v5 + 6452));
                       if ( !pipe )
                       {
-                        pipe = fileport_kobj_vm_attr_check((struct_krwCtx *)v5, *(uint32_t *)(v5 + 6456));
+                        pipe = fileport_kobj_vm_attr_check(krwCtx, *(uint32_t *)(v5 + 6456));
                         if ( !pipe )
                         {
-                          pipe = fileport_kobj_vm_attr_check((struct_krwCtx *)v5, *(uint32_t *)(v5 + 6460));
+                          pipe = fileport_kobj_vm_attr_check(krwCtx, *(uint32_t *)(v5 + 6460));
                           if ( !pipe )
                           {
 LABEL_531:
@@ -9222,7 +9224,7 @@ LABEL_531:
   {
 LABEL_532:
     *(uint64_t *)&outputStruct[0].msgh_bits = -1;
-    v228 = task_proc_struct_field_offset((struct_krwCtx *)v5);
+    v228 = task_proc_struct_field_offset(krwCtx);
     if ( v228 )
     {
       v229 = v228;
@@ -9262,9 +9264,9 @@ LABEL_536:
         goto LABEL_537;
       }
       v232 = v234;
-      if ( !kread_physmap_decorated((struct_krwCtx *)v5, *(uint64_t *)(v4 + 11280) + v229, (unsigned __int64 *)&v317) )
+      if ( !kread_physmap_decorated(krwCtx, *(uint64_t *)(v4 + 11280) + v229, (unsigned __int64 *)&v317) )
         goto LABEL_537;
-      v235 = get_ipc_kobject_offset((struct_krwCtx *)v5, v317, &outputStructCnt);
+      v235 = get_ipc_kobject_offset(krwCtx, v317, &outputStructCnt);
       if ( v235 )
         goto LABEL_553;
       if ( *(uint64_t *)(v5 + 544) )
@@ -9272,33 +9274,33 @@ LABEL_536:
         v246 = outputStructCnt;
 LABEL_578:
         if ( !kread_physmap_decorated(
-                (struct_krwCtx *)v5,
+                krwCtx,
                 v246 + (int)outputStruct[0].msgh_bits * (__int64)*(int *)(v5 + 360),
                 (unsigned __int64 *)&name.msgh_bits)
-          || !kread_physmap_decorated((struct_krwCtx *)v5, *(uint64_t *)&name.msgh_bits + 16LL, (unsigned __int64 *)a1)
-          || !kread_physmap_decorated((struct_krwCtx *)v5, *(uint64_t *)a1 + 56LL, (unsigned __int64 *)&v315)
-          || !kread_physmap_decorated((struct_krwCtx *)v5, v315 + 16, (unsigned __int64 *)&v316) )
+          || !kread_physmap_decorated(krwCtx, *(uint64_t *)&name.msgh_bits + 16LL, (unsigned __int64 *)a1)
+          || !kread_physmap_decorated(krwCtx, *(uint64_t *)a1 + 56LL, (unsigned __int64 *)&v315)
+          || !kread_physmap_decorated(krwCtx, v315 + 16, (unsigned __int64 *)&v316) )
         {
           goto LABEL_537;
         }
         if ( validate_kaddr_range(v5, v316) )
         {
           if ( !kread_physmap_decorated(
-                  (struct_krwCtx *)v5,
+                  krwCtx,
                   v246 + *(int *)(v5 + 360) * (__int64)v231,
                   (unsigned __int64 *)&name.msgh_bits)
-            || !kread_physmap_decorated((struct_krwCtx *)v5, *(uint64_t *)&name.msgh_bits + 16LL, (unsigned __int64 *)v319) )
+            || !kread_physmap_decorated(krwCtx, *(uint64_t *)&name.msgh_bits + 16LL, (unsigned __int64 *)v319) )
           {
             goto LABEL_537;
           }
-          v235 = krw_fd_verify_roundtrip(v5, (int *)outputStruct, *(unsigned __int64 *)v319);
+          v235 = krw_fd_verify_roundtrip(krwCtx, (int *)outputStruct, *(unsigned __int64 *)v319);
           if ( v235 )
           {
 LABEL_553:
             v305 = v235;
             goto LABEL_537;
           }
-          if ( kwrite64((struct_krwCtx *)v5, *(uint64_t *)&name.msgh_bits + 16LL, v316) )
+          if ( kwrite64(krwCtx, *(uint64_t *)&name.msgh_bits + 16LL, v316) )
           {
             v247 = outputStruct[0].msgh_bits;
             msgh_size = outputStruct[0].msgh_size;
@@ -9312,10 +9314,10 @@ LABEL_553:
             {
               if ( v249 )
               {
-                v305 = fileport_kobj_vm_attr_check((struct_krwCtx *)v5, v247);
+                v305 = fileport_kobj_vm_attr_check(krwCtx, v247);
                 if ( !v305 )
                 {
-                  v305 = fileport_kobj_vm_attr_check((struct_krwCtx *)v5, *(uint32_t *)(v5 + 6452));
+                  v305 = fileport_kobj_vm_attr_check(krwCtx, *(uint32_t *)(v5 + 6452));
                   goto LABEL_620;
                 }
               }
@@ -9334,11 +9336,11 @@ LABEL_553:
       v313 = 0;
       v246 = outputStructCnt;
       if ( kread_physmap_decorated(
-             (struct_krwCtx *)v5,
+             krwCtx,
              outputStructCnt + *(int *)(v5 + 360) * (__int64)v232,
              (unsigned __int64 *)&name.msgh_bits)
-        && kread_physmap_decorated((struct_krwCtx *)v5, *(uint64_t *)&name.msgh_bits + 16LL, (unsigned __int64 *)a1)
-        && kread_physmap_decorated((struct_krwCtx *)v5, *(uint64_t *)a1 + 40LL, &v313) )
+        && kread_physmap_decorated(krwCtx, *(uint64_t *)&name.msgh_bits + 16LL, (unsigned __int64 *)a1)
+        && kread_physmap_decorated(krwCtx, *(uint64_t *)a1 + 40LL, &v313) )
       {
         v250 = 128;
         if ( *(int *)(v5 + 320) > 8019 )
@@ -9354,7 +9356,7 @@ LABEL_553:
           v254 = 0;
           do
           {
-            v255 = kread_physmap_decorated((struct_krwCtx *)v5, v251, &v312);
+            v255 = kread_physmap_decorated(krwCtx, v251, &v312);
             if ( v253 )
             {
               if ( !v255 )
