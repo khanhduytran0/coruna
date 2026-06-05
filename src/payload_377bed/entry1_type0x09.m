@@ -21538,24 +21538,13 @@ const CFDictionaryRef *__fastcall iokit_connect_call_struct_method(const CFDicti
   int outputStruct; // [xsp+4h] [xbp-13Ch] BYREF
   size_t outputStructCnt; // [xsp+8h] [xbp-138h] BYREF
   io_connect_t connect; // [xsp+14h] [xbp-12Ch] BYREF
-  __int64 inputStruct; // [xsp+18h] [xbp-128h] BYREF
-  const char *v10; // [xsp+20h] [xbp-120h]
-  size_t v11; // [xsp+28h] [xbp-118h]
-  __int128 v12; // [xsp+30h] [xbp-110h]
-  __int128 v13; // [xsp+40h] [xbp-100h]
-  __int128 v14; // [xsp+50h] [xbp-F0h]
-  __int128 v15; // [xsp+60h] [xbp-E0h]
-  __int128 v16; // [xsp+70h] [xbp-D0h]
-  __int128 v17; // [xsp+80h] [xbp-C0h]
-  __int128 v18; // [xsp+90h] [xbp-B0h]
-  __int128 v19; // [xsp+A0h] [xbp-A0h]
-  __int128 v20; // [xsp+B0h] [xbp-90h]
-  __int128 v21; // [xsp+C0h] [xbp-80h]
-  __int128 v22; // [xsp+D0h] [xbp-70h]
-  __int128 v23; // [xsp+E0h] [xbp-60h]
-  __int128 v24; // [xsp+F0h] [xbp-50h]
-  __int128 v25; // [xsp+100h] [xbp-40h]
-  __int64 v26; // [xsp+110h] [xbp-30h]
+  struct iohdix_method_input
+  {
+    uint64_t magic;
+    const char *path;
+    size_t pathLen;
+    uint8_t reserved[0xE8];
+  } inputStruct; // [xsp+18h] [xbp-128h] BYREF
 
   if ( result )
   {
@@ -21578,24 +21567,10 @@ const CFDictionaryRef *__fastcall iokit_connect_call_struct_method(const CFDicti
       {
         outputStructCnt = 4;
         outputStruct = 0;
-        v12 = 0u;
-        v13 = 0u;
-        v14 = 0u;
-        v15 = 0u;
-        v16 = 0u;
-        v17 = 0u;
-        v18 = 0u;
-        v19 = 0u;
-        v20 = 0u;
-        v21 = 0u;
-        v22 = 0u;
-        v23 = 0u;
-        v24 = 0u;
-        v25 = 0u;
-        v26 = 0;
-        inputStruct = 0x1BEEFFEEDLL;
-        v10 = *(const char **)v1;
-        v11 = strlen(v10);
+        memset(&inputStruct, 0, sizeof(inputStruct));
+        inputStruct.magic = 0x1BEEFFEEDLL;
+        inputStruct.path = *(const char **)v1;
+        inputStruct.pathLen = strlen(inputStruct.path);
         v4 = IOConnectCallStructMethod(connect, 0, &inputStruct, 0x100u, &outputStruct, &outputStructCnt);
         v5 = v4 | 0x80000000;
         if ( !v4 )
@@ -21622,24 +21597,10 @@ __int64 __fastcall ioregistry_iter_read_cf_props(__int64 a1, io_iterator_t itera
   CFTypeID v11; // x28
   CFStringEncoding SystemEncoding; // w0
   __int64 valuePtr; // [xsp+8h] [xbp-E8h] BYREF
-  char buffer[16]; // [xsp+10h] [xbp-E0h] BYREF
-  __int128 v15; // [xsp+20h] [xbp-D0h]
-  __int128 v16; // [xsp+30h] [xbp-C0h]
-  __int128 v17; // [xsp+40h] [xbp-B0h]
-  __int128 v18; // [xsp+50h] [xbp-A0h]
-  __int128 v19; // [xsp+60h] [xbp-90h]
-  __int128 v20; // [xsp+70h] [xbp-80h]
-  __int128 v21; // [xsp+80h] [xbp-70h]
+  char buffer[128]; // [xsp+10h] [xbp-E0h] BYREF
 
   valuePtr = 0;
-  v20 = 0u;
-  v21 = 0u;
-  v18 = 0u;
-  v19 = 0u;
-  v16 = 0u;
-  v17 = 0u;
-  *(__int128 *)buffer = 0u;
-  v15 = 0u;
+  memset(buffer, 0, sizeof(buffer));
   result = IOIteratorNext(iterator);
   if ( (uint32_t)result )
   {
