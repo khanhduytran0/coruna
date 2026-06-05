@@ -20,6 +20,8 @@ RECOMP_TRACE_DMAFAIL ?= 0
 RECOMP_TRACE_PHYSMAP ?= 0
 RECOMP_TRACE_PORTS ?= 0
 RECOMP_PHYSMAP_VALIDATE_CACHE ?= 1
+RECOMP_TEMP_FAKE_OBJC_CLASS ?= 0
+RECOMP_TEMP_FAKE_OBJC_ARC ?= 0
 
 entry1_type0x09_FILES = entry1_type0x09.m
 entry1_type0x09_CFLAGS = \
@@ -28,6 +30,7 @@ entry1_type0x09_CFLAGS = \
     -DRECOMP_TRACE_PHYSMAP=$(RECOMP_TRACE_PHYSMAP) \
     -DRECOMP_TRACE_PORTS=$(RECOMP_TRACE_PORTS) \
     -DRECOMP_PHYSMAP_VALIDATE_CACHE=$(RECOMP_PHYSMAP_VALIDATE_CACHE) \
+    -DRECOMP_TEMP_FAKE_OBJC_CLASS=$(RECOMP_TEMP_FAKE_OBJC_CLASS) \
     -fno-inline \
     -fno-strict-aliasing \
     -Wno-int-conversion \
@@ -40,6 +43,10 @@ entry1_type0x09_CFLAGS = \
     -I.
 entry1_type0x09_FRAMEWORKS = CoreFoundation IOKit Security
 entry1_type0x09_INSTALL_PATH = /usr/local/lib
+
+ifeq ($(RECOMP_TEMP_FAKE_OBJC_ARC),1)
+entry1_type0x09_CFLAGS += -fobjc-arc
+endif
 
 TOOL_NAME = entry1_type0x09_test
 entry1_type0x09_test_FILES = test.m

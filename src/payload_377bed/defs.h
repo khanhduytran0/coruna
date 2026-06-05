@@ -58,8 +58,14 @@ enum CPUFamily : uint32_t
 
 
 /* 164 */
+#if !RECOMP_TEMP_FAKE_OBJC_CLASS
 struct struct_krwCtx
 {
+#else
+@interface struct_krwCtx : NSObject
+{
+@public
+#endif
   uint32_t flags;
   uint8_t gap4[168];
   uint32_t threadForKernelRead;
@@ -100,7 +106,11 @@ struct struct_krwCtx
   uint64_t gap1921[108];
   uint64_t IOKitConnInfo;
 };
+#if !RECOMP_TEMP_FAKE_OBJC_CLASS
 typedef struct struct_krwCtx struct_krwCtx;
+#else
+@end
+#endif
 
 /* 165 */
 struct __attribute__((packed)) __attribute__((aligned(4))) struct_IOKitConnInfo
