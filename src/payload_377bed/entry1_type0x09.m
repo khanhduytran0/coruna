@@ -28281,7 +28281,7 @@ __int64 __fastcall krw_write_validation(struct_krwCtx *a1)
   int v14; // w8
   unsigned __int64 v15; // x9
   pthread_t *v16; // x25
-  __int64 *v17; // x24
+  uint64_t *v17; // x24
   __int64 v18; // x23
   unsigned __int64 v20; // x0
   unsigned __int64 v21; // x22
@@ -28292,48 +28292,20 @@ __int64 __fastcall krw_write_validation(struct_krwCtx *a1)
   __int64 v26; // x0
   vm_size_t v27; // [xsp+0h] [xbp-180h]
   vm_address_t v28; // [xsp+8h] [xbp-178h] BYREF
-  __int128 v29; // [xsp+10h] [xbp-170h] BYREF
-  __int128 v30; // [xsp+20h] [xbp-160h]
-  __int128 v31; // [xsp+30h] [xbp-150h]
-  __int128 v32; // [xsp+40h] [xbp-140h]
-  __int128 v33; // [xsp+50h] [xbp-130h]
-  __int128 v34; // [xsp+60h] [xbp-120h]
-  __int128 v35; // [xsp+70h] [xbp-110h]
-  __int128 v36; // [xsp+80h] [xbp-100h]
-  __int128 v37; // [xsp+90h] [xbp-F0h] BYREF
-  __int128 v38; // [xsp+A0h] [xbp-E0h]
-  __int128 v39; // [xsp+B0h] [xbp-D0h]
-  __int128 v40; // [xsp+C0h] [xbp-C0h]
-  __int128 v41; // [xsp+D0h] [xbp-B0h]
-  __int128 v42; // [xsp+E0h] [xbp-A0h]
-  __int128 v43; // [xsp+F0h] [xbp-90h]
-  __int128 v44; // [xsp+100h] [xbp-80h]
+  uint64_t workerPtrs[16]; // [xsp+10h] [xbp-170h] BYREF
+  pthread_t workerThreads[16]; // [xsp+90h] [xbp-F0h] BYREF
 
   v2 = 0;
   v27 = vm_page_size;
   v28 = 0;
   v3 = 163878;
-  v43 = 0u;
-  v44 = 0u;
-  v41 = 0u;
-  v42 = 0u;
-  v39 = 0u;
-  v40 = 0u;
-  v37 = 0u;
-  v38 = 0u;
-  v35 = 0u;
-  v36 = 0u;
-  v33 = 0u;
-  v34 = 0u;
-  v31 = 0u;
-  v32 = 0u;
+  memset(workerThreads, 0, sizeof(workerThreads));
+  memset(workerPtrs, 0, sizeof(workerPtrs));
   v4 = 163848;
-  v29 = 0u;
-  v30 = 0u;
   while ( 1 )
   {
     v5 = (unsigned __int64 *)calloc(1u, 0x78u);
-    *((uint64_t *)&v29 + v2) = v5;
+    workerPtrs[v2] = (uint64_t)v5;
     if ( !v5 )
     {
       v4 = 708617;
@@ -28343,7 +28315,7 @@ LABEL_20:
     }
     v6 = v5;
     v7 = (void *(__cdecl *)(void *))nullsub_1(ulock_wait_loop);
-    v8 = pthread_create((pthread_t *)&v37 + v2, 0, v7, v6);
+    v8 = pthread_create(&workerThreads[v2], 0, v7, v6);
     if ( v8 )
     {
       v6 = 0;
@@ -28354,7 +28326,7 @@ LABEL_20:
       v4 = v14 | 0x40000000u;
       goto LABEL_22;
     }
-    v9 = pthread_mach_thread_np(*((pthread_t *)&v37 + v2));
+    v9 = pthread_mach_thread_np(workerThreads[v2]);
     if ( v9 + 1 < 2 )
       goto LABEL_20;
     v10 = v9;
@@ -28371,9 +28343,9 @@ LABEL_9:
     if ( (((v13 + 1520) ^ v13) & ~a1->pageMask) == 0 )
     {
       v4 = 0;
-      v15 = *((uint64_t *)&v37 + v2);
-      *((uint64_t *)&v29 + v2) = 0;
-      *((uint64_t *)&v37 + v2) = 0;
+      v15 = (uint64_t)workerThreads[v2];
+      workerPtrs[v2] = 0;
+      workerThreads[v2] = 0;
       LODWORD(v2) = v2 + 1;
       *v6 = v13;
       v6[5] = v15;
@@ -28400,8 +28372,8 @@ LABEL_22:
   if ( (int)v2 <= 0 )
     goto LABEL_29;
 LABEL_23:
-  v16 = (pthread_t *)&v37;
-  v17 = (__int64 *)&v29;
+  v16 = workerThreads;
+  v17 = workerPtrs;
   v2 = (unsigned int)v2;
   do
   {
