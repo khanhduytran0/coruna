@@ -42651,19 +42651,9 @@ __int64 __fastcall get_or_set_uid_cred_in_task(__int64 a1, int a2, int a3, int a
   __int64 v15; // x0
   __int64 v16; // x0
   unsigned __int64 v17; // x0
-  uint32_t v18[4]; // [xsp+0h] [xbp-150h] BYREF
-  __int128 v19; // [xsp+10h] [xbp-140h]
-  __int128 v20; // [xsp+20h] [xbp-130h]
-  __int128 v21; // [xsp+30h] [xbp-120h]
-  __int128 v22; // [xsp+40h] [xbp-110h]
-  int v23; // [xsp+50h] [xbp-100h]
-  int v24; // [xsp+54h] [xbp-FCh]
-  __int64 __s2; // [xsp+68h] [xbp-E8h] BYREF
-  int __s2_12; // [xsp+74h] [xbp-DCh]
-  __int128 v27; // [xsp+78h] [xbp-D8h]
-  __int128 v28; // [xsp+88h] [xbp-C8h]
-  __int128 v29; // [xsp+98h] [xbp-B8h]
-  __int128 v30; // [xsp+A8h] [xbp-A8h]
+  uint8_t newCred[0x58]; // [xsp+0h] [xbp-150h] BYREF
+  uint64_t selfTaskKaddr; // [xsp+68h] [xbp-E8h] BYREF
+  uint8_t oldCred[0x58]; // [xsp+68h] [xbp-E8h] BYREF
   int v31; // [xsp+CCh] [xbp-84h] BYREF
   uint64_t v32[3]; // [xsp+D0h] [xbp-80h] BYREF
   int v33; // [xsp+ECh] [xbp-64h] BYREF
@@ -42694,32 +42684,29 @@ __int64 __fastcall get_or_set_uid_cred_in_task(__int64 a1, int a2, int a3, int a
       if ( !result )
       {
 LABEL_10:
-        __s2 = 0;
-        result = get_kobj_and_resolve_kaddr((struct_krwCtx *)a1, mach_task_self_, &__s2);
+        selfTaskKaddr = 0;
+        result = get_kobj_and_resolve_kaddr((struct_krwCtx *)a1, mach_task_self_, &selfTaskKaddr);
         if ( !result )
           return result;
         if ( !*(uint64_t *)(a1 + 6368) )
         {
           *(uint64_t *)(a1 + 6368) = result;
-          *(uint64_t *)(a1 + 6376) = __s2;
+          *(uint64_t *)(a1 + 6376) = selfTaskKaddr;
         }
       }
       v10 = result + 24;
-      result = krw_read_thunk((struct_krwCtx *)a1, result + 24, 88, &__s2);
+      result = krw_read_thunk((struct_krwCtx *)a1, result + 24, sizeof(oldCred), oldCred);
       if ( (uint32_t)result )
       {
-        v18[3] = __s2_12;
-        v19 = v27;
-        v20 = v28;
-        v21 = v29;
-        v22 = v30;
-        v18[0] = a2;
-        v18[1] = a2;
-        v18[2] = a2;
-        LODWORD(v19) = a3;
-        v23 = a3;
-        v24 = a3;
-        if ( !memcmp(v18, &__s2, 0x58u) || (result = kwritebuf_universal((uint64_t *)a1, v10, v18, 0x58u), (uint32_t)result) )
+        memcpy(newCred, oldCred, sizeof(newCred));
+        *(uint32_t *)(newCred + 0) = a2;
+        *(uint32_t *)(newCred + 4) = a2;
+        *(uint32_t *)(newCred + 8) = a2;
+        *(uint32_t *)(newCred + 0x10) = a3;
+        *(uint32_t *)(newCred + 0x50) = a3;
+        *(uint32_t *)(newCred + 0x54) = a3;
+        if ( !memcmp(newCred, oldCred, sizeof(newCred))
+          || (result = kwritebuf_universal((uint64_t *)a1, v10, newCred, sizeof(newCred)), (uint32_t)result) )
         {
           v11 = kread_task_struct((struct_krwCtx *)a1, mach_task_self_);
           v37 = v11;
