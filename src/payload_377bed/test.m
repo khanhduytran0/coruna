@@ -45,7 +45,7 @@ typedef struct struct_krwCtx // sizeof=0x1D50
     uint64_t gap_0x370[695];
     uint32_t gap_0x1928;
     uint32_t gap_0x192C;
-    uint32_t gap_0x1930[2];
+    uint32_t krw_pipe_0[2];
     uint32_t gap_0x1938;
     uint32_t gap_0x193C;
     uint32_t gap_0x1940;

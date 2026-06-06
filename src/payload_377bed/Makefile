@@ -47,6 +47,7 @@ entry1_type0x09_INSTALL_PATH = /usr/local/lib
 ifeq ($(RECOMP_TEMP_FAKE_OBJC_ARC),1)
 entry1_type0x09_CFLAGS += -fobjc-arc
 endif
+entry1_type0x09_CFLAGS += -ferror-limit=0
 
 TOOL_NAME = entry1_type0x09_test
 entry1_type0x09_test_FILES = test.m

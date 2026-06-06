@@ -63,50 +63,57 @@ struct struct_krwCtx
 {
 #else
 @interface struct_krwCtx : NSObject
-{
-@public
+    {
+    @public
 #endif
-  /*  00000000 */ uint32_t flags;
-  /*  00000004 */ uint8_t gap_0x4[168];
-  /*  000000AC */ uint32_t threadForKernelRead;
-  /*  000000B0 */ uint8_t gap_0xB0[144];
-  /*  00000140 */ int xnuMajorVersion;
-  /*  00000144 */ uint8_t gap_0x144[20];
-  /*  00000158 */ uint64_t xnuVersionPacked;
-  /*  00000160 */ uint8_t gap_0x160[8];
-  /*  00000168 */ int stride_0x168;
-  /*  0000016C */ int gap_0x16C[5];
-  /*  00000180 */ int pageSizeOrSomething;
-  /*  00000184 */ int gap_0x184;
-  /*  00000188 */ uint64_t pageMask;
-  /*  00000190 */ uint8_t gap_0x190[136];
-  /*  00000218 */ uint64_t gap_0x218;
-  /*  00000220 */ uint8_t gap_0x220[56];
-  /*  00000258 */ int isRW;
-  /*  0000025C */ struct mach_timebase_info timebase;
-  /*  00000264 */ mach_port_t semaphore;
-  /*  00000268 */ pthread_mutex_t someMutex;
-  /*  000002A8 */ uint32_t someInt1;
-  /*  000002AC */ uint32_t someInt2;
-  /*  000002B0 */ uint64_t gap_0x2B0[16];
-  /*  00000330 */ pthread_mutex_t someMutex2;
-  /*  00000370 */ uint64_t gap_0x370[695];
-  /*  00001928 */ uint32_t gap_0x1928;
-  /*  0000192C */ uint32_t gap_0x192C;
-  /*  00001930 */ uint32_t gap_0x1930[2];
-  /*  00001938 */ uint32_t gap_0x1938;
-  /*  0000193C */ uint32_t gap_0x193C;
-  /*  00001940 */ uint32_t gap_0x1940;
-  /*  00001944 */ uint32_t gap_0x1944;
-  /*  00001948 */ uint64_t gap_0x1948[16];
-  /*  000019C8 */ uint64_t machHeaderPlus0x8000;
-  /*  000019D0 */ uint64_t gap_0x19D0;
-  /*  000019D8 */ uint64_t gap_0x19D8;
-  /*  000019E0 */ uint64_t slideMaybe;
-  /*  000019E8 */ uint64_t gap_0x19E8[108];
-  /*  00001D48 */ uint64_t IOKitConnInfo;
-  /*  00001D50 */ // end
-};
+        /*  00000000 */ uint32_t flags;
+        /*  00000004 */ uint8_t gap_0x4[168];
+        /*  000000AC */ uint32_t threadForKernelRead;
+        /*  000000B0 */ uint8_t gap_0xB0[0x90];
+        /*  00000140 */ int xnuMajorVersion;
+        /*  00000144 */ uint8_t gap_0x144[20];
+        /*  00000158 */ uint64_t xnuVersionPacked;
+        /*  00000160 */ uint8_t gap_0x160[8];
+        /*  00000168 */ int stride_0x168;
+        /*  0000016C */ int gap_0x16C[5];
+        /*  00000180 */ uint32_t pageSizeOrSomething;
+        /*  00000184 */ int gap_0x184;
+        /*  00000188 */ uint64_t pageMask;
+        /*  00000190 */ uint8_t gap_0x190[136];
+        /*  00000218 */ uint64_t gap_0x218;
+        /*  00000220 */ uint8_t gap_0x220[56];
+        /*  00000258 */ int isRW;
+        /*  0000025C */ struct mach_timebase_info timebase;
+        /*  00000264 */ mach_port_t semaphore;
+        /*  00000268 */ pthread_mutex_t someMutex;
+        /*  000002A8 */ uint32_t someInt1;
+        /*  000002AC */ uint32_t someInt2;
+        /*  000002B0 */ uint64_t gap_0x2B0[16];
+        /*  00000330 */ pthread_mutex_t someMutex2;
+        /*  00000370 */ uint64_t gap_0x370[695];
+        /*  00001928 */ uint32_t gap_0x1928;
+        /*  0000192C */ uint32_t gap_0x192C;
+        /*  00001930 */ uint32_t krw_pipe_0;
+        /*  00001934 */ uint32_t krw_pipe_1;
+        /*  00001938 */ uint32_t gap_0x1938;
+        /*  0000193C */ uint32_t gap_0x193C;
+        /*  00001940 */ uint32_t gap_0x1940;
+        /*  00001944 */ uint32_t gap_0x1944;
+        /*  00001948 */ uint64_t gap_0x1948[16];
+        /*  000019C8 */ uint64_t machHeaderPlus0x8000;
+        /*  000019D0 */ uint64_t gap_0x19D0;
+        /*  000019D8 */ uint64_t gap_0x19D8;
+        /*  000019E0 */ uint64_t slideMaybe;
+        /*  000019E8 */ uint64_t gap_0x19E8;
+        /*  000019F0 */ uint64_t gap_0x19F0;
+        /*  000019F8 */ uint64_t *gap_0x19F8;
+        /*  00001A00 */ uint64_t gap_0x1A00;
+        /*  00001A08 */ uint64_t gap_0x19E8[104];
+        /*  00001D48 */ uint64_t IOKitConnInfo;
+        /*  00001D50 */ uint64_t gap_0x1D50;
+        /*  00001D58 */ uint64_t gap_0x1D58;
+        /*  00001D60 */ // end
+    };
 #if !RECOMP_TEMP_FAKE_OBJC_CLASS
 typedef struct struct_krwCtx struct_krwCtx;
 #define KRWCTX_FROM_UINTPTR(value) ((struct_krwCtx *)(uintptr_t)(value))
