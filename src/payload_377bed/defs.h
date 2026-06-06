@@ -73,7 +73,12 @@ struct __attribute__((packed)) struct_krwCtx
             struct {
         /*  00000004 */ uint8_t gap_0x4_to_0xB[0x7];
         /*  0000000B */ uint8_t gap_0xB;
-        /*  0000000C */ uint8_t gap_0xC_to_0x28[0x1C];
+        /*  0000000C */ uint8_t gap_0xC;
+        /*  0000000D */ uint8_t gap_0xD_to_0x10[0x3];
+        /*  00000010 */ uint32_t gap_0x10;
+        /*  00000014 */ uint8_t gap_0x14_to_0x18[0x4];
+        /*  00000018 */ uint64_t gap_0x18;
+        /*  00000020 */ uint64_t gap_0x20;
         /*  00000028 */ uint64_t gap_0x28;
         /*  00000030 */ uint64_t gap_0x30;
         /*  00000038 */ uint64_t gap_0x38;
@@ -83,8 +88,10 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00000058 */ uint32_t gap_0x58;
         /*  0000005C */ uint8_t gap_0x5C_to_0x80[0x24];
         /*  00000080 */ uint64_t gap_0x80;
-        /*  00000088 */ uint32_t gap_0x88_size4;
-        /*  0000008C */ uint8_t gap_0x8C_to_0xA0[0x14];
+        /*  00000088 */ uint32_t gap_0x88;
+        /*  0000008C */ uint8_t gap_0x8C_to_0x90[0x4];
+        /*  00000090 */ uint64_t gap_0x90;
+        /*  00000098 */ uint64_t gap_0x98;
         /*  000000A0 */ uint64_t gap_0xA0;
         /*  000000A8 */ uint32_t gap_0xA8_size4;
             };
@@ -97,12 +104,13 @@ struct __attribute__((packed)) struct_krwCtx
         /*  000000D0 */ uint64_t gap_0xD0;
         /*  000000D8 */ uint64_t gap_0xD8;
         /*  000000E0 */ uint64_t gap_0xE0;
-        /*  000000E8 */ uint64_t gap_0xE8;
+        /*  000000E8 */ uint64_t gap_0xE8; // may be uint32_t?
         /*  000000F0 */ uint64_t gap_0xF0;
         /*  000000F8 */ uint64_t gap_0xF8;
         /*  00000100 */ uint64_t gap_0x100;
         /*  00000108 */ uint64_t gap_0x108;
-        /*  00000110 */ uint64_t gap_0x110;
+        /*  00000110 */ uint32_t gap_0x110;
+        /*  00000114 */ uint32_t gap_0x114;
         union {
         /*  00000118 */ uint64_t gap_0x118;
         /*  00000118 */ uint64_t gap_0x118_size8byte;
@@ -147,19 +155,32 @@ struct __attribute__((packed)) struct_krwCtx
         union {
         /*  00000190 */ uint8_t raw_0x190[136];
             struct {
-        /*  00000190 */ uint8_t gap_0x190_to_0x1A8[0x18];
+        /*  00000190 */ uint8_t gap_0x190_to_0x1A0[0x10];
+        /*  000001A0 */ uint64_t gap_0x1A0;
         /*  000001A8 */ uint64_t gap_0x1A8_size8;
         /*  000001B0 */ uint64_t gap_0x1B0;
         /*  000001B8 */ uint8_t gap_0x1B8_to_0x1E0[0x28];
         /*  000001E0 */ uint64_t gap_0x1E0;
         /*  000001E8 */ uint64_t gap_0x1E8;
-        /*  000001F0 */ uint8_t gap_0x1F0_to_0x218[0x28];
+        /*  000001F0 */ uint64_t gap_0x1F0;
+        /*  000001F8 */ uint64_t gap_0x1F8;
+        /*  00000200 */ uint64_t gap_0x200;
+        /*  00000208 */ uint64_t gap_0x208;
+        /*  00000210 */ uint64_t gap_0x210;
+        ///*  00000200 */ uint8_t gap_0x200_to_0x218[0x18];
             };
         };
         /*  00000218 */ uint64_t gap_0x218;
         union {
         /*  00000220 */ uint8_t raw_0x220[56];
+            struct {
         /*  00000220 */ uint64_t gap_0x220;
+        /*  00000228 */ uint64_t gap_0x228;
+        /*  00000230 */ uint64_t gap_0x230;
+        /*  00000238 */ uint8_t gap_0x238_to_0x248[0x10];
+        /*  00000248 */ uint64_t gap_0x248;
+        /*  00000250 */ uint64_t gap_0x250;
+            };
         };
         union {
         /*  00000258 */ int isRW;
@@ -189,7 +210,14 @@ struct __attribute__((packed)) struct_krwCtx
         /*  000003A0 */ uint64_t gap_0x3A0;
         /*  000003A8 */ uint64_t gap_0x3A8;
         /*  000003B0 */ uint64_t gap_0x3B0;
-        /*  000003B8 */ uint8_t gap_0x3B8_to_0x870[0x4B8];
+        /*  000003B8 */ uint8_t gap_0x3B8_to_0x5C0[0x208];
+        /*  000005C0 */ uint64_t gap_0x5C0;
+        /*  000005C8 */ uint8_t gap_0x5C8_to_0x5D0[0x8];
+        /*  000005D0 */ uint64_t gap_0x5D0;
+        /*  000005D8 */ uint64_t gap_0x5D8;
+        /*  000005E0 */ uint32_t gap_0x5E0_size4;
+        /*  000005E4 */ uint8_t gap_0x5E4_to_0x868[0x284];
+        /*  00000868 */ uint64_t gap_0x868;
         /*  00000870 */ uint64_t gap_0x870;
         /*  00000878 */ uint64_t gap_0x878;
         /*  00000880 */ uint8_t gap_0x880_to_0x1888[0x1008];
@@ -204,7 +232,7 @@ struct __attribute__((packed)) struct_krwCtx
         /*  000018C0 */ uint64_t gap_0x18C0;
         /*  000018C8 */ uint8_t gap_0x18C8_to_0x18E0[0x18];
         /*  000018E0 */ uint64_t gap_0x18E0_size8;
-        /*  000018E8 */ uint8_t gap_0x18E8_to_0x18F0[0x8];
+        /*  000018E8 */ uint64_t gap_0x18E8;
         /*  000018F0 */ uint64_t gap_0x18F0;
         /*  000018F8 */ uint64_t gap_0x18F8;
         /*  00001900 */ uint64_t gap_0x1900;
@@ -227,7 +255,7 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00001920 */ uint64_t gap_0x1920;
             struct {
         /*  00001920 */ uint32_t gap_0x1920_size4;
-        /*  00001924 */ uint8_t gap_0x1924_to_0x1928[0x4];
+        /*  00001924 */ uint32_t gap_0x1924_size4;
             };
         };
             };
@@ -250,7 +278,7 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00001958 */ uint64_t gap_0x1958;
         /*  00001960 */ uint8_t gap_0x1960_to_0x1990[0x30];
         /*  00001990 */ uint64_t gap_0x1990_size8;
-        /*  00001998 */ uint8_t gap_0x1998_to_0x19A0[0x8];
+        /*  00001998 */ uint64_t gap_0x1998;
         /*  000019A0 */ uint64_t gap_0x19A0;
         /*  000019A8 */ uint8_t gap_0x19A8_to_0x19C8[0x20];
             };
@@ -272,12 +300,16 @@ struct __attribute__((packed)) struct_krwCtx
         union {
         /*  00001A08 */ uint64_t raw_0x1A08[104];
             struct {
-        /*  00001A08 */ uint8_t gap_0x1A08_to_0x1D18[0x310];
+        /*  00001A08 */ uint8_t gap_0x1A08_to_0x1D08[0x300];
+        /*  00001D08 */ uint32_t gap_0x1D08_size4;
+        /*  00001D0C */ uint8_t gap_0x1D0C_to_0x1D10[0x4];
+        /*  00001D10 */ uint64_t gap_0x1D10;
         /*  00001D18 */ uint64_t gap_0x1D18_size8;
         /*  00001D20 */ uint64_t gap_0x1D20_kern_addr_allows_security_research;
         /*  00001D28 */ uint8_t gap_0x1D28_to_0x1D30[0x8];
         /*  00001D30 */ uint64_t gap_0x1D30_size8;
-        /*  00001D38 */ uint8_t gap_0x1D38_to_0x1D48[0x10];
+        /*  00001D38 */ uint64_t gap_0x1D38;
+        /*  00001D40 */ uint8_t gap_0x1D40_to_0x1D48[0x8];
             };
         };
         /*  00001D48 */ uint64_t IOKitConnInfo;
