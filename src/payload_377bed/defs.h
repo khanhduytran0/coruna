@@ -67,22 +67,70 @@ struct struct_krwCtx
     @public
 #endif
         /*  00000000 */ uint32_t flags;
-        /*  00000004 */ uint8_t gap_0x4[168];
+        /*  00000004 */ uint8_t gap_0x4[0x4C];
+        /*  00000050 */ uint64_t gap_0x50;
+        /*  00000058 */ uint8_t gap_0x58[0x54];
         /*  000000AC */ uint32_t threadForKernelRead;
-        /*  000000B0 */ uint8_t gap_0xB0[0x90];
+        ///*  000000B0 */ uint8_t gap_0xB0[0x90];
+        /*  00000B0 */ uint64_t gap_0xB0;
+        /*  000000B8 */ uint64_t gap_0xB8;
+        /*  000000C0 */ uint64_t gap_0xC0;
+        /*  000000C8 */ uint64_t gap_0xC8;
+        /*  000000D0 */ uint64_t gap_0xD0;
+        /*  000000D8 */ uint64_t gap_0xD8;
+        /*  000000E0 */ uint64_t gap_0xE0;
+        /*  000000E8 */ uint64_t gap_0xE8;
+        /*  000000F0 */ uint64_t gap_0xF0;
+        /*  000000F8 */ uint64_t gap_0xF8;
+        /*  00000100 */ uint64_t gap_0x100;
+        /*  00000108 */ uint64_t gap_0x108;
+        /*  00000110 */ uint64_t gap_0x110;
+        union {
+        /*  00000118 */ uint64_t gap_0x118;
+        /*  00000118 */ uint64_t gap_0x118_size8byte;
+        };
+        union {
+        /*  00000120 */ uint64_t gap_0x120;
+        /*  00000120 */ uint64_t gap_0x120_size8byte;
+        };
+        /*  00000128 */ uint64_t gap_0x128;
+        /*  00000130 */ uint64_t gap_0x130;
+        /*  00000138 */ uint64_t gap_0x138;
         /*  00000140 */ int xnuMajorVersion;
         /*  00000144 */ uint8_t gap_0x144[20];
         /*  00000158 */ uint64_t xnuVersionPacked;
+        union {
         /*  00000160 */ uint8_t gap_0x160[8];
+        /*  00000160 */ uint64_t gap_0x160_size8;
+        };
         /*  00000168 */ int stride_0x168;
+        union {
         /*  0000016C */ int gap_0x16C[5];
+            struct {
+        /*  0000016C */ int gap_0x16C_0;
+        /*  00000170 */ int gap_0x170;
+        /*  00000174 */ int gap_0x174;
+        /*  00000178 */ uint32_t gap_0x178_size4;
+        /*  0000017C */ int gap_0x17C;
+            };
+        };
         /*  00000180 */ uint32_t pageSizeOrSomething;
         /*  00000184 */ int gap_0x184;
         /*  00000188 */ uint64_t pageMask;
+        union {
         /*  00000190 */ uint8_t gap_0x190[136];
+            struct {
+        /*  00000190 */ uint8_t gap_0x190_to_0x1A8[0x18];
+        /*  000001A8 */ uint64_t gap_0x1A8_size8;
+        /*  000001B0 */ uint8_t gap_0x1B0_to_0x218[0x68];
+            };
+        };
         /*  00000218 */ uint64_t gap_0x218;
         /*  00000220 */ uint8_t gap_0x220[56];
+        union {
         /*  00000258 */ int isRW;
+        /*  00000258 */ uint32_t gap_0x258_size4;
+        };
         /*  0000025C */ struct mach_timebase_info timebase;
         /*  00000264 */ mach_port_t semaphore;
         /*  00000268 */ pthread_mutex_t someMutex;
@@ -90,25 +138,78 @@ struct struct_krwCtx
         /*  000002AC */ uint32_t someInt2;
         /*  000002B0 */ uint64_t gap_0x2B0[16];
         /*  00000330 */ pthread_mutex_t someMutex2;
+        union {
         /*  00000370 */ uint64_t gap_0x370[695];
+            struct {
+        /*  00000370 */ uint8_t gap_0x370_to_0x37C[0xC];
+        /*  0000037C */ uint32_t gap_0x37C_size4;
+        /*  00000380 */ uint8_t gap_0x380_to_0x1888[0x1508];
+        /*  00001888 */ uint64_t gap_0x1888;
+        /*  00001890 */ uint32_t gap_0x1890;
+        /*  00001894 */ uint8_t gap_0x1894_to_0x18E0[0x4C];
+        /*  000018E0 */ uint64_t gap_0x18E0_size8;
+        /*  000018E8 */ uint8_t gap_0x18E8_to_0x18F0[0x8];
+        /*  000018F0 */ uint64_t gap_0x18F0;
+        /*  000018F8 */ uint8_t gap_0x18F8_to_0x1910[0x18];
+        union {
+        /*  00001910 */ uint64_t gap_0x1910_size8;
+            struct {
+        /*  00001910 */ uint32_t gap_0x1910_size4;
+        /*  00001914 */ uint32_t gap_0x1914_size4;
+            };
+        };
+        /*  00001918 */ uint8_t gap_0x1918_to_0x191C[0x4];
+        /*  0000191C */ uint32_t gap_0x191C_size4;
+        /*  00001920 */ uint32_t gap_0x1920_size4;
+        /*  00001924 */ uint8_t gap_0x1924_to_0x1928[0x4];
+            };
+        };
         /*  00001928 */ uint32_t gap_0x1928;
         /*  0000192C */ uint32_t gap_0x192C;
         /*  00001930 */ uint32_t krw_pipe_0;
         /*  00001934 */ uint32_t krw_pipe_1;
         /*  00001938 */ uint32_t gap_0x1938;
         /*  0000193C */ uint32_t gap_0x193C;
+        union {
         /*  00001940 */ uint32_t gap_0x1940;
+        /*  00001940 */ uint32_t gap_0x1940_size4;
+        };
         /*  00001944 */ uint32_t gap_0x1944;
+        union {
         /*  00001948 */ uint64_t gap_0x1948[16];
+            struct {
+        /*  00001948 */ uint8_t gap_0x1948_to_0x1990[0x48];
+        /*  00001990 */ uint64_t gap_0x1990_size8;
+        /*  00001998 */ uint8_t gap_0x1998_to_0x19A0[0x8];
+        /*  000019A0 */ uint64_t gap_0x19A0;
+        /*  000019A8 */ uint8_t gap_0x19A8_to_0x19C8[0x20];
+            };
+        };
         /*  000019C8 */ uint64_t machHeaderPlus0x8000;
+        union {
         /*  000019D0 */ uint64_t gap_0x19D0;
+        /*  000019D0 */ uint64_t gap_0x19D0_size8;
+        };
         /*  000019D8 */ uint64_t gap_0x19D8;
+        union {
         /*  000019E0 */ uint64_t slideMaybe;
+        /*  000019E0 */ uint64_t gap_0x19E0_size8;
+        };
         /*  000019E8 */ uint64_t gap_0x19E8;
         /*  000019F0 */ uint64_t gap_0x19F0;
         /*  000019F8 */ uint64_t *gap_0x19F8;
         /*  00001A00 */ uint64_t gap_0x1A00;
-        /*  00001A08 */ uint64_t gap_0x19E8[104];
+        union {
+        /*  00001A08 */ uint64_t gap_0x1A08[104];
+            struct {
+        /*  00001A08 */ uint8_t gap_0x1A08_to_0x1D18[0x310];
+        /*  00001D18 */ uint64_t gap_0x1D18_size8;
+        /*  00001D20 */ uint64_t gap_0x1D20_kern_addr_allows_security_research;
+        /*  00001D28 */ uint8_t gap_0x1D28_to_0x1D30[0x8];
+        /*  00001D30 */ uint64_t gap_0x1D30_size8;
+        /*  00001D38 */ uint8_t gap_0x1D38_to_0x1D48[0x10];
+            };
+        };
         /*  00001D48 */ uint64_t IOKitConnInfo;
         /*  00001D50 */ uint64_t gap_0x1D50;
         /*  00001D58 */ uint64_t gap_0x1D58;
