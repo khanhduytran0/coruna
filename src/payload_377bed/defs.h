@@ -59,7 +59,8 @@ enum CPUFamily : uint32_t
 
 /* 164 */
 #if !RECOMP_TEMP_FAKE_OBJC_CLASS
-struct struct_krwCtx
+#pragma pack(push, 1)
+struct __attribute__((packed)) struct_krwCtx
 {
 #else
 @interface struct_krwCtx : NSObject
@@ -72,14 +73,20 @@ struct struct_krwCtx
             struct {
         /*  00000004 */ uint8_t gap_0x4_to_0xB[0x7];
         /*  0000000B */ uint8_t gap_0xB;
-        /*  0000000C */ uint8_t gap_0xC_to_0x30[0x24];
+        /*  0000000C */ uint8_t gap_0xC_to_0x28[0x1C];
+        /*  00000028 */ uint64_t gap_0x28;
         /*  00000030 */ uint64_t gap_0x30;
         /*  00000038 */ uint64_t gap_0x38;
         /*  00000040 */ uint64_t gap_0x40;
         /*  00000048 */ uint64_t gap_0x48;
         /*  00000050 */ uint64_t gap_0x50;
         /*  00000058 */ uint32_t gap_0x58;
-        /*  0000005C */ uint8_t gap_0x5C_to_0xAC[0x50];
+        /*  0000005C */ uint8_t gap_0x5C_to_0x80[0x24];
+        /*  00000080 */ uint64_t gap_0x80;
+        /*  00000088 */ uint32_t gap_0x88_size4;
+        /*  0000008C */ uint8_t gap_0x8C_to_0xA0[0x14];
+        /*  000000A0 */ uint64_t gap_0xA0;
+        /*  000000A8 */ uint32_t gap_0xA8_size4;
             };
         };
         /*  000000AC */ uint32_t threadForKernelRead;
@@ -239,7 +246,9 @@ struct struct_krwCtx
         union {
         /*  00001948 */ uint64_t raw_0x1948[16];
             struct {
-        /*  00001948 */ uint8_t gap_0x1948_to_0x1990[0x48];
+        /*  00001948 */ uint8_t gap_0x1948_to_0x1958[0x10];
+        /*  00001958 */ uint64_t gap_0x1958;
+        /*  00001960 */ uint8_t gap_0x1960_to_0x1990[0x30];
         /*  00001990 */ uint64_t gap_0x1990_size8;
         /*  00001998 */ uint8_t gap_0x1998_to_0x19A0[0x8];
         /*  000019A0 */ uint64_t gap_0x19A0;
@@ -278,6 +287,7 @@ struct struct_krwCtx
     };
 #if !RECOMP_TEMP_FAKE_OBJC_CLASS
 typedef struct struct_krwCtx struct_krwCtx;
+#pragma pack(pop)
 #define KRWCTX_FROM_UINTPTR(value) ((struct_krwCtx *)(uintptr_t)(value))
 #define KRWCTX_RAW_PTR(ctx) ((char *)(ctx))
 #else
