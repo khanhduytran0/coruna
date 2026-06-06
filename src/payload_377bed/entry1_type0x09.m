@@ -44820,7 +44820,7 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   v98 = 0;
   v97 = 0;
   v96 = 0;
-  *(uint64_t *)krwCtx->krw_pipe_0 = -1;
+  krwCtx->krw_pipe_0 = -1;
   *(uint64_t *)&krwCtx->gap_0x1938 = -1;
   *(uint64_t *)&krwCtx->gap_0x1940 = -1;
   mach_timebase_info(&krwCtx->timebase);
@@ -45086,7 +45086,7 @@ LABEL_87:
     return 0x28012;
 LABEL_96:
   krwCtx->gap_0x178 = 2 * v34 - 64;
-  *(__int128 *)krwCtx->gap_0x19E8 = xmmword_43730;
+  *(__int128 *)&krwCtx->gap_0x19E8 = xmmword_43730;
   if ( !(unsigned int)another_sandbox_check(krwCtx) )
     return 0x28012;
   mach_port_with_a2 = create_mach_port_with_a2(krwCtx, 0x200u);
