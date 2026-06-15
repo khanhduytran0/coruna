@@ -10155,11 +10155,25 @@ __int64 __fastcall setup_iokit_notify_dispatch(uint64_t *a1, uint64_t **a2)
   __int128 v10; // [xsp+30h] [xbp-40h]
 
   a1[1] = 176;
+
+  // qword_48000: notification selector, stored at the match + 4.
+  // Pattern words with masks:
+  //   d280000f / ffffffff: mov x15, #0
+  //   wildcard
+  //   d280000f / fffffc1f: mov x15, #imm, register fixed
+  //   wildcard
+  //   d280000f / fffffc1f: mov x15, #imm, register fixed
   v9 = xmmword_42F30;
   LODWORD(v10) = -763363313;
   v7 = xmmword_42F44;
   LODWORD(v8) = -993;
   *a1 = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 5u) + 4;
+
+  // qword_48010/qword_48018/qword_48040: PACGA gadget cluster.
+  //   9ac03021: pacga x1, x1, x0
+  //   9262f842: and   x2, x2, #0xffffffffdfffffff
+  //   9ac13041: pacga x1, x2, x1
+  //   9ac13061: pacga x1, x3, x1
   v9 = xmmword_42F58;
   v10 = unk_42F68;
   *(uint64_t *)&v4 = -1;
@@ -10170,21 +10184,43 @@ __int64 __fastcall setup_iokit_notify_dispatch(uint64_t *a1, uint64_t **a2)
   a1[2] = v5;
   a1[3] = v5 + 20;
   a1[8] = v5 + 28;
+
+  // qword_48020: IA-key signing/store gadget.
+  //   dac10230: pacia x16, x17
+  //   f9000010: str   x16, [x0]
+  //   d6601fe0: raw PAUTH branch/auth word, not decoded by local llvm.
   *(uint64_t *)&v9 = 0xF9000010DAC10230LL;
   DWORD2(v9) = -698416192;
   *(uint64_t *)&v7 = -1;
   DWORD2(v7) = -1;
   a1[4] = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 3u);
+
+  // qword_48028: DA-key signing/store twin of qword_48020.
+  //   dac10a30: pacda x16, x17
+  //   f9000010: str   x16, [x0]
+  //   d6601fe0: raw PAUTH branch/auth word, not decoded by local llvm.
   *(uint64_t *)&v9 = 0xF9000010DAC10A30LL;
   DWORD2(v9) = -698416192;
   *(uint64_t *)&v7 = -1;
   DWORD2(v7) = -1;
   a1[5] = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 3u);
+
+  // qword_48030: interrupt/thread-state helper.
+  //   d5034fdf: msr DAIFSet, #0xf
+  //   d538d083: mrs x3, TPIDR_EL1
+  //   90ff830f: adrp x15, ...
   *(uint64_t *)&v9 = 0xD538D083D5034FDFLL;
   DWORD2(v9) = -1862270273;
   *(uint64_t *)&v7 = -1;
   DWORD2(v7) = -1;
   a1[6] = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 3u);
+
+  // qword_48038: kernel message/page-info helper.
+  //   f9000e60: str x0, [x19, #0x18]
+  //   f94046e0: ldr x0, [x23, #0x88]
+  //   wildcard
+  //   d2808471: mov x17, #0x423
+  //   d74b316f: raw system/branch-class word, not decoded by local llvm.
   v9 = xmmword_42F78;
   LODWORD(v10) = -683734767;
   v7 = xmmword_42F8C;
