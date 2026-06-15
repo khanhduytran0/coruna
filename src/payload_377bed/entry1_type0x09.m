@@ -4732,107 +4732,101 @@ void __fastcall teardown_iogpu_vm_copy(vm_address_t *a1)
 //----- (000000000000A0A0) ----------------------------------------------------
 __int64 __fastcall necp_send_msg_1(struct_krwCtx *krwCtx)
 {
-  __int64 v2; // x20
-  __int64 v3; // x0
-  unsigned __int64 v4; // x0
-  unsigned __int64 v5; // x21
-  unsigned __int64 v6; // x22
-  unsigned __int64 v7; // x22
-  __int64 v8; // x0
-  __int64 *v9; // x0
-  __int64 v10; // x24
-  unsigned __int64 v11; // x25
-  __int64 v12; // x23
-  __int64 v13; // x21
-  uint64_t v15[3]; // [xsp+0h] [xbp-A0h] BYREF
-  uint64_t v16[3]; // [xsp+18h] [xbp-88h] BYREF
-  int v17; // [xsp+34h] [xbp-6Ch] BYREF
-  unsigned __int64 v18; // [xsp+38h] [xbp-68h] BYREF
-  int v19; // [xsp+40h] [xbp-60h] BYREF
-  int v20; // [xsp+44h] [xbp-5Ch] BYREF
-  __int64 v21; // [xsp+48h] [xbp-58h] BYREF
-  __int64 v22; // [xsp+50h] [xbp-50h] BYREF
-  __int64 v23; // [xsp+58h] [xbp-48h] BYREF
+  uint64_t textRange[3]; // [xsp+0h] [xbp-A0h] BYREF
+  uint64_t textRange2[3]; // [xsp+18h] [xbp-88h] BYREF
+  int doubledPatchCount; // [xsp+34h] [xbp-6Ch] BYREF
+  unsigned __int64 patchedInstruction; // [xsp+38h] [xbp-68h] BYREF
+  int headerMagic; // [xsp+40h] [xbp-60h] BYREF
+  int patchCount; // [xsp+44h] [xbp-5Ch] BYREF
+  __int64 dispatchTarget; // [xsp+48h] [xbp-58h] BYREF
+  __int64 selfCheckValue; // [xsp+50h] [xbp-50h] BYREF
+  __int64 dataPointer; // [xsp+58h] [xbp-48h] BYREF
 
-  v2 = 708625;
-  v23 = 0;
-  v21 = 0;
-  v22 = 0;
-  macho_find_text_section(krwCtx->kernelMachoCtx, v16);
-  v3 = kernel_pattern_scan((__int64)v16, "08 3D 40 92 09 18 80 52", 0);
-  if ( !v3 )
-    return v2;
-  v4 = find_kernel_func_aligned((__int64 *)krwCtx->kernelMachoCtx, v3 + 8);
-  if ( !v4 )
-    return v2;
-  v5 = v4;
-  v6 = v4 + 7104;
-  if ( !kread_physmap_decorated(krwCtx, v4 + 7104, (unsigned __int64 *)&v22) )
+  dataPointer = 0;
+  dispatchTarget = 0;
+  selfCheckValue = 0;
+
+  macho_find_text_section(krwCtx->kernelMachoCtx, textRange2);
+
+  // 08 3D 40 92: and x8, x8, #0xffff
+  // 09 18 80 52: mov w9, #0xc0
+  // This lands inside the kernel routine whose nearby literal/data slots drive
+  // the vmcopy PAC-bypass notification path used below.
+  __int64 maskPattern = kernel_pattern_scan((__int64)textRange2, "08 3D 40 92 09 18 80 52", 0);
+  if ( !maskPattern )
+    return 708625;
+
+  unsigned __int64 ownerFunction = find_kernel_func_aligned((__int64 *)krwCtx->kernelMachoCtx, maskPattern + 8);
+  if ( !ownerFunction )
+    return 708625;
+
+  unsigned __int64 selfCheckSlot = ownerFunction + 7104;
+  if ( !kread_physmap_decorated(krwCtx, selfCheckSlot, (unsigned __int64 *)&selfCheckValue) )
     return 163855;
-  if ( v6 != v22 )
+  if ( selfCheckSlot != selfCheckValue )
     return 163878;
-  if ( !kread_physmap_decorated(krwCtx, v5 + 7120, (unsigned __int64 *)&v23) )
+
+  if ( !kread_physmap_decorated(krwCtx, ownerFunction + 7120, (unsigned __int64 *)&dataPointer) )
     return 163855;
-  if ( (unsigned __int64)(v23 + 0x1000000000000LL) > 0xFFFFFFFFEFFELL )
+  if ( (unsigned __int64)(dataPointer + 0x1000000000000LL) > 0xFFFFFFFFEFFELL )
     return 163878;
-  if ( !(unsigned int)krw_read_thunk(krwCtx, v23, 4, &v19) )
+
+  if ( !(unsigned int)krw_read_thunk(krwCtx, dataPointer, 4, &headerMagic) )
     return 163855;
-  if ( v19 != 1864396150 )
+  if ( headerMagic != 1864396150 )
     return 163857;
-  v7 = v5 + 7168;
-  if ( !kread_physmap_decorated(krwCtx, v5 + 7168, (unsigned __int64 *)&v21) )
+
+  unsigned __int64 dispatchTargetSlot = ownerFunction + 7168;
+  if ( !kread_physmap_decorated(krwCtx, dispatchTargetSlot, (unsigned __int64 *)&dispatchTarget) )
     return 163855;
-  if ( validate_kaddr_range(krwCtx, v21) )
+  if ( validate_kaddr_range(krwCtx, dispatchTarget) )
     return 0;
-  macho_find_text_section(krwCtx->kernelMachoCtx, v15);
-  v8 = kernel_pattern_scan((__int64)v15, "1F 01 0A EB 41 00 00 54 C0 03 5F D6 .. .. .. F9", 0);
-  if ( v8 )
+
+  macho_find_text_section(krwCtx->kernelMachoCtx, textRange);
+
+  // 1F 01 0A EB: cmp x8, x10
+  // 41 00 00 54: b.ne +0x8
+  // C0 03 5F D6: ret
+  // The found function is patched briefly so the notification path resolves
+  // the PAC-authenticated dispatch target, then the side effect is checked.
+  __int64 retComparePattern =
+    kernel_pattern_scan((__int64)textRange, "1F 01 0A EB 41 00 00 54 C0 03 5F D6 .. .. .. F9", 0);
+  if ( !retComparePattern )
+    return 708625;
+
+  __int64 *patchFunction = (__int64 *)find_kernel_func((__int64 *)krwCtx->kernelMachoCtx, (__int64 *)(retComparePattern - 8));
+  if ( !patchFunction )
+    return 708625;
+
+  __int64 patchCountSlot = ownerFunction + 7272;
+  if ( !(unsigned int)krw_read_thunk(krwCtx, patchCountSlot, 4, &patchCount) )
+    return 163855;
+  if ( !patchCount )
+    return 163857;
+
+  doubledPatchCount = 2 * patchCount;
+  __int64 patchGateSlot = ownerFunction + 7176;
+  if ( !(unsigned int)kwrite_with_retry(krwCtx, patchGateSlot, (__int64)&doubledPatchCount, 4) )
+    return 163856;
+
+  patchedInstruction = macho_read_u64((__int64 *)krwCtx->kernelMachoCtx, patchFunction) + 52428;
+  if ( !(unsigned int)kwrite_with_retry(krwCtx, (__int64)patchFunction, (__int64)&patchedInstruction, 4) )
+    return 163856;
+
+  semaphore_timedwait_ns(krwCtx, 0x1312D0u);
+  if ( !kread_physmap_decorated(krwCtx, dispatchTargetSlot, (unsigned __int64 *)&dispatchTarget) )
+    return 163855;
+
+  doubledPatchCount = 0;
+  if ( !validate_kaddr_range(krwCtx, dispatchTarget)
+    && !(unsigned int)kwrite_with_retry(krwCtx, patchGateSlot, (__int64)&doubledPatchCount, 4) )
   {
-    v9 = (__int64 *)find_kernel_func((__int64 *)krwCtx->kernelMachoCtx, (__int64 *)(v8 - 8));
-    if ( v9 )
-    {
-      v10 = (__int64)v9;
-      v11 = macho_read_u64((__int64 *)krwCtx->kernelMachoCtx, v9);
-      v12 = v5 + 7272;
-      if ( (unsigned int)krw_read_thunk(krwCtx, v5 + 7272, 4, &v20) )
-      {
-        if ( v20 )
-        {
-          v17 = 2 * v20;
-          v13 = v5 + 7176;
-          v2 = 163856;
-          if ( (unsigned int)kwrite_with_retry(krwCtx, v13, (__int64)&v17, 4) )
-          {
-            v18 = v11 + 52428;
-            if ( (unsigned int)kwrite_with_retry(krwCtx, v10, (__int64)&v18, 4) )
-            {
-              semaphore_timedwait_ns(krwCtx, 0x1312D0u);
-              v2 = 163855;
-              if ( kread_physmap_decorated(krwCtx, v7, (unsigned __int64 *)&v21) )
-              {
-                if ( validate_kaddr_range(krwCtx, v21)
-                  || (v17 = 0, (unsigned int)kwrite_with_retry(krwCtx, v13, (__int64)&v17, 4)) )
-                {
-                  if ( (unsigned int)krw_read_thunk(krwCtx, v12, 4, &v20) )
-                    return 0;
-                  else
-                    return 163855;
-                }
-                else
-                {
-                  return 163856;
-                }
-              }
-            }
-          }
-          return v2;
-        }
-        return 163857;
-      }
-      return 163855;
-    }
+    return 163856;
   }
-  return v2;
+
+  if ( (unsigned int)krw_read_thunk(krwCtx, patchCountSlot, 4, &patchCount) )
+    return 0;
+  return 163855;
 }
 // A0A0: too many cbuild loops
 
