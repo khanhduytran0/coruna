@@ -1772,6 +1772,14 @@ static const struct thread_hijack_allocation_candidate kThreadHijackAllocCandida
   { 0x20000000, 0 },
 };
 static const uint32_t kIogpuMachPortSelectors[4] = { 0x15, 0x16, 0x18, 0x19 };
+static const uint32_t kIOSurfaceIdToTaskVmInfoIndex[27] = {
+  0, 1, 2, 3, 4, 5,
+  0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+  0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+  3, 0, 1, 2, 2, 0, 1, 4, 4, 5, 0
+};
+static const uint32_t kLegacyIokitSlotTypes[10] = { 17, 4, 3, 6, 7, 5, 40, 20, 2, 42 };
+static const uint32_t kHashDigestSizes[4] = { 20, 32, 20, 48 };
 
 #define SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(dst) \
   do { \
@@ -1888,11 +1896,6 @@ __int128 xmmword_431D0 = IDA_INT128_C(0x0000000000300000ULL, 0x00000000000003C4U
 __int128 xmmword_431E0 = IDA_INT128_C(0x0000000000300000ULL, 0x00000000000003C5ULL); // weak
 __int128 xmmword_431F0 = IDA_INT128_C(0x0000000000000000ULL, 0xFFFFFFFF80000000ULL); // weak
 __int128 xmmword_43200 = IDA_INT128_C(0x0000001000000000ULL, 0x4000000100000001ULL); // weak
-unsigned int dword_4339C[] = { 0, 1, 2, 3, 4, 5, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
-    0xFFFFFFFF, 0xFFFFFFFF, 3, 0, 1, 2, 2, 0, 1, 4, 4,
-    5, 0 };
-uint32_t dword_43428[10] = { 17, 4, 3, 6, 7, 5, 40, 20, 2, 42 }; // weak
 __int128 xmmword_43450 = IDA_INT128_C(0x0000000000000002ULL, 0x0000000000000000ULL); // weak
 __int128 xmmword_43460 = 17230332160LL; // weak
 __int128 xmmword_43478 = IDA_INT128_C(0x0000000000000000ULL, 0x8000000100000000ULL); // weak
@@ -1932,7 +1935,6 @@ uint16_t dmaFail_sbox[256] = {
 }; // weak
 __int128 xmmword_43690 = IDA_INT128_C(0x0000064000000730ULL, 0x0000030000000060ULL); // weak
 __int128 xmmword_436C0 = IDA_INT128_C(0x1000000000000000ULL, 0x0000000000000000ULL); // weak
-unsigned int dword_436F0[4] = { 20u, 32u, 20u, 48u }; // weak
 __int128 xmmword_43730 = IDA_INT128_C(0xFFFFFFFFFFFFEFFFULL, 0xFFFF000000000000ULL); // weak
 __int128 xmmword_43750 = IDA_INT128_C(0x0000000000000001ULL, 0x0000000000000000ULL); // weak
 __int128 xmmword_43760; // weak
@@ -18207,9 +18209,8 @@ __int64 __fastcall iosurface_id_to_index(unsigned int a1)
   if ( a1 > 0x19 )
     return 0xFFFFFFFFLL;
   else
-    return dword_4339C[a1];
+    return kIOSurfaceIdToTaskVmInfoIndex[a1];
 }
-// 4339C: using guessed type unsigned int dword_4339C[27];
 
 //----- (000000000001BE0C) ----------------------------------------------------
 __int64 __fastcall get_iosurface_mem_entry(struct_krwCtx *krwCtx, unsigned int a2, mach_port_name_t *a3)
@@ -22027,7 +22028,7 @@ __int64 __fastcall check_iogpu_krw_ready_4(struct_krwCtx *krwCtx, __int64 a2, un
             v21 = v20;
             if ( v20 == 9 )
               break;
-            v22 = dword_43428[++v20];
+            v22 = kLegacyIokitSlotTypes[++v20];
           }
           while ( v22 != v19 );
           if ( v21 > 8 )
@@ -22076,7 +22077,7 @@ LABEL_47:
           v26 = v25;
           if ( v25 == 9 )
             break;
-          v27 = dword_43428[++v25];
+          v27 = kLegacyIokitSlotTypes[++v25];
         }
         while ( v27 != v24 );
         if ( v26 > 8 )
@@ -22095,7 +22096,6 @@ LABEL_47:
   }
   return v10;
 }
-// 43428: using guessed type uint32_t dword_43428[10];
 
 //----- (0000000000021060) ----------------------------------------------------
 __int64 __fastcall iokit_slot_alloc_pgtable_lookup(struct_krwCtx *krwCtx, __int64 a2, __int16 a3, __int64 a4)
@@ -31036,7 +31036,7 @@ __int64 __fastcall compute_sha_hash(int a1, const void *a2, CC_LONG a3, void *a4
 
   if ( (unsigned int)(a1 - 1) > 3 )
     return 0;
-  v6 = dword_436F0[a1 - 1];
+  v6 = kHashDigestSizes[a1 - 1];
   if ( *a5 < (unsigned int)v6 )
     return 0;
   if ( (unsigned int)(a1 - 2) < 2 )
@@ -31065,7 +31065,6 @@ LABEL_11:
   }
   return 0;
 }
-// 436F0: using guessed type unsigned int dword_436F0[4];
 
 //----- (000000000002BE34) ----------------------------------------------------
 __int64 __fastcall cfplist_compare_and_serialize(UInt8 *a1, CFIndex a2, UInt8 *a3, CFIndex a4, uint64_t *a5, uint64_t *a6, uint8_t *a7)
