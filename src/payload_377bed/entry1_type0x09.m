@@ -37377,7 +37377,7 @@ __int64 __fastcall setup_task_port_chain(struct_krwCtx *krwCtx, mach_port_name_t
 }
 
 //----- (00000000000339B4) ----------------------------------------------------
-__int64 __fastcall sub_339B4(struct_krwCtx *krwCtx, mach_port_name_t task, mach_port_t port)
+__int64 __fastcall task_get_ipc_port_ptr(struct_krwCtx *krwCtx, mach_port_name_t task, mach_port_t port)
 {
   __int64 result; // x0
   int v5; // [xsp+8h] [xbp-18h] BYREF
@@ -37395,7 +37395,7 @@ __int64 __fastcall sub_339B4(struct_krwCtx *krwCtx, mach_port_name_t task, mach_
 }
 
 //----- (0000000000033A1C) ----------------------------------------------------
-__int64 __fastcall sub_33A1C(struct_krwCtx *krwCtx, unsigned int a2)
+__int64 __fastcall task_self_get_ipc_port_ptr(struct_krwCtx *krwCtx, unsigned int a2)
 {
   return task_get_ipc_port_ptr(krwCtx, mach_task_self_, a2);
 }
@@ -49401,11 +49401,6 @@ bool __fastcall krw_task_for_pid_or_name_ret_ptr(struct_krwCtx *krwCtx, int vict
   return real_task_for_pid_or_name(krwCtx, victim_pid, victim_process_name, out_task);
 }
 __int64 __fastcall kreadptr(struct_krwCtx *krwCtx, __int64 addr) { return get_task_struct_field_offset(krwCtx, addr); }
-__int64 __fastcall task_self_get_ipc_port_ptr(struct_krwCtx *krwCtx, unsigned int a2)
-{
-  return task_get_ipc_port_ptr(krwCtx, mach_task_self_, a2);
-}
-
 __int64 __fastcall driver_cmd_setup_untethered_persistence_maybe(struct_krwCtx *krwCtx, int a2)
 {
   return setup_untethered_persistence_maybe(krwCtx, a2);
@@ -49425,11 +49420,6 @@ __int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *krwCtx, __int64
   return sub_2CBA4(krwCtx, task, entitlementXml, a4);
 }
 unsigned __int64 __fastcall krw_xpac_vaddr_2(struct_krwCtx *krwCtx, __int64 a2) { return maybe_sptm_translate_kaddr(krwCtx, a2); }
-__int64 __fastcall task_get_ipc_port_ptr(struct_krwCtx *krwCtx, mach_port_name_t task, mach_port_t port)
-{
-  return sub_339B4(krwCtx, task, port);
-}
-
 __int64 __fastcall nullsub_1(uint64_t a1) { return a1; }
 __int64 __fastcall nullsub_2(uint64_t a1) { return a1; }
 __int64 __fastcall macho_read_u64_thunk(uint64_t a1, uint64_t a2) { return macho_read_u64((__int64 *)a1, (__int64 *)a2); }
