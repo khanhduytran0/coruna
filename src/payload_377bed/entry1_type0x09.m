@@ -10144,88 +10144,101 @@ __int64 __fastcall flush_cpu_cache(__int64 a1, mach_vm_address_t a2, int a3)
     return 5;
 }
 
+struct kobj_snapshot_buf
+{
+  uint64_t *sectionHeader;
+  uint8_t *bytes;
+  uint64_t size;
+};
+
+#define LOOKUP_KOBJ_PATTERN(snapshot, words, masks, count) \
+  kobj_snapshot_lookup_wrapper((snapshot), (__int64)(words), (__int64)(masks), (count))
+
 //----- (0000000000010730) ----------------------------------------------------
 __int64 __fastcall setup_iokit_notify_dispatch(uint64_t *a1, uint64_t **a2)
 {
-  __int128 v4; // q0
-  unsigned __int64 v5; // x0
-  __int128 v7; // [xsp+0h] [xbp-70h] BYREF
-  __int128 v8; // [xsp+10h] [xbp-60h]
-  __int128 v9; // [xsp+20h] [xbp-50h] BYREF
-  __int128 v10; // [xsp+30h] [xbp-40h]
-
   a1[1] = 176;
 
   // qword_48000: notification selector, stored at the match + 4.
-  // Pattern words with masks:
-  //   d280000f / ffffffff: mov x15, #0
-  //   wildcard
-  //   d280000f / fffffc1f: mov x15, #imm, register fixed
-  //   wildcard
-  //   d280000f / fffffc1f: mov x15, #imm, register fixed
-  v9 = xmmword_42F30;
-  LODWORD(v10) = -763363313;
-  v7 = xmmword_42F44;
-  LODWORD(v8) = -993;
-  *a1 = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 5u) + 4;
+  const uint32_t notificationSelectorWords[] = {
+    0xD280000F, // mov x15, #0
+    0x00000000,
+    0xD280000F, // mov x15, #imm, register fixed by mask
+    0x00000000,
+    0xD280000F, // mov x15, #imm, register fixed by mask
+  };
+  const uint32_t notificationSelectorMasks[] = {
+    0xFFFFFFFF,
+    0x00000000,
+    0xFFFFFC1F,
+    0x00000000,
+    0xFFFFFC1F,
+  };
+  a1[0] = LOOKUP_KOBJ_PATTERN(a2, notificationSelectorWords, notificationSelectorMasks, 5) + 4;
 
-  // qword_48010/qword_48018/qword_48040: PACGA gadget cluster.
-  //   9ac03021: pacga x1, x1, x0
-  //   9262f842: and   x2, x2, #0xffffffffdfffffff
-  //   9ac13041: pacga x1, x2, x1
-  //   9ac13061: pacga x1, x3, x1
-  v9 = xmmword_42F58;
-  v10 = unk_42F68;
-  *(uint64_t *)&v4 = -1;
-  *((uint64_t *)&v4 + 1) = -1;
-  v7 = v4;
-  v8 = v4;
-  v5 = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 8u);
-  a1[2] = v5;
-  a1[3] = v5 + 20;
-  a1[8] = v5 + 28;
+  // qword_48010/qword_48018/qword_48040: PACGA gadget cluster:
+  // pacga x1 with x0/x2/x3/x4/x5, store it at [x0,#0x128], then return.
+  const uint32_t pacgaClusterWords[] = {
+    0x9AC03021, // pacga x1, x1, x0
+    0x9262F842, // and   x2, x2, #0xffffffffdfffffff
+    0x9AC13041, // pacga x1, x2, x1
+    0x9AC13061, // pacga x1, x3, x1
+    0x9AC13081, // pacga x1, x4, x1
+    0x9AC130A1, // pacga x1, x5, x1
+    0xF9009401, // str   x1, [x0, #0x128]
+    0xD65F03C0, // ret
+  };
+  const uint32_t pacgaClusterMasks[] = {
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+    0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+  };
+  unsigned __int64 pacgaCluster = LOOKUP_KOBJ_PATTERN(a2, pacgaClusterWords, pacgaClusterMasks, 8);
+  a1[2] = pacgaCluster;
+  a1[3] = pacgaCluster + 20;
+  a1[8] = pacgaCluster + 28;
+
+  const uint32_t allExact3[] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 
   // qword_48020: IA-key signing/store gadget.
-  //   dac10230: pacia x16, x17
-  //   f9000010: str   x16, [x0]
-  //   d6601fe0: raw PAUTH branch/auth word, not decoded by local llvm.
-  *(uint64_t *)&v9 = 0xF9000010DAC10230LL;
-  DWORD2(v9) = -698416192;
-  *(uint64_t *)&v7 = -1;
-  DWORD2(v7) = -1;
-  a1[4] = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 3u);
+  const uint32_t paciaStoreWords[] = {
+    0xDAC10230, // pacia x16, x17
+    0xF9000010, // str   x16, [x0]
+    0xD65F03C0, // ret
+  };
+  a1[4] = LOOKUP_KOBJ_PATTERN(a2, paciaStoreWords, allExact3, 3);
 
   // qword_48028: DA-key signing/store twin of qword_48020.
-  //   dac10a30: pacda x16, x17
-  //   f9000010: str   x16, [x0]
-  //   d6601fe0: raw PAUTH branch/auth word, not decoded by local llvm.
-  *(uint64_t *)&v9 = 0xF9000010DAC10A30LL;
-  DWORD2(v9) = -698416192;
-  *(uint64_t *)&v7 = -1;
-  DWORD2(v7) = -1;
-  a1[5] = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 3u);
+  const uint32_t pacdaStoreWords[] = {
+    0xDAC10A30, // pacda x16, x17
+    0xF9000010, // str   x16, [x0]
+    0xD65F03C0, // ret
+  };
+  a1[5] = LOOKUP_KOBJ_PATTERN(a2, pacdaStoreWords, allExact3, 3);
 
   // qword_48030: interrupt/thread-state helper.
-  //   d5034fdf: msr DAIFSet, #0xf
-  //   d538d083: mrs x3, TPIDR_EL1
-  //   90ff830f: adrp x15, ...
-  *(uint64_t *)&v9 = 0xD538D083D5034FDFLL;
-  DWORD2(v9) = -1862270273;
-  *(uint64_t *)&v7 = -1;
-  DWORD2(v7) = -1;
-  a1[6] = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 3u);
+  const uint32_t threadStateHelperWords[] = {
+    0xD5034FDF, // msr DAIFSet, #0xf
+    0xD538D083, // mrs x3, TPIDR_EL1
+    0x910002BF, // mov sp, x21
+  };
+  a1[6] = LOOKUP_KOBJ_PATTERN(a2, threadStateHelperWords, allExact3, 3);
 
   // qword_48038: kernel message/page-info helper.
-  //   f9000e60: str x0, [x19, #0x18]
-  //   f94046e0: ldr x0, [x23, #0x88]
-  //   wildcard
-  //   d2808471: mov x17, #0x423
-  //   d74b316f: raw system/branch-class word, not decoded by local llvm.
-  v9 = xmmword_42F78;
-  LODWORD(v10) = -683734767;
-  v7 = xmmword_42F8C;
-  LODWORD(v8) = -1;
-  a1[7] = kobj_snapshot_lookup_wrapper(a2, (__int64)&v9, (__int64)&v7, 5u);
+  const uint32_t pageInfoHelperWords[] = {
+    0xF9000E60, // str x0, [x19, #0x18]
+    0xF94046E0, // ldr x0, [x23, #0x88]
+    0x00000000,
+    0xD2808471, // mov x17, #0x423
+    0xD73F0911, // blraa x8, x17
+  };
+  const uint32_t pageInfoHelperMasks[] = {
+    0xFFFFFFFF,
+    0xFFFFFFFF,
+    0x00000000,
+    0xFFFFFFFF,
+    0xFFFFFFFF,
+  };
+  a1[7] = LOOKUP_KOBJ_PATTERN(a2, pageInfoHelperWords, pageInfoHelperMasks, 5);
   return 0;
 }
 // 42F30: using guessed type __int128 xmmword_42F30;
@@ -46720,7 +46733,7 @@ int __fastcall update_physmap_table_entry_count(struct_krwCtx *krwCtx, task_insp
 //----- (000000000003FED4) ----------------------------------------------------
 uint64_t *__fastcall alloc_kobj_snapshot_buf(__int64 a1, __int64 a2)
 {
-  uint64_t *v4; // x21
+  struct kobj_snapshot_buf *v4; // x21
   uint64_t *v5; // x22
   size_t v6; // x19
   void *v7; // x23
@@ -46729,20 +46742,21 @@ uint64_t *__fastcall alloc_kobj_snapshot_buf(__int64 a1, __int64 a2)
   v4 = calloc(1u, 0x18u);
   v5 = calloc(1u, 0x48u);
   kread_via_kobject(a1, a2, (__int64)v5, 72);
-  *v4 = v5;
+  v4->sectionHeader = v5;
   v6 = v5[4];
   v7 = malloc(v6);
   kread_via_kobject(a1, v5[3], (__int64)v7, v6);
   v8 = v5[4];
-  v4[1] = v7;
-  v4[2] = v8;
-  return v4;
+  v4->bytes = v7;
+  v4->size = v8;
+  return (uint64_t *)v4;
 }
 
 //----- (000000000003FF78) ----------------------------------------------------
 __int64 __fastcall read_u32_from_kobj_snapshot(__int64 a1, uint64_t *a2, __int64 a3)
 {
-  return *(unsigned int *)(a2[1] + a3 - *(uint64_t *)(*a2 + 24LL));
+  struct kobj_snapshot_buf *snapshot = (struct kobj_snapshot_buf *)a2;
+  return *(unsigned int *)(snapshot->bytes + a3 - snapshot->sectionHeader[3]);
 }
 
 //----- (000000000003FF8C) ----------------------------------------------------
@@ -46754,33 +46768,35 @@ unsigned __int64 __fastcall kobj_snapshot_lookup_wrapper(uint64_t **a1, __int64 
 //----- (000000000003FFA0) ----------------------------------------------------
 unsigned __int64 __fastcall kobj_snapshot_pattern_search(__int64 a1, uint64_t *a2, __int64 a3, __int64 a4, unsigned int a5)
 {
-  unsigned __int64 v5; // x8
-  unsigned __int64 v6; // x9
-  unsigned __int64 v7; // x10
+  struct kobj_snapshot_buf *snapshot; // x8
+  unsigned __int64 scanStart; // x8
+  unsigned __int64 scanEnd; // x9
+  unsigned __int64 cursor; // x10
   __int64 v8; // x12
   unsigned __int64 result; // x0
 
-  v5 = a2[1];
-  v6 = v5 + a2[2] - 4LL * a5;
-  if ( v6 <= v5 )
+  snapshot = (struct kobj_snapshot_buf *)a2;
+  scanStart = (unsigned __int64)snapshot->bytes;
+  scanEnd = scanStart + snapshot->size - 4LL * a5;
+  if ( scanEnd <= scanStart )
     return 0LL;
-  v7 = a2[1];
+  cursor = scanStart;
   while ( a5 )
   {
     v8 = 0LL;
-    while ( (*(uint32_t *)(a4 + v8) & *(uint32_t *)(v7 + v8)) == *(uint32_t *)(a3 + v8) )
+    while ( (*(uint32_t *)(a4 + v8) & *(uint32_t *)(cursor + v8)) == *(uint32_t *)(a3 + v8) )
     {
       v8 += 4LL;
       if ( 4LL * a5 == v8 )
-        return v7 - v5 + *(uint64_t *)(*a2 + 24LL);
+        return cursor - scanStart + snapshot->sectionHeader[3];
     }
     result = 0LL;
-    v7 += 4LL;
-    if ( v7 >= v6 )
+    cursor += 4LL;
+    if ( cursor >= scanEnd )
       return result;
   }
-  v7 = a2[1];
-  return v7 - v5 + *(uint64_t *)(*a2 + 24LL);
+  cursor = scanStart;
+  return cursor - scanStart + snapshot->sectionHeader[3];
 }
 
 //----- (0000000000040024) ----------------------------------------------------
