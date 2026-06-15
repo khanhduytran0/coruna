@@ -1780,6 +1780,15 @@ struct iokit_notify_dispatch_gadgets
   uint64_t pacgaStoreRet;
 };
 
+struct xnu_runtime_info
+{
+  char *versionString;
+  uint64_t packedVersion;
+  uint32_t defaultOffsets[4];
+  uint32_t versionDependentOffset;
+  uint32_t socDependentOffset;
+};
+
 static const integer_t kVmcopyRaceLowPriorityPolicy[4] = { 0x20A51, 0x2710, 0x2711, 1 };
 static const integer_t kVmcopyRaceHighPriorityPolicy[4] = { 0x3E8, 0xF4240, 0xF4241, 1 };
 static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
@@ -1801,8 +1810,10 @@ static const uint32_t kIOSurfaceIdToTaskVmInfoIndex[27] = {
 };
 static const uint32_t kLegacyIokitSlotTypes[10] = { 17, 4, 3, 6, 7, 5, 40, 20, 2, 42 };
 static const uint32_t kHashDigestSizes[4] = { 20, 32, 20, 48 };
+static const uint32_t kXnuRuntimeDefaultOffsets[4] = { 0x60, 0x300, 0x730, 0x640 };
 static struct iokit_notify_dispatch_gadgets gIokitNotifyDispatchGadgets;
 static struct physmap_gadget_table gPhysmapGadgets;
+static struct xnu_runtime_info gXnuRuntimeInfo;
 
 #define qword_48000 gIokitNotifyDispatchGadgets.notificationSelector
 #define qword_48008 gIokitNotifyDispatchGadgets.taskPortIpcKobjectOffset
@@ -1847,6 +1858,8 @@ static struct physmap_gadget_table gPhysmapGadgets;
 #define qword_480C0 gPhysmapGadgets.jumpTarget
 #define qword_480C8 gPhysmapGadgets.vmPageArray
 #define qword_480D0 gPhysmapGadgets.pmapTteTable
+#define qword_480D8 gXnuRuntimeInfo.versionString
+#define algn_480E0 ((uint8_t *)&gXnuRuntimeInfo.packedVersion)
 
 #define SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(dst) \
   do { \
@@ -2000,7 +2013,6 @@ uint16_t dmaFail_sbox[256] = {
   0x160, 0x290, 0x308, 0x3B0, 0x3C8, 0x3D0, 0x1A0, 0x260,
   0x310, 0x1C0, 0x2A0, 0x3E0, 0x2C0, 0x320, 0x340, 0x380,
 }; // weak
-__int128 xmmword_43690 = IDA_INT128_C(0x0000064000000730ULL, 0x0000030000000060ULL); // weak
 __int128 xmmword_436C0 = IDA_INT128_C(0x1000000000000000ULL, 0x0000000000000000ULL); // weak
 __int128 xmmword_43730 = IDA_INT128_C(0xFFFFFFFFFFFFEFFFULL, 0xFFFF000000000000ULL); // weak
 __int128 xmmword_43750 = IDA_INT128_C(0x0000000000000001ULL, 0x0000000000000000ULL); // weak
@@ -2026,8 +2038,6 @@ __int64 (__fastcall *off_448E0[7])() =
 }; // weak
 _UNKNOWN unk_44918; // weak
 _UNKNOWN unk_44938; // weak
-__int64 qword_480D8; // weak
-uint8_t algn_480E0[32]; // weak
 // extern const CFAllocatorRef kCFAllocatorDefault;
 // extern const CFAllocatorRef kCFAllocatorNull;
 // extern const CFBooleanRef kCFBooleanFalse;
@@ -5946,7 +5956,6 @@ LABEL_27:
 // BA54: variable 'v17' is possibly undefined
 // BA88: variable 'v23' is possibly undefined
 // 448E0: using guessed type __int64 (__fastcall *off_448E0[7])();
-// 480D8: using guessed type __int64 qword_480D8;
 
 //----- (000000000000BB3C) ----------------------------------------------------
 unsigned __int64 __fastcall scan_for_macho_header(__int64 *krwCtx, __int64 a2)
@@ -17466,8 +17475,6 @@ LABEL_20:
                         + ((v30 >> 7) & 0x7FF8);
   return result;
 }
-// 480D8: using guessed type __int64 qword_480D8;
-// 480E0: using guessed type uint8_t algn_480E0[32];
 
 //----- (000000000001AA90) ----------------------------------------------------
 __int64 __fastcall spin_wait_el0_transition(__int64 result)
@@ -18088,8 +18095,6 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   return 0;
 }
 // 20: using guessed type segment_command_64 stru_20;
-// 480D8: using guessed type __int64 qword_480D8;
-// 480E0: using guessed type uint8_t algn_480E0[32];
 
 //----- (000000000001BC54) ----------------------------------------------------
 __int64 __fastcall call_vtable_ptr_slot2_v2(__int64 a1)
@@ -25184,6 +25189,7 @@ __int64 __fastcall send_mach_msg_from_ctx(__int64 a1, mach_port_t a2, mach_port_
 //----- (0000000000024BC0) ----------------------------------------------------
 int __fastcall parse_xnu_version_string(__int64 a1)
 {
+  struct xnu_runtime_info *info; // x20
   char *v2; // x0
   char *v3; // x0
   int result; // w0
@@ -25196,8 +25202,9 @@ int __fastcall parse_xnu_version_string(__int64 a1)
   int xnu_parts[4]; // [xsp+38h] [xbp-558h] BYREF
   struct utsname v13; // [xsp+48h] [xbp-548h] BYREF
 
+  info = (struct xnu_runtime_info *)a1;
   uname(&v13);
-  *(uint64_t *)a1 = strdup(v13.version);
+  info->versionString = strdup(v13.version);
   memset(xnu_parts, 0, sizeof(xnu_parts));
   v2 = strstr(v13.version, "xnu-");
   if ( sscanf(v2, "xnu-%d.%d.%d~%d", &xnu_parts[0], &xnu_parts[1], &xnu_parts[2], &xnu_parts[3]) == 4
@@ -25220,13 +25227,13 @@ int __fastcall parse_xnu_version_string(__int64 a1)
       v5 += 4;
     }
     while ( v5 != 16 );
-    *(uint64_t *)(a1 + 8) = v6;
-    *(uint32_t *)(a1 + 36) = 38;
+    info->packedVersion = v6;
+    info->socDependentOffset = 38;
     if ( strstr(v13.version, "T8120") )
       v7 = 46;
     else
       v7 = 38;
-    *(uint32_t *)(a1 + 36) = v7;
+    info->socDependentOffset = v7;
     if ( v6 <= 0x74B4D4047FFLL )
     {
       if ( v6 < 0x73835AB9470LL )
@@ -25238,8 +25245,8 @@ int __fastcall parse_xnu_version_string(__int64 a1)
     {
       v8 = 72;
     }
-    *(uint32_t *)(a1 + 32) = v8;
-    *(__int128 *)(a1 + 16) = xmmword_43690;
+    info->versionDependentOffset = v8;
+    memcpy(info->defaultOffsets, kXnuRuntimeDefaultOffsets, sizeof(info->defaultOffsets));
     result = 0;
   }
   else
@@ -25248,7 +25255,6 @@ int __fastcall parse_xnu_version_string(__int64 a1)
   }
   return result;
 }
-// 43690: using guessed type __int128 xmmword_43690;
 
 //----- (0000000000024D64) ----------------------------------------------------
 const CFDictionaryRef *__fastcall ioservice_get_matching(const char *a1)
