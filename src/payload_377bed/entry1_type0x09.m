@@ -1789,6 +1789,40 @@ struct xnu_runtime_info
   uint32_t socDependentOffset;
 };
 
+struct csblob_walk_ctx
+{
+  uint32_t flags;
+  uint32_t reserved_0x4;
+  uint64_t csblobKaddr;
+  size_t blobSize;
+  uint64_t blobDataKaddr;
+  uint64_t chainHeadKaddr;
+  uint64_t teamIdOrEntitlementsKaddr;
+  uint32_t containerKind;
+  uint32_t reserved_0x34;
+  void *container;
+  uint32_t selectedSlot;
+  uint32_t pid;
+  uint32_t platformByte;
+  uint32_t specialSlotOffset;
+  uint32_t alternateSlotOffset;
+  uint32_t cmsBlobOffset;
+  uint32_t signatureOffset;
+  uint32_t minSlotDistanceQword;
+  uint32_t reserved_0x60;
+};
+
+typedef char csblob_walk_ctx_container_kind_offset_must_be_0x30[
+  __builtin_offsetof(struct csblob_walk_ctx, containerKind) == 0x30 ? 1 : -1];
+typedef char csblob_walk_ctx_container_offset_must_be_0x38[
+  __builtin_offsetof(struct csblob_walk_ctx, container) == 0x38 ? 1 : -1];
+typedef char csblob_walk_ctx_selected_slot_offset_must_be_0x40[
+  __builtin_offsetof(struct csblob_walk_ctx, selectedSlot) == 0x40 ? 1 : -1];
+typedef char csblob_walk_ctx_pid_offset_must_be_0x44[
+  __builtin_offsetof(struct csblob_walk_ctx, pid) == 0x44 ? 1 : -1];
+typedef char csblob_walk_ctx_min_slot_distance_offset_must_be_0x5c[
+  __builtin_offsetof(struct csblob_walk_ctx, minSlotDistanceQword) == 0x5c ? 1 : -1];
+
 static const integer_t kVmcopyRaceLowPriorityPolicy[4] = { 0x20A51, 0x2710, 0x2711, 1 };
 static const integer_t kVmcopyRaceHighPriorityPolicy[4] = { 0x3E8, 0xF4240, 0xF4241, 1 };
 static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
@@ -33026,24 +33060,24 @@ LABEL_11:
 //----- (000000000002E5C0) ----------------------------------------------------
 __int64 __fastcall csblob_chain_walk_offsets(struct_krwCtx *krwCtx, unsigned int a2, __int64 *a3, unsigned __int8 a4, __int64 a5)
 {
-  unsigned __int64 v8; // x0
-  unsigned __int64 v9; // x23
-  __int64 v10; // x24
-  __int64 v11; // x21
-  __int64 v12; // x27
-  __int64 v13; // x25
-  __int64 v14; // x8
-  __int64 v15; // x28
-  __int64 v16; // x26
+  struct csblob_walk_ctx *ctx; // x20
+  unsigned __int64 csblobKaddr; // x23
+  __int64 blobSizeOffset; // x24
+  __int64 blobDataOffset; // x21
+  __int64 flagsOffset; // x27
+  __int64 specialSlotPtrOffset; // x25
+  __int64 cmsBlobPtrOffset; // x8
+  __int64 alternateSlotPtrOffset; // x28
+  __int64 teamIdOrEntitlementsOffset; // x26
   __int64 v17; // x24
   unsigned int *v18; // x0
-  unsigned int *v19; // x21
-  size_t v20; // x8
-  unsigned __int64 v21; // x9
-  unsigned __int64 v22; // x10
-  size_t v23; // x23
-  size_t v24; // x10
-  size_t v25; // x10
+  unsigned int *blobBytes; // x21
+  size_t blobSize; // x8
+  unsigned __int64 blobDataKaddr; // x9
+  unsigned __int64 chainHeadKaddr; // x10
+  size_t specialSlotOffset; // x23
+  size_t alternateSlotOffset; // x10
+  size_t cmsBlobOffset; // x10
   unsigned int v26; // w8
   unsigned int v27; // w27
   __int64 v28; // x28
@@ -33071,134 +33105,128 @@ __int64 __fastcall csblob_chain_walk_offsets(struct_krwCtx *krwCtx, unsigned int
   char *v52; // x24
   unsigned int *v53; // x0
   int v54; // [xsp+8h] [xbp-A8h]
-  unsigned int *v55; // [xsp+10h] [xbp-A0h]
-  __int64 v56; // [xsp+18h] [xbp-98h] BYREF
-  unsigned __int64 v57; // [xsp+20h] [xbp-90h] BYREF
-  unsigned __int64 v58; // [xsp+28h] [xbp-88h] BYREF
-  unsigned __int64 v59; // [xsp+30h] [xbp-80h] BYREF
-  unsigned __int64 v60; // [xsp+38h] [xbp-78h] BYREF
-  unsigned __int64 v61; // [xsp+40h] [xbp-70h] BYREF
-  size_t __size; // [xsp+48h] [xbp-68h] BYREF
-  unsigned __int64 v63; // [xsp+50h] [xbp-60h] BYREF
-  int v64; // [xsp+5Ch] [xbp-54h] BYREF
+  unsigned int *container; // [xsp+10h] [xbp-A0h]
+  __int64 teamIdOrEntitlementsKaddr; // [xsp+18h] [xbp-98h] BYREF
+  unsigned __int64 chainHeadOut; // [xsp+20h] [xbp-90h] BYREF
+  unsigned __int64 signatureKaddr; // [xsp+28h] [xbp-88h] BYREF
+  unsigned __int64 cmsBlobKaddr; // [xsp+30h] [xbp-80h] BYREF
+  unsigned __int64 alternateSlotKaddr; // [xsp+38h] [xbp-78h] BYREF
+  unsigned __int64 specialSlotKaddr; // [xsp+40h] [xbp-70h] BYREF
+  size_t blobSizeRead; // [xsp+48h] [xbp-68h] BYREF
+  unsigned __int64 blobDataKaddrRead; // [xsp+50h] [xbp-60h] BYREF
+  int csFlags; // [xsp+5Ch] [xbp-54h] BYREF
 
-  v64 = 0;
-  __size = 0;
-  v63 = 0;
-  v60 = 0;
-  v61 = 0;
-  v58 = 0;
-  v59 = 0;
-  v56 = 0;
-  v57 = 0;
+  csFlags = 0;
+  blobSizeRead = 0;
+  blobDataKaddrRead = 0;
+  alternateSlotKaddr = 0;
+  specialSlotKaddr = 0;
+  signatureKaddr = 0;
+  cmsBlobKaddr = 0;
+  teamIdOrEntitlementsKaddr = 0;
+  chainHeadOut = 0;
   if ( !a5 )
     return 0;
-  v8 = walk_task_csblob_chain(krwCtx, a2, a3, a4, &v57);
-  if ( !v8 )
+  ctx = (struct csblob_walk_ctx *)a5;
+  csblobKaddr = walk_task_csblob_chain(krwCtx, a2, a3, a4, &chainHeadOut);
+  if ( !csblobKaddr )
     return 0;
-  v9 = v8;
-  v10 = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
-  v11 = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 64LL : 80LL;
-  v12 = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 16LL : 32LL;
-  v13 = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 120LL : 128LL;
-  v14 = 136;
-  v15 = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 128LL : 136LL;
+  blobSizeOffset = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
+  blobDataOffset = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 64LL : 80LL;
+  flagsOffset = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 16LL : 32LL;
+  specialSlotPtrOffset = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 120LL : 128LL;
+  cmsBlobPtrOffset = 136;
+  alternateSlotPtrOffset = krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 128LL : 136LL;
   if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
   {
-    v16 = 24;
+    teamIdOrEntitlementsOffset = 24;
   }
   else
   {
-    v14 = 144;
-    v16 = 40;
+    cmsBlobPtrOffset = 144;
+    teamIdOrEntitlementsOffset = 40;
   }
-  if ( !kread_physmap_decorated(krwCtx, v14 + v8, &v59)
-    || (krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && !kread_physmap_decorated(krwCtx, v9 + 152, &v58))
-    || !kread_physmap_decorated(krwCtx, v13 + v9, &v61)
-    || !kread_physmap_decorated(krwCtx, v15 + v9, &v60)
-    || !kread_u32(krwCtx, v12 + v9, &v64)
-    || (v64 & 1) == 0
-    || !kread_physmap_decorated(krwCtx, v10 + v9, &__size)
-    || !kread_physmap_decorated(krwCtx, v11 + v9, &v63) )
+  if ( !kread_physmap_decorated(krwCtx, cmsBlobPtrOffset + csblobKaddr, &cmsBlobKaddr)
+    || (krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && !kread_physmap_decorated(krwCtx, csblobKaddr + 152, &signatureKaddr))
+    || !kread_physmap_decorated(krwCtx, specialSlotPtrOffset + csblobKaddr, &specialSlotKaddr)
+    || !kread_physmap_decorated(krwCtx, alternateSlotPtrOffset + csblobKaddr, &alternateSlotKaddr)
+    || !kread_u32(krwCtx, flagsOffset + csblobKaddr, &csFlags)
+    || (csFlags & 1) == 0
+    || !kread_physmap_decorated(krwCtx, blobSizeOffset + csblobKaddr, &blobSizeRead)
+    || !kread_physmap_decorated(krwCtx, blobDataOffset + csblobKaddr, &blobDataKaddrRead) )
   {
     return 0;
   }
   v17 = 0;
-  if ( v63 && __size )
+  if ( blobDataKaddrRead && blobSizeRead )
   {
-    if ( (unsigned int)krw_read_thunk(krwCtx, v16 + v9, 8, &v56) )
+    if ( (unsigned int)krw_read_thunk(krwCtx, teamIdOrEntitlementsOffset + csblobKaddr, 8, &teamIdOrEntitlementsKaddr) )
     {
-      v18 = (unsigned int *)malloc(__size);
+      v18 = (unsigned int *)malloc(blobSizeRead);
       if ( v18 )
       {
-        v19 = v18;
-        *(uint64_t *)(a5 + 96) = 0;
-        *(__int128 *)(a5 + 64) = 0u;
-        *(__int128 *)(a5 + 80) = 0u;
-        *(__int128 *)(a5 + 32) = 0u;
-        *(__int128 *)(a5 + 48) = 0u;
-        *(__int128 *)a5 = 0u;
-        *(__int128 *)(a5 + 16) = 0u;
-        if ( !(unsigned int)krw_read_thunk(krwCtx, v63, __size, v18) )
+        blobBytes = v18;
+        memset(ctx, 0, sizeof(*ctx));
+        if ( !(unsigned int)krw_read_thunk(krwCtx, blobDataKaddrRead, blobSizeRead, v18) )
           goto LABEL_110;
-        *(uint32_t *)a5 = v64;
-        v20 = __size;
-        v21 = v63;
-        *(uint64_t *)(a5 + 8) = v9;
-        *(uint64_t *)(a5 + 16) = v20;
-        v22 = v57;
-        *(uint64_t *)(a5 + 24) = v21;
-        *(uint64_t *)(a5 + 32) = v22;
-        *(uint64_t *)(a5 + 40) = v56;
-        *(uint32_t *)(a5 + 68) = a2;
-        v23 = v61 ? (unsigned int)(v61 - v21) : 0LL;
-        *(uint32_t *)(a5 + 76) = v23;
-        if ( v20 <= v23 )
+        ctx->flags = csFlags;
+        blobSize = blobSizeRead;
+        blobDataKaddr = blobDataKaddrRead;
+        ctx->csblobKaddr = csblobKaddr;
+        ctx->blobSize = blobSize;
+        chainHeadKaddr = chainHeadOut;
+        ctx->blobDataKaddr = blobDataKaddr;
+        ctx->chainHeadKaddr = chainHeadKaddr;
+        ctx->teamIdOrEntitlementsKaddr = teamIdOrEntitlementsKaddr;
+        ctx->pid = a2;
+        specialSlotOffset = specialSlotKaddr ? (unsigned int)(specialSlotKaddr - blobDataKaddr) : 0LL;
+        ctx->specialSlotOffset = specialSlotOffset;
+        if ( blobSize <= specialSlotOffset )
           goto LABEL_110;
-        v24 = v60 ? (unsigned int)(v60 - v21) : 0LL;
-        *(uint32_t *)(a5 + 80) = v24;
-        if ( (uint32_t)v24 )
+        alternateSlotOffset = alternateSlotKaddr ? (unsigned int)(alternateSlotKaddr - blobDataKaddr) : 0LL;
+        ctx->alternateSlotOffset = alternateSlotOffset;
+        if ( (uint32_t)alternateSlotOffset )
         {
-          if ( v20 <= v24 && ((krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
+          if ( blobSize <= alternateSlotOffset && ((krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)) )
             goto LABEL_110;
         }
-        v25 = v59 ? (unsigned int)(v59 - v21) : 0LL;
-        *(uint32_t *)(a5 + 84) = v25;
-        if ( (uint32_t)v25 )
+        cmsBlobOffset = cmsBlobKaddr ? (unsigned int)(cmsBlobKaddr - blobDataKaddr) : 0LL;
+        ctx->cmsBlobOffset = cmsBlobOffset;
+        if ( (uint32_t)cmsBlobOffset )
         {
-          if ( v20 <= v25 )
+          if ( blobSize <= cmsBlobOffset )
             goto LABEL_110;
         }
-        LODWORD(v21) = v58 - v21;
-        v21 = v58 ? (unsigned int)v21 : 0LL;
-        *(uint32_t *)(a5 + 88) = v21;
-        if ( (uint32_t)v21 )
+        LODWORD(blobDataKaddr) = signatureKaddr - blobDataKaddr;
+        blobDataKaddr = signatureKaddr ? (unsigned int)blobDataKaddr : 0LL;
+        ctx->signatureOffset = blobDataKaddr;
+        if ( (uint32_t)blobDataKaddr )
         {
-          if ( v20 <= v21 )
+          if ( blobSize <= blobDataKaddr )
             goto LABEL_110;
         }
-        if ( *v19 == 34397946 )
+        if ( *blobBytes == 34397946 )
         {
-          v55 = (unsigned int *)csblob_alloc_container();
-          if ( !v55 )
+          container = (unsigned int *)csblob_alloc_container();
+          if ( !container )
             goto LABEL_110;
-          v39 = csblob_dup_entry(v19);
+          v39 = csblob_dup_entry(blobBytes);
           if ( v39 )
           {
             v35 = v39;
-            if ( (unsigned int)csblob_realloc_array(v55, 0, (__int64)v39) != -1 )
+            if ( (unsigned int)csblob_realloc_array(container, 0, (__int64)v39) != -1 )
             {
               LODWORD(v37) = 0;
               v40 = 0;
-              *(uint32_t *)(a5 + 48) = 1;
-              *(uint64_t *)(a5 + 56) = v55;
-              *(uint32_t *)(a5 + 64) = 0;
+              ctx->containerKind = 1;
+              ctx->container = container;
+              ctx->selectedSlot = 0;
 LABEL_104:
-              *(uint32_t *)(a5 + 92) = v37;
+              ctx->minSlotDistanceQword = v37;
               v53 = csblob_find_entry(a5, v40, -86111230);
               if ( v53 )
               {
-                *(uint32_t *)(a5 + 72) = *((unsigned __int8 *)v53 + 36);
+                ctx->platformByte = *((unsigned __int8 *)v53 + 36);
                 if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)
                   || !csblob_find_entry(a5, 7, -86085262)
                   || csblob_find_entry(a5, 5, -86085263)
@@ -33206,7 +33234,7 @@ LABEL_104:
                 {
                   v17 = 1;
 LABEL_111:
-                  free(v19);
+                  free(blobBytes);
                   return v17;
                 }
               }
@@ -33221,18 +33249,18 @@ LABEL_83:
         }
         else
         {
-          if ( *v19 != -1072898310 )
+          if ( *blobBytes != -1072898310 )
             goto LABEL_110;
-          v55 = (unsigned int *)csblob_alloc_container();
-          if ( !v55 )
+          container = (unsigned int *)csblob_alloc_container();
+          if ( !container )
             goto LABEL_110;
-          v54 = v23;
-          v26 = v19[2];
+          v54 = specialSlotOffset;
+          v26 = blobBytes[2];
           if ( v26 )
           {
             v27 = 0;
             v28 = bswap32(v26);
-            v29 = v19 + 4;
+            v29 = blobBytes + 4;
             while ( 1 )
             {
               v30 = v29;
@@ -33240,12 +33268,12 @@ LABEL_83:
               v32 = bswap32(*v29);
               if ( (unsigned int)v32 < v27 || v27 == 0 )
                 v27 = v32;
-              v34 = csblob_dup_entry((unsigned int *)((char *)v19 + v32));
+              v34 = csblob_dup_entry((unsigned int *)((char *)blobBytes + v32));
               if ( !v34 )
                 goto LABEL_84;
               v35 = v34;
               v36 = bswap32(v31);
-              if ( (unsigned int)csblob_realloc_array(v55, v36, (__int64)v34) == -1 )
+              if ( (unsigned int)csblob_realloc_array(container, v36, (__int64)v34) == -1 )
                 goto LABEL_83;
               if ( *v35 == 34397946 )
               {
@@ -33259,7 +33287,7 @@ LABEL_83:
                 {
                   v36 = 0;
 LABEL_74:
-                  *(uint32_t *)(a5 + 64) = v36;
+                  ctx->selectedSlot = v36;
                 }
               }
 LABEL_75:
@@ -33273,15 +33301,15 @@ LABEL_75:
           }
           LODWORD(v37) = -2;
 LABEL_86:
-          v40 = *(uint32_t *)(a5 + 64);
-          v41 = *v55;
+          v40 = ctx->selectedSlot;
+          v41 = *container;
           if ( !(uint32_t)v41 )
             goto LABEL_103;
           v42 = 0;
           v43 = 0;
           v44 = 0;
           v45 = 0;
-          v46 = (unsigned int **)(*((uint64_t *)v55 + 1) + 8LL);
+          v46 = (unsigned int **)(*((uint64_t *)container + 1) + 8LL);
           do
           {
             v47 = *((uint32_t *)v46 - 2);
@@ -33310,16 +33338,16 @@ LABEL_86:
           {
             v52 = v51;
             bzero(&v51[v49], v50 - v49);
-            *(uint64_t *)(*((uint64_t *)v55 + 1) + 16LL * v45 + 8) = v52;
-            v40 = *(uint32_t *)(a5 + 64);
+            *(uint64_t *)(*((uint64_t *)container + 1) + 16LL * v45 + 8) = v52;
+            v40 = ctx->selectedSlot;
 LABEL_103:
-            *(uint32_t *)(a5 + 48) = 1;
-            *(uint64_t *)(a5 + 56) = v55;
+            ctx->containerKind = 1;
+            ctx->container = container;
             goto LABEL_104;
           }
         }
 LABEL_84:
-        csblob_free_array(v55);
+        csblob_free_array(container);
         goto LABEL_110;
       }
     }
