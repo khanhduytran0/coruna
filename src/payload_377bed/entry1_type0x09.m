@@ -33779,7 +33779,7 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
   __int64 *v11; // x28
   __int64 v12; // x2
   unsigned __int64 xnuVersionPacked; // x8
-  char *v14; // x9
+  char *blobPointerField; // x9
   __int64 v15; // x9
   __int64 v16; // x21
   int v17; // w0
@@ -33821,9 +33821,7 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
   __int64 v53; // [xsp+78h] [xbp-1188h] BYREF
   mach_vm_address_t v54; // [xsp+80h] [xbp-1180h] BYREF
   unsigned __int64 v55; // [xsp+88h] [xbp-1178h] BYREF
-  __int128 v56; // [xsp+90h] [xbp-1170h] BYREF
-  __int128 v57[11]; // [xsp+A0h] [xbp-1160h] BYREF
-  __int64 v58; // [xsp+150h] [xbp-10B0h]
+  uint8_t csblobHeader[200]; // [xsp+90h] [xbp-1170h] BYREF
   uint64_t v59[7]; // [xsp+160h] [xbp-10A0h] BYREF
   uint8_t v60[20]; // [xsp+198h] [xbp-1068h] BYREF
   int v61; // [xsp+1ACh] [xbp-1054h]
@@ -33867,18 +33865,15 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
           v11 = &v62;
           while ( 1 )
           {
-            v58 = 0;
-            memset(&v57[1], 0, 160);
             v12 = v5->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
-            v56 = 0u;
-            v57[0] = 0u;
-            if ( !(unsigned int)krw_read_thunk(v5, v10, v12, &v56) )
+            memset(csblobHeader, 0, sizeof(csblobHeader));
+            if ( !(unsigned int)krw_read_thunk(v5, v10, v12, csblobHeader) )
               break;
             xnuVersionPacked = v5->xnuVersionPacked;
-            v14 = (char *)&v57[1] + 8;
+            blobPointerField = (char *)csblobHeader + 40;
             if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
-              v14 = (char *)v57 + 8;
-            if ( !(*(uint64_t *)v14 >> 29) )
+              blobPointerField = (char *)csblobHeader + 24;
+            if ( !(*(uint64_t *)blobPointerField >> 29) )
             {
               v15 = 144;
               if ( xnuVersionPacked > XNU_VERSION_PACKED(7195, 100, 325, 1023, 1023) )
