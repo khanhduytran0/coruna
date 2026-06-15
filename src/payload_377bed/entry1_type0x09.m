@@ -704,7 +704,7 @@ __int64 __fastcall driver_dispatch_command2(
 __int64 __fastcall driver_dispatch_command3(struct_krwCtx *krwCtx, int cmd, __int64 inoutValue);
 __int64 __fastcall reinit_and_refresh_krw_ctx(struct_krwCtx *krwCtx);
 __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx);
-__int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(struct_krwCtx *krwCtx, unsigned int a2, int a3, int a4);
+__int64 __fastcall task_kobject_update_flag_bits(struct_krwCtx *krwCtx, unsigned int a2, int a3, int a4);
 bool __fastcall check_krw_necp_state(struct_krwCtx *krwCtx, bool *a2);
 bool __fastcall check_dispatch_krw_state(struct_krwCtx *krwCtx, int a2);
 bool __fastcall find_kernel_text_exec_section(struct_krwCtx *krwCtx, __int64 *a2, __int64 *a3);
@@ -29495,7 +29495,7 @@ unsigned __int64 __fastcall maybe_sptm_translate_kaddr(struct_krwCtx *krwCtx, __
 // 29D08: variable 'vars8' is possibly undefined
 
 //----- (0000000000029D2C) ----------------------------------------------------
-unsigned __int64 __fastcall sub_29D2C(struct_krwCtx *krwCtx, __int64 a2)
+unsigned __int64 __fastcall krw_xpac_vaddr_if_needed(struct_krwCtx *krwCtx, __int64 a2)
 {
 
   if ( !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
@@ -42696,7 +42696,7 @@ bool __fastcall kwrite_task_dispatch_via_kobj(struct_krwCtx *someCtx, unsigned i
         address = v8;
         if ( kread_physmap_decorated(someCtx, v8, (unsigned __int64 *)&v10) )
         {
-          if ( (unsigned int)set_flags_something_INEEDTOLOOK_sub_3F8C0(someCtx, a3, v5, 1) )
+          if ( (unsigned int)task_kobject_update_flag_bits(someCtx, a3, v5, 1) )
           {
             vm_attr_increment_offset_check(someCtx, newValue);
             if ( someCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
@@ -42710,7 +42710,7 @@ bool __fastcall kwrite_task_dispatch_via_kobj(struct_krwCtx *someCtx, unsigned i
   }
   else
   {
-    return set_flags_something_INEEDTOLOOK_sub_3F8C0(someCtx, a3, v5, 0);
+    return task_kobject_update_flag_bits(someCtx, a3, v5, 0);
   }
     return 0;
 }
@@ -46219,7 +46219,7 @@ LABEL_11:
       if ( (v6 = krwCtx->exploitThread, (unsigned int)(v6 + 1) < 2)
         || v6 != mach_thread_self()
         || ((v7 = mach_thread_self(), krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)) ? (v8 = 1) : (v8 = 0x4000000),
-            (unsigned int)set_flags_something_INEEDTOLOOK_sub_3F8C0(krwCtx, v7, v8, 0)) )
+            (unsigned int)task_kobject_update_flag_bits(krwCtx, v7, v8, 0)) )
       {
         if ( !krwCtx->savedUidGid || (unsigned int)get_or_set_uid_cred_in_task(krwCtx, krwCtx->savedUid, krwCtx->savedGid, 0) )
         {
@@ -46464,7 +46464,7 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
 }
 
 //----- (000000000003F8C0) ----------------------------------------------------
-__int64 __fastcall set_flags_something_INEEDTOLOOK_sub_3F8C0(struct_krwCtx *krwCtx, unsigned int a2, int a3, int a4)
+__int64 __fastcall task_kobject_update_flag_bits(struct_krwCtx *krwCtx, unsigned int a2, int a3, int a4)
 {
   __int64 result; // x0
   unsigned __int64 v8; // x22
