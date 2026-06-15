@@ -82,14 +82,14 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00000004 */ uint8_t raw_0x4[0xA8];
             struct {
         /*  00000004 */ uint8_t gap_0x4_to_0xB[0x7];
-        /*  0000000B */ uint8_t gap_0xB;
+        /*  0000000B */ uint8_t isSandboxed;
         /*  0000000C */ uint8_t gap_0xC;
         /*  0000000D */ uint8_t gap_0xD_to_0x10[0x3];
-        /*  00000010 */ uint32_t gap_0x10;
+        /*  00000010 */ uint32_t iosurfaceObj;
         /*  00000014 */ uint8_t gap_0x14_to_0x18[0x4];
         /*  00000018 */ uint64_t gap_0x18;
         /*  00000020 */ uint64_t gap_0x20;
-        /*  00000028 */ uint64_t gap_0x28;
+        /*  00000028 */ uint64_t semaphoreHelperCtx;
         /*  00000030 */ uint64_t iogpuKreadFn;
         /*  00000038 */ uint64_t iogpuKread2Fn;
         /*  00000040 */ uint64_t iogpuKwriteFn;
@@ -98,30 +98,30 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00000058 */ uint32_t ioSurfaceMemEntryMaybe;
         /*  0000005C */ uint32_t gap_0x5C_size4;
         /*  00000060 */ uint8_t gap_0x60_to_0x80[0x20];
-        /*  00000080 */ uint64_t gap_0x80;
-        /*  00000088 */ uint32_t gap_0x88;
+        /*  00000080 */ uint64_t physmapBasePhys;
+        /*  00000088 */ uint32_t physmapSize;
         /*  0000008C */ uint8_t gap_0x8C_to_0x90[0x4];
         /*  00000090 */ uint64_t gap_0x90;
         /*  00000098 */ uint64_t gap_0x98;
-        /*  000000A0 */ uint64_t gap_0xA0;
-        /*  000000A8 */ uint32_t gap_0xA8_size4;
+        /*  000000A0 */ uint64_t percpuBasePhys;
+        /*  000000A8 */ uint32_t percpuSize;
             };
         };
         /*  000000AC */ uint32_t threadForKernelRead;
-        /*  00000B0 */ uint64_t gap_0xB0;
-        /*  000000B8 */ uint64_t gap_0xB8;
-        /*  000000C0 */ uint64_t gap_0xC0;
-        /*  000000C8 */ uint64_t gap_0xC8;
-        /*  000000D0 */ uint64_t gap_0xD0;
-        /*  000000D8 */ uint64_t gap_0xD8;
-        /*  000000E0 */ uint64_t gap_0xE0;
-        /*  000000E8 */ uint64_t gap_0xE8; // may be uint32_t?
-        /*  000000F0 */ uint64_t gap_0xF0;
-        /*  000000F8 */ uint64_t gap_0xF8;
-        /*  00000100 */ uint64_t gap_0x100;
-        /*  00000108 */ uint64_t gap_0x108;
-        /*  00000110 */ uint32_t gap_0x110;
-        /*  00000114 */ uint32_t gap_0x114;
+        /*  00000B0 */ uint64_t threadStateMapAddr;
+        /*  000000B8 */ uint64_t threadStateMapSize;
+        /*  000000C0 */ uint64_t threadStatePageOffset;
+        /*  000000C8 */ uint64_t threadStateMappedPtr;
+        /*  000000D0 */ uint64_t threadStateScratchKaddr;
+        /*  000000D8 */ uint64_t threadStateKrwPhysAddr;
+        /*  000000E0 */ uint64_t threadStateSavedPtr;
+        /*  000000E8 */ uint64_t ioConnectPort; // low 32 bits
+        /*  000000F0 */ uint64_t ioConnectKernelValue;
+        /*  000000F8 */ uint64_t ioConnectMappedAddr;
+        /*  00000100 */ uint64_t ioConnectMappedSize;
+        /*  00000108 */ uint64_t ioConnectDataOffset;
+        /*  00000110 */ uint32_t ioConnectDataSize;
+        /*  00000114 */ uint32_t ioConnectMemPort;
         union {
         /*  00000118 */ uint64_t mappedKernelRegion;
         /*  00000118 */ uint64_t mappedKernelRegion_size8byte;
@@ -154,8 +154,8 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00000170 */ int gap_0x170;
         /*  00000174 */ int gap_0x174;
         union {
-        /*  00000178 */ uint32_t gap_0x178;
-        /*  00000178 */ uint32_t gap_0x178_size4;
+        /*  00000178 */ uint32_t vmMapSize;
+        /*  00000178 */ uint32_t vmMapSize_size4;
         };
         /*  0000017C */ int gap_0x17C;
             };
@@ -209,7 +209,7 @@ struct __attribute__((packed)) struct_krwCtx
         union {
         /*  00000370 */ uint64_t raw_0x370[695];
             struct {
-        /*  00000370 */ uint64_t gap_0x370;
+        /*  00000370 */ uint64_t restoreRecordListHead;
         union {
         /*  00000378 */ uint64_t gap_0x378;
             struct {
@@ -235,11 +235,11 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00000870 */ uint64_t gap_0x870;
         /*  00000878 */ uint64_t gap_0x878;
         /*  00000880 */ uint8_t gap_0x880_to_0x1888[0x1008];
-        /*  00001888 */ uint64_t gap_0x1888;
-        /*  00001890 */ uint32_t gap_0x1890;
+        /*  00001888 */ uint64_t pplPhysmapBase;
+        /*  00001890 */ uint32_t pplPhysmapSize;
         /*  00001894 */ uint8_t gap_0x1894_to_0x1898[0x4];
-        /*  00001898 */ uint64_t gap_0x1898;
-        /*  000018A0 */ uint64_t gap_0x18A0;
+        /*  00001898 */ uint64_t iogpuKobjPtr2;
+        /*  000018A0 */ uint64_t iogpuObjCount;
         /*  000018A8 */ uint64_t gap_0x18A8;
         /*  000018B0 */ uint64_t gap_0x18B0;
         /*  000018B8 */ uint64_t gap_0x18B8;
@@ -247,17 +247,17 @@ struct __attribute__((packed)) struct_krwCtx
         /*  000018C8 */ uint8_t gap_0x18C8_to_0x18D8[0x10];
         /*  000018D8 */ uint32_t gap_0x18D8_size4;
         /*  000018DC */ uint8_t gap_0x18DC_to_0x18E0[0x4];
-        /*  000018E0 */ uint64_t gap_0x18E0_size8;
+        /*  000018E0 */ uint64_t cachedSelfTaskKaddr;
         /*  000018E8 */ uint64_t gap_0x18E8;
         /*  000018F0 */ uint64_t gap_0x18F0;
         /*  000018F8 */ uint64_t gap_0x18F8;
-        /*  00001900 */ uint64_t gap_0x1900;
-        /*  00001908 */ uint64_t gap_0x1908;
+        /*  00001900 */ uint64_t selfTaskDyldInfoKaddr;
+        /*  00001908 */ uint64_t selfTaskDyldInfoValue;
         union {
-        /*  00001910 */ uint64_t gap_0x1910_size8;
+        /*  00001910 */ uint64_t savedUidGid;
             struct {
-        /*  00001910 */ uint32_t gap_0x1910_size4;
-        /*  00001914 */ uint32_t gap_0x1914_size4;
+        /*  00001910 */ uint32_t savedUid;
+        /*  00001914 */ uint32_t savedGid;
             };
         };
         union {
@@ -286,12 +286,12 @@ struct __attribute__((packed)) struct_krwCtx
         /*  00001940 */ uint32_t iosurfaceFd;
         /*  00001940 */ uint32_t iosurfaceFd_size4;
         };
-        /*  00001944 */ uint32_t gap_0x1944;
+        /*  00001944 */ uint32_t necpFd;
         union {
-        /*  00001948 */ uint64_t raw_0x1948[16];
+        /*  00001948 */ uint64_t necpClientUuidAndState[16];
             struct {
-        /*  00001948 */ uint8_t gap_0x1948_to_0x1958[0x10];
-        /*  00001958 */ uint64_t gap_0x1958;
+        /*  00001948 */ uint8_t necpClientUuid[0x10];
+        /*  00001958 */ uint64_t necpClientKaddr;
         /*  00001960 */ uint8_t gap_0x1960_to_0x1990[0x30];
         /*  00001990 */ uint64_t gap_0x1990_size8;
         /*  00001998 */ uint64_t gap_0x1998;
@@ -311,8 +311,8 @@ struct __attribute__((packed)) struct_krwCtx
         };
         /*  000019E8 */ uint64_t gap_0x19E8;
         /*  000019F0 */ uint64_t gap_0x19F0;
-        /*  000019F8 */ uint64_t *gap_0x19F8;
-        /*  00001A00 */ uint64_t gap_0x1A00;
+        /*  000019F8 */ uint64_t *kernelMachoCtx;
+        /*  00001A00 */ uint64_t auxkcMachoCtx;
         union {
         /*  00001A08 */ uint64_t raw_0x1A08[104];
             struct {
@@ -330,7 +330,7 @@ struct __attribute__((packed)) struct_krwCtx
         };
         /*  00001D48 */ uint64_t IOKitConnInfo;
         /*  00001D50 */ uint64_t gap_0x1D50;
-        /*  00001D58 */ uint64_t gap_0x1D58;
+        /*  00001D58 */ uint64_t dmaFailCtx;
         /*  00001D60 */ // end
     };
 #if !RECOMP_TEMP_FAKE_OBJC_CLASS

