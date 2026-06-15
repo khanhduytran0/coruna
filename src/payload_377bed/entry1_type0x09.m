@@ -25576,7 +25576,7 @@ __int64 __fastcall fd_open_dev_null(int *fdOut)
 }
 
 //----- (0000000000025334) ----------------------------------------------------
-__int64 __fastcall sub_25334(struct_krwCtx *krwCtx, unsigned __int64 a2, void *a3, unsigned int a4, int a5)
+__int64 __fastcall kreadbuf_via_dev_null_simple(struct_krwCtx *krwCtx, unsigned __int64 a2, void *a3, unsigned int a4, int a5)
 {
   __int64 v5; // x20
   __int64 v11; // x26
@@ -29505,7 +29505,7 @@ unsigned __int64 __fastcall sub_29D2C(struct_krwCtx *krwCtx, __int64 a2)
 // 29D68: variable 'vars8' is possibly undefined
 
 //----- (0000000000029D88) ----------------------------------------------------
-unsigned __int64 __fastcall sub_29D88(struct_krwCtx *krwCtx, __int64 a2)
+unsigned __int64 __fastcall krw_xpac_vaddr(struct_krwCtx *krwCtx, __int64 a2)
 {
   __int64 v2; // x19
 
@@ -31790,7 +31790,7 @@ void __fastcall csblob_free_entry(__int64 a1)
 }
 
 //----- (000000000002CBA4) ----------------------------------------------------
-__int64 __fastcall sub_2CBA4(struct_krwCtx *krwCtx, __int64 task, char *entitlementXml, char a4)
+__int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *krwCtx, __int64 task, char *entitlementXml, char a4)
 {
   __int64 result; // x0
   unsigned __int64 v9; // x8
@@ -39317,7 +39317,7 @@ __int64 __fastcall vm_attr_field_offset_add4_check(struct_krwCtx *krwCtx, __int6
 }
 
 //----- (0000000000036078) ----------------------------------------------------
-struct_krwCtx *__fastcall sub_36078(struct_krwCtx *result, int a2)
+struct_krwCtx *__fastcall krw_ctx_set_flag(struct_krwCtx *result, int a2)
 {
   result->flags |= a2;
   return result;
@@ -49415,7 +49415,6 @@ bool __fastcall kread_physmap_decorated(struct_krwCtx *krwCtx, unsigned __int64 
   return kread64(krwCtx, vaddr, out);
 }
 //__int64 __fastcall kread_u32_value(__int64 a1, unsigned __int64 a2) { return kread_u32_value(krwCtx, a2); }
-unsigned __int64 __fastcall krw_xpac_vaddr(struct_krwCtx *krwCtx, __int64 a2) { return sub_29D88(krwCtx, a2); }
 bool __fastcall kwrite64_last_arg(struct_krwCtx *krwCtx, mach_vm_address_t address, __int64 newValue, int whatIsThis)
 {
   return this_is_the_kwrite64(krwCtx, address, newValue, whatIsThis);
@@ -49429,20 +49428,6 @@ __int64 __fastcall kreadptr(struct_krwCtx *krwCtx, __int64 addr) { return get_ta
 __int64 __fastcall driver_cmd_setup_untethered_persistence_maybe(struct_krwCtx *krwCtx, int a2)
 {
   return setup_untethered_persistence_maybe(krwCtx, a2);
-}
-__int64 __fastcall kreadbuf_via_dev_null_simple(
-        struct_krwCtx *krwCtx,
-        unsigned __int64 a2,
-        void *a3,
-        unsigned int a4,
-        int a5)
-{
-  return sub_25334(krwCtx, a2, a3, a4, a5);
-}
-struct_krwCtx *__fastcall krw_ctx_set_flag(struct_krwCtx *result, int a2) { return sub_36078(result, a2); }
-__int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *krwCtx, __int64 task, char *entitlementXml, char a4)
-{
-  return sub_2CBA4(krwCtx, task, entitlementXml, a4);
 }
 unsigned __int64 __fastcall krw_xpac_vaddr_2(struct_krwCtx *krwCtx, __int64 a2) { return maybe_sptm_translate_kaddr(krwCtx, a2); }
 __int64 __fastcall nullsub_1(uint64_t a1) { return a1; }
