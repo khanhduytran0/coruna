@@ -1538,44 +1538,39 @@ LABEL_12:
 //----- (0000000000009018) ----------------------------------------------------
 void *__fastcall setup_physmap_copy_structure(uint64_t *a1)
 {
-  __int16 v2; // w1
-  __int64 v3; // x1
-  unsigned __int64 v4; // x0
-  unsigned __int64 v5; // x0
   void *result; // x0
-  __int64 v7; // [xsp+0h] [xbp-200h] BYREF
-  __int64 v8; // [xsp+8h] [xbp-1F8h] BYREF
-  unsigned __int64 v9; // [xsp+10h] [xbp-1F0h] BYREF
-  unsigned __int64 v10; // [xsp+18h] [xbp-1E8h] BYREF
+  uint64_t previousOverlapPte; // [xsp+0h] [xbp-200h] BYREF
+  uint64_t nextOverlapPte; // [xsp+8h] [xbp-1F8h] BYREF
+  unsigned __int64 previousOverlapAddr; // [xsp+10h] [xbp-1F0h] BYREF
+  unsigned __int64 nextOverlapAddr; // [xsp+18h] [xbp-1E8h] BYREF
   uint8_t iogpuDesc[0xE0]; // [xsp+20h] [xbp-1E0h] BYREF
   uint8_t physmapDesc[0xE0]; // [xsp+100h] [xbp-100h] BYREF
-  unsigned __int64 v33; // [xsp+1E0h] [xbp-20h] BYREF
-  uint32_t v34; // [xsp+1ECh] [xbp-14h] BYREF
+  unsigned __int64 physmapDescAddr; // [xsp+1E0h] [xbp-20h] BYREF
+  uint32_t physmapRangeIndex; // [xsp+1ECh] [xbp-14h] BYREF
 
-  v34 = 0;
-  physmap_read_dword(a1, a1[181], &v34);
-  v33 = 0;
-  scan_physmap_addr_range(a1, a1[180], v34, &v33);
+  physmapRangeIndex = 0;
+  physmap_read_dword(a1, a1[181], &physmapRangeIndex);
+  physmapDescAddr = 0;
+  scan_physmap_addr_range(a1, a1[180], physmapRangeIndex, &physmapDescAddr);
   memset(physmapDesc, 0, sizeof(physmapDesc));
-  physmap_read_aligned(a1, v33, physmapDesc, sizeof(physmapDesc));
-  v2 = *(int16_t *)&physmapDesc[0x40];
+  physmap_read_aligned(a1, physmapDescAddr, physmapDesc, sizeof(physmapDesc));
+  __int16 iogpuDescriptorId = *(int16_t *)&physmapDesc[0x40];
   a1[164] = *(uint64_t *)&physmapDesc[0x08];
   a1[165] = a1[182];
   memset(iogpuDesc, 0, sizeof(iogpuDesc));
-  iogpu_kread_loop(a1, v2, (char *)iogpuDesc, sizeof(iogpuDesc));
-  v3 = *(uint64_t *)&iogpuDesc[0x48];
-  a1[166] = v3;
-  v9 = 0;
-  v10 = 0;
-  scan_physmap_overlap(a1, v3, &v10, &v9);
-  v8 = 0;
-  v4 = build_physmap_page_table(a1, v10);
-  physmap_read_aligned(a1, v4, &v8, 8u);
-  a1[167] = v8;
-  v7 = 0;
-  v5 = build_physmap_page_table(a1, v9);
-  result = physmap_read_aligned(a1, v5, &v7, 8u);
-  a1[168] = v7;
+  iogpu_kread_loop(a1, iogpuDescriptorId, (char *)iogpuDesc, sizeof(iogpuDesc));
+  uint64_t iogpuObjectAddr = *(uint64_t *)&iogpuDesc[0x48];
+  a1[166] = iogpuObjectAddr;
+
+  previousOverlapAddr = 0;
+  nextOverlapAddr = 0;
+  scan_physmap_overlap(a1, iogpuObjectAddr, &nextOverlapAddr, &previousOverlapAddr);
+  nextOverlapPte = 0;
+  physmap_read_aligned(a1, build_physmap_page_table(a1, nextOverlapAddr), &nextOverlapPte, 8u);
+  a1[167] = nextOverlapPte;
+  previousOverlapPte = 0;
+  result = physmap_read_aligned(a1, build_physmap_page_table(a1, previousOverlapAddr), &previousOverlapPte, 8u);
+  a1[168] = previousOverlapPte;
   return result;
 }
 
