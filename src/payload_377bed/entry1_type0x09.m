@@ -33813,9 +33813,7 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
   unsigned __int64 v55; // [xsp+88h] [xbp-1178h] BYREF
   uint8_t csblobHeader[200]; // [xsp+90h] [xbp-1170h] BYREF
   uint64_t v59[7]; // [xsp+160h] [xbp-10A0h] BYREF
-  uint8_t v60[20]; // [xsp+198h] [xbp-1068h] BYREF
-  int v61; // [xsp+1ACh] [xbp-1054h]
-  __int64 v62; // [xsp+1B8h] [xbp-1048h] BYREF
+  uint8_t procInfoInline[0x1000]; // [xsp+198h] [xbp-1068h] BYREF
 
   v2 = a3;
   v4 = a2;
@@ -33852,7 +33850,7 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
         v10 = address;
         if ( address )
         {
-          v11 = &v62;
+          v11 = (__int64 *)(procInfoInline + 32);
           while ( 1 )
           {
             v12 = v5->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
@@ -33891,15 +33889,15 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
                   v53 = 0;
                   __fd = -1;
                   if ( !(unsigned int)wire_proc_page_via_kobject(v5, v47, &v54, &v53, &__fd)
-                    || (v19 = __fd, (unsigned int)pread_loop(__fd, (__int64)v60, 0x1000u, v18)) )
+                    || (v19 = __fd, (unsigned int)pread_loop(__fd, (__int64)procInfoInline, 0x1000u, v18)) )
                   {
                     v20 = 0;
                     v39 = 0;
                     goto LABEL_39;
                   }
                   v38 = v19;
-                  v23 = v61;
-                  v24 = (unsigned int)(v61 + 32);
+                  v23 = *(uint32_t *)(procInfoInline + 20);
+                  v24 = (unsigned int)(v23 + 32);
                   if ( (unsigned int)v24 <= 0x1000 )
                   {
                     v20 = 0;
@@ -33908,7 +33906,7 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
                   }
                   else
                   {
-                    v20 = (char *)malloc((unsigned int)(v61 + 32));
+                    v20 = (char *)malloc(v24);
                     if ( !v20 || (unsigned int)pread_loop(v38, (__int64)v20, v24, v18) )
                     {
                       v39 = 0;
