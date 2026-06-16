@@ -1828,6 +1828,27 @@ typedef char csblob_walk_ctx_min_slot_distance_offset_must_be_0x5c[
 typedef char csblob_walk_ctx_der_preference_offset_must_be_0x60[
   __builtin_offsetof(struct csblob_walk_ctx, prefersDerEntitlements) == 0x60 ? 1 : -1];
 
+struct csblob_procinfo_header
+{
+  uint8_t reserved_0x00[20];
+  uint32_t entryBytes;
+  uint8_t reserved_0x18[8];
+  uint8_t entries[];
+};
+
+struct csblob_procinfo_entry
+{
+  uint32_t type;
+  uint32_t size;
+  uint32_t fileOffset;
+  uint32_t fileLength;
+};
+
+typedef char csblob_procinfo_header_entry_bytes_offset_must_be_0x14[
+  __builtin_offsetof(struct csblob_procinfo_header, entryBytes) == 0x14 ? 1 : -1];
+typedef char csblob_procinfo_header_entries_offset_must_be_0x20[
+  __builtin_offsetof(struct csblob_procinfo_header, entries) == 0x20 ? 1 : -1];
+
 struct vm_map_entry_wire_snapshot
 {
   uint64_t prev;
@@ -33792,6 +33813,8 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
   struct_krwCtx *v34; // x0
   unsigned __int64 v35; // x1
   mach_vm_size_t v36; // x3
+  struct csblob_procinfo_header *procInfoHeader; // x8
+  struct csblob_procinfo_entry *procInfoEntry; // x8
   __int64 *v37; // [xsp+10h] [xbp-11F0h]
   int v38; // [xsp+18h] [xbp-11E8h]
   int v39; // [xsp+1Ch] [xbp-11E4h]
@@ -33850,7 +33873,8 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
         v10 = address;
         if ( address )
         {
-          v11 = (__int64 *)(procInfoInline + 32);
+          procInfoHeader = (struct csblob_procinfo_header *)procInfoInline;
+          v11 = (__int64 *)procInfoHeader->entries;
           while ( 1 )
           {
             v12 = v5->xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 48LL : 64LL;
@@ -33896,7 +33920,7 @@ unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, uns
                     goto LABEL_39;
                   }
                   v38 = v19;
-                  v23 = *(uint32_t *)(procInfoInline + 20);
+                  v23 = procInfoHeader->entryBytes;
                   v24 = (unsigned int)(v23 + 32);
                   if ( (unsigned int)v24 <= 0x1000 )
                   {
@@ -33940,7 +33964,8 @@ LABEL_39:
                   v39 = 0;
                   while ( 2 )
                   {
-                    if ( *(uint32_t *)v25 == 29 )
+                    procInfoEntry = (struct csblob_procinfo_entry *)v25;
+                    if ( procInfoEntry->type == 29 )
                     {
                       newBytes = 14;
                       v49 = 0x7F00000000000000LL;
@@ -33962,8 +33987,8 @@ LABEL_39:
                           v30 = v28 + v40;
                           if ( (unsigned int)kwritebuf_universal(v5, v30, &v49, 8u) )
                           {
-                            v31 = *((unsigned int *)v25 + 2);
-                            v32 = *((unsigned int *)v25 + 3);
+                            v31 = procInfoEntry->fileOffset;
+                            v32 = procInfoEntry->fileLength;
                             v59[0] = v55;
                             v59[1] = v31;
                             v59[2] = v32;
@@ -33990,7 +34015,7 @@ LABEL_69:
                         }
                       }
                     }
-                    v25 += *((unsigned int *)v25 + 1);
+                    v25 += procInfoEntry->size;
                     if ( v25 >= v26 )
                       goto LABEL_74;
                     continue;
