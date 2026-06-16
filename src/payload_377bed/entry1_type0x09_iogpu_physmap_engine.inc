@@ -47,6 +47,35 @@ static inline void iogpu_patch_descriptor64(__int64 iogpuCtx, __int64 offset, si
     1);
 }
 
+static inline kern_return_t iogpu_remap_self_page(vm_address_t *address)
+{
+  vm_prot_t curProtection = 0;
+  vm_prot_t maxProtection = 0;
+
+  return vm_remap(
+    mach_task_self_,
+    address,
+    0x4000u,
+    0,
+    0x4000,
+    mach_task_self_,
+    *address,
+    0,
+    &maxProtection,
+    &curProtection,
+    1u);
+}
+
+static inline kern_return_t iogpu_allocate_fixed(vm_address_t *address, vm_size_t size, int flags)
+{
+  return vm_allocate(mach_task_self_, address, size, flags);
+}
+
+static inline kern_return_t iogpu_map_memory_entry_fixed(vm_address_t *address, mem_entry_name_port_t port)
+{
+  return vm_map(mach_task_self_, address, 0x4000u, 0, 0x4000, port, 0, 0, 3, 3, 1u);
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -2544,270 +2573,178 @@ __int64 __fastcall iogpu_init_private_ctx(
         mem_entry_name_port_t a5,
         uint64_t *a6)
 {
-  __int64 v12; // x24
-  __int64 v13; // x20
-  __int64 v14; // x28
-  __int64 v15; // x21
-  __int64 v16; // x22
-  kern_return_t v17; // w0
-  uint64_t *v19; // x0
-  vm_address_t v20; // x9
-  __int64 v21; // [xsp+20h] [xbp-A0h]
-  vm_address_t v22; // [xsp+28h] [xbp-98h] BYREF
-  vm_address_t v23; // [xsp+30h] [xbp-90h] BYREF
-  vm_address_t v24; // [xsp+38h] [xbp-88h] BYREF
-  vm_prot_t cur_protection[2]; // [xsp+40h] [xbp-80h] BYREF
-  vm_address_t v26; // [xsp+48h] [xbp-78h] BYREF
-  vm_address_t v27; // [xsp+50h] [xbp-70h] BYREF
-  vm_address_t src_address; // [xsp+58h] [xbp-68h] BYREF
-  vm_address_t target_address; // [xsp+60h] [xbp-60h] BYREF
-  vm_address_t address; // [xsp+68h] [xbp-58h] BYREF
+  __int64 status; // x24
+  uint64_t objectKaddr; // x20
+  uint64_t pageAlignedSize; // x28
+  uint64_t srcPhys; // x21
+  uint64_t dstKaddr; // [xsp+20h] [xbp-A0h]
+  uint64_t auxKaddr; // x22
+  kern_return_t kr; // w0
+  uint64_t *privateCtx; // x0
+  vm_address_t stagedMirror; // x9
+  vm_address_t fixedPage; // [xsp+28h] [xbp-98h] BYREF
+  vm_address_t auxMap; // [xsp+48h] [xbp-78h] BYREF
+  vm_address_t mirrorMap; // [xsp+50h] [xbp-70h] BYREF
+  vm_address_t srcMap; // [xsp+58h] [xbp-68h] BYREF
+  vm_address_t targetMap; // [xsp+60h] [xbp-60h] BYREF
+  vm_address_t scratchMap; // [xsp+68h] [xbp-58h] BYREF
 
-  v12 = 163857;
-  address = 0;
-  src_address = 0;
-  target_address = 0;
-  v26 = 0;
-  v27 = 0;
-  v13 = a6[10];
-  if ( validate_kaddr_range(krwCtx, v13) )
+  status = 163857;
+  scratchMap = 0;
+  srcMap = 0;
+  targetMap = 0;
+  auxMap = 0;
+  mirrorMap = 0;
+
+  objectKaddr = a6[10];
+  if ( !validate_kaddr_range(krwCtx, objectKaddr) )
+    return 163878;
+
+  pageAlignedSize = a6[12];
+  if ( !pageAlignedSize || (krwCtx->pageMask & pageAlignedSize) != 0 )
+    goto cleanup;
+
+  srcPhys = a6[13];
+  if ( !srcPhys )
+    goto cleanup;
+
+  status = 163878;
+  dstKaddr = a6[14];
+  if ( !validate_kaddr_range(krwCtx, dstKaddr) )
+    goto cleanup;
+
+  auxKaddr = a6[15];
+  if ( !validate_kaddr_range(krwCtx, auxKaddr) )
+    goto cleanup;
+
+  kr = vm_allocate(mach_task_self_, &scratchMap, 0xC000u, 1);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_allocate_fixed(&scratchMap, 0x4000u, 16386);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&scratchMap);
+  if ( kr )
+    goto mach_error;
+  fixedPage = scratchMap + 0x4000;
+  kr = iogpu_allocate_fixed(&fixedPage, 0x8000u, 0x4000);
+  if ( kr )
+    goto mach_error;
+
+  kr = vm_allocate(mach_task_self_, &targetMap, 0xC000u, 1);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_map_memory_entry_fixed(&targetMap, a3);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&targetMap);
+  if ( kr )
+    goto mach_error;
+  fixedPage = targetMap + 0x4000;
+  kr = iogpu_allocate_fixed(&fixedPage, 0x8000u, 0x4000);
+  if ( kr )
+    goto mach_error;
+  kr = vm_copy(mach_task_self_, targetMap, 0xC000u, scratchMap);
+  if ( kr )
+    goto mach_error;
+
+  kr = vm_allocate(mach_task_self_, &srcMap, 0xC000u, 1);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_map_memory_entry_fixed(&srcMap, a4);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&srcMap);
+  if ( kr )
+    goto mach_error;
+  fixedPage = srcMap + 0x4000;
+  kr = iogpu_allocate_fixed(&fixedPage, 0x4000u, 16386);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&fixedPage);
+  if ( kr )
+    goto mach_error;
+
+  kr = vm_allocate(mach_task_self_, &mirrorMap, 0xC000u, 1);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_allocate_fixed(&mirrorMap, 0x4000u, 16386);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&mirrorMap);
+  if ( kr )
+    goto mach_error;
+  fixedPage = mirrorMap + 0x4000;
+  kr = iogpu_allocate_fixed(&fixedPage, 0x4000u, 16386);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&fixedPage);
+  if ( kr )
+    goto mach_error;
+
+  kr = vm_allocate(mach_task_self_, &auxMap, 0xC000u, 1);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_allocate_fixed(&auxMap, 0x4000u, 16386);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&auxMap);
+  if ( kr )
+    goto mach_error;
+  fixedPage = auxMap + 0x4000;
+  kr = iogpu_map_memory_entry_fixed(&fixedPage, a5);
+  if ( kr )
+    goto mach_error;
+  kr = iogpu_remap_self_page(&fixedPage);
+  if ( kr )
+    goto mach_error;
+
+  privateCtx = calloc(1u, 0x5E8u);
+  if ( !privateCtx )
   {
-    v14 = a6[12];
-    if ( v14 )
-    {
-      if ( (krwCtx->pageMask & v14) == 0 )
-      {
-        v15 = a6[13];
-        if ( v15 )
-        {
-          v21 = a6[14];
-          v12 = 163878;
-          if ( validate_kaddr_range(krwCtx, v21) )
-          {
-            v16 = a6[15];
-            if ( validate_kaddr_range(krwCtx, v16) )
-            {
-              v17 = vm_allocate(mach_task_self_, &address, 0xC000u, 1);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_allocate(mach_task_self_, &address, 0x4000u, 16386);
-              if ( v17 )
-                goto LABEL_31;
-              *(uint64_t *)cur_protection = 0;
-              v17 = vm_remap(
-                      mach_task_self_,
-                      &address,
-                      0x4000u,
-                      0,
-                      0x4000,
-                      mach_task_self_,
-                      address,
-                      0,
-                      &cur_protection[1],
-                      cur_protection,
-                      1u);
-              if ( v17 )
-                goto LABEL_31;
-              v24 = address + 0x4000;
-              v17 = vm_allocate(mach_task_self_, &v24, 0x8000u, 0x4000);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_allocate(mach_task_self_, &target_address, 0xC000u, 1);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_map(mach_task_self_, &target_address, 0x4000u, 0, 0x4000, a3, 0, 0, 3, 3, 1u);
-              if ( v17 )
-                goto LABEL_31;
-              *(uint64_t *)cur_protection = 0;
-              v17 = vm_remap(
-                      mach_task_self_,
-                      &target_address,
-                      0x4000u,
-                      0,
-                      0x4000,
-                      mach_task_self_,
-                      target_address,
-                      0,
-                      &cur_protection[1],
-                      cur_protection,
-                      1u);
-              if ( v17 )
-                goto LABEL_31;
-              v23 = target_address + 0x4000;
-              v17 = vm_allocate(mach_task_self_, &v23, 0x8000u, 0x4000);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_copy(mach_task_self_, target_address, 0xC000u, address);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_allocate(mach_task_self_, &src_address, 0xC000u, 1);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_map(mach_task_self_, &src_address, 0x4000u, 0, 0x4000, a4, 0, 0, 3, 3, 1u);
-              if ( v17 )
-                goto LABEL_31;
-              *(uint64_t *)cur_protection = 0;
-              v17 = vm_remap(
-                      mach_task_self_,
-                      &src_address,
-                      0x4000u,
-                      0,
-                      0x4000,
-                      mach_task_self_,
-                      src_address,
-                      0,
-                      &cur_protection[1],
-                      cur_protection,
-                      1u);
-              if ( v17 )
-                goto LABEL_31;
-              v22 = src_address + 0x4000;
-              v17 = vm_allocate(mach_task_self_, &v22, 0x4000u, 16386);
-              if ( v17 )
-                goto LABEL_31;
-              *(uint64_t *)cur_protection = 0;
-              v17 = vm_remap(
-                      mach_task_self_,
-                      &v22,
-                      0x4000u,
-                      0,
-                      0x4000,
-                      mach_task_self_,
-                      v22,
-                      0,
-                      &cur_protection[1],
-                      cur_protection,
-                      1u);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_allocate(mach_task_self_, &v27, 0xC000u, 1);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_allocate(mach_task_self_, &v27, 0x4000u, 16386);
-              if ( v17 )
-                goto LABEL_31;
-              *(uint64_t *)cur_protection = 0;
-              v17 = vm_remap(
-                      mach_task_self_,
-                      &v27,
-                      0x4000u,
-                      0,
-                      0x4000,
-                      mach_task_self_,
-                      v27,
-                      0,
-                      &cur_protection[1],
-                      cur_protection,
-                      1u);
-              if ( v17 )
-                goto LABEL_31;
-              v22 = v27 + 0x4000;
-              v17 = vm_allocate(mach_task_self_, &v22, 0x4000u, 16386);
-              if ( v17 )
-                goto LABEL_31;
-              *(uint64_t *)cur_protection = 0;
-              v17 = vm_remap(
-                      mach_task_self_,
-                      &v22,
-                      0x4000u,
-                      0,
-                      0x4000,
-                      mach_task_self_,
-                      v22,
-                      0,
-                      &cur_protection[1],
-                      cur_protection,
-                      1u);
-              if ( v17 )
-                goto LABEL_31;
-              v17 = vm_allocate(mach_task_self_, &v26, 0xC000u, 1);
-              if ( v17
-                || (v17 = vm_allocate(mach_task_self_, &v26, 0x4000u, 16386)) != 0
-                || (*(uint64_t *)cur_protection = 0,
-                    (v17 = vm_remap(
-                             mach_task_self_,
-                             &v26,
-                             0x4000u,
-                             0,
-                             0x4000,
-                             mach_task_self_,
-                             v26,
-                             0,
-                             &cur_protection[1],
-                             cur_protection,
-                             1u)) != 0)
-                || (v22 = v26 + 0x4000,
-                    (v17 = vm_map(mach_task_self_, &v22, 0x4000u, 0, 0x4000, a5, 0, 0, 3, 3, 1u)) != 0)
-                || (*(uint64_t *)cur_protection = 0,
-                    (v17 = vm_remap(
-                             mach_task_self_,
-                             &v22,
-                             0x4000u,
-                             0,
-                             0x4000,
-                             mach_task_self_,
-                             v22,
-                             0,
-                             &cur_protection[1],
-                             cur_protection,
-                             1u)) != 0) )
-              {
-LABEL_31:
-                v12 = v17 | 0x80000000;
-              }
-              else
-              {
-                v19 = calloc(1u, 0x5E8u);
-                if ( v19 )
-                {
-                  v12 = 0;
-                  v19[163] = v13;
-                  v19[164] = v14;
-                  v19[165] = v15;
-                  v19[166] = v21;
-                  v19[167] = v16;
-                  v19[169] = address;
-                  v20 = src_address;
-                  v19[170] = target_address;
-                  v19[171] = 49152;
-                  address = 0;
-                  src_address = 0;
-                  target_address = 0;
-                  v19[172] = v20;
-                  v19[173] = v27;
-                  v19[174] = 49152;
-                  v19[175] = v26;
-                  v19[176] = v20;
-                  v19[177] = 49152;
-                  v26 = 0;
-                  v27 = 0;
-                  *a2 = v19;
-                  goto LABEL_35;
-                }
-                v12 = 708617;
-              }
-            }
-          }
-        }
-      }
-    }
+    status = 708617;
+    goto cleanup;
   }
-  else
-  {
-    v12 = 163878;
-  }
-  if ( src_address )
-    vm_deallocate(mach_task_self_, src_address, 0xC000u);
-LABEL_35:
-  if ( v27 )
-    vm_deallocate(mach_task_self_, v27, 0xC000u);
-  if ( v26 )
-    vm_deallocate(mach_task_self_, v26, 0xC000u);
-  if ( address )
-    vm_deallocate(mach_task_self_, address, 0xC000u);
-  if ( target_address )
-    vm_deallocate(mach_task_self_, target_address, 0xC000u);
-  return v12;
+
+  status = 0;
+  privateCtx[163] = objectKaddr;
+  privateCtx[164] = pageAlignedSize;
+  privateCtx[165] = srcPhys;
+  privateCtx[166] = dstKaddr;
+  privateCtx[167] = auxKaddr;
+  privateCtx[169] = scratchMap;
+  stagedMirror = srcMap;
+  privateCtx[170] = targetMap;
+  privateCtx[171] = 49152;
+  scratchMap = 0;
+  srcMap = 0;
+  targetMap = 0;
+  privateCtx[172] = stagedMirror;
+  privateCtx[173] = mirrorMap;
+  privateCtx[174] = 49152;
+  privateCtx[175] = auxMap;
+  privateCtx[176] = stagedMirror;
+  privateCtx[177] = 49152;
+  auxMap = 0;
+  mirrorMap = 0;
+  *a2 = (uint64_t)privateCtx;
+  goto cleanup;
+
+mach_error:
+  status = kr | 0x80000000;
+
+cleanup:
+  if ( srcMap )
+    vm_deallocate(mach_task_self_, srcMap, 0xC000u);
+  if ( mirrorMap )
+    vm_deallocate(mach_task_self_, mirrorMap, 0xC000u);
+  if ( auxMap )
+    vm_deallocate(mach_task_self_, auxMap, 0xC000u);
+  if ( scratchMap )
+    vm_deallocate(mach_task_self_, scratchMap, 0xC000u);
+  if ( targetMap )
+    vm_deallocate(mach_task_self_, targetMap, 0xC000u);
+  return status;
 }
 
 //----- (000000000000B460) ----------------------------------------------------
