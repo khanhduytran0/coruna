@@ -539,7 +539,8 @@ unsigned __int64 __fastcall proc_kread_and_patch_slot(struct_krwCtx *krwCtx, uns
 __int64 __fastcall csblob_find_slot_by_pair(struct csblob_walk_ctx *ctx, int slot, int magic);
 void *__fastcall csblob_dup_entry(unsigned int *a1);
 void __fastcall csblob_bzero_and_free(uint32_t *a1);
-void __fastcall csblob_proc_patch_dispatch(__int64 a1);
+struct csblob_proc_patch_dispatch_args;
+void __fastcall csblob_proc_patch_dispatch(struct csblob_proc_patch_dispatch_args *args);
 uint32_t *__fastcall csblob_alloc_and_fill_slots(__int64 a1, uint64_t *a2, size_t *a3, unsigned int *a4, unsigned int *a5, unsigned int *a6);
 __int64 __fastcall wire_proc_page_via_kobject(struct_krwCtx *krwCtx, __int64 a2, mach_vm_address_t *a3, uint64_t *a4, int *a5);
 __int64 __fastcall csblob_compute_and_copy_hash(struct csblob_walk_ctx *ctx, void *outHash);
@@ -1848,6 +1849,13 @@ typedef char csblob_procinfo_header_entry_bytes_offset_must_be_0x14[
   __builtin_offsetof(struct csblob_procinfo_header, entryBytes) == 0x14 ? 1 : -1];
 typedef char csblob_procinfo_header_entries_offset_must_be_0x20[
   __builtin_offsetof(struct csblob_procinfo_header, entries) == 0x20 ? 1 : -1];
+
+struct csblob_proc_patch_dispatch_args
+{
+  struct_krwCtx *krwCtx;
+  struct csblob_walk_ctx *csblobCtx;
+  uint32_t result;
+};
 
 struct vm_map_entry_wire_snapshot
 {
@@ -31762,28 +31770,27 @@ __int64 __fastcall csblob_replace_entry(struct csblob_walk_ctx *ctx, int slot, u
 __int64 __fastcall csblob_apply_with_physmap_write(struct_krwCtx *krwCtx, __int64 a2)
 {
   __int64 result; // x0
-  uint64_t v4[2]; // [xsp+8h] [xbp-28h] BYREF
-  unsigned int v5; // [xsp+18h] [xbp-18h]
+  struct csblob_proc_patch_dispatch_args args; // [xsp+8h] [xbp-28h] BYREF
 
-  v4[0] = (uint64_t)krwCtx;
-  v4[1] = a2;
-  v5 = 0;
+  args.krwCtx = krwCtx;
+  args.csblobCtx = (struct csblob_walk_ctx *)a2;
+  args.result = 0;
   if ( krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(7195, 100, 326, 0, 0) || krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED) )
   {
-    csblob_proc_patch_dispatch((__int64)v4);
-    return v5;
+    csblob_proc_patch_dispatch(&args);
+    return args.result;
   }
   if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) && krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(7195, 120, 37, 1023, 1023) )
   {
-    result = run_callback_with_physmap_write(krwCtx, csblob_proc_patch_dispatch, (__int64)v4);
+    result = run_callback_with_physmap_write(krwCtx, (__int64)csblob_proc_patch_dispatch, (__int64)&args);
     if ( (uint32_t)result )
-      return v5;
+      return args.result;
   }
   else
   {
-    result = pthread_create_and_join(krwCtx, (__int64)csblob_proc_patch_dispatch, v4);
+    result = pthread_create_and_join(krwCtx, (__int64)csblob_proc_patch_dispatch, &args);
     if ( (uint32_t)result )
-      return v5;
+      return args.result;
   }
   return result;
 }
@@ -34183,7 +34190,7 @@ void __fastcall csblob_bzero_and_free(uint32_t *a1)
 // 2FA10: variable 'vars8' is possibly undefined
 
 //----- (000000000002FA24) ----------------------------------------------------
-void __fastcall csblob_proc_patch_dispatch(__int64 a1)
+void __fastcall csblob_proc_patch_dispatch(struct csblob_proc_patch_dispatch_args *args)
 {
   __int64 v2; // x20
   int *v3; // x21
@@ -34432,10 +34439,10 @@ void __fastcall csblob_proc_patch_dispatch(__int64 a1)
   __int128 v246; // [xsp+460h] [xbp-90h]
   __int128 v247; // [xsp+470h] [xbp-80h]
 
-  v2 = *(uint64_t *)a1;
-  v3 = *(int **)(a1 + 8);
-  v4 = *(uint64_t *)(*(uint64_t *)a1 + 344LL);
-  v5 = (**(uint32_t **)a1 & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v4 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023);
+  v2 = (uint64_t)args->krwCtx;
+  v3 = (int *)args->csblobCtx;
+  v4 = args->krwCtx->xnuVersionPacked;
+  v5 = (args->krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || v4 > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023);
   if ( !v5 )
   {
     v204 = 0;
@@ -35741,7 +35748,7 @@ LABEL_452:
 LABEL_463:
   v12 = v123;
 LABEL_466:
-  *(uint32_t *)(a1 + 16) = v12;
+  args->result = v12;
 }
 // 30824: variable 'v78' is possibly undefined
 // 308F8: variable 'v86' is possibly undefined
