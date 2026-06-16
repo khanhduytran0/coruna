@@ -8,6 +8,45 @@ static inline void iogpu_desc_store64(void *buf, size_t offset, uint64_t value)
   *(uint64_t *)((uint8_t *)buf + offset) = value;
 }
 
+static inline void iogpu_read_descriptor_256(__int64 iogpuCtx, __int64 offset, uint8_t scratch[0x100])
+{
+  memset(scratch, 0, 0x100);
+  (*(void (__fastcall **)(__int64, __int64, uint8_t *, __int64, __int64))(iogpuCtx + 48))(
+    iogpuCtx,
+    offset,
+    scratch,
+    0x100,
+    1);
+}
+
+static inline void iogpu_patch_descriptor32(__int64 iogpuCtx, __int64 offset, size_t fieldOffset, uint32_t value)
+{
+  uint8_t scratch[0x100];
+
+  iogpu_read_descriptor_256(iogpuCtx, offset, scratch);
+  iogpu_desc_store32(scratch, fieldOffset, value);
+  (*(void (__fastcall **)(__int64, __int64, uint8_t *, __int64, __int64))(iogpuCtx + 64))(
+    iogpuCtx,
+    offset + fieldOffset,
+    scratch + fieldOffset,
+    4,
+    1);
+}
+
+static inline void iogpu_patch_descriptor64(__int64 iogpuCtx, __int64 offset, size_t fieldOffset, uint64_t value)
+{
+  uint8_t scratch[0x100];
+
+  iogpu_read_descriptor_256(iogpuCtx, offset, scratch);
+  iogpu_desc_store64(scratch, fieldOffset, value);
+  (*(void (__fastcall **)(__int64, __int64, uint8_t *, __int64, __int64))(iogpuCtx + 64))(
+    iogpuCtx,
+    offset + fieldOffset,
+    scratch + fieldOffset,
+    8,
+    1);
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -1760,23 +1799,19 @@ __int64 __fastcall dealloc_physmap_3page_slot(__int64 a1, vm_address_t *a2)
 //----- (0000000000009588) ----------------------------------------------------
 __int64 __fastcall dealloc_iogpu_physmap_2(__int64 a1, uint64_t *a2)
 {
-  __int64 v4; // x20
-  __int64 v5; // x21
+  __int64 iogpuCtx; // x20
+  __int64 descOffset; // x21
   __int64 result; // x0
-  __int128 v7[16]; // [xsp+0h] [xbp-130h] BYREF
 
-  v4 = *(uint64_t *)(a1 + 1488);
-  (*(void (__fastcall **)(__int64, uint64_t))(a1 + 1464))(v4, a2[8]);
+  iogpuCtx = *(uint64_t *)(a1 + 1488);
+  (*(void (__fastcall **)(__int64, uint64_t))(a1 + 1464))(iogpuCtx, a2[8]);
   (*(void (__fastcall **)(uint64_t, uint64_t))(a1 + 1464))(*(uint64_t *)(a1 + 1488), a2[13]);
   vm_deallocate(mach_task_self_, a2[8], 0x4000u);
   a2[8] = 0;
   vm_deallocate(mach_task_self_, a2[13], 0x4000u);
   a2[13] = 0;
-  v5 = a2[7] - *(uint64_t *)(a1 + 1344);
-  memset(v7, 0, sizeof(v7));
-  (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v4 + 48))(v4, v5, v7, 256, 1);
-  *((uint64_t *)&v7[4] + 1) = 0;
-  (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v4 + 64))(v4, v5 + 72, (char *)&v7[4] + 8, 8, 1);
+  descOffset = a2[7] - *(uint64_t *)(a1 + 1344);
+  iogpu_patch_descriptor64(iogpuCtx, descOffset, 72, 0);
   vm_deallocate(mach_task_self_, a2[20], 0x10000u);
   a2[20] = 0;
   vm_deallocate(mach_task_self_, a2[21], 0x10000u);
@@ -1791,29 +1826,21 @@ __int64 __fastcall dealloc_iogpu_physmap_2(__int64 a1, uint64_t *a2)
 //----- (00000000000096D8) ----------------------------------------------------
 __int64 __fastcall dealloc_iogpu_physmap_entry(__int64 a1, uint64_t *a2)
 {
-  __int64 v4; // x20
-  __int64 v5; // x9
-  __int64 v6; // x22
-  __int64 v7; // x21
+  __int64 iogpuCtx; // x20
+  __int64 physBase; // x9
+  __int64 firstDescOffset; // x22
+  __int64 secondDescOffset; // x21
   __int64 result; // x0
-  __int128 v9[16]; // [xsp+0h] [xbp-240h] BYREF
-  __int128 v10[16]; // [xsp+100h] [xbp-140h] BYREF
 
-  v4 = *(uint64_t *)(a1 + 1488);
-  (*(void (__fastcall **)(__int64, uint64_t))(a1 + 1464))(v4, a2[13]);
+  iogpuCtx = *(uint64_t *)(a1 + 1488);
+  (*(void (__fastcall **)(__int64, uint64_t))(a1 + 1464))(iogpuCtx, a2[13]);
   vm_deallocate(mach_task_self_, a2[13], 0x4000u);
   a2[13] = 0;
-  v5 = *(uint64_t *)(a1 + 1344);
-  v6 = a2[2] - v5;
-  v7 = a2[12] - v5;
-  memset(v10, 0, sizeof(v10));
-  (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v4 + 48))(v4, v6, v10, 256, 1);
-  DWORD2(v10[2]) = 3;
-  (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v4 + 64))(v4, v6 + 40, (char *)&v10[2] + 8, 4, 1);
-  memset(v9, 0, sizeof(v9));
-  (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v4 + 48))(v4, v7, v9, 256, 1);
-  *((uint64_t *)&v9[4] + 1) = 0;
-  (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v4 + 64))(v4, v7 + 72, (char *)&v9[4] + 8, 8, 1);
+  physBase = *(uint64_t *)(a1 + 1344);
+  firstDescOffset = a2[2] - physBase;
+  secondDescOffset = a2[12] - physBase;
+  iogpu_patch_descriptor32(iogpuCtx, firstDescOffset, 40, 3);
+  iogpu_patch_descriptor64(iogpuCtx, secondDescOffset, 72, 0);
   vm_deallocate(mach_task_self_, a2[20], 0x4000u);
   a2[20] = 0;
   vm_deallocate(mach_task_self_, a2[21], 0x10000u);
@@ -1832,35 +1859,22 @@ __int64 __fastcall dealloc_iogpu_physmap_entry(__int64 a1, uint64_t *a2)
 //----- (00000000000098A4) ----------------------------------------------------
 __int64 __fastcall dealloc_iogpu_physmap_triple(__int64 a1, uint64_t *a2)
 {
-  __int64 v3; // x20
-  __int64 v4; // x9
-  __int64 v5; // x23
-  __int64 v6; // x22
-  __int64 v7; // x21
+  __int64 iogpuCtx; // x20
+  __int64 physBase; // x9
+  __int64 firstDescOffset; // x23
+  __int64 secondDescOffset; // x22
+  __int64 thirdDescOffset; // x21
   __int64 result; // x0
-  __int128 v9[16]; // [xsp+0h] [xbp-340h] BYREF
-  __int128 v10[16]; // [xsp+100h] [xbp-240h] BYREF
-  __int128 v11[16]; // [xsp+200h] [xbp-140h] BYREF
 
-  v3 = *(uint64_t *)(a1 + 1488);
-  v4 = *(uint64_t *)(a1 + 1344);
-  v5 = a2[2] - v4;
-  v6 = a2[7] - v4;
-  v7 = a2[12] - v4;
-  memset(v11, 0, sizeof(v11));
-  (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v5, v11, 256, 1);
-  *((uint64_t *)&v11[4] + 1) = 0;
-  (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(v3, v5 + 72, (char *)&v11[4] + 8, 8, 1);
-  memset(v10, 0, sizeof(v10));
-  (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v6, v10, 256, 1);
-  *((uint64_t *)&v10[4] + 1) = 0;
-  (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(v3, v6 + 72, (char *)&v10[4] + 8, 8, 1);
-  memset(v9, 0, sizeof(v9));
-  (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v7, v9, 256, 1);
-  *((uint64_t *)&v9[4] + 1) = 0;
-  (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(v3, v7 + 72, (char *)&v9[4] + 8, 8, 1);
-  *((uint64_t *)&v9[3] + 1) = 0;
-  (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(v3, v7 + 56, (char *)&v9[3] + 8, 8, 1);
+  iogpuCtx = *(uint64_t *)(a1 + 1488);
+  physBase = *(uint64_t *)(a1 + 1344);
+  firstDescOffset = a2[2] - physBase;
+  secondDescOffset = a2[7] - physBase;
+  thirdDescOffset = a2[12] - physBase;
+  iogpu_patch_descriptor64(iogpuCtx, firstDescOffset, 72, 0);
+  iogpu_patch_descriptor64(iogpuCtx, secondDescOffset, 72, 0);
+  iogpu_patch_descriptor64(iogpuCtx, thirdDescOffset, 72, 0);
+  iogpu_patch_descriptor64(iogpuCtx, thirdDescOffset, 56, 0);
   vm_deallocate(mach_task_self_, a2[20], 0x4000u);
   a2[20] = 0;
   vm_deallocate(mach_task_self_, a2[26], 0x10000u);
@@ -1877,159 +1891,97 @@ __int64 __fastcall dealloc_iogpu_physmap_triple(__int64 a1, uint64_t *a2)
 //----- (0000000000009AC0) ----------------------------------------------------
 void __fastcall cleanup_physmap_context(__int64 a1)
 {
-  __int64 v2; // x24
-  __int64 v3; // x20
-  vm_address_t **v4; // x27
-  vm_address_t *v5; // x21
-  vm_address_t *v6; // x26
-  uint64_t *v7; // x25
-  __int64 v8; // x9
-  __int64 v9; // x23
-  uint64_t *v10; // x28
-  __int64 v11; // x22
-  __int64 v12; // x21
-  __int64 v13; // x1
-  __int64 v14; // x21
-  vm_address_t *v15; // x21
-  __int64 v16; // [xsp+28h] [xbp-488h]
-  __int64 v17; // [xsp+30h] [xbp-480h]
-  uint64_t *v18; // [xsp+38h] [xbp-478h]
-  __int128 v19[16]; // [xsp+40h] [xbp-470h] BYREF
-  __int128 v20[16]; // [xsp+140h] [xbp-370h] BYREF
-  __int128 v21[16]; // [xsp+240h] [xbp-270h] BYREF
-  __int128 v22[16]; // [xsp+340h] [xbp-170h] BYREF
-  uint64_t v23[2]; // [xsp+440h] [xbp-70h]
+  __int64 iogpuCtx = *(uint64_t *)(a1 + 1488);
+  vm_address_t **listHeads[2] = {
+    (vm_address_t **)(a1 + 1208),
+    (vm_address_t **)(a1 + 1240),
+  };
 
-  v2 = 0;
-  v3 = *(uint64_t *)(a1 + 1488);
-  v4 = (vm_address_t **)(a1 + 1208);
-  v23[0] = a1 + 1208;
-  v23[1] = a1 + 1240;
-  v16 = a1 + 1240;
-  v17 = a1 + 1208;
-  while ( 1 )
+  for ( size_t listIndex = 0; listIndex < 2; ++listIndex )
   {
-    while ( 1 )
+    vm_address_t **list = listHeads[listIndex];
+    vm_address_t *entry;
+
+    while ( (entry = list[1]) != 0 )
     {
-      v5 = v4[1];
-      if ( !v5 )
-        break;
-      v4[1] = (vm_address_t *)*v5;
-      switch ( v5[1] )
+      list[1] = (vm_address_t *)*entry;
+      switch ( entry[1] )
       {
         case 1uLL:
-          dealloc_physmap_copy_slot(a1, (__int64)v5);
+          dealloc_physmap_copy_slot(a1, (__int64)entry);
           break;
         case 2uLL:
-          dealloc_physmap_2page_slot(a1, v5);
+          dealloc_physmap_2page_slot(a1, entry);
           break;
         case 3uLL:
-          dealloc_physmap_3page_slot(a1, v5);
+          dealloc_physmap_3page_slot(a1, entry);
           break;
         case 4uLL:
-          dealloc_iogpu_physmap_2(a1, v5);
+          dealloc_iogpu_physmap_2(a1, entry);
           break;
         case 5uLL:
-          dealloc_iogpu_physmap_entry(a1, v5);
+          dealloc_iogpu_physmap_entry(a1, entry);
           break;
         case 6uLL:
-          dealloc_iogpu_physmap_triple(a1, v5);
+          dealloc_iogpu_physmap_triple(a1, entry);
           break;
         default:
           break;
       }
-      dealloc_krw_port_array(a1, (__int64)(v5 + 2));
-      dealloc_krw_port_array(a1, (__int64)(v5 + 7));
-      dealloc_krw_port_array(a1, (__int64)(v5 + 12));
-      free(v5);
+      dealloc_krw_port_array(a1, (__int64)(entry + 2));
+      dealloc_krw_port_array(a1, (__int64)(entry + 7));
+      dealloc_krw_port_array(a1, (__int64)(entry + 12));
+      free(entry);
     }
-    v6 = *v4;
-    v7 = *v4 + 2;
-    v8 = *(uint64_t *)(a1 + 1344);
-    v9 = *v7 - v8;
-    v10 = *v4 + 7;
-    v11 = *v10 - v8;
-    v18 = *v4 + 12;
-    v12 = *v18 - v8;
-    memset(v22, 0, sizeof(v22));
-    (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v9, v22, 256, 1);
-    *((uint64_t *)&v22[4] + 1) = 0;
-    (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(
-      v3,
-      v9 + 72,
-      (char *)&v22[4] + 8,
-      8,
-      1);
-    memset(v21, 0, sizeof(v21));
-    (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v11, v21, 256, 1);
-    *((uint64_t *)&v21[4] + 1) = 0;
-    (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(
-      v3,
-      v11 + 72,
-      (char *)&v21[4] + 8,
-      8,
-      1);
-    memset(v20, 0, sizeof(v20));
-    (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v12, v20, 256, 1);
-    *((uint64_t *)&v20[4] + 1) = 0;
-    (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(
-      v3,
-      v12 + 72,
-      (char *)&v20[4] + 8,
-      8,
-      1);
-    *((uint64_t *)&v20[3] + 1) = 0;
-    (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(
-      v3,
-      v12 + 56,
-      (char *)&v20[3] + 8,
-      8,
-      1);
-    if ( v4 == (vm_address_t **)v16 )
+
+    vm_address_t *root = *list;
+    uint64_t *rootPorts0 = root + 2;
+    uint64_t *rootPorts1 = root + 7;
+    uint64_t *rootPorts2 = root + 12;
+    __int64 physBase = *(uint64_t *)(a1 + 1344);
+    __int64 firstDescOffset = *rootPorts0 - physBase;
+    __int64 secondDescOffset = *rootPorts1 - physBase;
+    __int64 thirdDescOffset = *rootPorts2 - physBase;
+
+    iogpu_patch_descriptor64(iogpuCtx, firstDescOffset, 72, 0);
+    iogpu_patch_descriptor64(iogpuCtx, secondDescOffset, 72, 0);
+    iogpu_patch_descriptor64(iogpuCtx, thirdDescOffset, 72, 0);
+    iogpu_patch_descriptor64(iogpuCtx, thirdDescOffset, 56, 0);
+    if ( list == listHeads[1] )
     {
-      v14 = query_vm_region_nesting(v6[26]).object_id - *(uint64_t *)(a1 + 1344);
-      memset(v19, 0, sizeof(v19));
-      (*(void (__fastcall **)(__int64, __int64, __int128 *, __int64, __int64))(v3 + 48))(v3, v14, v19, 256, 1);
-      DWORD2(v19[2]) = 2;
-      (*(void (__fastcall **)(__int64, __int64, char *, __int64, __int64))(v3 + 64))(
-        v3,
-        v14 + 40,
-        (char *)&v19[2] + 8,
-        4,
-        1);
+      __int64 objectDescOffset = query_vm_region_nesting(root[26]).object_id - physBase;
+      iogpu_patch_descriptor32(iogpuCtx, objectDescOffset, 40, 2);
     }
-    vm_deallocate(mach_task_self_, v6[28], 0x10000u);
-    v6[28] = 0;
-    vm_deallocate(mach_task_self_, v6[29], 0x10000u);
-    v6[29] = 0;
-    if ( v4 == (vm_address_t **)v17 )
+
+    vm_deallocate(mach_task_self_, root[28], 0x10000u);
+    root[28] = 0;
+    vm_deallocate(mach_task_self_, root[29], 0x10000u);
+    root[29] = 0;
+    vm_address_t *lastMapping;
+    if ( list == listHeads[0] )
     {
-      vm_deallocate(mach_task_self_, v6[26], 0x10000u);
-      v6[26] = 0;
-      vm_deallocate(mach_task_self_, v6[27], 0x10000u);
-      v6[27] = 0;
-      vm_deallocate(mach_task_self_, v6[30], 0xC000u);
-      v6[30] = 0;
-      v15 = v6 + 31;
+      vm_deallocate(mach_task_self_, root[26], 0x10000u);
+      root[26] = 0;
+      vm_deallocate(mach_task_self_, root[27], 0x10000u);
+      root[27] = 0;
+      vm_deallocate(mach_task_self_, root[30], 0xC000u);
+      root[30] = 0;
+      lastMapping = root + 31;
     }
     else
     {
-      vm_deallocate(mach_task_self_, v6[26], 0xC000u);
-      v6[26] = 0;
-      v15 = v6 + 27;
+      vm_deallocate(mach_task_self_, root[26], 0xC000u);
+      root[26] = 0;
+      lastMapping = root + 27;
     }
-    vm_deallocate(mach_task_self_, *v15, 0xC000u);
-    *v15 = 0;
-    dealloc_krw_port_array(a1, (__int64)v7);
-    dealloc_krw_port_array(a1, (__int64)v10);
-    dealloc_krw_port_array(a1, (__int64)v18);
-    free(v6);
-    if ( ++v2 == 2 )
-      break;
-    v4 = (vm_address_t **)v23[v2];
+    vm_deallocate(mach_task_self_, *lastMapping, 0xC000u);
+    *lastMapping = 0;
+    dealloc_krw_port_array(a1, (__int64)rootPorts0);
+    dealloc_krw_port_array(a1, (__int64)rootPorts1);
+    dealloc_krw_port_array(a1, (__int64)rootPorts2);
+    free(root);
   }
 }
-// 9D9C: variable 'v13' is possibly undefined
 
 //----- (0000000000009F4C) ----------------------------------------------------
 __int64 __fastcall free_vm_page_array_list(__int64 a1)
