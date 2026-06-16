@@ -533,100 +533,35 @@ __int64 __fastcall allocate_two_buffers_for_something(uint64_t *a1)
 //----- (0000000000007454) ----------------------------------------------------
 __int64 __fastcall setup_krw_region_structure(uint64_t *a1)
 {
-  vm_size_t v2; // x2
-  vm_size_t v3; // x2
   __int64 result; // x0
-  unsigned __int64 v5; // x8
-  __int128 *v6; // x9
-  unsigned __int64 v7; // x9
-  unsigned __int64 v8; // x22
-  vm_address_t v9; // x20
-  uint8_t v10[32]; // [xsp+0h] [xbp-140h] BYREF
-  __int128 v11; // [xsp+20h] [xbp-120h]
-  __int128 v12; // [xsp+30h] [xbp-110h]
-  __int128 v13; // [xsp+40h] [xbp-100h]
-  __int128 v14; // [xsp+50h] [xbp-F0h]
-  __int128 v15; // [xsp+60h] [xbp-E0h]
-  __int128 v16; // [xsp+70h] [xbp-D0h]
-  __int128 v17; // [xsp+80h] [xbp-C0h]
-  __int128 v18; // [xsp+90h] [xbp-B0h]
-  __int128 v19; // [xsp+A0h] [xbp-A0h]
-  __int128 v20; // [xsp+B0h] [xbp-90h]
-  __int128 v21; // [xsp+C0h] [xbp-80h]
-  __int128 v22; // [xsp+D0h] [xbp-70h]
-  __int128 v23; // [xsp+E0h] [xbp-60h]
-  __int128 v24; // [xsp+F0h] [xbp-50h]
+  uint8_t desc[0x100]; // [xsp+0h] [xbp-140h] BYREF
   vm_address_t address; // [xsp+108h] [xbp-38h] BYREF
 
-  v2 = 163840LL * a1[179];
-  a1[140] = v2;
-  *(uint64_t *)v10 = 0;
-  vm_allocate(mach_task_self_, (vm_address_t *)v10, v2, 1);
-  a1[138] = *(uint64_t *)v10;
-  v3 = a1[140] + 0x8000LL;
-  *(uint64_t *)v10 = 0;
-  result = vm_allocate(mach_task_self_, (vm_address_t *)v10, v3, 1);
-  a1[139] = *(uint64_t *)v10;
-  *(uint64_t *)v10 = 0;
-  *(uint64_t *)&v10[24] = 0;
-  v23 = 0u;
-  v24 = 0u;
-  v21 = 0u;
-  v22 = 0u;
-  v19 = 0u;
-  v20 = 0u;
-  v17 = 0u;
-  *(uint64_t *)&v18 = 0;
-  v15 = 0u;
-  v16 = 0u;
-  v13 = 0u;
-  v14 = 0u;
-  v11 = 0u;
-  v12 = 0u;
-  *(__int128 *)&v10[8] = *(__int128 *)byte_42D30;
-  DWORD2(v11) = 1;
-  LODWORD(v16) = 4;
-  HIDWORD(v16) = 16893952;
-  *((uint64_t *)&v18 + 1) = -1;
-  HIDWORD(v19) = 786560;
+  a1[140] = 0x28000LL * a1[179];
+  address = 0;
+  vm_allocate(mach_task_self_, &address, a1[140], 1);
+  a1[138] = address;
+  address = 0;
+  result = vm_allocate(mach_task_self_, &address, a1[140] + 0x8000LL, 1);
+  a1[139] = address;
+
+  memset(desc, 0, sizeof(desc));
+  memcpy(&desc[8], byte_42D30, 0x10);
+  iogpu_desc_store32(desc, 40, 1);
+  iogpu_desc_store32(desc, 112, 4);
+  iogpu_desc_store32(desc, 124, 16893952);
+  iogpu_desc_store64(desc, 152, -1LL);
+  iogpu_desc_store32(desc, 172, 786560);
   if ( a1[140] )
   {
-    v5 = 0;
-    do
+    for ( uint64_t offset = 0; offset < a1[140]; offset += sizeof(desc) )
+      memcpy((void *)(a1[138] + offset), desc, sizeof(desc));
+    for ( uint64_t offset = 0; offset < a1[140]; offset += 0x4000LL )
     {
-      v6 = (__int128 *)(v5 + a1[138]);
-      v6[12] = v21;
-      v6[13] = v22;
-      v6[14] = v23;
-      v6[15] = v24;
-      v6[8] = v17;
-      v6[9] = v18;
-      v6[10] = v19;
-      v6[11] = v20;
-      v6[4] = v13;
-      v6[5] = v14;
-      v6[6] = v15;
-      v6[7] = v16;
-      *v6 = *(__int128 *)v10;
-      v6[1] = *(__int128 *)&v10[16];
-      v6[2] = v11;
-      v6[3] = v12;
-      v5 += 256LL;
-      v7 = a1[140];
-    }
-    while ( v5 < v7 );
-    if ( v7 )
-    {
-      v8 = 0;
-      do
-      {
-        address = v8 + a1[139];
-        v9 = address;
-        vm_allocate(mach_task_self_, &address, 0x4000u, 16386);
-        result = vm_remap_inplace(v9, 0x4000u, 0);
-        v8 += 0x4000LL;
-      }
-      while ( v8 < a1[140] );
+      address = a1[139] + offset;
+      vm_address_t fixedAddress = address;
+      vm_allocate(mach_task_self_, &address, 0x4000u, 16386);
+      result = vm_remap_inplace(fixedAddress, 0x4000u, 0);
     }
   }
   return result;
