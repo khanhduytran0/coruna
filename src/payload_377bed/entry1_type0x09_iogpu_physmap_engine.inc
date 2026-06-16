@@ -1,3 +1,13 @@
+static inline void iogpu_desc_store32(void *buf, size_t offset, uint32_t value)
+{
+  *(uint32_t *)((uint8_t *)buf + offset) = value;
+}
+
+static inline void iogpu_desc_store64(void *buf, size_t offset, uint64_t value)
+{
+  *(uint64_t *)((uint8_t *)buf + offset) = value;
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -1288,299 +1298,161 @@ void __fastcall run_physmap_setup_sequence(uint64_t *a1)
 //----- (0000000000008758) ----------------------------------------------------
 __int64 __fastcall validate_physmap_range_3(vm_address_t *a1)
 {
-  vm_address_t v2; // x8
-  __int64 v3; // x8
-  vm_address_t v4; // x20
-  vm_address_t v5; // x20
-  __int64 v6; // x8
-  vm_address_t v7; // x20
-  vm_address_t *v8; // x26
-  vm_address_t v9; // x8
-  vm_address_t v10; // x9
-  vm_address_t v11; // x10
-  __int64 v12; // x20
-  vm_address_t v13; // x11
-  __int64 v14; // x8
-  vm_address_t v15; // x8
-  vm_address_t v16; // x1
-  vm_address_t v17; // x8
-  vm_address_t v18; // x20
-  vm_size_t v19; // x21
-  unsigned __int64 v20; // x8
-  __int128 *v21; // x9
-  __int64 v22; // x20
-  vm_address_t *v23; // x21
-  vm_address_t v24; // x8
-  unsigned __int64 v25; // x11
-  unsigned __int64 v26; // x10
-  unsigned int v27; // w8
-  __int128 *v28; // x8
-  __int128 v30; // [xsp+10h] [xbp-380h]
-  __int128 v31; // [xsp+30h] [xbp-360h]
-  uint8_t v32[32]; // [xsp+40h] [xbp-350h]
-  __int128 v33; // [xsp+60h] [xbp-330h]
-  __int128 v34; // [xsp+B0h] [xbp-2E0h]
-  __int128 v35; // [xsp+D0h] [xbp-2C0h]
-  __int128 v36; // [xsp+E0h] [xbp-2B0h]
-  __int128 v37; // [xsp+F0h] [xbp-2A0h]
-  __int128 v38; // [xsp+100h] [xbp-290h]
-  uint8_t v39[32]; // [xsp+140h] [xbp-250h]
-  __int128 v40; // [xsp+160h] [xbp-230h]
-  __int128 v41; // [xsp+170h] [xbp-220h]
-  __int128 v42; // [xsp+1B0h] [xbp-1E0h]
-  __int128 v43; // [xsp+1D0h] [xbp-1C0h]
-  __int128 v44; // [xsp+1E0h] [xbp-1B0h]
-  __int128 v45; // [xsp+1F0h] [xbp-1A0h]
-  __int128 v46; // [xsp+200h] [xbp-190h]
-  uint8_t address[32]; // [xsp+240h] [xbp-150h] BYREF
-  __int128 v48; // [xsp+260h] [xbp-130h]
-  __int128 v49; // [xsp+270h] [xbp-120h]
-  __int128 v50; // [xsp+280h] [xbp-110h]
-  __int128 v51; // [xsp+290h] [xbp-100h]
-  __int128 v52; // [xsp+2A0h] [xbp-F0h]
-  __int128 v53; // [xsp+2B0h] [xbp-E0h]
-  __int128 v54; // [xsp+2C0h] [xbp-D0h]
-  __int128 v55; // [xsp+2D0h] [xbp-C0h]
-  __int128 v56; // [xsp+2E0h] [xbp-B0h]
-  __int128 v57; // [xsp+2F0h] [xbp-A0h]
-  __int128 v58; // [xsp+300h] [xbp-90h]
-  __int128 v59; // [xsp+310h] [xbp-80h]
-  __int128 v60; // [xsp+320h] [xbp-70h]
-  __int128 v61; // [xsp+330h] [xbp-60h]
+  vm_address_t scratch;
+  vm_address_t copyDst;
+  vm_address_t remapBase;
+  vm_address_t sourceBase;
+  vm_address_t selectedChunk;
+  vm_address_t selectedPhys;
+  vm_address_t keepStart;
+  vm_size_t keepTailSize;
+  uint8_t repeatDesc[0x100];
+  uint8_t topDesc[0x100];
+  uint8_t middleDesc[0x100];
+  uint8_t tailDesc[0x30];
 
-  *(uint64_t *)address = 0;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0xC000u, 1);
-  v2 = *(uint64_t *)address;
-  a1[176] = *(uint64_t *)address;
-  a1[172] = v2;
-  *(uint64_t *)address = v2;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x4000u, 0x4000);
+  scratch = 0;
+  vm_allocate(mach_task_self_, &scratch, 0xC000u, 1);
+  a1[176] = scratch;
+  a1[172] = scratch;
+  vm_allocate(mach_task_self_, &scratch, 0x4000u, 0x4000);
   thread_switch(0, 2, 0);
   vm_deallocate(mach_task_self_, a1[7], 0x4000u);
   a1[7] = 0;
   vm_remap_inplace(a1[172], 0x4000u, 0);
   query_vm_region_nesting(a1[172]);
-  *(uint64_t *)address = 0;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x10000u, 1);
-  v3 = *(uint64_t *)address;
-  a1[175] = *(uint64_t *)address;
-  *(uint64_t *)address = v3;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x4000u, 16386);
+
+  scratch = 0;
+  vm_allocate(mach_task_self_, &scratch, 0x10000u, 1);
+  a1[175] = scratch;
+  vm_allocate(mach_task_self_, &scratch, 0x4000u, 16386);
   vm_remap_inplace(a1[175], 0x4000u, 0);
-  *(uint64_t *)address = a1[175] + 0x4000;
-  v4 = *(uint64_t *)address;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x4000u, 0x4000);
+  scratch = a1[175] + 0x4000;
+  copyDst = scratch;
+  vm_allocate(mach_task_self_, &scratch, 0x4000u, 0x4000);
   thread_switch(0, 2, 0);
   vm_deallocate(mach_task_self_, a1[9], 0x4000u);
   a1[9] = 0;
-  vm_copy(mach_task_self_, a1[172], 0xC000u, v4);
-  query_vm_region_nesting(v4);
+  vm_copy(mach_task_self_, a1[172], 0xC000u, copyDst);
+  query_vm_region_nesting(copyDst);
   vm_deallocate(mach_task_self_, a1[175] + 49152, 0x4000u);
-  *(uint64_t *)address = a1[172] + 0x4000;
-  v5 = *(uint64_t *)address;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x4000u, 16386);
-  vm_remap_inplace(v5, 0x4000u, 0);
-  *(uint64_t *)address = 0;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0xC000u, 1);
-  v6 = *(uint64_t *)address;
-  a1[173] = *(uint64_t *)address;
-  *(uint64_t *)address = v6;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x4000u, 16386);
+  scratch = a1[172] + 0x4000;
+  remapBase = scratch;
+  vm_allocate(mach_task_self_, &scratch, 0x4000u, 16386);
+  vm_remap_inplace(remapBase, 0x4000u, 0);
+
+  scratch = 0;
+  vm_allocate(mach_task_self_, &scratch, 0xC000u, 1);
+  a1[173] = scratch;
+  vm_allocate(mach_task_self_, &scratch, 0x4000u, 16386);
   vm_remap_inplace(a1[173], 0x4000u, 0);
-  *(uint64_t *)address = a1[173] + 0x4000;
-  v7 = *(uint64_t *)address;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x4000u, 16386);
-  vm_remap_inplace(v7, 0x4000u, 0);
-  v8 = a1 + 138;
+  scratch = a1[173] + 0x4000;
+  remapBase = scratch;
+  vm_allocate(mach_task_self_, &scratch, 0x4000u, 16386);
+  vm_remap_inplace(remapBase, 0x4000u, 0);
+
   vm_copy(mach_task_self_, a1[139], a1[140], a1[138]);
-  v9 = a1[140];
-  if ( v9 )
+  selectedChunk = -1;
+  if ( a1[140] )
   {
-    v10 = 0;
-    v11 = *v8;
-    v12 = -1;
-    do
+    for ( vm_address_t offset = 0; offset < a1[140]; offset += 0x4000 )
     {
-      v13 = v11 + v10;
-      if ( (*(uint8_t *)(v11 + v10 + 127) & 1) == 0 && (*(uint8_t *)(v13 + 383) & 1) == 0 )
+      vm_address_t chunk = a1[138] + offset;
+      if ( (*(uint8_t *)(chunk + 127) & 1) == 0 && (*(uint8_t *)(chunk + 383) & 1) == 0 )
       {
-        a1[163] = *(uint64_t *)(v13 + 328);
-        v12 = v10;
+        a1[163] = *(uint64_t *)(chunk + 328);
+        selectedChunk = offset;
       }
-      v10 += 0x4000LL;
     }
-    while ( v10 < v9 );
   }
-  else
-  {
-    v12 = -1;
-  }
-  *(uint64_t *)address = 0;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0xC000u, 1);
-  v14 = *(uint64_t *)address;
-  a1[169] = *(uint64_t *)address;
-  *(uint64_t *)address = v14;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x4000u, 16386);
+
+  scratch = 0;
+  vm_allocate(mach_task_self_, &scratch, 0xC000u, 1);
+  a1[169] = scratch;
+  vm_allocate(mach_task_self_, &scratch, 0x4000u, 16386);
   vm_remap_inplace(a1[169], 0x4000u, 0);
-  *(uint64_t *)address = a1[169] + 0x4000;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x8000u, 0x4000);
-  v15 = a1[139] + v12;
-  a1[170] = v15;
-  *(uint64_t *)address = v15 + 0x4000;
-  vm_allocate(mach_task_self_, (vm_address_t *)address, 0x8000u, 0x4000);
-  v16 = a1[139];
-  v17 = a1[170];
-  v18 = v17 + 49152;
-  v19 = v16 + a1[140] - v17 - 0x4000;
-  vm_deallocate(mach_task_self_, v16, v17 - v16);
-  vm_deallocate(mach_task_self_, v18, v19);
+  scratch = a1[169] + 0x4000;
+  vm_allocate(mach_task_self_, &scratch, 0x8000u, 0x4000);
+
+  a1[170] = a1[139] + selectedChunk;
+  scratch = a1[170] + 0x4000;
+  vm_allocate(mach_task_self_, &scratch, 0x8000u, 0x4000);
+  sourceBase = a1[139];
+  keepStart = a1[170];
+  keepTailSize = sourceBase + a1[140] - keepStart - 0x4000;
+  vm_deallocate(mach_task_self_, sourceBase, keepStart - sourceBase);
+  vm_deallocate(mach_task_self_, keepStart + 0xC000, keepTailSize);
   vm_deallocate(mach_task_self_, a1[138], a1[140]);
-  *v8 = 0;
+  a1[138] = 0;
   a1[139] = 0;
-  *(uint64_t *)address = 0;
-  *(__int128 *)&address[16] = 0u;
-  v60 = 0u;
-  v61 = 0u;
-  v58 = 0u;
-  v59 = 0u;
-  v56 = 0u;
-  v57 = 0u;
-  v54 = 0u;
-  *(uint64_t *)&v55 = 0;
-  v52 = 0u;
-  v53 = 0u;
-  v50 = 0u;
-  v51 = 0u;
-  v48 = 0u;
-  v49 = 0u;
-  *(__int128 *)&address[8] = *(__int128 *)byte_42D30;
-  DWORD2(v48) = 100;
-  LODWORD(v53) = 4;
-  HIDWORD(v53) = 16893952;
-  *((uint64_t *)&v55 + 1) = -1;
-  v20 = -256;
-  HIDWORD(v56) = 786560;
-  do
-  {
-    v21 = (__int128 *)(v20 + a1[169]);
-    v21[28] = v58;
-    v21[29] = v59;
-    v21[30] = v60;
-    v21[31] = v61;
-    v21[24] = v54;
-    v21[25] = v55;
-    v21[26] = v56;
-    v21[27] = v57;
-    v21[20] = v50;
-    v21[21] = v51;
-    v21[22] = v52;
-    v21[23] = v53;
-    v21[16] = *(__int128 *)address;
-    v21[17] = *(__int128 *)&address[16];
-    v21[18] = v48;
-    v21[19] = v49;
-    v20 += 256LL;
-  }
-  while ( v20 >> 8 < 0x3F );
+
+  memset(repeatDesc, 0, sizeof(repeatDesc));
+  memcpy(repeatDesc + 8, byte_42D30, 16);
+  iogpu_desc_store32(repeatDesc, 40, 100);
+  iogpu_desc_store32(repeatDesc, 112, 4);
+  iogpu_desc_store32(repeatDesc, 124, 16893952);
+  iogpu_desc_store64(repeatDesc, 152, -1ULL);
+  iogpu_desc_store32(repeatDesc, 172, 786560);
+  for ( size_t offset = 0; offset < 0x4000; offset += sizeof(repeatDesc) )
+    memcpy((void *)(a1[169] + offset), repeatDesc, sizeof(repeatDesc));
+
   vm_copy(mach_task_self_, a1[169], 0xC000u, a1[170]);
-  v22 = 0;
-  v23 = a1 + 11;
-  do
+  for ( size_t index = 0; index != 124; index += 2 )
   {
-    vm_deallocate(mach_task_self_, v23[v22], 0x4000u);
-    v23[v22] = 0;
-    v22 += 2;
+    vm_deallocate(mach_task_self_, a1[11 + index], 0x4000u);
+    a1[11 + index] = 0;
   }
-  while ( v22 != 124 );
+
   bzero((void *)a1[169], 0x4000u);
-  *(uint64_t *)&v43 = 0;
-  v44 = 0u;
-  *(uint64_t *)&v45 = 0;
-  v46 = 0u;
-  v42 = 0u;
-  v41 = 0u;
-  v24 = a1[163];
-  v25 = (v24 + 0x2400000200LL) >> 6;
-  if ( v24 == -512 )
-    LODWORD(v25) = 0;
-  *(uint32_t *)v39 = v25;
-  *(uint32_t *)&v39[4] = v25;
-  *(__int128 *)&v39[8] = *(__int128 *)byte_42D30;
-  *(uint64_t *)&v39[24] = 0x4000;
-  *(uint64_t *)&v40 = v24 + 512;
-  *((uint64_t *)&v40 + 1) = 0x100000064LL;
-  LODWORD(v41) = 1;
-  HIDWORD(v42) = 1165312;
-  *((uint64_t *)&v43 + 1) = -1;
-  HIDWORD(v44) = 786439;
-  *((uint64_t *)&v45 + 1) = v24 + 184;
-  *(uint64_t *)&v46 = v24 + 184;
-  *(uint64_t *)&v35 = 0;
-  v36 = 0u;
-  *(uint64_t *)&v37 = 0;
-  *((uint64_t *)&v38 + 1) = 0;
-  v34 = 0u;
-  v26 = (v24 + 0x2400000100LL) >> 6;
-  if ( v24 == -256 )
-    LODWORD(v26) = 0;
-  *(uint32_t *)v32 = v26;
-  *(uint32_t *)&v32[4] = v26;
-  *(__int128 *)&v32[8] = *(__int128 *)byte_42D30;
-  *(uint64_t *)&v32[24] = 0x4000;
-  *(uint64_t *)&v33 = 0;
-  *((uint64_t *)&v33 + 1) = 100;
-  LODWORD(v34) = 4;
-  HIDWORD(v34) = 100352;
-  *((uint64_t *)&v35 + 1) = -1;
-  HIDWORD(v36) = 786439;
-  *((uint64_t *)&v37 + 1) = v24 + 3200;
-  *(uint64_t *)&v38 = v24 + 3200;
-  DWORD2(v31) = 0;
-  *(uint64_t *)&v30 = 0;
-  if ( v24 )
-    v27 = (v24 + 0x2400000000LL) >> 6;
+
+  selectedPhys = a1[163];
+  memset(topDesc, 0, sizeof(topDesc));
+  uint32_t topPageIndex = (selectedPhys + 0x2400000200LL) >> 6;
+  if ( selectedPhys == -512 )
+    topPageIndex = 0;
+  iogpu_desc_store32(topDesc, 0, topPageIndex);
+  iogpu_desc_store32(topDesc, 4, topPageIndex);
+  memcpy(topDesc + 8, byte_42D30, 16);
+  iogpu_desc_store64(topDesc, 24, 0x4000);
+  iogpu_desc_store64(topDesc, 32, selectedPhys + 512);
+  iogpu_desc_store64(topDesc, 40, 0x100000064LL);
+  iogpu_desc_store32(topDesc, 48, 1);
+  iogpu_desc_store32(topDesc, 124, 1165312);
+  iogpu_desc_store64(topDesc, 152, -1ULL);
+  iogpu_desc_store32(topDesc, 172, 786439);
+  iogpu_desc_store64(topDesc, 184, selectedPhys + 184);
+  iogpu_desc_store64(topDesc, 192, selectedPhys + 184);
+
+  memset(middleDesc, 0, sizeof(middleDesc));
+  uint32_t middlePageIndex = (selectedPhys + 0x2400000100LL) >> 6;
+  if ( selectedPhys == -256 )
+    middlePageIndex = 0;
+  iogpu_desc_store32(middleDesc, 0, middlePageIndex);
+  iogpu_desc_store32(middleDesc, 4, middlePageIndex);
+  memcpy(middleDesc + 8, byte_42D30, 16);
+  iogpu_desc_store64(middleDesc, 24, 0x4000);
+  iogpu_desc_store64(middleDesc, 40, 100);
+  iogpu_desc_store32(middleDesc, 112, 4);
+  iogpu_desc_store32(middleDesc, 124, 100352);
+  iogpu_desc_store64(middleDesc, 152, -1ULL);
+  iogpu_desc_store32(middleDesc, 172, 786439);
+  iogpu_desc_store64(middleDesc, 184, selectedPhys + 3200);
+  iogpu_desc_store64(middleDesc, 192, selectedPhys + 3200);
+
+  memset(tailDesc, 0, sizeof(tailDesc));
+  uint32_t tailPageIndex;
+  if ( selectedPhys )
+    tailPageIndex = (selectedPhys + 0x2400000000LL) >> 6;
   else
-    v27 = 0;
-  DWORD2(v30) = v27;
-  HIDWORD(v30) = v27;
-  *(uint64_t *)&v31 = v27 | 0x401000100000000LL;
-  HIDWORD(v31) = 4108;
-  v28 = (__int128 *)a1[169];
-  v28[2] = v40;
-  v28[3] = v41;
-  *v28 = *(__int128 *)v39;
-  v28[1] = *(__int128 *)&v39[16];
-  v28[6] = 0u;
-  v28[7] = v42;
-  v28[4] = 0u;
-  v28[5] = 0u;
-  v28[10] = v44;
-  v28[11] = v45;
-  v28[8] = 0u;
-  v28[9] = v43;
-  v28[14] = 0u;
-  v28[15] = 0u;
-  v28[12] = v46;
-  v28[13] = 0u;
-  v28[28] = v38;
-  v28[29] = 0u;
-  v28[30] = 0u;
-  v28[31] = 0u;
-  v28[24] = 0u;
-  v28[25] = v35;
-  v28[26] = v36;
-  v28[27] = v37;
-  v28[20] = 0u;
-  v28[21] = 0u;
-  v28[22] = 0u;
-  v28[23] = v34;
-  v28[16] = *(__int128 *)v32;
-  v28[17] = *(__int128 *)&v32[16];
-  v28[18] = v33;
-  v28[19] = 0u;
-  v28[32] = v30;
-  v28[33] = 0u;
-  v28[34] = v31;
+    tailPageIndex = 0;
+  iogpu_desc_store32(tailDesc, 8, tailPageIndex);
+  iogpu_desc_store32(tailDesc, 12, tailPageIndex);
+  iogpu_desc_store64(tailDesc, 32, tailPageIndex | 0x401000100000000LL);
+  iogpu_desc_store32(tailDesc, 44, 4108);
+
+  memcpy((void *)a1[169], topDesc, sizeof(topDesc));
+  memcpy((void *)(a1[169] + 0x100), middleDesc, sizeof(middleDesc));
+  memcpy((void *)(a1[169] + 0x200), tailDesc, sizeof(tailDesc));
   return vm_copy(mach_task_self_, a1[169], 0xC000u, a1[170]);
 }
 // 42D30: using guessed type __int128 xmmword_42D30;
@@ -10994,4 +10866,3 @@ LABEL_5:
 }
 // 15B94: variable 'v33' is possibly undefined
 // 15C84: variable 'v37' is possibly undefined
-
