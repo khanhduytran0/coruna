@@ -507,18 +507,19 @@ bool __fastcall cfdict_compare_or_merge(const void *a1, const void *a2, uint8_t 
 void *__fastcall cfplist_serialize_xml(CFPropertyListRef propertyList, size_t *a2);
 bool __fastcall csblob_inject_entitlement(struct_krwCtx *krwCtx, unsigned int a2, const char *a3);
 __int64 __fastcall csblob_read_and_patch(struct_krwCtx *krwCtx, unsigned int a2, __int64 a3);
-unsigned int *__fastcall csblob_find_entry(__int64 a1, int a2, int a3);
-__int64 __fastcall csblob_replace_entry(__int64 a1, int a2, unsigned int *a3);
+struct csblob_walk_ctx;
+unsigned int *__fastcall csblob_find_entry(struct csblob_walk_ctx *ctx, int slot, int magic);
+__int64 __fastcall csblob_replace_entry(struct csblob_walk_ctx *ctx, int slot, unsigned int *replacement);
 __int64 __fastcall csblob_apply_with_physmap_write(struct_krwCtx *krwCtx, __int64 a2);
-void __fastcall csblob_free_entry(__int64 a1);
+void __fastcall csblob_free_entry(struct csblob_walk_ctx *ctx);
 __int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *krwCtx, __int64 task, char *entitlementXml, char a4);
 __int64 __fastcall ce_context_cfdata_transform(const UInt8 *a1, CFIndex a2, char *a3, uint64_t *a4, size_t *a5, uint8_t *a6);
 __int64 __fastcall kread_task_slot_and_necp_set(struct_krwCtx *krwCtx, __int64 a2, unsigned int a3, bool *a4);
-uint32_t *__fastcall csblob_set_entry_data(__int64 a1, int a2, unsigned int a3, const void *a4, unsigned int a5);
-__int64 __fastcall csblob_zero_entry_region(__int64 a1, unsigned int a2, int a3);
+uint32_t *__fastcall csblob_set_entry_data(struct csblob_walk_ctx *ctx, int slot, unsigned int magic, const void *data, unsigned int size);
+__int64 __fastcall csblob_zero_entry_region(struct csblob_walk_ctx *ctx, unsigned int slot, int magic);
 bool __fastcall ce_serialize_cfplist(const UInt8 *a1, CFIndex a2, __int64 a3);
-uint32_t *__fastcall csblob_alloc_and_insert_entry(__int64 a1, int a2, unsigned int a3, const void *a4, unsigned int a5);
-unsigned int *__fastcall csblob_repack_entries(__int64 a1, unsigned int a2);
+uint32_t *__fastcall csblob_alloc_and_insert_entry(struct csblob_walk_ctx *ctx, int slot, unsigned int magic, const void *data, unsigned int size);
+unsigned int *__fastcall csblob_repack_entries(struct csblob_walk_ctx *ctx, unsigned int minSlotCount);
 __int64 __fastcall validate_physmap_range_6(struct_krwCtx *krwCtx, unsigned int a2);
 __int64 __fastcall physmap_pgtable_check_and_append(struct_krwCtx *krwCtx, unsigned int a2);
 mach_vm_address_t __fastcall kread_and_set_vm_attr(struct_krwCtx *krwCtx, unsigned int a2);
@@ -535,13 +536,13 @@ __int64 __fastcall check_csblob_patchable(struct_krwCtx *krwCtx, unsigned int a2
 unsigned __int64 __fastcall patch_csblob_in_all_procs(struct_krwCtx *krwCtx, unsigned int a2, __int64 a3);
 __int64 __fastcall walk_csblob_chain_for_offset(struct_krwCtx *krwCtx, int a2);
 unsigned __int64 __fastcall proc_kread_and_patch_slot(struct_krwCtx *krwCtx, unsigned int a2, __int64 a3);
-__int64 __fastcall csblob_find_slot_by_pair(__int64 result, int a2, int a3);
+__int64 __fastcall csblob_find_slot_by_pair(struct csblob_walk_ctx *ctx, int slot, int magic);
 void *__fastcall csblob_dup_entry(unsigned int *a1);
 void __fastcall csblob_bzero_and_free(uint32_t *a1);
 void __fastcall csblob_proc_patch_dispatch(__int64 a1);
 uint32_t *__fastcall csblob_alloc_and_fill_slots(__int64 a1, uint64_t *a2, size_t *a3, unsigned int *a4, unsigned int *a5, unsigned int *a6);
 __int64 __fastcall wire_proc_page_via_kobject(struct_krwCtx *krwCtx, __int64 a2, mach_vm_address_t *a3, uint64_t *a4, int *a5);
-__int64 __fastcall csblob_compute_and_copy_hash(__int64 a1, void *a2);
+__int64 __fastcall csblob_compute_and_copy_hash(struct csblob_walk_ctx *ctx, void *outHash);
 __int64 __fastcall physmap_kwrite_chain_entry(struct_krwCtx *krwCtx, unsigned __int64 a2, unsigned int a3, const void *a4, mach_vm_size_t a5);
 __int64 __fastcall get_version_specific_offset(struct_krwCtx *krwCtx);
 __int64 __fastcall get_dyld_slide_info(struct_krwCtx *krwCtx);
@@ -1809,7 +1810,9 @@ struct csblob_walk_ctx
   uint32_t cmsBlobOffset;
   uint32_t signatureOffset;
   uint32_t minSlotDistanceQword;
-  uint32_t reserved_0x60;
+  uint8_t prefersDerEntitlements;
+  uint8_t modifiedDerEntitlements;
+  uint16_t reserved_0x62;
 };
 
 typedef char csblob_walk_ctx_container_kind_offset_must_be_0x30[
@@ -1822,6 +1825,8 @@ typedef char csblob_walk_ctx_pid_offset_must_be_0x44[
   __builtin_offsetof(struct csblob_walk_ctx, pid) == 0x44 ? 1 : -1];
 typedef char csblob_walk_ctx_min_slot_distance_offset_must_be_0x5c[
   __builtin_offsetof(struct csblob_walk_ctx, minSlotDistanceQword) == 0x5c ? 1 : -1];
+typedef char csblob_walk_ctx_der_preference_offset_must_be_0x60[
+  __builtin_offsetof(struct csblob_walk_ctx, prefersDerEntitlements) == 0x60 ? 1 : -1];
 
 struct vm_map_entry_wire_snapshot
 {
@@ -31256,12 +31261,12 @@ bool __fastcall csblob_inject_entitlement(struct_krwCtx *krwCtx, unsigned int a2
   uint32_t *v16; // x22
   uint32_t *v17; // x0
   size_t v18; // x0
-  uint8_t v20[104]; // [xsp+8h] [xbp-B8h] BYREF
+  struct csblob_walk_ctx v20; // [xsp+8h] [xbp-B8h] BYREF
 
-  if ( (unsigned int)csblob_read_and_patch(krwCtx, a2, (__int64)v20) )
+  if ( (unsigned int)csblob_read_and_patch(krwCtx, a2, (__int64)&v20) )
   {
     v5 = (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 || krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023);
-    v7 = csblob_find_entry((__int64)v20, 0, -86111230);
+    v7 = csblob_find_entry(&v20, 0, -86111230);
     if ( !v7 )
       goto LABEL_23;
     v8 = v7;
@@ -31292,9 +31297,9 @@ bool __fastcall csblob_inject_entitlement(struct_krwCtx *krwCtx, unsigned int a2
             strlcpy((char *)v8 + v14, a3, v13);
             v16 = 0;
 LABEL_20:
-            if ( (unsigned int)csblob_replace_entry((__int64)v20, 0, v8) )
+            if ( (unsigned int)csblob_replace_entry(&v20, 0, v8) )
             {
-              v6 = (unsigned int)csblob_apply_with_physmap_write(krwCtx, (__int64)v20) != 0;
+              v6 = (unsigned int)csblob_apply_with_physmap_write(krwCtx, (__int64)&v20) != 0;
               if ( !v16 )
                 goto LABEL_26;
               goto LABEL_25;
@@ -31304,7 +31309,7 @@ LABEL_20:
 LABEL_25:
               free(v16);
 LABEL_26:
-            csblob_free_entry((__int64)v20);
+            csblob_free_entry(&v20);
             return v6;
           }
 LABEL_23:
@@ -31424,7 +31429,7 @@ __int64 __fastcall csblob_read_and_patch(struct_krwCtx *krwCtx, unsigned int a2,
       }
       goto LABEL_82;
     }
-    v9 = csblob_find_entry((__int64)&v46, v50, -86111230);
+    v9 = csblob_find_entry((struct csblob_walk_ctx *)&v46, v50, -86111230);
     if ( !v9 )
       goto LABEL_82;
     v10 = v9;
@@ -31435,7 +31440,7 @@ __int64 __fastcall csblob_read_and_patch(struct_krwCtx *krwCtx, unsigned int a2,
     {
 LABEL_15:
       v11 = csblob_apply_with_physmap_write(krwCtx, (__int64)&v46);
-      csblob_free_entry((__int64)&v46);
+      csblob_free_entry((struct csblob_walk_ctx *)&v46);
       v52 = 0;
       v50 = 0u;
       v51 = 0u;
@@ -31472,7 +31477,7 @@ LABEL_24:
       goto LABEL_82;
     if ( xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     {
-      v22 = csblob_find_entry((__int64)&v46, 5, -86085263);
+      v22 = csblob_find_entry((struct csblob_walk_ctx *)&v46, 5, -86085263);
       if ( !v22 )
       {
         if ( v18 )
@@ -31495,8 +31500,8 @@ LABEL_24:
           v10[10] = 0x8000;
           v24 = 32760;
         }
-        if ( !(unsigned int)csblob_alloc_and_insert_entry((__int64)&v46, 5, 0xFADE7171, v21, v24)
-          || !(unsigned int)csblob_repack_entries((__int64)&v46, 5u) )
+        if ( !(unsigned int)csblob_alloc_and_insert_entry((struct csblob_walk_ctx *)&v46, 5, 0xFADE7171, v21, v24)
+          || !(unsigned int)csblob_repack_entries((struct csblob_walk_ctx *)&v46, 5u) )
         {
           goto LABEL_59;
         }
@@ -31505,7 +31510,7 @@ LABEL_24:
     }
     else
     {
-      v19 = csblob_find_entry((__int64)&v46, 7, -86085262);
+      v19 = csblob_find_entry((struct csblob_walk_ctx *)&v46, 7, -86085262);
       if ( v19 )
       {
         if ( (unsigned int)ce_context_cfdata_transform(
@@ -31517,7 +31522,7 @@ LABEL_24:
                              0) )
         {
           v20 = v55;
-          if ( !(unsigned int)csblob_set_entry_data((__int64)&v46, 7, 0xFADE7172, v55, v54) )
+          if ( !(unsigned int)csblob_set_entry_data((struct csblob_walk_ctx *)&v46, 7, 0xFADE7172, v55, v54) )
           {
             v21 = 0;
             v28 = 0;
@@ -31529,7 +31534,7 @@ LABEL_61:
               free(v21);
             if ( !v28 )
               goto LABEL_82;
-            v34 = csblob_find_entry((__int64)&v46, 0, -86111230);
+            v34 = csblob_find_entry((struct csblob_walk_ctx *)&v46, 0, -86111230);
             if ( !v34 )
               goto LABEL_82;
             v35 = v34;
@@ -31557,7 +31562,7 @@ LABEL_61:
               v42[5] = 0;
             }
             v42[1] = bswap32(v37 + 128);
-            v43 = csblob_replace_entry((__int64)&v46, 0, v42);
+            v43 = csblob_replace_entry((struct csblob_walk_ctx *)&v46, 0, v42);
             free(v42);
             if ( v43 )
             {
@@ -31565,7 +31570,7 @@ LABEL_61:
                 goto LABEL_15;
               if ( (unsigned int)csblob_apply_with_physmap_write(krwCtx, (__int64)&v46) )
               {
-                csblob_free_entry((__int64)&v46);
+                csblob_free_entry((struct csblob_walk_ctx *)&v46);
                 v52 = 0;
                 v50 = 0u;
                 v51 = 0u;
@@ -31575,13 +31580,13 @@ LABEL_61:
                 v47 = 0u;
                 if ( (unsigned int)csblob_chain_walk_offsets(krwCtx, a2, 0, 1u, (__int64)&v46) )
                 {
-                  v44 = csblob_find_entry((__int64)&v46, 5, -86085263);
+                  v44 = csblob_find_entry((struct csblob_walk_ctx *)&v46, 5, -86085263);
                   if ( v44 )
                   {
                     v44[1] = bswap32(strlen((const char *)v44 + 8) + 8);
-                    if ( (unsigned int)csblob_zero_entry_region((__int64)&v46, 5u, -86085263) )
+                    if ( (unsigned int)csblob_zero_entry_region((struct csblob_walk_ctx *)&v46, 5u, -86085263) )
                     {
-                      if ( csblob_find_entry((__int64)&v46, v50, -86111230) )
+                      if ( csblob_find_entry((struct csblob_walk_ctx *)&v46, v50, -86111230) )
                         goto LABEL_15;
                     }
                   }
@@ -31589,11 +31594,11 @@ LABEL_61:
               }
             }
 LABEL_82:
-            csblob_free_entry((__int64)&v46);
+            csblob_free_entry((struct csblob_walk_ctx *)&v46);
             return 0;
           }
           v21 = 0;
-          if ( !(unsigned int)csblob_zero_entry_region((__int64)&v46, 7u, -86085262) )
+          if ( !(unsigned int)csblob_zero_entry_region((struct csblob_walk_ctx *)&v46, 7u, -86085262) )
             goto LABEL_59;
 LABEL_52:
           v28 = 1;
@@ -31603,7 +31608,7 @@ LABEL_60:
         }
         goto LABEL_58;
       }
-      v22 = csblob_find_entry((__int64)&v46, 5, -86085263);
+      v22 = csblob_find_entry((struct csblob_walk_ctx *)&v46, 5, -86085263);
       if ( !v22 )
       {
         if ( ce_serialize_cfplist(
@@ -31617,8 +31622,8 @@ LABEL_60:
             goto LABEL_59;
           BytePtr = CFDataGetBytePtr(v53);
           memcpy(v21, BytePtr, Length);
-          if ( !(unsigned int)csblob_alloc_and_insert_entry((__int64)&v46, 7, 0xFADE7172, v21, Length)
-            || !(unsigned int)csblob_repack_entries((__int64)&v46, 7u) )
+          if ( !(unsigned int)csblob_alloc_and_insert_entry((struct csblob_walk_ctx *)&v46, 7, 0xFADE7172, v21, Length)
+            || !(unsigned int)csblob_repack_entries((struct csblob_walk_ctx *)&v46, 7u) )
           {
             goto LABEL_59;
           }
@@ -31656,13 +31661,13 @@ LABEL_60:
         v10[10] = v26;
         LODWORD(v25) = v26 - 8;
       }
-      if ( !(unsigned int)csblob_set_entry_data((__int64)&v46, 5, 0xFADE7171, v21, v25) )
+      if ( !(unsigned int)csblob_set_entry_data((struct csblob_walk_ctx *)&v46, 5, 0xFADE7171, v21, v25) )
         goto LABEL_59;
 LABEL_50:
       v30 = 5;
       v31 = -86085263;
 LABEL_51:
-      if ( (unsigned int)csblob_zero_entry_region((__int64)&v46, v30, v31) )
+      if ( (unsigned int)csblob_zero_entry_region((struct csblob_walk_ctx *)&v46, v30, v31) )
         goto LABEL_52;
 LABEL_59:
       v28 = 0;
@@ -31676,59 +31681,51 @@ LABEL_58:
 }
 
 //----- (000000000002C9B0) ----------------------------------------------------
-unsigned int *__fastcall csblob_find_entry(__int64 a1, int a2, int a3)
+unsigned int *__fastcall csblob_find_entry(struct csblob_walk_ctx *ctx, int slot, int magic)
 {
-  int v3; // w8
-  unsigned int *v4; // x9
-  __int64 v5; // x8
-  unsigned int **i; // x9
-  unsigned int *result; // x0
+  if ( !ctx )
+    return 0;
 
-  if ( !a1 )
-    return 0;
-  v3 = *(uint32_t *)(a1 + 48);
-  if ( !v3 )
+  if ( ctx->containerKind == 0 )
   {
-    if ( !a2 )
-    {
-      result = *(unsigned int **)(a1 + 56);
-      if ( *result == 34397946 )
-        return result;
-    }
-    return 0;
-  }
-  if ( v3 != 1 )
-    return 0;
-  v4 = *(unsigned int **)(a1 + 56);
-  v5 = *v4;
-  if ( !(uint32_t)v5 )
-    return 0;
-  for ( i = (unsigned int **)(*((uint64_t *)v4 + 1) + 8LL); ; i += 2 )
-  {
-    if ( *((uint32_t *)i - 2) == a2 )
-    {
-      result = *i;
-      if ( bswap32(**i) == a3 )
-        break;
-    }
-    if ( !--v5 )
+    if ( slot )
       return 0;
+
+    unsigned int *blob = (unsigned int *)ctx->container;
+    if ( blob && *blob == 34397946 )
+      return blob;
+    return 0;
   }
-  return result;
+
+  if ( ctx->containerKind != 1 )
+    return 0;
+
+  unsigned int *superblob = (unsigned int *)ctx->container;
+  uint32_t entryCount = superblob[0];
+  if ( !entryCount )
+    return 0;
+
+  unsigned int **entry = (unsigned int **)(*((uint64_t *)superblob + 1) + 8LL);
+  for ( uint32_t remaining = entryCount; remaining; --remaining, entry += 2 )
+  {
+    if ( *((uint32_t *)entry - 2) == slot && bswap32(**entry) == magic )
+      return *entry;
+  }
+  return 0;
 }
 
 //----- (000000000002CA2C) ----------------------------------------------------
-__int64 __fastcall csblob_replace_entry(__int64 a1, int a2, unsigned int *a3)
+__int64 __fastcall csblob_replace_entry(struct csblob_walk_ctx *ctx, int slot, unsigned int *replacement)
 {
   __int64 result; // x0
   __int64 v5; // x20
   uint32_t *v6; // x8
 
-  result = csblob_find_slot_by_pair(a1, a2, -86111230);
+  result = csblob_find_slot_by_pair(ctx, slot, -86111230);
   if ( result )
   {
     v5 = result;
-    result = (__int64)csblob_dup_entry(a3);
+    result = (__int64)csblob_dup_entry(replacement);
     if ( result )
     {
       v6 = *(uint32_t **)(v5 + 8);
@@ -31771,22 +31768,18 @@ __int64 __fastcall csblob_apply_with_physmap_write(struct_krwCtx *krwCtx, __int6
 }
 
 //----- (000000000002CB54) ----------------------------------------------------
-void __fastcall csblob_free_entry(__int64 a1)
+void __fastcall csblob_free_entry(struct csblob_walk_ctx *ctx)
 {
-  int v2; // w8
-
-  v2 = *(uint32_t *)(a1 + 48);
-  if ( v2 )
+  if ( ctx->containerKind == 0 )
   {
-    if ( v2 == 1 )
-      csblob_free_array(*(unsigned int **)(a1 + 56));
+    csblob_bzero_and_free((uint32_t *)ctx->container);
   }
-  else
+  else if ( ctx->containerKind == 1 )
   {
-    csblob_bzero_and_free(*(uint32_t **)(a1 + 56));
+    csblob_free_array((unsigned int *)ctx->container);
   }
-  *(uint64_t *)(a1 + 56) = 0;
-  *(uint32_t *)(a1 + 48) = -1;
+  ctx->container = 0;
+  ctx->containerKind = -1;
 }
 
 //----- (000000000002CBA4) ----------------------------------------------------
@@ -31820,15 +31813,12 @@ __int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *krwCtx, __int64
   bool v33; // [xsp+17h] [xbp-C9h] BYREF
   size_t __n; // [xsp+18h] [xbp-C8h] BYREF
   void *__src; // [xsp+20h] [xbp-C0h] BYREF
-  uint8_t v36[64]; // [xsp+28h] [xbp-B8h] BYREF
-  int v37; // [xsp+68h] [xbp-78h]
-  char v38; // [xsp+88h] [xbp-58h]
-  char v39; // [xsp+89h] [xbp-57h]
+  struct csblob_walk_ctx v36; // [xsp+28h] [xbp-B8h] BYREF
 
   __src = 0;
   v33 = 0;
   theData = 0;
-  result = csblob_read_and_patch(krwCtx, task, (__int64)v36);
+  result = csblob_read_and_patch(krwCtx, task, (__int64)&v36);
   if ( !(uint32_t)result )
     return result;
   v9 = krwCtx->xnuVersionPacked;
@@ -31837,7 +31827,7 @@ __int64 __fastcall krw_inject_entitlements2_maybe(struct_krwCtx *krwCtx, __int64
     v12 = 0;
     v11 = (a4 & 1) == 0;
 LABEL_12:
-    v13 = csblob_find_entry((__int64)v36, 5, -86085263);
+    v13 = csblob_find_entry(&v36, 5, -86085263);
     if ( !v13 )
     {
       if ( (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
@@ -31849,9 +31839,9 @@ LABEL_12:
           {
             BytePtr = CFDataGetBytePtr(theData);
             Length = CFDataGetLength(theData);
-            if ( (unsigned int)csblob_alloc_and_insert_entry((__int64)v36, 7, 0xFADE7172, BytePtr, Length) )
+            if ( (unsigned int)csblob_alloc_and_insert_entry(&v36, 7, 0xFADE7172, BytePtr, Length) )
             {
-              if ( (unsigned int)csblob_repack_entries((__int64)v36, 7u) )
+              if ( (unsigned int)csblob_repack_entries(&v36, 7u) )
               {
                 v22 = -86085262;
                 v23 = 7;
@@ -31860,8 +31850,8 @@ LABEL_12:
             }
           }
         }
-        else if ( (unsigned int)csblob_alloc_and_insert_entry((__int64)v36, 5, 0xFADE7171, entitlementXml, v19)
-               && (unsigned int)csblob_repack_entries((__int64)v36, 5u) )
+        else if ( (unsigned int)csblob_alloc_and_insert_entry(&v36, 5, 0xFADE7171, entitlementXml, v19)
+               && (unsigned int)csblob_repack_entries(&v36, 5u) )
         {
           goto LABEL_52;
         }
@@ -31882,14 +31872,14 @@ LABEL_18:
       v18 = 0;
       goto LABEL_57;
     }
-    if ( (unsigned int)kread_task_slot_and_necp_set(krwCtx, (__int64)v36, task, &v33) )
+    if ( (unsigned int)kread_task_slot_and_necp_set(krwCtx, (__int64)&v36, task, &v33) )
     {
       if ( v33 )
         goto LABEL_18;
 LABEL_25:
-      if ( !v38 && (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
+      if ( !v36.prefersDerEntitlements && (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) != 0 )
       {
-        v26 = csblob_find_entry((__int64)v36, v37, -86111230);
+        v26 = csblob_find_entry(&v36, v36.selectedSlot, -86111230);
         if ( v26 )
         {
           v27 = v26[10];
@@ -31915,7 +31905,7 @@ LABEL_56:
         goto LABEL_57;
       }
       v24 = __src;
-      if ( (unsigned int)csblob_set_entry_data((__int64)v36, 5, 0xFADE7171, __src, __n) )
+      if ( (unsigned int)csblob_set_entry_data(&v36, 5, 0xFADE7171, __src, __n) )
       {
 LABEL_52:
         v23 = 5;
@@ -31932,18 +31922,18 @@ LABEL_55:
     v11 = 0;
     goto LABEL_56;
   }
-  v38 = 1;
+  v36.prefersDerEntitlements = 1;
   v11 = (a4 & 1) == 0;
   if ( v9 >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) && (a4 & 1) != 0 )
   {
-    v39 = 1;
+    v36.modifiedDerEntitlements = 1;
   }
   else if ( v9 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
   {
     v12 = 0;
     goto LABEL_12;
   }
-  v25 = csblob_find_entry((__int64)v36, 7, -86085262);
+  v25 = csblob_find_entry(&v36, 7, -86085262);
   if ( !v25 )
   {
     v12 = 1;
@@ -31955,14 +31945,14 @@ LABEL_55:
   {
 LABEL_67:
     v24 = __src;
-    if ( (unsigned int)csblob_set_entry_data((__int64)v36, 7, 0xFADE7172, __src, __n) )
+    if ( (unsigned int)csblob_set_entry_data(&v36, 7, 0xFADE7172, __src, __n) )
     {
       v23 = 7;
       v22 = -86085262;
 LABEL_53:
-      if ( (unsigned int)csblob_zero_entry_region((__int64)v36, v23, v22) )
+      if ( (unsigned int)csblob_zero_entry_region(&v36, v23, v22) )
       {
-        v18 = (unsigned int)csblob_apply_with_physmap_write(krwCtx, (__int64)v36) == 0;
+        v18 = (unsigned int)csblob_apply_with_physmap_write(krwCtx, (__int64)&v36) == 0;
         goto LABEL_57;
       }
       goto LABEL_56;
@@ -31972,7 +31962,7 @@ LABEL_53:
   v18 = 0;
   if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) && (a4 & 1) != 0 )
   {
-    if ( !(unsigned int)kread_task_slot_and_necp_set(krwCtx, (__int64)v36, task, &v33) )
+    if ( !(unsigned int)kread_task_slot_and_necp_set(krwCtx, (__int64)&v36, task, &v33) )
       goto LABEL_55;
     if ( v33 )
     {
@@ -31989,7 +31979,7 @@ LABEL_58:
 LABEL_59:
   if ( theData )
     CFRelease(theData);
-  csblob_free_entry((__int64)v36);
+  csblob_free_entry(&v36);
   if ( v18 )
     return 0;
   if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) || v11 )
@@ -32153,24 +32143,24 @@ __int64 __fastcall kread_task_slot_and_necp_set(struct_krwCtx *krwCtx, __int64 a
 }
 
 //----- (000000000002D374) ----------------------------------------------------
-uint32_t *__fastcall csblob_set_entry_data(__int64 a1, int a2, unsigned int a3, const void *a4, unsigned int a5)
+uint32_t *__fastcall csblob_set_entry_data(struct csblob_walk_ctx *ctx, int slot, unsigned int magic, const void *data, unsigned int size)
 {
   uint32_t *result; // x0
   uint32_t *v9; // x20
   uint32_t *v10; // x23
   uint32_t *v11; // x0
 
-  result = (uint32_t *)csblob_find_slot_by_pair(a1, a2, a3);
+  result = (uint32_t *)csblob_find_slot_by_pair(ctx, slot, magic);
   if ( result )
   {
     v9 = result;
-    result = malloc(a5 + 8LL);
+    result = malloc(size + 8LL);
     if ( result )
     {
       v10 = result;
-      *result = bswap32(a3);
-      result[1] = bswap32(a5 + 8);
-      memcpy(result + 2, a4, a5);
+      *result = bswap32(magic);
+      result[1] = bswap32(size + 8);
+      memcpy(result + 2, data, size);
       v11 = (uint32_t *)*((uint64_t *)v9 + 1);
       *((uint64_t *)v9 + 1) = v10;
       csblob_bzero_and_free(v11);
@@ -32182,7 +32172,7 @@ uint32_t *__fastcall csblob_set_entry_data(__int64 a1, int a2, unsigned int a3, 
 // 0: using guessed type int def_3E8F0;
 
 //----- (000000000002D3F8) ----------------------------------------------------
-__int64 __fastcall csblob_zero_entry_region(__int64 a1, unsigned int a2, int a3)
+__int64 __fastcall csblob_zero_entry_region(struct csblob_walk_ctx *ctx, unsigned int slot, int magic)
 {
   unsigned int *v5; // x20
   __int64 result; // x0
@@ -32194,15 +32184,15 @@ __int64 __fastcall csblob_zero_entry_region(__int64 a1, unsigned int a2, int a3)
   int v12; // [xsp+4h] [xbp-5Ch] BYREF
   uint8_t __src[48]; // [xsp+8h] [xbp-58h] BYREF
 
-  v5 = csblob_find_entry(a1, a2, a3);
-  result = (__int64)csblob_find_entry(a1, *(uint32_t *)(a1 + 64), -86111230);
+  v5 = csblob_find_entry(ctx, slot, magic);
+  result = (__int64)csblob_find_entry(ctx, ctx->selectedSlot, -86111230);
   if ( result )
   {
-    if ( bswap32(*(uint32_t *)(result + 24)) < a2 )
+    if ( bswap32(*(uint32_t *)(result + 24)) < slot )
       return 0;
-    v7 = *(unsigned int *)(a1 + 72);
+    v7 = ctx->specialSlotOffset;
     v8 = result + bswap32(*(uint32_t *)(result + 16));
-    v9 = (unsigned int)v7 * a2;
+    v9 = (unsigned int)v7 * slot;
     v10 = (void *)(v8 - v9);
     if ( v5 )
     {
@@ -32210,7 +32200,7 @@ __int64 __fastcall csblob_zero_entry_region(__int64 a1, unsigned int a2, int a3)
       result = compute_sha_hash(*(unsigned __int8 *)(result + 37), v5, bswap32(v5[1]), __src, &v12);
       if ( !(uint32_t)result )
         return result;
-      v11 = *(unsigned int *)(a1 + 72);
+      v11 = ctx->specialSlotOffset;
       if ( (uint32_t)v11 != v12 )
         return 0;
       memcpy(v10, __src, v11);
@@ -32287,25 +32277,25 @@ LABEL_12:
 }
 
 //----- (000000000002D64C) ----------------------------------------------------
-uint32_t *__fastcall csblob_alloc_and_insert_entry(__int64 a1, int a2, unsigned int a3, const void *a4, unsigned int a5)
+uint32_t *__fastcall csblob_alloc_and_insert_entry(struct csblob_walk_ctx *ctx, int slot, unsigned int magic, const void *data, unsigned int size)
 {
   size_t v9; // x24
   unsigned int v10; // w25
   uint32_t *result; // x0
   uint32_t *v12; // x22
 
-  if ( (*(uint8_t *)a1 & 1) != 0 && *(uint32_t *)(a1 + 48) == 1 )
+  if ( (ctx->flags & 1) != 0 && ctx->containerKind == 1 )
   {
-    v9 = a5;
-    v10 = a5 + 8;
-    result = malloc(a5 + 8LL);
+    v9 = size;
+    v10 = size + 8;
+    result = malloc(size + 8LL);
     if ( !result )
       return result;
     v12 = result;
-    *result = bswap32(a3);
+    *result = bswap32(magic);
     result[1] = bswap32(v10);
-    memcpy(result + 2, a4, v9);
-    if ( (unsigned int)csblob_realloc_array(*(unsigned int **)(a1 + 56), a2, (__int64)v12) != -1 )
+    memcpy(result + 2, data, v9);
+    if ( (unsigned int)csblob_realloc_array((unsigned int *)ctx->container, slot, (__int64)v12) != -1 )
       return &def_3E8F0 + 1;
     csblob_bzero_and_free(v12);
   }
@@ -32314,7 +32304,7 @@ uint32_t *__fastcall csblob_alloc_and_insert_entry(__int64 a1, int a2, unsigned 
 // 0: using guessed type int def_3E8F0;
 
 //----- (000000000002D700) ----------------------------------------------------
-unsigned int *__fastcall csblob_repack_entries(__int64 a1, unsigned int a2)
+unsigned int *__fastcall csblob_repack_entries(struct csblob_walk_ctx *ctx, unsigned int minSlotCount)
 {
   unsigned int *result; // x0
   unsigned int *v5; // x21
@@ -32330,19 +32320,19 @@ unsigned int *__fastcall csblob_repack_entries(__int64 a1, unsigned int a2)
   unsigned int v15; // w9
   __int64 v16; // x19
 
-  result = csblob_find_entry(a1, *(uint32_t *)(a1 + 64), -86111230);
+  result = csblob_find_entry(ctx, ctx->selectedSlot, -86111230);
   if ( result )
   {
     v5 = result;
     v6 = bswap32(result[6]);
-    if ( v6 >= a2 )
+    if ( v6 >= minSlotCount )
     {
       return (unsigned int *)(&def_3E8F0 + 1);
     }
     else
     {
-      v7 = *(uint32_t *)(a1 + 72);
-      v8 = v7 * (a2 - v6);
+      v7 = ctx->specialSlotOffset;
+      v8 = v7 * (minSlotCount - v6);
       v9 = bswap32(result[1]) + v8;
       result = (unsigned int *)malloc(v9);
       if ( result )
@@ -32355,7 +32345,7 @@ unsigned int *__fastcall csblob_repack_entries(__int64 a1, unsigned int a2)
         v13 = bswap32(v10[4]) + v8;
         v10[4] = bswap32(v13);
         v10[1] = bswap32(bswap32(v10[1]) + v8);
-        v10[6] = bswap32(a2);
+        v10[6] = bswap32(minSlotCount);
         memcpy((char *)v10 + v13 - v11, (char *)v5 + bswap32(v5[4]) - v11, v12);
         v14 = bswap32(v5[4]);
         if ( bswap32(v5[5]) > v14 )
@@ -32378,7 +32368,7 @@ unsigned int *__fastcall csblob_repack_entries(__int64 a1, unsigned int a2)
             }
           }
         }
-        v16 = csblob_replace_entry(a1, *(uint32_t *)(a1 + 64), v10);
+        v16 = csblob_replace_entry(ctx, ctx->selectedSlot, v10);
         free(v10);
         return (unsigned int *)v16;
       }
@@ -32897,7 +32887,7 @@ mach_vm_address_t __fastcall setup_pgtable_and_patch_csblob(struct_krwCtx *krwCt
               return 0;
             }
 LABEL_16:
-            csblob_free_entry((__int64)v22);
+            csblob_free_entry((struct csblob_walk_ctx *)v22);
             result = walk_proc_and_get_csblob_addr(krwCtx, a2, (unsigned __int64 *)v18);
             if ( (uint32_t)result )
             {
@@ -32913,7 +32903,7 @@ LABEL_16:
                   result = csblob_set_cs_flags(krwCtx, (__int64)v22);
                   if ( (uint32_t)result )
                   {
-                    csblob_free_entry((__int64)v22);
+                    csblob_free_entry((struct csblob_walk_ctx *)v22);
                     return 1;
                   }
                   return result;
@@ -33236,14 +33226,14 @@ __int64 __fastcall csblob_chain_walk_offsets(struct_krwCtx *krwCtx, unsigned int
               ctx->selectedSlot = 0;
 LABEL_104:
               ctx->minSlotDistanceQword = v37;
-              v53 = csblob_find_entry(a5, v40, -86111230);
+              v53 = csblob_find_entry(ctx, v40, -86111230);
               if ( v53 )
               {
                 ctx->platformByte = *((unsigned __int8 *)v53 + 36);
                 if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)
-                  || !csblob_find_entry(a5, 7, -86085262)
-                  || csblob_find_entry(a5, 5, -86085263)
-                  || (unsigned int)csblob_zero_entry_region(a5, 5u, -86085263) )
+                  || !csblob_find_entry(ctx, 7, -86085262)
+                  || csblob_find_entry(ctx, 5, -86085263)
+                  || (unsigned int)csblob_zero_entry_region(ctx, 5u, -86085263) )
                 {
                   v17 = 1;
 LABEL_111:
@@ -33252,7 +33242,7 @@ LABEL_111:
                 }
               }
 LABEL_110:
-              csblob_free_entry(a5);
+              csblob_free_entry(ctx);
               v17 = 0;
               goto LABEL_111;
             }
@@ -33717,11 +33707,11 @@ bool __fastcall csblob_modify_entitlement_bits(struct_krwCtx *krwCtx, unsigned i
   unsigned __int64 v12; // x10
   __int64 v13; // x11
   unsigned __int64 v14; // x8
-  uint8_t v15[104]; // [xsp+8h] [xbp-88h] BYREF
+  struct csblob_walk_ctx v15; // [xsp+8h] [xbp-88h] BYREF
 
-  if ( !(unsigned int)csblob_read_and_patch(krwCtx, a2, (__int64)v15) )
+  if ( !(unsigned int)csblob_read_and_patch(krwCtx, a2, (__int64)&v15) )
     return 0;
-  v7 = csblob_find_entry((__int64)v15, 0, -86111230);
+  v7 = csblob_find_entry(&v15, 0, -86111230);
   if ( v7 && bswap32(v7[2]) >> 10 >= 0x81 )
   {
     v10 = *((uint64_t *)v7 + 10);
@@ -33739,15 +33729,15 @@ bool __fastcall csblob_modify_entitlement_bits(struct_krwCtx *krwCtx, unsigned i
       goto LABEL_5;
     }
     *((uint64_t *)v7 + 10) = bswap64(v14);
-    if ( (unsigned int)csblob_replace_entry((__int64)v15, 0, v7) )
+    if ( (unsigned int)csblob_replace_entry(&v15, 0, v7) )
     {
-      v8 = (unsigned int)csblob_apply_with_physmap_write(krwCtx, (__int64)v15) != 0;
+      v8 = (unsigned int)csblob_apply_with_physmap_write(krwCtx, (__int64)&v15) != 0;
       goto LABEL_5;
     }
   }
   v8 = 0;
 LABEL_5:
-  csblob_free_entry((__int64)v15);
+  csblob_free_entry(&v15);
   return v8;
 }
 
@@ -33755,12 +33745,12 @@ LABEL_5:
 __int64 __fastcall check_csblob_patchable(struct_krwCtx *krwCtx, unsigned int a2)
 {
   __int64 result; // x0
-  uint8_t v3[104]; // [xsp+8h] [xbp-68h] BYREF
+  struct csblob_walk_ctx v3; // [xsp+8h] [xbp-68h] BYREF
 
-  result = csblob_read_and_patch(krwCtx, a2, (__int64)v3);
+  result = csblob_read_and_patch(krwCtx, a2, (__int64)&v3);
   if ( (uint32_t)result )
   {
-    csblob_free_entry((__int64)v3);
+    csblob_free_entry(&v3);
     return 1;
   }
   return result;
@@ -34114,27 +34104,29 @@ unsigned __int64 __fastcall proc_kread_and_patch_slot(struct_krwCtx *krwCtx, uns
 }
 
 //----- (000000000002F92C) ----------------------------------------------------
-__int64 __fastcall csblob_find_slot_by_pair(__int64 result, int a2, int a3)
+__int64 __fastcall csblob_find_slot_by_pair(struct csblob_walk_ctx *ctx, int slot, int magic)
 {
   unsigned int *v3; // x9
   __int64 v4; // x8
 
-  if ( result )
+  if ( ctx )
   {
-    if ( *(uint32_t *)(result + 48) == 1 && (v3 = *(unsigned int **)(result + 56), v4 = *v3, (uint32_t)v4) )
+    if ( ctx->containerKind == 1 && (v3 = (unsigned int *)ctx->container, v4 = *v3, (uint32_t)v4) )
     {
-      for ( result = *((uint64_t *)v3 + 1); *(uint32_t *)result != a2 || bswap32(**(uint32_t **)(result + 8)) != a3; result += 16 )
+      __int64 result = *((uint64_t *)v3 + 1);
+      for ( ; *(uint32_t *)result != slot || bswap32(**(uint32_t **)(result + 8)) != magic; result += 16 )
       {
         if ( !--v4 )
           return 0;
       }
+      return result;
     }
     else
     {
       return 0;
     }
   }
-  return result;
+  return 0;
 }
 
 //----- (000000000002F980) ----------------------------------------------------
@@ -34753,7 +34745,7 @@ LABEL_111:
         goto LABEL_349;
       v169 = v16;
       v101 = v187;
-      if ( !(unsigned int)csblob_compute_and_copy_hash((__int64)v3, v212) )
+      if ( !(unsigned int)csblob_compute_and_copy_hash((struct csblob_walk_ctx *)v3, v212) )
         goto LABEL_349;
       if ( !physmap_single_check(v2, (__int64)v212, 20) )
         goto LABEL_349;
@@ -34788,7 +34780,7 @@ LABEL_110:
       {
 LABEL_350:
         if ( v198 != -1 )
-          csblob_free_entry((__int64)&v195);
+          csblob_free_entry((struct csblob_walk_ctx *)&v195);
         goto LABEL_352;
       }
       goto LABEL_111;
@@ -34897,7 +34889,7 @@ LABEL_39:
   if ( v4 <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
     goto LABEL_142;
   bufSize = v171 & 1;
-  if ( !(unsigned int)csblob_compute_and_copy_hash((__int64)v3, v212) || !physmap_single_check(v2, (__int64)v212, 20) )
+  if ( !(unsigned int)csblob_compute_and_copy_hash((struct csblob_walk_ctx *)v3, v212) || !physmap_single_check(v2, (__int64)v212, 20) )
     goto LABEL_451;
   v52 = bufSize;
   if ( bufSize )
@@ -35450,7 +35442,7 @@ LABEL_59:
         if ( v70 > XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
           v71 = 136;
         bufc = v71;
-        v72 = csblob_find_entry((__int64)&v195, v199, -86111230);
+        v72 = csblob_find_entry((struct csblob_walk_ctx *)&v195, v199, -86111230);
         if ( !v72 )
           goto LABEL_451;
         if ( v40 )
@@ -35712,7 +35704,7 @@ LABEL_451:
   }
 LABEL_452:
   if ( v198 != -1 )
-    csblob_free_entry((__int64)&v195);
+    csblob_free_entry((struct csblob_walk_ctx *)&v195);
   v139 = v193;
   if ( v193 != -1 )
   {
@@ -36084,13 +36076,13 @@ LABEL_65:
 }
 
 //----- (0000000000031FC0) ----------------------------------------------------
-__int64 __fastcall csblob_compute_and_copy_hash(__int64 a1, void *a2)
+__int64 __fastcall csblob_compute_and_copy_hash(struct csblob_walk_ctx *ctx, void *outHash)
 {
   __int64 result; // x0
   unsigned int __n; // [xsp+4h] [xbp-4Ch] BYREF
   uint8_t __n_4[48]; // [xsp+8h] [xbp-48h] BYREF
 
-  result = (__int64)csblob_find_entry(a1, *(uint32_t *)(a1 + 64), -86111230);
+  result = (__int64)csblob_find_entry(ctx, ctx->selectedSlot, -86111230);
   if ( result )
   {
     __n = 48;
@@ -36102,7 +36094,7 @@ __int64 __fastcall csblob_compute_and_copy_hash(__int64 a1, void *a2)
                &__n);
     if ( (uint32_t)result )
     {
-      memcpy(a2, __n_4, __n);
+      memcpy(outHash, __n_4, __n);
       return 1;
     }
   }
