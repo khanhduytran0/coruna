@@ -176,6 +176,41 @@ static inline uint64_t vmcopy_page_info_ref_from_addr(uint64_t addr, uint64_t pa
   return (addr - linearBase) >> pageShift;
 }
 
+static inline __int64 physmap_find_free_vm_region(vm_size_t requiredSize, vm_address_t *baseOut, vm_size_t *sizeOut)
+{
+  vm_address_t regionAddress = 0;
+  vm_size_t regionSize = 0;
+  natural_t depth = 1;
+  natural_t info[19];
+  mach_msg_type_number_t infoCnt;
+
+  while ( 1 )
+  {
+    memset(info, 0, sizeof(info));
+    infoCnt = 19;
+    depth = 1;
+    __int64 kr = vm_region_recurse_64(
+                   mach_task_self_,
+                   &regionAddress,
+                   &regionSize,
+                   &depth,
+                   (vm_region_recurse_info_t)info,
+                   &infoCnt);
+    if ( (uint32_t)kr )
+      return kr;
+    if ( depth > 1 )
+      return 5;
+    if ( depth == 1 && regionSize >= requiredSize && *(memory_object_size_t *)((char *)&info[2] + 4) == 0 )
+    {
+      *baseOut = regionAddress;
+      *sizeOut = requiredSize;
+      return 0;
+    }
+    regionAddress += regionSize;
+    regionSize = 0;
+  }
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -3373,8 +3408,6 @@ __int64 __fastcall kernel_read_loop_physmap(struct_krwCtx *krwCtx, __int64 a2, u
   __int64 v42; // x24
   mach_port_t *v43; // x21
   unsigned __int64 v44; // x22
-  vm_address_t v45; // x8
-  __int64 v47; // x0
   unsigned __int64 v48; // x8
   unsigned __int64 v49; // x8
   __int64 v50; // x23
@@ -3557,16 +3590,7 @@ LABEL_9:
     v117 = v12;
     free_region_address = 0;
     v139 = 0;
-    LODWORD(v135) = 1;
-    memset(size, 0, 19 * sizeof(natural_t));
-    LODWORD(v134) = 19;
-    v42 = vm_region_recurse_64(
-            mach_task_self_,
-            &free_region_address,
-            &v139,
-            (natural_t *)&v135,
-            (vm_region_recurse_info_t)size,
-            (mach_msg_type_number_t *)&v134);
+    v42 = physmap_find_free_vm_region(v14 + 2 * vm_page_size, &free_region_address, &v139);
     if ( (uint32_t)v42 )
     {
 LABEL_58:
@@ -3574,40 +3598,8 @@ LABEL_58:
       v120 = 0;
       goto LABEL_170;
     }
-    while ( 1 )
-    {
-      if ( (unsigned int)v135 > 1 )
-      {
-        v42 = 5;
-        goto LABEL_58;
-      }
-      if ( (uint32_t)v135 == 1 )
-      {
-        v45 = v14 + 2 * vm_page_size;
-        if ( v139 >= v45 && *(memory_object_size_t *)((char *)&size[1] + 4) == 0 )
-          break;
-      }
-      free_region_address += v139;
-      v139 = 0;
-      LODWORD(v135) = 1;
-      memset(size, 0, 19 * sizeof(natural_t));
-      LODWORD(v134) = 19;
-      v47 = vm_region_recurse_64(
-              mach_task_self_,
-              &free_region_address,
-              &v139,
-              (natural_t *)&v135,
-              (vm_region_recurse_info_t)size,
-              (mach_msg_type_number_t *)&v134);
-      if ( (uint32_t)v47 )
-      {
-        v42 = v47;
-        goto LABEL_58;
-      }
-    }
-    v139 = v14 + 2 * vm_page_size;
     *(uint64_t *)(a2 + 13864) = free_region_address;
-    atomic_store(v45, (unsigned __int64 *)(a2 + 13872));
+    atomic_store(v139, (unsigned __int64 *)(a2 + 13872));
     *v13 = free_region_address;
     v13[1] = v139;
     TRACE_PHYSMAP("kernel_read_loop_physmap free region base=%llx size=%llx required=%llx\n",
