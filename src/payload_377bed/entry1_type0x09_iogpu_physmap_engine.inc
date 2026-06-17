@@ -242,6 +242,31 @@ static inline __int64 physmap_make_worker_memory_entries(
   return 0;
 }
 
+static inline __int64 physmap_start_worker_threads(pthread_t *threads, unsigned int count, __int64 state)
+{
+  for ( unsigned int i = 0; i < count; ++i )
+  {
+    void *(__cdecl *entry)(void *) = (void *(__cdecl *)(void *))nullsub_1(acquire_physmap_page_atomic);
+    if ( pthread_create(&threads[i], 0, entry, (void *)state) )
+      return 5;
+  }
+  return 0;
+}
+
+static inline __int64 physmap_join_worker_threads(pthread_t *threads, unsigned int count)
+{
+  for ( unsigned int i = 0; i < count; ++i )
+  {
+    if ( !threads[i] )
+      continue;
+    __int64 kr = pthread_join(threads[i], 0);
+    if ( (uint32_t)kr )
+      return kr;
+    threads[i] = 0;
+  }
+  return 0;
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -3422,12 +3447,7 @@ __int64 __fastcall kernel_read_loop_physmap(struct_krwCtx *krwCtx, __int64 a2, u
   vm_address_t v29; // x28
   __int64 v30; // x0
   __int64 memory_entry_64; // x0
-  pthread_t *v32; // x24
-  unsigned __int64 v33; // x22
-  void *(__cdecl *v34)(void *); // x0
   unsigned int v35; // w8
-  pthread_t *v36; // x22
-  unsigned __int64 v37; // x25
   vm_address_t v38; // x25
   __int64 v39; // x0
   __int64 v40; // x21
@@ -3477,8 +3497,6 @@ __int64 __fastcall kernel_read_loop_physmap(struct_krwCtx *krwCtx, __int64 a2, u
   __int64 v87; // x0
   unsigned __int8 *v88; // x23
   __int64 v89; // x19
-  pthread_t *v90; // x22
-  __int64 v91; // x25
   unsigned __int64 v92; // x22
   bool v93; // w25
   vm_address_t v94; // x1
@@ -3511,9 +3529,6 @@ __int64 __fastcall kernel_read_loop_physmap(struct_krwCtx *krwCtx, __int64 a2, u
   mem_entry_name_port_t v122; // [xsp+78h] [xbp-418h] BYREF
   mach_msg_type_number_t v123; // [xsp+7Ch] [xbp-414h] BYREF
   int info[19]; // [xsp+80h] [xbp-410h] BYREF
-  __int128 v125; // [xsp+90h] [xbp-400h]
-  __int128 v126; // [xsp+A0h] [xbp-3F0h]
-  natural_t v127[7]; // [xsp+B0h] [xbp-3E0h] BYREF
   natural_t v128; // [xsp+CCh] [xbp-3C4h] BYREF
   vm_size_t v129; // [xsp+D0h] [xbp-3C0h] BYREF
   vm_address_t v130; // [xsp+D8h] [xbp-3B8h] BYREF
@@ -3524,8 +3539,6 @@ __int64 __fastcall kernel_read_loop_physmap(struct_krwCtx *krwCtx, __int64 a2, u
   vm_address_t v135; // [xsp+F8h] [xbp-398h] BYREF
   vm_address_t free_region_address;
   memory_object_size_t size[10]; // [xsp+100h] [xbp-390h] BYREF
-  __int128 v137; // [xsp+120h] [xbp-370h]
-  uint8_t v138[28]; // [xsp+130h] [xbp-360h] BYREF
   vm_address_t v139; // [xsp+150h] [xbp-340h] BYREF
   mach_port_t name; // [xsp+15Ch] [xbp-334h] BYREF
   vm_address_t v141; // [xsp+160h] [xbp-330h] BYREF
@@ -3620,7 +3633,6 @@ LABEL_9:
     v42 = physmap_find_free_vm_region(v14 + 2 * vm_page_size, &free_region_address, &v139);
     if ( (uint32_t)v42 )
     {
-LABEL_58:
       v19 = 0;
       v120 = 0;
       goto LABEL_170;
@@ -3711,26 +3723,17 @@ LABEL_169:
                           &infoCnt);
       v11 = v112;
       if ( (uint32_t)memory_entry_64 )
-        goto LABEL_71;
+      {
+        v42 = memory_entry_64;
+        goto LABEL_72;
+      }
       v108 = *(uint32_t *)((char *)size + 0x28);
       if ( v112 )
       {
-        v32 = (pthread_t *)v145;
-        v33 = v113;
-        while ( 1 )
-        {
-          v34 = (void *(__cdecl *)(void *))nullsub_1(acquire_physmap_page_atomic);
-          if ( pthread_create(v32, 0, v34, (void *)a2) )
-            break;
-          ++v32;
-          if ( !--v33 )
-            goto LABEL_36;
-        }
-LABEL_70:
-        v42 = 5;
-        goto LABEL_72;
+        v42 = physmap_start_worker_threads((pthread_t *)v145, v113, a2);
+        if ( (uint32_t)v42 )
+          goto LABEL_72;
       }
-LABEL_36:
       while ( 1 )
       {
         v35 = atomic_load((unsigned int *)(a2 + 13888));
@@ -3746,31 +3749,28 @@ LABEL_36:
       v131 = v19;
       memory_entry_64 = mach_make_memory_entry_64(mach_task_self_, &v131, 0, 1, &name, v26);
       if ( (uint32_t)memory_entry_64 )
-        goto LABEL_71;
+      {
+        v42 = memory_entry_64;
+        goto LABEL_72;
+      }
       if ( v131 != v19 )
-        goto LABEL_70;
+      {
+        v42 = 5;
+        goto LABEL_72;
+      }
       v121 = v7;
       atomic_store(1u, (unsigned __int8 *)(a2 + 13884));
       if ( v112 )
       {
-        v36 = (pthread_t *)v145;
-        v37 = v113;
-        while ( 1 )
+        memory_entry_64 = physmap_join_worker_threads((pthread_t *)v145, v113);
+        if ( (uint32_t)memory_entry_64 )
         {
-          memory_entry_64 = pthread_join(*v36, 0);
-          if ( (uint32_t)memory_entry_64 )
-            break;
-          *v36++ = 0;
-          if ( !--v37 )
-            goto LABEL_44;
-        }
-LABEL_71:
-        v42 = memory_entry_64;
+          v42 = memory_entry_64;
 LABEL_72:
-        v120 = v19;
-        goto LABEL_170;
+          v120 = v19;
+          goto LABEL_170;
+        }
       }
-LABEL_44:
       v38 = v141;
       v129 = 0;
       v130 = v141;
@@ -4137,19 +4137,7 @@ LABEL_171:
     atomic_store(1u, v88);
     if ( v11 )
     {
-      v90 = (pthread_t *)v145;
-      v91 = v11;
-      do
-      {
-        if ( *v90 )
-        {
-          pthread_join(*v90, 0);
-          *v90 = 0;
-        }
-        ++v90;
-        --v91;
-      }
-      while ( v91 );
+      physmap_join_worker_threads((pthread_t *)v145, v11);
     }
     v92 = 0;
     v93 = 1;
