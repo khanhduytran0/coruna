@@ -419,7 +419,7 @@ __int64 __fastcall krw_ctx_buf_append_entry(__int64 a1, __int64 a2, int a3);
 __int64 __fastcall buf_append_data(__int64 a1, const void *a2, unsigned int a3);
 __int64 __fastcall send_mach_msg_from_ctx(__int64 a1, mach_port_t a2, mach_port_t a3, mach_msg_id_t a4);
 int __fastcall parse_xnu_version_string(__int64 a1);
-const CFDictionaryRef *__fastcall ioservice_get_matching(const char *a1);
+io_service_t __fastcall ioservice_get_matching(const char *a1);
 __int64 __fastcall ioservice_notification_send(unsigned int a1, __int64 a2, __int64 a3, unsigned int a4, unsigned int a5, const void *a6, int a7);
 __int64 __fastcall register_ioservice_publish_notify(__int64 a1, unsigned int a2, mach_port_name_t *a3);
 bool __fastcall set_thread_realtime_policy_1(thread_act_t a1, thread_policy_t policy_info);

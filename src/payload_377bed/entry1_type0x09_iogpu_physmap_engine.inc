@@ -5680,7 +5680,7 @@ LABEL_372:
   v280 = vm_page_size;
   v285 = v185;
   *(__int128 *)a1 = 0u;
-  v186 = (unsigned int)ioservice_get_matching("IOSurfaceRoot");
+  v186 = ioservice_get_matching("IOSurfaceRoot");
   v10 = 163854;
   if ( v186 + 1 < 2 )
     return v10;
@@ -10231,7 +10231,7 @@ __int64 __fastcall find_connect_ioavservice(__int64 a1)
   }
   else
   {
-    v6 = (unsigned int)ioservice_get_matching("AppleKeyStore");
+    v6 = ioservice_get_matching("AppleKeyStore");
     result = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_MOBILEBACKUP_SANDBOX_PATCHED);
     if ( !(uint32_t)result )
     {

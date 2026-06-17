@@ -433,7 +433,7 @@ __int64 __fastcall necp_ioservice_auth_write(struct_krwCtx *krwCtx, __int64 a2)
   v4 = krwCtx->iosurfaceObj;
   if ( v4 + 1 <= 1 )
   {
-    v5 = (unsigned int)ioservice_get_matching("AppleSEPManager");
+    v5 = ioservice_get_matching("AppleSEPManager");
     if ( v5 + 1 < 2 )
       return 708625;
     v4 = v5;
@@ -504,4 +504,3 @@ LABEL_25:
   }
   return v6;
 }
-

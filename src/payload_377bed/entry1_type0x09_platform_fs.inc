@@ -1127,6 +1127,7 @@ const CFDictionaryRef *__fastcall iokit_connect_call_struct_method(const CFDicti
 {
   const CFDictionaryRef *v1; // x19
   io_object_t v2; // w20
+  io_service_t service; // w0
   kern_return_t v3; // w0
   kern_return_t v4; // w0
   unsigned int v5; // w8
@@ -1144,16 +1145,16 @@ const CFDictionaryRef *__fastcall iokit_connect_call_struct_method(const CFDicti
   if ( result )
   {
     v1 = result;
-    result = ioservice_get_matching("IOHDIXController");
-    if ( (unsigned int)((uint32_t)result + 1) < 2 )
+    service = ioservice_get_matching("IOHDIXController");
+    if ( service + 1 < 2 )
     {
       *((uint32_t *)v1 + 2) = 708625;
     }
     else
     {
-      v2 = (unsigned int)result;
+      v2 = service;
       connect = 0;
-      v3 = IOServiceOpen((io_service_t)result, mach_task_self_, 0, &connect);
+      v3 = IOServiceOpen(service, mach_task_self_, 0, &connect);
       if ( v3 )
       {
         *((uint32_t *)v1 + 2) = v3 | 0x80000000;
@@ -3212,4 +3213,3 @@ bool __fastcall check_root_fs_mounted(bool *a1)
   }
   return result;
 }
-

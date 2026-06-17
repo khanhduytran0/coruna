@@ -1580,16 +1580,14 @@ int __fastcall parse_xnu_version_string(__int64 a1)
 }
 
 //----- (0000000000024D64) ----------------------------------------------------
-const CFDictionaryRef *__fastcall ioservice_get_matching(const char *a1)
+io_service_t __fastcall ioservice_get_matching(const char *a1)
 {
-  const CFDictionaryRef *result; // x0
+  CFMutableDictionaryRef matching; // x0
 
-  result = IOServiceMatching(a1);
-  if ( result )
-  {
-    return (const CFDictionaryRef *)IOServiceGetMatchingService(kIOMasterPortDefault, result);
-  }
-  return result;
+  matching = IOServiceMatching(a1);
+  if ( matching )
+    return IOServiceGetMatchingService(kIOMasterPortDefault, matching);
+  return 0;
 }
 // 24D90: variable 'vars8' is possibly undefined
 
@@ -3142,7 +3140,7 @@ __int64 __fastcall setup_iosurface_semaphore_helper(struct_krwCtx *krwCtx)
     {
       if ( (unsigned int)(krwCtx->iosurfaceObj + 1) <= 1 )
       {
-        v7 = (unsigned int)ioservice_get_matching("AppleSEPManager");
+        v7 = ioservice_get_matching("AppleSEPManager");
         if ( v7 + 1 < 2 )
           return 708625;
         krwCtx->iosurfaceObj = v7;
@@ -6084,4 +6082,3 @@ LABEL_12:
     goto LABEL_12;
   return v5;
 }
-
