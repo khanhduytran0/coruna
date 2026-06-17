@@ -4204,10 +4204,7 @@ LABEL_171:
 // local variable allocation has failed, the output may be wrong!
 __int64 __fastcall kext_exploit_main(uint64_t x0, uint32_t w1, uint64_t x2)
 {
-  __int64 v3; // x0
-  uint32_t *v4; // x2
   uint32_t *v5; // x20
-  int v6; // w1
   int v7; // w21
   uint64_t v8; // x19
   int v9; // w0
@@ -4416,8 +4413,6 @@ __int64 __fastcall kext_image_scan_init(uint64_t *a1)
 //----- (000000000000CEB8) ----------------------------------------------------
 __int64 __fastcall kext_image_scan_trampoline_0(struct_krwCtx *x0, uint64_t x1)
 {
-  __int64 v2; // x0
-  __int64 v3; // x1
   __int64 v4; // x20
   __int64 v5; // x19
   __int64 v6; // x27
