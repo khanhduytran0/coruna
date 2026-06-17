@@ -4446,7 +4446,7 @@ __int64 __fastcall kext_image_scan_trampoline_0(struct_krwCtx *x0, uint64_t x1)
   __int64 v30; // x21
   int v31; // w0
   __int64 v32; // x0
-  void *v33; // x24
+  uintptr_t v33; // x24
   __int64 v34; // x8
   uint64_t *v35; // x21
   __int64 v36; // x8
@@ -4501,7 +4501,7 @@ __int64 __fastcall kext_image_scan_trampoline_0(struct_krwCtx *x0, uint64_t x1)
   uint64_t *v85; // x15
   unsigned int v86; // w16
   unsigned int m; // w17
-  __int64 *v88; // x0
+  uint64_t *v88; // x0
   __int64 v89; // x1
   vm_size_t v90; // x2
   char *v91; // x3
@@ -4685,7 +4685,7 @@ __int64 __fastcall kext_image_scan_trampoline_0(struct_krwCtx *x0, uint64_t x1)
   mach_port_name_t v271[2]; // [xsp+70h] [xbp-10E0h]
   mach_port_name_t v272; // [xsp+70h] [xbp-10E0h]
   __int64 v273; // [xsp+70h] [xbp-10E0h]
-  void *value; // [xsp+78h] [xbp-10D8h]
+  uintptr_t value; // [xsp+78h] [xbp-10D8h]
   unsigned __int64 valuea; // [xsp+78h] [xbp-10D8h]
   int v276; // [xsp+80h] [xbp-10D0h]
   unsigned __int64 v277; // [xsp+80h] [xbp-10D0h]
@@ -4733,7 +4733,6 @@ __int64 __fastcall kext_image_scan_trampoline_0(struct_krwCtx *x0, uint64_t x1)
   size_t outputStructCnt; // [xsp+140h] [xbp-1010h] BYREF
   mem_entry_name_port_t v319[2]; // [xsp+148h] [xbp-1008h] BYREF
   integer_t a1[4]; // [xsp+150h] [xbp-1000h] BYREF
-  __int128 v321; // [xsp+160h] [xbp-FF0h]
   struct
   {
     mach_msg_header_t outputStruct[2]; // [xsp+170h] [xbp-FE0h] BYREF
@@ -5019,7 +5018,7 @@ LABEL_100:
   {
     a1[0] = 0;
     *(uint64_t *)&name.msgh_bits = vm_page_size;
-    if ( v33 && !((unsigned int)v33 % (unsigned int)v266) )
+    if ( v33 && !(v33 % (unsigned int)v266) )
     {
       v36 = *(uint64_t *)(v4 + 13464);
       if ( (uint32_t)v266 )
@@ -5049,7 +5048,7 @@ LABEL_100:
     if ( mach_make_memory_entry(mach_task_self_, (vm_size_t *)&name.msgh_bits, 0, v41, (mem_entry_name_port_t *)a1, 0) )
       break;
     value = v33;
-    *(uint32_t *)(v264 + 4LL * (uint64_t)v33) = a1[0];
+    *(uint32_t *)(v264 + 4LL * v33) = a1[0];
     v42 = *v281;
     if ( !*v281 )
       goto LABEL_92;
@@ -5124,7 +5123,7 @@ LABEL_85:
       v47 = 1LL << v43;
       goto LABEL_86;
     }
-    *(uint32_t *)(v264 + 4LL * (uint64_t)value) = 0;
+    *(uint32_t *)(v264 + 4LL * value) = 0;
     *(uint32_t *)(v4 + 13552) = a1[0];
     *(uint64_t *)(v4 + 13560) = v55 - v262;
     v42 = *v281;
@@ -5138,10 +5137,10 @@ LABEL_93:
     v56.i16[0] = vaddlv_u8(v56);
     if ( v42 == v56.i32[0] )
       break;
-    v33 = (char *)value + 1;
+    v33 = value + 1;
     ++v276;
   }
-  while ( (unsigned __int64)value + 1 < *(unsigned int *)(v4 + 13440) );
+  while ( value + 1 < *(unsigned int *)(v4 + 13440) );
   get_page_size();
   if ( (uint32_t)v10 == 708620 )
     goto LABEL_100;
@@ -5686,7 +5685,6 @@ LABEL_372:
   v280 = vm_page_size;
   v285 = v185;
   *(__int128 *)a1 = 0u;
-  v321 = 0u;
   v186 = (unsigned int)ioservice_get_matching("IOSurfaceRoot");
   v10 = 163854;
   if ( v186 + 1 < 2 )
