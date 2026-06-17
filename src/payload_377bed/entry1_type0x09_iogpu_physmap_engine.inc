@@ -211,6 +211,37 @@ static inline __int64 physmap_find_free_vm_region(vm_size_t requiredSize, vm_add
   }
 }
 
+static inline __int64 physmap_make_worker_memory_entries(
+        vm_size_t mappingSize,
+        vm_address_t sourceAddress,
+        unsigned int workerCount,
+        mach_port_t objectHandles[4],
+        mach_port_t *firstObjectHandle)
+{
+  if ( firstObjectHandle )
+    *firstObjectHandle = 0;
+
+  for ( unsigned int i = 0; i < workerCount; ++i )
+  {
+    memory_object_size_t entrySize = mappingSize;
+    __int64 kr = mach_make_memory_entry_64(
+                   mach_task_self_,
+                   &entrySize,
+                   sourceAddress,
+                   1,
+                   &objectHandles[i],
+                   0);
+    if ( (uint32_t)kr )
+      return kr;
+    if ( entrySize != mappingSize )
+      return 5;
+  }
+
+  if ( firstObjectHandle && workerCount )
+    *firstObjectHandle = objectHandles[0];
+  return 0;
+}
+
 //----- (00000000000068F4) ----------------------------------------------------
 void __fastcall deallocate_physmap_pages(__int64 a1)
 {
@@ -3385,10 +3416,6 @@ __int64 __fastcall kernel_read_loop_physmap(struct_krwCtx *krwCtx, __int64 a2, u
   vm_size_t v19; // x20
   unsigned __int8 *v20; // x11
   unsigned int *v21; // x12
-  unsigned __int64 v22; // x21
-  __int64 v23; // x27
-  mach_port_t *v24; // x25
-  __int64 v25; // x0
   unsigned int v26; // w21
   vm_size_t v27; // x27
   __int64 v28; // x0
@@ -3619,7 +3646,6 @@ LABEL_58:
     v19 = atomic_load((unsigned __int64 *)(a2 + 13872));
     v20 = (unsigned __int8 *)(a2 + 13884);
     v21 = (unsigned int *)(a2 + 13888);
-    v22 = v11;
     v109 = v14;
     v113 = v11;
     while ( 1 )
@@ -3635,10 +3661,20 @@ LABEL_58:
                     (unsigned long long)*(uint64_t *)(a2 + 13864),
                     (unsigned long long)atomic_load((unsigned __int64 *)(a2 + 13872)));
       if ( v11 )
-        break;
-      v112 = 0;
-      v26 = 0;
-LABEL_25:
+      {
+        v42 = physmap_make_worker_memory_entries(v19, *(uint64_t *)(a2 + 13864), v11, object_handle, &v26);
+        if ( (uint32_t)v42 )
+        {
+          v120 = v17;
+          goto LABEL_170;
+        }
+        v112 = v11;
+      }
+      else
+      {
+        v112 = 0;
+        v26 = 0;
+      }
       atomic_store(v26, (unsigned int *)(a2 + 13880));
       v27 = vm_page_size;
       v28 = vm_map(mach_task_self_, &address, v19, 0, 1, v26, 0, 0, 1, 1, 1u);
@@ -4081,36 +4117,10 @@ LABEL_168:
       v18 = v111 + 1;
       v42 = 5;
       v17 = v19;
-      v22 = v113;
       v21 = (unsigned int *)(a2 + 13888);
       if ( v111 + 1 == v116 )
         return v42;
     }
-    v23 = v7;
-    v24 = object_handle;
-    while ( 1 )
-    {
-      size[0] = v19;
-      v25 = mach_make_memory_entry_64(mach_task_self_, size, *(uint64_t *)(a2 + 13864), 1, v24, 0);
-      if ( (uint32_t)v25 )
-      {
-        v42 = v25;
-        goto LABEL_69;
-      }
-      if ( size[0] != v19 )
-        break;
-      ++v24;
-      if ( !--v22 )
-      {
-        v112 = v11;
-        v26 = object_handle[0];
-        v7 = v23;
-        goto LABEL_25;
-      }
-    }
-    v42 = 5;
-LABEL_69:
-    v120 = v17;
   }
   else
   {
