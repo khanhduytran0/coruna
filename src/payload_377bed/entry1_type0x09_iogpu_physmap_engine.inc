@@ -111,6 +111,13 @@ typedef struct EntitlementIokitThreadArg
   int status;
 } EntitlementIokitThreadArg;
 
+typedef struct CfCollectionApplyContext
+{
+  uint32_t status;
+  uint32_t reserved;
+  const void *object;
+} CfCollectionApplyContext;
+
 typedef struct VmcopyRaceThreadBlock
 {
   uint64_t isa;
@@ -8758,8 +8765,7 @@ __int64 __fastcall compare_cfdict_entries(const void *a1, const void *a2)
   CFTypeID v5; // x22
   CFTypeID v6; // x22
   void (__cdecl *v7)(const void *, const void *, void *); // x0
-  unsigned int v9; // [xsp+0h] [xbp-30h] BYREF
-  const void *v10; // [xsp+8h] [xbp-28h]
+  CfCollectionApplyContext context; // BYREF
 
   v2 = 708609;
   if ( a1 )
@@ -8772,11 +8778,12 @@ __int64 __fastcall compare_cfdict_entries(const void *a1, const void *a2)
         v6 = CFGetTypeID(a2);
         if ( v6 == CFDictionaryGetTypeID() )
         {
-          v9 = 0;
-          v10 = a1;
+          context.status = 0;
+          context.reserved = 0;
+          context.object = a1;
           v7 = (void (__cdecl *)(const void *, const void *, void *))nullsub_1(iterate_cftype_values);
-          CFDictionaryApplyFunction((CFDictionaryRef)a2, v7, &v9);
-          return v9;
+          CFDictionaryApplyFunction((CFDictionaryRef)a2, v7, &context);
+          return context.status;
         }
       }
     }
@@ -8788,6 +8795,7 @@ __int64 __fastcall compare_cfdict_entries(const void *a1, const void *a2)
 //----- (00000000000129F8) ----------------------------------------------------
 void __fastcall iterate_cftype_values(const void *a1, CFTypeRef cf, __int64 a3)
 {
+  CfCollectionApplyContext *dictContext; // x20
   CFTypeID v6; // x22
   CFTypeID v7; // x22
   int v8; // w23
@@ -8801,12 +8809,13 @@ void __fastcall iterate_cftype_values(const void *a1, CFTypeRef cf, __int64 a3)
   void (__cdecl *v16)(const void *, void *); // x0
   int v17; // w8
   void *value; // [xsp+8h] [xbp-48h] BYREF
-  int context; // [xsp+10h] [xbp-40h] BYREF
-  void *v20; // [xsp+18h] [xbp-38h]
+  uint8_t allArrayValuesAreStrings; // BYREF
+  CfCollectionApplyContext arrayContext; // BYREF
   CFRange v21; // 0:x1.16
   CFRange v22; // 0:x1.16
 
-  if ( !a3 || *(uint32_t *)a3 )
+  dictContext = (CfCollectionApplyContext *)a3;
+  if ( !dictContext || dictContext->status )
     return;
   if ( !a1 || !cf )
   {
@@ -8819,7 +8828,7 @@ LABEL_22:
   if ( CFStringGetTypeID() != v6 && CFArrayGetTypeID() != v6 && CFBooleanGetTypeID() != v6 && CFNumberGetTypeID() != v6 )
     goto LABEL_21;
   value = 0;
-  if ( !CFDictionaryGetValueIfPresent(*(CFDictionaryRef *)(a3 + 8), a1, (const void **)&value) )
+  if ( !CFDictionaryGetValueIfPresent((CFDictionaryRef)dictContext->object, a1, (const void **)&value) )
     goto LABEL_19;
   v7 = CFGetTypeID(value);
   if ( CFGetTypeID(cf) != v7 )
@@ -8843,22 +8852,23 @@ LABEL_21:
           v12 = CFGetTypeID(cf);
           if ( v12 == CFArrayGetTypeID() )
           {
-            LOBYTE(context) = 1;
+            allArrayValuesAreStrings = 1;
             Count = CFArrayGetCount((CFArrayRef)cf);
             v14 = (void (__cdecl *)(const void *, void *))nullsub_1(check_cfstring_type);
             v21.location = 0;
             v21.length = Count;
-            CFArrayApplyFunction((CFArrayRef)cf, v21, v14, &context);
-            if ( (uint8_t)context )
+            CFArrayApplyFunction((CFArrayRef)cf, v21, v14, &allArrayValuesAreStrings);
+            if ( allArrayValuesAreStrings )
             {
-              context = 0;
-              v20 = v9;
+              arrayContext.status = 0;
+              arrayContext.reserved = 0;
+              arrayContext.object = v9;
               v15 = CFArrayGetCount((CFArrayRef)cf);
               v16 = (void (__cdecl *)(const void *, void *))nullsub_1(cfarray_add_unique);
               v22.location = 0;
               v22.length = v15;
-              CFArrayApplyFunction((CFArrayRef)cf, v22, v16, &context);
-              v8 = context;
+              CFArrayApplyFunction((CFArrayRef)cf, v22, v16, &arrayContext);
+              v8 = arrayContext.status;
             }
             else
             {
@@ -8868,12 +8878,12 @@ LABEL_21:
         }
       }
     }
-    *(uint32_t *)a3 = v8;
+    dictContext->status = v8;
     return;
   }
 LABEL_19:
-  if ( !*(uint32_t *)a3 )
-    CFDictionarySetValue(*(CFMutableDictionaryRef *)(a3 + 8), a1, cf);
+  if ( !dictContext->status )
+    CFDictionarySetValue((CFMutableDictionaryRef)dictContext->object, a1, cf);
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
 
@@ -8884,8 +8894,7 @@ __int64 __fastcall merge_cfdict_entries(const void *a1, const void *a2)
   CFTypeID v5; // x22
   CFTypeID v6; // x22
   void (__cdecl *v7)(const void *, const void *, void *); // x0
-  unsigned int v9; // [xsp+0h] [xbp-30h] BYREF
-  const void *v10; // [xsp+8h] [xbp-28h]
+  CfCollectionApplyContext context; // BYREF
 
   v2 = 708609;
   if ( a1 )
@@ -8898,11 +8907,12 @@ __int64 __fastcall merge_cfdict_entries(const void *a1, const void *a2)
         v6 = CFGetTypeID(a2);
         if ( v6 == CFDictionaryGetTypeID() )
         {
-          v9 = 0;
-          v10 = a1;
+          context.status = 0;
+          context.reserved = 0;
+          context.object = a1;
           v7 = (void (__cdecl *)(const void *, const void *, void *))nullsub_1(apply_cfdict_update);
-          CFDictionaryApplyFunction((CFDictionaryRef)a2, v7, &v9);
-          return v9;
+          CFDictionaryApplyFunction((CFDictionaryRef)a2, v7, &context);
+          return context.status;
         }
       }
     }
@@ -8914,21 +8924,22 @@ __int64 __fastcall merge_cfdict_entries(const void *a1, const void *a2)
 //----- (0000000000012C98) ----------------------------------------------------
 void __fastcall apply_cfdict_update(void *key, CFTypeRef valueToCompare, __int64 a3)
 {
+  CfCollectionApplyContext *dictContext; // x20
   CFTypeID v5; // x21
   CFIndex Count; // x21
   void (__cdecl *v7)(const void *, void *); // x0
   int v8; // w8
-  int context; // [xsp+8h] [xbp-38h] BYREF
-  void *v10; // [xsp+10h] [xbp-30h]
+  CfCollectionApplyContext arrayContext; // BYREF
   void *value; // [xsp+18h] [xbp-28h] BYREF
   CFRange v12; // 0:x1.16
 
-  if ( a3 && !*(uint32_t *)a3 )
+  dictContext = (CfCollectionApplyContext *)a3;
+  if ( dictContext && !dictContext->status )
   {
     if ( key && valueToCompare )
     {
       value = 0;
-      if ( !CFDictionaryGetValueIfPresent(*(CFDictionaryRef *)(a3 + 8), key, (const void **)&value) )
+      if ( !CFDictionaryGetValueIfPresent((CFDictionaryRef)dictContext->object, key, (const void **)&value) )
       {
         v8 = 708625;
         goto LABEL_14;
@@ -8938,21 +8949,22 @@ void __fastcall apply_cfdict_update(void *key, CFTypeRef valueToCompare, __int64
       {
         if ( CFArrayGetTypeID() == v5 )
         {
-          context = 0;
-          v10 = value;
+          arrayContext.status = 0;
+          arrayContext.reserved = 0;
+          arrayContext.object = value;
           Count = CFArrayGetCount(valueToCompare);
           v7 = (void (__cdecl *)(const void *, void *))nullsub_1(cfarray_contains_check);
           v12.location = 0;
           v12.length = Count;
-          CFArrayApplyFunction(valueToCompare, v12, v7, &context);
-          v8 = context;
+          CFArrayApplyFunction(valueToCompare, v12, v7, &arrayContext);
+          v8 = arrayContext.status;
 LABEL_14:
-          *(uint32_t *)a3 = v8;
+          dictContext->status = v8;
           return;
         }
         if ( CFEqual(valueToCompare, value) )
         {
-          *(uint32_t *)a3 = 0;
+          dictContext->status = 0;
           return;
         }
       }
@@ -8968,26 +8980,28 @@ LABEL_14:
 //----- (0000000000012DB0) ----------------------------------------------------
 void __fastcall cfarray_add_unique(const void *a1, __int64 a2)
 {
+  CfCollectionApplyContext *context; // x20
   CFArrayRef v4; // x21
   CFMutableArrayRef v5; // x0
   CFRange v7; // 0:x1.16
 
-  if ( a2 && !*(uint32_t *)a2 )
+  context = (CfCollectionApplyContext *)a2;
+  if ( context && !context->status )
   {
     if ( a1 )
     {
-      v4 = *(CFArrayRef *)(a2 + 8);
+      v4 = (CFArrayRef)context->object;
       v7.length = CFArrayGetCount(v4);
       v7.location = 0;
       if ( !CFArrayContainsValue(v4, v7, a1) )
       {
-        v5 = *(CFMutableArrayRef *)(a2 + 8);
+        v5 = (CFMutableArrayRef)context->object;
         CFArrayAppendValue(v5, a1);
       }
     }
     else
     {
-      *(uint32_t *)a2 = 708609;
+      context->status = 708609;
     }
   }
 }
@@ -9009,26 +9023,28 @@ const void *__fastcall check_cfstring_type(const void *result, uint8_t *a2)
 //----- (0000000000012E88) ----------------------------------------------------
 const void *__fastcall cfarray_contains_check(const void *result, __int64 a2)
 {
+  CfCollectionApplyContext *context; // x20
   const void *v3; // x20
   int v4; // w22
   CFArrayRef v5; // x21
   CFRange v6; // 0:x1.16
 
-  if ( a2 && !*(uint32_t *)a2 )
+  context = (CfCollectionApplyContext *)a2;
+  if ( context && !context->status )
   {
     v3 = result;
     v4 = 708609;
     if ( result )
     {
-      v5 = *(CFArrayRef *)(a2 + 8);
+      v5 = (CFArrayRef)context->object;
       v6.length = CFArrayGetCount(v5);
       v6.location = 0;
-      result = (const void *)CFArrayContainsValue(v5, v6, v3);
-      if ( (uint32_t)result )
+      Boolean containsValue = CFArrayContainsValue(v5, v6, v3);
+      if ( containsValue )
         return result;
       v4 = 708625;
     }
-    *(uint32_t *)a2 = v4;
+    context->status = v4;
   }
   return result;
 }
