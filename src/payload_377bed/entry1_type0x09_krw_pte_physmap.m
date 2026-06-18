@@ -940,137 +940,99 @@ unsigned __int64 __fastcall krw_xpac_vaddr(struct_krwCtx *krwCtx, __int64 a2)
 //----- (0000000000029DF8) ----------------------------------------------------
 bool __fastcall this_is_the_kwrite64(struct_krwCtx *krwCtx, mach_vm_address_t address, __int64 newValue, int whatIsThis)
 {
-  // struct_krwCtx *krwCtx; // x19
-  __int64 (__fastcall *v6)(__int64, mach_vm_address_t, __int64 *, uint64_t, __int64); // x8
-  int v7; // w0
-  kern_return_t v8; // w21
-  __int64 v10; // x23
-  semaphore_t v11; // w0
-  int v12; // w21
-  vm_map_t v13; // w0
-  mach_vm_size_t v14; // x2
-  __int64 v16; // x9
-  int v17; // w8
-  uint64_t *v18; // x20
-  kern_return_t v19; // w0
-  mach_timespec_t v20; // x1
-  kern_return_t v21; // w0
-  __int64 v22; // [xsp+8h] [xbp-48h] BYREF
-  __int64 v23; // [xsp+10h] [xbp-40h] BYREF
-  vm_machine_attribute_val_t value[2]; // [xsp+18h] [xbp-38h] BYREF
+  __int64 (__fastcall *customKwrite)(struct_krwCtx *, mach_vm_address_t, __int64 *, uint64_t, __int64);
+  __int64 writeValue = newValue;
+  int rawStatus;
 
-  v22 = newValue;
-  v6 = (__int64 (__fastcall *)(__int64, mach_vm_address_t, __int64 *, uint64_t, __int64))krwCtx->iogpuKwriteFn;
-  if ( v6 )
-  {
-    v7 = v6(krwCtx, address, &v22, krwCtx->stride_0x168, 1);
-    goto LABEL_3;
-  }
+  customKwrite = (__int64 (__fastcall *)(struct_krwCtx *, mach_vm_address_t, __int64 *, uint64_t, __int64))krwCtx->iogpuKwriteFn;
+  if ( customKwrite )
+    return customKwrite(krwCtx, address, &writeValue, krwCtx->stride_0x168, 1) == 0;
+
   if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
-    *(uint64_t *)value = newValue;
     if ( !krwCtx->IOKitConnInfo )
-    {
-      v8 = 5;
-      return v8 == 0;
-    }
-    v7 = iosurface_physmap_kwrite(krwCtx, address, (__int64)value, krwCtx->stride_0x168, 1);
-    goto LABEL_3;
+      return false;
+    return iosurface_physmap_kwrite(krwCtx, address, (__int64)&writeValue, krwCtx->stride_0x168, 1) == 0;
   }
+
   if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
-  {
-    v7 = ioconnect_callmethod_write(krwCtx, address, (__int64)&v22, krwCtx->stride_0x168, 1);
-    goto LABEL_3;
-  }
+    return ioconnect_callmethod_write(krwCtx, address, (__int64)&writeValue, krwCtx->stride_0x168, 1) == 0;
+
   if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
-    goto LABEL_27;
+  {
+    vm_machine_attribute_val_t value = 7;
+    kern_return_t kr = mach_vm_write(krwCtx->targetVmPort, address, (vm_offset_t)&writeValue, krwCtx->stride_0x168);
+    mach_vm_machine_attribute(krwCtx->targetVmPort, address, krwCtx->stride_0x168, 1u, &value);
+    return kr == 0;
+  }
+
   if ( krwCtx->iosurfaceFd_size4 == -1 || !krwCtx->gap_0x218 )
   {
     if ( krwCtx->pipeFd0 != -1 && krwCtx->pipeFd1 != -1 )
-    {
-      v7 = pipe_pair_krw(krwCtx, address, &v22, krwCtx->stride_0x168, 1);
-      goto LABEL_3;
-    }
-LABEL_27:
-    v8 = mach_vm_write(krwCtx->targetVmPort, address, (vm_offset_t)&v22, krwCtx->stride_0x168);
-    v13 = krwCtx->targetVmPort;
-    v14 = krwCtx->stride_0x168;
-    value[0] = 7;
-    mach_vm_machine_attribute(v13, address, v14, 1u, value);
-    return v8 == 0;
+      return pipe_pair_krw(krwCtx, address, &writeValue, krwCtx->stride_0x168, 1) == 0;
+
+    vm_machine_attribute_val_t value = 7;
+    kern_return_t kr = mach_vm_write(krwCtx->targetVmPort, address, (vm_offset_t)&writeValue, krwCtx->stride_0x168);
+    mach_vm_machine_attribute(krwCtx->targetVmPort, address, krwCtx->stride_0x168, 1u, &value);
+    return kr == 0;
   }
-  v23 = newValue;
-  if ( whatIsThis )
+
+  if ( !whatIsThis )
+    return necp_ioconnect_krw(krwCtx, address, (__int64)&writeValue, krwCtx->stride_0x168, 1) == 0;
+
+  rawStatus = acquire_write_semaphore_lock(krwCtx, 1u, 0x2710u);
+  if ( rawStatus )
+    return false;
+
+  if ( krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
   {
-    v7 = acquire_write_semaphore_lock(krwCtx, 1u, 0x2710u);
-    if ( v7 )
-      goto LABEL_3;
-    if ( krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
-    {
-      v12 = necp_ioservice_auth_write(krwCtx, address);
-      goto LABEL_32;
-    }
-    *(uint64_t *)value = newValue;
-    v10 = krwCtx->semaphoreHelperCtx;
-    if ( !v10 || (v11 = *(uint32_t *)(v10 + 8), v11 + 1 < 2) )
-    {
-      v12 = 708609;
-      goto LABEL_32;
-    }
-    v12 = 708609;
-    if ( (unsigned int)(*(uint32_t *)(v10 + 12) + 1) >= 2 )
-    {
-      *(uint64_t *)(v10 + 32) = address;
-      v18 = (uint64_t *)(v10 + 32);
-      *(uint64_t *)(v10 + 40) = value;
-      *(uint64_t *)(v10 + 48) = 8;
-      v19 = semaphore_signal(v11);
-      if ( v19 )
-      {
-        v12 = v19 | 0x80000000;
-LABEL_41:
-        *v18 = 0;
-        *(uint64_t *)(v10 + 40) = 0;
-        *(uint64_t *)(v10 + 48) = 0;
-        goto LABEL_32;
-      }
-      v20 = IDA_MACH_TIMESPEC(3ULL);
-      v21 = semaphore_timedwait(*(uint32_t *)(v10 + 12), v20);
-      v12 = *(uint32_t *)(v10 + 60);
-      if ( !v12 )
-      {
-        if ( v21 )
-          v12 = v21 | 0x80000000;
-        else
-          v12 = 0;
-        goto LABEL_41;
-      }
-      *v18 = 0;
-      *(uint64_t *)(v10 + 40) = 0;
-      *(uint64_t *)(v10 + 48) = 0;
-      teardown_semaphore_helper_ctx(krwCtx, 0);
-    }
-LABEL_32:
-    v16 = krwCtx->mappedKernelRegion;
-    v17 = 708616;
-    if ( v16 && krwCtx->mappedKernelSize )
-    {
-      v17 = 0;
-      atomic_store(0, (unsigned __int8 *)(v16 + 1));
-    }
-    if ( v12 )
-      v7 = v12;
-    else
-      v7 = v17;
-    goto LABEL_3;
+    rawStatus = necp_ioservice_auth_write(krwCtx, address);
   }
-  v7 = necp_ioconnect_krw(krwCtx, address, (__int64)&v23, krwCtx->stride_0x168, 1);
-LABEL_3:
-  if ( v7 )
-    v8 = 5;
   else
-    v8 = 0;
-  return v8 == 0;
+  {
+    uint64_t helper = krwCtx->semaphoreHelperCtx;
+    rawStatus = 708609;
+    if ( helper )
+    {
+      semaphore_t requestSemaphore = *(uint32_t *)(helper + 8);
+      semaphore_t replySemaphore = *(uint32_t *)(helper + 12);
+      if ( requestSemaphore + 1 >= 2 && replySemaphore + 1 >= 2 )
+      {
+        uint64_t *helperAddress = (uint64_t *)(helper + 32);
+        *(uint64_t *)(helper + 32) = address;
+        *(uint64_t *)(helper + 40) = (uint64_t)&writeValue;
+        *(uint64_t *)(helper + 48) = 8;
+
+        kern_return_t signalStatus = semaphore_signal(requestSemaphore);
+        if ( signalStatus )
+        {
+          rawStatus = signalStatus | 0x80000000;
+        }
+        else
+        {
+          kern_return_t waitStatus = semaphore_timedwait(replySemaphore, IDA_MACH_TIMESPEC(3ULL));
+          rawStatus = *(uint32_t *)(helper + 60);
+          if ( !rawStatus )
+            rawStatus = waitStatus ? waitStatus | 0x80000000 : 0;
+        }
+
+        *helperAddress = 0;
+        *(uint64_t *)(helper + 40) = 0;
+        *(uint64_t *)(helper + 48) = 0;
+        if ( *(uint32_t *)(helper + 60) )
+          teardown_semaphore_helper_ctx(krwCtx, 0);
+      }
+    }
+  }
+
+  int mappedRegionStatus = 708616;
+  if ( krwCtx->mappedKernelRegion && krwCtx->mappedKernelSize )
+  {
+    mappedRegionStatus = 0;
+    atomic_store(0, (unsigned __int8 *)(krwCtx->mappedKernelRegion + 1));
+  }
+
+  return (rawStatus ? rawStatus : mappedRegionStatus) == 0;
 }
 
 //----- (000000000002A0D0) ----------------------------------------------------
@@ -1082,38 +1044,32 @@ bool __fastcall kwrite64(struct_krwCtx *krwCtx, mach_vm_address_t a2, __int64 a3
 //----- (000000000002A0D8) ----------------------------------------------------
 __int64 __fastcall pgtable_walk_and_physmap_remap(struct_krwCtx *krwCtx, __int64 a2, __int64 a3)
 {
-  int v6; // w0
-  int v7; // w0
-  __int64 v8; // x8
-  __int64 v9; // x20
-  uint8_t v11[32]; // [xsp+8h] [xbp-88h] BYREF
-  __int64 v12; // [xsp+28h] [xbp-68h]
-  __int128 v13[3]; // [xsp+30h] [xbp-60h] BYREF
-  __int64 v14; // [xsp+60h] [xbp-30h]
-
-  v12 = 0;
-  v14 = 0;
-  memset(v13, 0, sizeof(v13));
-  v6 = pgtable_walk_wrapper(krwCtx, a2 & ~krwCtx->pageMask, v11);
-  if ( !v6 )
-    return 0;
-  v7 = physmap_map_cached(krwCtx, v12 & 0xFFFFFFFFC000LL, (__int64)v13);
-  v8 = *(uint64_t *)&v13[0];
-  if ( v7 )
+  struct
   {
-    v9 = 0;
-    if ( !*(uint64_t *)&v13[0] )
-      return v9;
-    goto LABEL_7;
+    uint8_t unused[32];
+    uint64_t paddr;
+  } walk = {0};
+  struct
+  {
+    uint64_t mappedAddress;
+    uint8_t rest[48];
+  } mapping = {0};
+
+  if ( !pgtable_walk_wrapper(krwCtx, a2 & ~krwCtx->pageMask, &walk) )
+    return 0;
+
+  if ( physmap_map_cached(krwCtx, walk.paddr & 0xFFFFFFFFC000LL, (__int64)&mapping) )
+  {
+    if ( mapping.mappedAddress )
+      physmap_unmap_cached(krwCtx, (__int64)&mapping);
+    return 0;
   }
-  *(uint64_t *)((krwCtx->pageMask & a2) + *(uint64_t *)&v13[0]) = a3;
-  v9 = 1;
-  if ( v8 )
-LABEL_7:
-    physmap_unmap_cached(krwCtx, (__int64)v13);
-  return v9;
+
+  *(uint64_t *)((krwCtx->pageMask & a2) + mapping.mappedAddress) = a3;
+  if ( mapping.mappedAddress )
+    physmap_unmap_cached(krwCtx, (__int64)&mapping);
+  return 1;
 }
-// 2A11C: variable 'v6' is possibly undefined
 
 //----- (000000000002A188) ----------------------------------------------------
 __int64 __fastcall kwritebuf_last_arg_1(struct_krwCtx *krwCtx, __int64 address, const void *buf, mach_vm_size_t bufSize)
@@ -1468,43 +1424,24 @@ __int64 __fastcall mach_vm_read_with_attr_chunks(
         mach_vm_size_t size,
         unsigned int a5)
 {
-  unsigned int v5; // w21
-  unsigned int v8; // w24
-  __int64 v10; // x25
-  unsigned int v11; // w26
-  mach_msg_type_number_t v12; // w23
-  __int64 result; // x0
-  vm_machine_attribute_val_t value; // [xsp+Ch] [xbp-44h] BYREF
+  uint32_t totalSize = size;
+  uint32_t maxChunkSize = a5 ? a5 : totalSize;
+  uint32_t remaining = totalSize;
+  uint32_t offset = 0;
 
-  v5 = size;
-  if ( a5 )
-    v8 = a5;
-  else
-    v8 = size;
-  if ( (uint32_t)size )
+  while ( remaining )
   {
-    v10 = 0;
-    v11 = size;
-    while ( 1 )
-    {
-      v12 = v11 >= v8 ? v8 : v11;
-      result = mach_vm_write(target_task, v10 + address, v10 + a3, v12);
-      if ( (uint32_t)result )
-        break;
-      v10 += v12;
-      v11 -= v12;
-      if ( !v11 )
-        goto LABEL_11;
-    }
+    mach_msg_type_number_t chunkSize = remaining >= maxChunkSize ? maxChunkSize : remaining;
+    kern_return_t kr = mach_vm_write(target_task, address + offset, a3 + offset, chunkSize);
+    if ( kr )
+      return kr;
+    offset += chunkSize;
+    remaining -= chunkSize;
   }
-  else
-  {
-LABEL_11:
-    value = 7;
-    mach_vm_machine_attribute(target_task, address, v5, 1u, &value);
-    return 0;
-  }
-  return result;
+
+  vm_machine_attribute_val_t value = 7;
+  mach_vm_machine_attribute(target_task, address, totalSize, 1u, &value);
+  return 0;
 }
 
 //----- (000000000002A8A4) ----------------------------------------------------
