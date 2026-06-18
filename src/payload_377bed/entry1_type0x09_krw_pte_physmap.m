@@ -55,55 +55,45 @@ __int64 __fastcall teardown_sptm_pgtable_state(__int64 a1)
 //----- (0000000000028DFC) ----------------------------------------------------
 bool __fastcall noppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address_t address, int a3)
 {
-  // struct_krwCtx *krwCtx; // x19
-  __int64 (__fastcall *v5)(__int64, mach_vm_address_t, int *, __int64, __int64); // x8
-  int v6; // w0
-  kern_return_t v7; // w21
-  vm_map_t v9; // w0
-  int v10; // [xsp+8h] [xbp-28h] BYREF
-  vm_machine_attribute_val_t value; // [xsp+Ch] [xbp-24h] BYREF
+  __int64 (__fastcall *customKwrite)(struct_krwCtx *, mach_vm_address_t, int *, __int64, __int64);
+  int newValue = a3;
+  int rawStatus;
 
-  v10 = a3;
-  v5 = (__int64 (__fastcall *)(__int64, mach_vm_address_t, int *, __int64, __int64))krwCtx->iogpuKwriteFn;
-  if ( v5 )
-  {
-    v6 = v5(krwCtx, address, &v10, 4, 1);
-    goto LABEL_3;
-  }
+  customKwrite = (__int64 (__fastcall *)(struct_krwCtx *, mach_vm_address_t, int *, __int64, __int64))krwCtx->iogpuKwriteFn;
+  if ( customKwrite )
+    return customKwrite(krwCtx, address, &newValue, 4, 1) == 0;
+
   if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
-    v6 = iosurface_physmap_kwrite(krwCtx, address, (__int64)&v10, 4u, 1);
+    rawStatus = iosurface_physmap_kwrite(krwCtx, address, (__int64)&newValue, 4u, 1);
   }
   else if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
   {
-    v6 = ioconnect_callmethod_write(krwCtx, address, (__int64)&v10, 4u, 1);
+    rawStatus = ioconnect_callmethod_write(krwCtx, address, (__int64)&newValue, 4u, 1);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->iosurfaceFd_size4 != -1
+         && krwCtx->gap_0x218 )
+  {
+    rawStatus = necp_ioconnect_krw(krwCtx, address, (__int64)&newValue, 4u, 1);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->pipeFd0 != -1
+         && krwCtx->pipeFd1 != -1 )
+  {
+    rawStatus = pipe_pair_krw(krwCtx, address, &newValue, 4u, 1);
   }
   else
   {
-    if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
-      goto LABEL_22;
-    if ( krwCtx->iosurfaceFd_size4 != -1 && krwCtx->gap_0x218 )
-    {
-      v6 = necp_ioconnect_krw(krwCtx, address, (__int64)&v10, 4u, 1);
-      goto LABEL_3;
-    }
-    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
-    {
-LABEL_22:
-      v7 = mach_vm_write(krwCtx->targetVmPort, address, (vm_offset_t)&v10, 4u);
-      v9 = krwCtx->targetVmPort;
-      value = 7;
-      mach_vm_machine_attribute(v9, address, 4u, 1u, &value);
-      return v7 == 0;
-    }
-    v6 = pipe_pair_krw(krwCtx, address, &v10, 4u, 1);
+    vm_machine_attribute_val_t value = 7;
+    kern_return_t kr = mach_vm_write(krwCtx->targetVmPort, address, (vm_offset_t)&newValue, 4u);
+    mach_vm_machine_attribute(krwCtx->targetVmPort, address, 4u, 1u, &value);
+    return kr == 0;
   }
-LABEL_3:
-  if ( v6 )
-    v7 = 5;
-  else
-    v7 = 0;
-  return v7 == 0;
+
+  return rawStatus == 0;
 }
 
 //----- (0000000000028F90) ----------------------------------------------------
@@ -540,56 +530,44 @@ LABEL_100:
 //----- (00000000000295B4) ----------------------------------------------------
 bool __fastcall kread_u32(struct_krwCtx *krwCtx, unsigned __int64 vaddr, void *outBuf)
 {
-  // struct_krwCtx *krwCtx; // x19
-  __int64 (__fastcall *v3)(__int64, unsigned __int64, void *, unsigned int, __int64); // x8
-  int v4; // w0
-  int v5; // w0
-  __int64 v7; // [xsp+8h] [xbp-8h] BYREF
+  __int64 (__fastcall *customKread)(struct_krwCtx *, unsigned __int64, void *, unsigned int, __int64);
+  int rawStatus;
+  uint64_t bytesRead = 0;
 
   krwCtx = KRWCTX_FROM_UINTPTR(krwCtx);
-  v3 = (__int64 (__fastcall *)(__int64, unsigned __int64, void *, unsigned int, __int64))krwCtx->iogpuKreadFn;
-  if ( v3 )
-  {
-    v4 = v3(krwCtx, vaddr, outBuf, 4, 1);
-    goto LABEL_3;
-  }
+
+  customKread = (__int64 (__fastcall *)(struct_krwCtx *, unsigned __int64, void *, unsigned int, __int64))krwCtx->iogpuKreadFn;
+  if ( customKread )
+    return customKread(krwCtx, vaddr, outBuf, 4, 1) == 0;
+
   if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
-    v4 = kreadbuf_via_dev_null_and_thread_state(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
+    rawStatus = kreadbuf_via_dev_null_and_thread_state(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
   }
   else if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
   {
-    v4 = kreadbuf_via_IOConnectCallMethod(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
+    rawStatus = kreadbuf_via_IOConnectCallMethod(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->iosurfaceFd != -1
+         && krwCtx->gap_0x218 )
+  {
+    rawStatus = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->pipeFd0 != -1
+         && krwCtx->pipeFd1 != -1 )
+  {
+    rawStatus = kreadbuf_via_dev_null_simple(krwCtx, vaddr, outBuf, 4u, 1);
   }
   else
   {
-    if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
-      goto LABEL_22;
-    if ( krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218 )
-    {
-      v4 = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, 4u, 1);
-      goto LABEL_3;
-    }
-    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
-    {
-LABEL_22:
-      v5 = kreadbuf_via_tfp0(
-             krwCtx->targetVmPort,
-             vaddr,
-             4u,
-             krwCtx->vmMapSize,
-             (__int64)outBuf,
-             &v7);
-      return v5 == 0;
-    }
-    v4 = kreadbuf_via_dev_null_simple(krwCtx, vaddr, outBuf, 4u, 1);
+    return kreadbuf_via_tfp0(krwCtx->targetVmPort, vaddr, 4u, krwCtx->vmMapSize, (__int64)outBuf, &bytesRead) == 0;
   }
-LABEL_3:
-  if ( v4 )
-    v5 = 5;
-  else
-    v5 = 0;
-  return v5 == 0;
+
+  return rawStatus == 0;
 }
 
 //----- (00000000000296E8) ----------------------------------------------------
@@ -875,49 +853,50 @@ __int64 __fastcall kreadbuf_via_tfp0(
 //----- (0000000000029B78) ----------------------------------------------------
 bool __fastcall kread64_internal(struct_krwCtx *krwCtx, unsigned __int64 a2, uint64_t *a3)
 {
-  __int64 (__fastcall *v3)(struct_krwCtx *, unsigned __int64, uint64_t *, uint64_t, __int64); // x8
-  int v4; // w0
-  int v5; // w0
-  __int64 v7; // [xsp+8h] [xbp-8h] BYREF
+  __int64 (__fastcall *customKread)(struct_krwCtx *, unsigned __int64, uint64_t *, uint64_t, __int64);
+  int rawStatus;
+  uint64_t bytesRead = 0;
 
   *a3 = 0;
-  v3 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, uint64_t *, uint64_t, __int64))&krwCtx->iogpuKreadFn;
-  if ( v3 )
-  {
-    v4 = v3(krwCtx, a2, a3, (unsigned int)krwCtx->stride_0x168, 1);
-    goto LABEL_3;
-  }
+
+  customKread = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, uint64_t *, uint64_t, __int64))&krwCtx->iogpuKreadFn;
+  if ( customKread )
+    return customKread(krwCtx, a2, a3, (unsigned int)krwCtx->stride_0x168, 1) == 0;
+
   if ( krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
   {
-    v4 = kreadbuf_via_dev_null_and_thread_state(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
+    rawStatus = kreadbuf_via_dev_null_and_thread_state(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
   }
   else if ( (unsigned int)(*(uint32_t *)&krwCtx->ioConnectPort + 1) >= 2 && *(uint64_t *)&krwCtx->ioConnectMappedAddr && *(uint64_t *)&krwCtx->ioConnectMappedSize )
   {
-    v4 = kreadbuf_via_IOConnectCallMethod(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
+    rawStatus = kreadbuf_via_IOConnectCallMethod(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->iosurfaceFd != -1
+         && krwCtx->gap_0x218 )
+  {
+    rawStatus = kreadbuf_via_dev_null_only(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->pipeFd0 != -1
+         && krwCtx->pipeFd1 != -1 )
+  {
+    rawStatus = kreadbuf_via_dev_null_simple(krwCtx, a2, a3, krwCtx->stride_0x168, 1);
   }
   else
   {
-    if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
-      goto LABEL_22;
-    if ( krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218 )
-    {
-      v4 = kreadbuf_via_dev_null_only(krwCtx, a2, (__int64)a3, krwCtx->stride_0x168, 1);
-      goto LABEL_3;
-    }
-    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
-    {
-LABEL_22:
-      v5 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, a2, krwCtx->stride_0x168, (unsigned int)krwCtx->vmMapSize, (__int64)a3, &v7);
-      return v5 == 0;
-    }
-    v4 = kreadbuf_via_dev_null_simple(krwCtx, a2, a3, krwCtx->stride_0x168, 1);
+    return kreadbuf_via_tfp0(
+             krwCtx->targetAndParentTaskPorts,
+             a2,
+             krwCtx->stride_0x168,
+             (unsigned int)krwCtx->vmMapSize,
+             (__int64)a3,
+             &bytesRead) == 0;
   }
-LABEL_3:
-  if ( v4 )
-    v5 = 5;
-  else
-    v5 = 0;
-  return v5 == 0;
+
+  return rawStatus == 0;
 }
 
 //----- (0000000000029CB0) ----------------------------------------------------
@@ -1264,49 +1243,49 @@ unsigned __int64 __fastcall decode_pte_to_physmap_addr(struct_krwCtx *krwCtx, un
 //----- (000000000002A360) ----------------------------------------------------
 bool __fastcall kreadbuf_universal(struct_krwCtx *krwCtx, unsigned __int64 vaddr, mach_vm_size_t size, void *outBuf, __int64 a5)
 {
-  __int64 (__fastcall *v5)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64); // x9
-  int v6; // w0
-  int v7; // w0
+  __int64 (__fastcall *customKread)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64);
+  int rawStatus;
 
-  v5 = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64))&krwCtx->iogpuKreadFn;
-  if ( v5 )
-  {
-    v6 = v5(krwCtx, vaddr, outBuf, size, a5);
-    goto LABEL_3;
-  }
+  customKread = *(__int64 (__fastcall **)(struct_krwCtx *, unsigned __int64, void *, mach_vm_size_t, __int64))&krwCtx->iogpuKreadFn;
+  if ( customKread )
+    return customKread(krwCtx, vaddr, outBuf, size, a5) == 0;
+
   if ( krwCtx->threadForKernelRead + 1 >= 2 && *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
   {
-    v6 = kreadbuf_via_dev_null_and_thread_state(krwCtx, vaddr, (__int64)outBuf, size, a5);
+    rawStatus = kreadbuf_via_dev_null_and_thread_state(krwCtx, vaddr, (__int64)outBuf, size, a5);
   }
   else if ( (unsigned int)(*(uint32_t *)&krwCtx->ioConnectPort + 1) >= 2
          && *(uint64_t *)&krwCtx->ioConnectMappedAddr
          && *(uint64_t *)&krwCtx->ioConnectMappedSize )
   {
-    v6 = kreadbuf_via_IOConnectCallMethod(krwCtx, vaddr, (__int64)outBuf, size, a5);
+    rawStatus = kreadbuf_via_IOConnectCallMethod(krwCtx, vaddr, (__int64)outBuf, size, a5);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->iosurfaceFd != -1
+         && krwCtx->gap_0x218 )
+  {
+    rawStatus = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, size, a5);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->pipeFd0 != -1
+         && krwCtx->pipeFd1 != -1 )
+  {
+    rawStatus = kreadbuf_via_dev_null_simple(krwCtx, vaddr, outBuf, size, a5);
   }
   else
   {
-    if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
-      goto LABEL_22;
-    if ( krwCtx->iosurfaceFd != -1 && krwCtx->gap_0x218 )
-    {
-      v6 = kreadbuf_via_dev_null_only(krwCtx, vaddr, (__int64)outBuf, size, a5);
-      goto LABEL_3;
-    }
-    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
-    {
-LABEL_22:
-      v7 = kreadbuf_via_tfp0(krwCtx->targetAndParentTaskPorts, vaddr, size, (unsigned int)krwCtx->vmMapSize, (__int64)outBuf, 0);
-      return v7 == 0;
-    }
-    v6 = kreadbuf_via_dev_null_simple(krwCtx, vaddr, outBuf, size, a5);
+    return kreadbuf_via_tfp0(
+             krwCtx->targetAndParentTaskPorts,
+             vaddr,
+             size,
+             (unsigned int)krwCtx->vmMapSize,
+             (__int64)outBuf,
+             0) == 0;
   }
-LABEL_3:
-  if ( v6 )
-    v7 = 5;
-  else
-    v7 = 0;
-  return v7 == 0;
+
+  return rawStatus == 0;
 }
 
 //----- (000000000002A480) ----------------------------------------------------
@@ -1318,13 +1297,11 @@ bool __fastcall kreadbuf_0(__int64 krwCtx, unsigned __int64 addr, mach_vm_size_t
 //----- (000000000002A488) ----------------------------------------------------
 bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, const void *a3, mach_vm_size_t a4, int a5)
 {
-  // struct_krwCtx *krwCtx; // x19
-  __int64 (__fastcall *v5)(__int64, unsigned __int64, const void *, mach_vm_size_t, int); // x8
-  int v6; // w0
-  int v7; // w0
+  __int64 (__fastcall *customKwrite)(struct_krwCtx *, unsigned __int64, const void *, mach_vm_size_t, int);
+  int rawStatus;
 
   TRACE_PORTS("noppl_kwritebuf enter ctx=%llx addr=%llx buf=%llx size=%llx a5=%d fn=%llx sptm_fd=%d sptm_ctx=%llx shm_port=%d shm_u=%llx shm_k=%llx necp_r=%d necp_w=%d pipe0=%d pipe1=%d iosurface_fd=%d necp=%llx tfp=%d chunk=%u\n",
-              (unsigned long long)a1,
+              (unsigned long long)krwCtx,
               (unsigned long long)a2,
               (unsigned long long)a3,
               (unsigned long long)a4,
@@ -1343,50 +1320,51 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
               (unsigned long long)krwCtx->gap_0x218,
               krwCtx->targetVmPort,
               krwCtx->vmMapSize_size4);
-  v5 = (__int64 (__fastcall *)(__int64, unsigned __int64, const void *, mach_vm_size_t, int))krwCtx->iogpuKwriteFn;
-  if ( v5 )
+
+  customKwrite = (__int64 (__fastcall *)(struct_krwCtx *, unsigned __int64, const void *, mach_vm_size_t, int))krwCtx->iogpuKwriteFn;
+  if ( customKwrite )
   {
-    v6 = v5(krwCtx, a2, a3, a4, a5);
-    TRACE_PORTS("noppl_kwritebuf backend=custom raw=%x\n", v6);
-    goto LABEL_3;
+    rawStatus = customKwrite(krwCtx, a2, a3, a4, a5);
+    TRACE_PORTS("noppl_kwritebuf backend=custom raw=%x\n", rawStatus);
+    goto done;
   }
+
   if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
-    v6 = iosurface_physmap_kwrite(krwCtx, a2, (__int64)a3, a4, a5);
-    TRACE_PORTS("noppl_kwritebuf backend=sptm raw=%x\n", v6);
+    rawStatus = iosurface_physmap_kwrite(krwCtx, a2, (__int64)a3, a4, a5);
+    TRACE_PORTS("noppl_kwritebuf backend=sptm raw=%x\n", rawStatus);
   }
   else if ( (unsigned int)(krwCtx->ioConnectPort + 1) >= 2 && krwCtx->ioConnectMappedAddr && krwCtx->ioConnectMappedSize )
   {
-    v6 = ioconnect_callmethod_write(krwCtx, a2, (__int64)a3, a4, a5);
-    TRACE_PORTS("noppl_kwritebuf backend=ioconnect raw=%x\n", v6);
+    rawStatus = ioconnect_callmethod_write(krwCtx, a2, (__int64)a3, a4, a5);
+    TRACE_PORTS("noppl_kwritebuf backend=ioconnect raw=%x\n", rawStatus);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->iosurfaceFd_size4 != -1
+         && krwCtx->gap_0x218 )
+  {
+    rawStatus = necp_ioconnect_krw(krwCtx, a2, (__int64)a3, a4, a5);
+    TRACE_PORTS("noppl_kwritebuf backend=necp raw=%x\n", rawStatus);
+  }
+  else if ( krwCtx->krw_pipe_0 != -1
+         && krwCtx->krw_pipe_1 != -1
+         && krwCtx->pipeFd0 != -1
+         && krwCtx->pipeFd1 != -1 )
+  {
+    rawStatus = pipe_pair_krw(krwCtx, a2, a3, a4, a5);
+    TRACE_PORTS("noppl_kwritebuf backend=pipe raw=%x\n", rawStatus);
   }
   else
   {
-    if ( krwCtx->krw_pipe_0 == -1 || krwCtx->krw_pipe_1 == -1 )
-      goto LABEL_22;
-    if ( krwCtx->iosurfaceFd_size4 != -1 && krwCtx->gap_0x218 )
-    {
-      v6 = necp_ioconnect_krw(krwCtx, a2, (__int64)a3, a4, a5);
-      TRACE_PORTS("noppl_kwritebuf backend=necp raw=%x\n", v6);
-      goto LABEL_3;
-    }
-    if ( krwCtx->pipeFd0 == -1 || krwCtx->pipeFd1 == -1 )
-    {
-LABEL_22:
-      v7 = mach_vm_read_with_attr_chunks(krwCtx->targetVmPort, a2, (__int64)a3, a4, krwCtx->vmMapSize_size4);
-      TRACE_PORTS("noppl_kwritebuf backend=tfp raw=%x ok=%d\n", v7, v7 == 0);
-      return v7 == 0;
-    }
-    v6 = pipe_pair_krw(krwCtx, a2, a3, a4, a5);
-    TRACE_PORTS("noppl_kwritebuf backend=pipe raw=%x\n", v6);
+    rawStatus = mach_vm_read_with_attr_chunks(krwCtx->targetVmPort, a2, (__int64)a3, a4, krwCtx->vmMapSize_size4);
+    TRACE_PORTS("noppl_kwritebuf backend=tfp raw=%x ok=%d\n", rawStatus, rawStatus == 0);
+    return rawStatus == 0;
   }
-LABEL_3:
-  if ( v6 )
-    v7 = 5;
-  else
-    v7 = 0;
-  TRACE_PORTS("noppl_kwritebuf exit raw=%x ok=%d\n", v6, v7 == 0);
-  return v7 == 0;
+
+done:
+  TRACE_PORTS("noppl_kwritebuf exit raw=%x ok=%d\n", rawStatus, rawStatus == 0);
+  return rawStatus == 0;
 }
 
 //----- (000000000002A56C) ----------------------------------------------------
@@ -1648,4 +1626,3 @@ __int64 vtable_trampoline_b()
 {
   return 0LL;
 }
-
