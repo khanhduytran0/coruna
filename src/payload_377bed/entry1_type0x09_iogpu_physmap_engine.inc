@@ -8488,7 +8488,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   thread_act_t stateThread = 0;
   semaphore_t readySemaphore = 0;
   semaphore_t resumeSemaphore = 0;
-  int pageShift = 0;
+  uint32_t pageShift = 0;
   natural_t suspendedThreadState[0x44]; // BYREF
   VmcopyWritePhysmapBlock writePhysmapBlock; // BYREF
   integer_t policyInfo[4]; // BYREF
