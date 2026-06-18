@@ -237,189 +237,172 @@ static uint64_t driver_dispatch_stage3_command(struct_krwCtx *krwCtx, int cmd, u
 
 static uint64_t driver_dispatch_stage1_command(struct_krwCtx *krwCtx, int cmd, uint64_t inoutValue)
 {
-  uint64_t v3; // x20
-  uint64_t v6; // x21
-  int v14; // w23
-  int v15; // w0
-  int v16; // w0
-  int v21; // w0
-  int v22; // w22
-  int v23; // w21
-  int v24; // w22
-  unsigned int v25; // w1
-  bool v26; // w8
-  int v27; // w20
-  int v28; // w8
-  __int64 v50; // [xsp+0h] [xbp-40h] BYREF
-  int v51; // [xsp+8h] [xbp-38h] BYREF
-  int v52; // [xsp+Ch] [xbp-34h] BYREF
+  uint64_t status = 708616;
+  bool commandSucceeded = false;
 
-  v3 = inoutValue;
-  v6 = 708616;
-  v14 = 0;
-  v50 = 0;
-  LODWORD(v50) = v3;
-  v52 = 0;
-  if ( cmd > 264 )
+  switch ( cmd )
   {
-    if ( cmd > 268 )
+    case DRIVER_CMD_STAGE1_GET_ROOT_PREFIX:
     {
-      if ( cmd != DRIVER_CMD_STAGE1_CHECK_DISPATCH_KRW )
+      uint32_t rootPrefixLen = 1024;
+      int hasRootPrefix = 0;
+
+      status = 0;
+      if ( get_root_prefix_path(krwCtx, (void *)(inoutValue + 16), &rootPrefixLen, &hasRootPrefix) )
       {
-        if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_ENTRY_CHECK )
-        {
-          v15 = physmap_entry_check(krwCtx, *(uint32_t *)v3, *(uint32_t *)(v3 + 4), *(uint64_t *)(v3 + 16));
-          goto LABEL_79;
-        }
-        if ( cmd == DRIVER_CMD_STAGE1_PHYSMAP_SINGLE_CHECK )
-        {
-          v15 = physmap_single_check(krwCtx, v3, 20);
-LABEL_79:
-          v14 = v15;
-          LODWORD(v6) = 0;
-        }
-LABEL_179:
-        v26 = v14 == 0;
-LABEL_180:
-        return driver_dispatch_finish(v6, !v26);
+        if ( hasRootPrefix )
+          *(uint32_t *)inoutValue = 1;
+        if ( rootPrefixLen )
+          *(uint32_t *)inoutValue |= 2u;
+        commandSucceeded = true;
       }
+      break;
+    }
+
+    case DRIVER_CMD_STAGE1_GET_ROOT_STATFS:
+    {
+      int rootStatfs = 0;
+
+      status = 0;
+      if ( get_root_statfs(krwCtx, &rootStatfs) )
+      {
+        *(uint32_t *)inoutValue = rootStatfs;
+        commandSucceeded = true;
+      }
+      break;
+    }
+
+    case DRIVER_CMD_STAGE1_CHECK_KRW_NECP_STATE:
+    {
+      bool necpReady = false;
+
       if ( krwCtx->xnuVersionPacked >> 43 >= 0x44B )
       {
-        v15 = check_dispatch_krw_state(krwCtx, v3 != 0);
-        goto LABEL_79;
-      }
-LABEL_84:
-      v14 = 0;
-      goto LABEL_179;
-    }
-    if ( cmd != DRIVER_CMD_STAGE1_CHECK_MOUNT_THREAD )
-    {
-      if ( cmd == DRIVER_CMD_STAGE1_WALK_CSBLOB_FOR_PATH )
-      {
-        if ( !v3 )
-          v3 = _CFProcessPath();
-        v21 = open((const char *)v3, 0, v50);
-        if ( v21 == -1 )
+        status = 0;
+        if ( check_krw_necp_state(krwCtx, &necpReady) )
         {
-          v27 = errno;
-          v14 = 0;
-          v28 = errno;
-          if ( v27 < 0 )
-            v28 = -v28;
-          LODWORD(v6) = v28 | 0x40000000;
-        }
-        else
-        {
-          v22 = v21;
-          if ( v3 )
-            LODWORD(v6) = 0;
-          else
-            LODWORD(v6) = 708609;
-          v14 = walk_csblob_chain_for_offset(krwCtx, v21);
-          close(v22);
+          *(uint32_t *)inoutValue = necpReady;
+          commandSucceeded = true;
         }
       }
-      goto LABEL_179;
+      break;
     }
-    v25 = v3 & 0xF;
-    if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
+
+    case DRIVER_CMD_STAGE1_NECP_CAPABILITIES:
     {
-      if ( v25 > 2 )
-      {
-        v14 = 0;
-        LODWORD(v6) = 708609;
-        goto LABEL_179;
-      }
-      v15 = check_mount_thread_info(krwCtx, v25);
-      goto LABEL_79;
-    }
-    if ( v25 == 1 )
-      LODWORD(v6) = 708616;
-    else
-      LODWORD(v6) = 0;
-    goto LABEL_178;
-  }
-  if ( cmd > -2147483380 )
-  {
-    if ( cmd != DRIVER_CMD_STAGE1_CHECK_KRW_NECP_STATE )
-    {
-      if ( cmd != DRIVER_CMD_STAGE1_NECP_CAPABILITIES )
-        goto LABEL_179;
-      v23 = *(uint32_t *)v3;
-      v24 = (*(uint32_t *)v3 & 1) != 0 && krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) && krwCtx->xnuMajorVersion < 8792;
-      if ( (v23 & 4) != 0 )
+      uint32_t requestedCaps = *(uint32_t *)inoutValue;
+      uint32_t supportedCaps = (requestedCaps & 1) != 0
+                            && krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023)
+                            && krwCtx->xnuMajorVersion < 8792;
+
+      if ( (requestedCaps & 4) != 0 )
       {
         if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
         {
           if ( check_necp_flag(krwCtx) )
-            v24 |= 4u;
+            supportedCaps |= 4u;
         }
         else if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A11) && krwCtx->xnuMajorVersion > 6152 )
         {
-          v24 |= 4u;
+          supportedCaps |= 4u;
         }
       }
-      if ( (v23 & 2) != 0 )
+
+      if ( (requestedCaps & 2) != 0 )
       {
         if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
         {
           if ( check_necp_flag(krwCtx) )
-            v24 |= 2u;
+            supportedCaps |= 2u;
         }
         else
         {
-          v24 |= 2u;
+          supportedCaps |= 2u;
         }
       }
-      if ( (v23 & 8) != 0 && krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
-        v24 |= 8u;
-      LODWORD(v6) = 0;
-      *(uint32_t *)v3 = v24;
-      goto LABEL_178;
-    }
-    v16 = 0;
-    LOBYTE(v51) = 0;
-    if ( krwCtx->xnuVersionPacked >> 43 >= 0x44B )
-    {
-      v16 = check_krw_necp_state(krwCtx, (bool *)&v51);
-      LODWORD(v6) = 0;
-      if ( v16 )
-        LODWORD(v50) = (unsigned __int8)v51;
-    }
-  }
-  else
-  {
-    if ( cmd == DRIVER_CMD_STAGE1_GET_ROOT_PREFIX )
-    {
-      v51 = 1024;
-      if ( !(unsigned int)get_root_prefix_path(krwCtx, (void *)(v3 + 16), (uint32_t *)&v51, (int *)&v52) )
-      {
-        LODWORD(v6) = 0;
-        goto LABEL_84;
-      }
-      if ( v52 )
-        *(uint32_t *)v3 = 1;
-      LODWORD(v6) = 0;
-      if ( v51 )
-        *(uint32_t *)v3 |= 2u;
-LABEL_178:
-      v14 = 1;
-      goto LABEL_179;
-    }
-    if ( cmd != DRIVER_CMD_STAGE1_GET_ROOT_STATFS )
-      goto LABEL_179;
-  v16 = get_root_statfs(krwCtx, (int *)&v50);
-    LODWORD(v6) = 0;
-  }
-  if ( v16 )
-  {
-    v26 = 0;
-    *(uint32_t *)v3 = v50;
-  }
-  else
-  {
-    v26 = 1;
-  }
-  goto LABEL_180;
-}
 
+      if ( (requestedCaps & 8) != 0
+        && krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
+      {
+        supportedCaps |= 8u;
+      }
+
+      *(uint32_t *)inoutValue = supportedCaps;
+      status = 0;
+      commandSucceeded = true;
+      break;
+    }
+
+    case DRIVER_CMD_STAGE1_CHECK_MOUNT_THREAD:
+    {
+      uint32_t mountThreadIndex = inoutValue & 0xF;
+
+      if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(8018, 1023, 1023, 1023, 1023) )
+      {
+        if ( mountThreadIndex > 2 )
+        {
+          status = 708609;
+          break;
+        }
+
+        status = 0;
+        commandSucceeded = check_mount_thread_info(krwCtx, mountThreadIndex);
+        break;
+      }
+
+      status = mountThreadIndex == 1 ? 708616 : 0;
+      commandSucceeded = true;
+      break;
+    }
+
+    case DRIVER_CMD_STAGE1_WALK_CSBLOB_FOR_PATH:
+    {
+      uint64_t path = inoutValue;
+
+      if ( !path )
+        path = (uint64_t)_CFProcessPath();
+
+      int fd = open((const char *)path, 0, (mode_t)inoutValue);
+      if ( fd == -1 )
+      {
+        int err = errno;
+        if ( err < 0 )
+          err = -err;
+        status = (uint32_t)err | 0x40000000u;
+        break;
+      }
+
+      status = path ? 0 : 708609;
+      commandSucceeded = walk_csblob_chain_for_offset(krwCtx, fd);
+      close(fd);
+      break;
+    }
+
+    case DRIVER_CMD_STAGE1_CHECK_DISPATCH_KRW:
+      if ( krwCtx->xnuVersionPacked >> 43 >= 0x44B )
+      {
+        status = 0;
+        commandSucceeded = check_dispatch_krw_state(krwCtx, inoutValue != 0);
+      }
+      break;
+
+    case DRIVER_CMD_STAGE1_PHYSMAP_SINGLE_CHECK:
+      status = 0;
+      commandSucceeded = physmap_single_check(krwCtx, inoutValue, 20);
+      break;
+
+    case DRIVER_CMD_STAGE1_PHYSMAP_ENTRY_CHECK:
+      status = 0;
+      commandSucceeded = physmap_entry_check(
+        krwCtx,
+        *(uint32_t *)inoutValue,
+        *(uint32_t *)(inoutValue + 4),
+        *(uint64_t *)(inoutValue + 16));
+      break;
+
+    default:
+      break;
+  }
+
+  return driver_dispatch_finish(status, commandSucceeded);
+}
