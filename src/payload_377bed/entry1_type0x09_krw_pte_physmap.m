@@ -907,91 +907,56 @@ unsigned __int64 __fastcall port_right_index_to_kaddr(struct_krwCtx *krwCtx, uns
 //----- (000000000002A200) ----------------------------------------------------
 unsigned __int64 __fastcall decode_pte_to_physmap_addr(struct_krwCtx *krwCtx, unsigned __int64 a2, uint32_t *a3)
 {
-  bool v6; // cc
-  int v7; // w9
-  unsigned __int64 v8; // x8
-  unsigned __int64 v9; // x11
-  char v10; // w12
-  __int64 v11; // x10
-  __int64 v12; // x13
-  __int64 v13; // x13
-  __int64 v14; // x12
-  __int64 v15; // x12
-  __int64 v16; // x9
-  unsigned __int64 v17; // x8
-
   if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
   {
-    if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER) || krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A16_A17_MASK) )
+    bool isNewEncoding = krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023);
+    bool hasWideKernelVa = krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER)
+                        || krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A16_A17_MASK);
+    uint64_t pteAddressMask;
+    uint64_t fallbackPteAddressMask;
+    uint64_t physmapBase;
+    uint8_t selectorShift;
+
+    if ( hasWideKernelVa )
     {
-      v6 = krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023);
-      v7 = v6;
-      v8 = 0xFFFF9FFFFFFFFFF0LL;
-      if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
-        v8 = -32;
-      v9 = 0xFFFFBFFFFFFFC000LL;
-      if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
-      {
-        v10 = 46;
-      }
-      else
-      {
-        v9 = 0xFFFF9FFFFFFFC000LL;
-        v10 = 45;
-      }
-      v11 = 0x600000000000LL;
-      v12 = 0x400000000000LL;
+      pteAddressMask = isNewEncoding ? -32LL : 0xFFFF9FFFFFFFFFF0LL;
+      fallbackPteAddressMask = isNewEncoding ? 0xFFFFBFFFFFFFC000LL : 0xFFFF9FFFFFFFC000LL;
+      selectorShift = isNewEncoding ? 46 : 45;
+      physmapBase = isNewEncoding ? 0x400000000000LL : 0x600000000000LL;
     }
     else
     {
-      v6 = krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023);
-      v7 = v6;
-      v8 = 0xFFFFFF9FFFFFFFF0LL;
-      if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
-        v8 = -32;
-      v9 = 0xFFFFFFBFFFFFC000LL;
-      if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(8792, 80, 24, 1023, 1023) )
-      {
-        v10 = 38;
-      }
-      else
-      {
-        v9 = 0xFFFFFF9FFFFFC000LL;
-        v10 = 37;
-      }
-      v11 = 0x6000000000LL;
-      v12 = 0x4000000000LL;
+      pteAddressMask = isNewEncoding ? -32LL : 0xFFFFFF9FFFFFFFF0LL;
+      fallbackPteAddressMask = isNewEncoding ? 0xFFFFFFBFFFFFC000LL : 0xFFFFFF9FFFFFC000LL;
+      selectorShift = isNewEncoding ? 38 : 37;
+      physmapBase = isNewEncoding ? 0x4000000000LL : 0x6000000000LL;
     }
-    if ( v6 )
-      v11 = v12;
-    v13 = 3;
-    if ( v7 )
-      v13 = 1;
-    v14 = v13 & (a2 >> v10);
-    if ( v14 )
+
+    uint64_t selectorMask = isNewEncoding ? 1 : 3;
+    uint64_t selector = selectorMask & (a2 >> selectorShift);
+    uint32_t decodedBits;
+    if ( selector )
     {
-      v15 = v14 << (a2 & 0xF);
-      if ( v7 )
-        v16 = ((a2 & 0x10) | 0x20) << (a2 & 0xF);
+      if ( isNewEncoding )
+        decodedBits = ((a2 & 0x10) | 0x20) << (a2 & 0xF);
       else
-        LODWORD(v16) = v15;
+        decodedBits = selector << (a2 & 0xF);
     }
     else
     {
-      LODWORD(v16) = ((uint32_t)a2 << 14) & 0xFFFC000;
-      v8 = v9;
+      decodedBits = ((uint32_t)a2 << 14) & 0xFFFC000;
+      pteAddressMask = fallbackPteAddressMask;
     }
-    *a3 = v16;
-    return (v8 & a2) | v11;
+
+    *a3 = decodedBits;
+    return (pteAddressMask & a2) | physmapBase;
   }
-  else
-  {
-    v17 = HIWORD(a2);
-    if ( (a2 & 0x800000000000LL) != 0 )
-      LODWORD(v17) = HIWORD(a2) << 14;
-    *a3 = v17;
-    return a2 | 0xFFFF800000000000LL;
-  }
+
+  uint32_t decodedBits = (uint16_t)(a2 >> 16);
+  if ( (a2 & 0x800000000000LL) != 0 )
+    decodedBits <<= 14;
+  *a3 = decodedBits;
+  return a2 | 0xFFFF800000000000LL;
 }
 
 //----- (000000000002A360) ----------------------------------------------------
@@ -1269,14 +1234,9 @@ __int64 __fastcall pgtable_write_aligned(struct_krwCtx *krwCtx)
 //----- (000000000002AABC) ----------------------------------------------------
 __int64 __fastcall semaphore_timedwait_ns(__int64 a1, unsigned int a2)
 {
-  mach_timespec_t v2; // x1
-
-  v2 = IDA_MACH_TIMESPEC((a2 / 0xF4240uLL) & 0x7FFFFFFFFLL
-                       | ((unsigned __int64)((125 * (a2 % 0xF4240)) & 0x1FFFFFFF) << 35));
-  if ( semaphore_timedwait(*(uint32_t *)(a1 + 612), v2) == 49 )
-    return 0;
-  else
-    return 0xFFFFFFFFLL;
+  mach_timespec_t timeout = IDA_MACH_TIMESPEC((a2 / 0xF4240uLL) & 0x7FFFFFFFFLL
+                                            | ((unsigned __int64)((125 * (a2 % 0xF4240)) & 0x1FFFFFFF) << 35));
+  return semaphore_timedwait(*(uint32_t *)(a1 + 612), timeout) == 49 ? 0 : 0xFFFFFFFFLL;
 }
 
 //----- (000000000002AB10) ----------------------------------------------------
