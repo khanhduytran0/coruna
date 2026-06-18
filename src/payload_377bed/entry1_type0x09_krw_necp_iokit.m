@@ -413,7 +413,7 @@ kern_return_t ioconnect_struct_method_kwrite(struct_krwCtx *krwCtx, uint64_t vad
 // 2B418: variable 'v25' is possibly undefined
 // 2B450: variable 'v26' is possibly undefined
 
-#include "entry1_type0x09_dmafail_ppl.inc"
+#include "entry1_type0x09_dmafail_ppl.m"
 
 //----- (000000000002B5BC) ----------------------------------------------------
 __int64 __fastcall necp_ioservice_auth_write(struct_krwCtx *krwCtx, __int64 a2)

@@ -4836,9 +4836,9 @@ LABEL_47:
 }
 // 19728: using guessed type __int64 __fastcall nullsub_1(uint64_t);
 
-#include "entry1_type0x09_krw_pte_physmap.inc"
+#include "entry1_type0x09_krw_pte_physmap.m"
 
-#include "entry1_type0x09_krw_necp_iokit.inc"
+#include "entry1_type0x09_krw_necp_iokit.m"
 
 //----- (000000000002B788) ----------------------------------------------------
 __int64 __fastcall posix_spawn_with_sigdefault(const char **a1)
@@ -5250,11 +5250,11 @@ LABEL_9:
   return 0;
 }
 
-#include "entry1_type0x09_csblob.inc"
+#include "entry1_type0x09_csblob.m"
 
 // 2FA10: variable 'vars8' is possibly undefined
 
-#include "entry1_type0x09_csblob_patch.inc"
+#include "entry1_type0x09_csblob_patch.m"
 
 //----- (0000000000031914) ----------------------------------------------------
 uint32_t *__fastcall csblob_alloc_and_fill_slots(__int64 a1, uint64_t *a2, size_t *a3, unsigned int *a4, unsigned int *a5, unsigned int *a6)
@@ -6050,7 +6050,7 @@ LABEL_15:
   return 0;
 }
 
-#include "entry1_type0x09_ipc_task.inc"
+#include "entry1_type0x09_ipc_task.m"
 
 //----- (00000000000356C8) ----------------------------------------------------
 __int64 __fastcall get_task_bsd_info_kaddr(struct_krwCtx *krwCtx, unsigned int a2, __int64 *a3)
