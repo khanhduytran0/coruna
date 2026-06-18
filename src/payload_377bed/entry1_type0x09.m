@@ -202,7 +202,7 @@ void __fastcall necp_dispatch_by_version(struct_krwCtx *krwCtx);
 bool __fastcall check_necp_flag(struct_krwCtx *krwCtx);
 bool __fastcall necp_kread_region(struct_krwCtx *krwCtx, unsigned __int64 a2, __int64 a3, unsigned int a4);
 bool __fastcall ppl_physmap_table_patch_write(struct_krwCtx *krwCtx, mach_vm_address_t vaddr, __int64 newBytes, __int64 size, int a5);
-bool __fastcall get_kwrite_fn(struct_krwCtx *krwCtx, __int64 *a2, int *a3);
+bool __fastcall get_kwrite_fn(struct_krwCtx *krwCtx, uint64_t *a2, uint32_t *a3);
 bool __fastcall pgtable_walk_for_physmap(struct_krwCtx *krwCtx, unsigned __int64 a2, unsigned __int64 a3);
 bool __fastcall physmap_table_write_versioned(struct_krwCtx *krwCtx, unsigned __int64 a2, int a3);
 bool __fastcall check_physmap_range_necp(struct_krwCtx *krwCtx, unsigned __int64 a2, int a3);
