@@ -6168,23 +6168,22 @@ LABEL_101:
   v62 = (unsigned int)v261;
   while ( 2 )
   {
-    v63 = (int8x8_t *)(v4 + 688 * v62);
-    v65 = v63[2];
-    v64 = v63 + 2;
-    if ( !*(uint64_t *)&v65 || !*(uint64_t *)(v4 + 688 * v62 + 24) )
+    PhysmapReadResult *retryResult = physmap_read_result_at(v4, v62);
+    v64 = (int8x8_t *)retryResult;
+    if ( !retryResult->mapping || !retryResult->processedPageMask )
     {
       get_page_size();
       if ( *(uint32_t *)v4 == 3 )
       {
-        v70 = kernel_read_loop_physmap(v5, v4, 0x10u, (__int64)v64);
+        v70 = kernel_read_loop_physmap(v5, v4, 0x10u, (__int64)retryResult);
         if ( !v70 )
         {
           get_page_size();
-          v71 = physmap_read_rebuild_page((uint64_t *)v4, v64);
+          v71 = physmap_read_rebuild_page((uint64_t *)v4, (int8x8_t *)retryResult);
           if ( !(uint32_t)v71 )
           {
             get_page_size();
-            v67 = *(uint32_t *)(v4 + 688 * v62 + 48);
+            v67 = retryResult->pageCount;
             goto LABEL_134;
           }
           v10 = v71;
@@ -6200,9 +6199,8 @@ LABEL_128:
       v10 = v70 | 0x80000000;
       goto LABEL_128;
     }
-    v66 = (int8x8_t *)(v4 + 688 * v62);
-    v67 = v66[6].u32[0];
-    v68 = (uint8x8_t)vcnt_s8(v66[5]);
+    v67 = retryResult->pageCount;
+    v68 = (uint8x8_t)vcnt_s8(*(int8x8_t *)&retryResult->processedPageMask);
     v68.i16[0] = vaddlv_u8(v68);
     if ( v67 == v68.i32[0] )
     {
@@ -6220,8 +6218,8 @@ LABEL_134:
       v282 = *(uint64_t *)(v4 + 11304) + *(uint64_t *)(v4 + 11296);
       theDicta = *(CFMutableDictionaryRef *)(v4 + 11296);
       v73 = vm_page_shift;
-      kobject = v4 + 688 * v62 + 48;
-      __handle = (int8x8_t *)(v4 + 688 * v62 + 40);
+      kobject = (__int64)&retryResult->pageCount;
+      __handle = (int8x8_t *)&retryResult->processedPageMask;
       LODWORD(v74) = *(uint32_t *)(v4 + 12352);
       do
       {
