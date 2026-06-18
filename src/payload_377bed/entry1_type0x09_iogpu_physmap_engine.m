@@ -379,7 +379,8 @@ typedef struct PhysmapReadResult
   uint64_t processedPageMask;
   uint32_t pageCount;
   mem_entry_name_port_t memoryEntry;
-  uint64_t reserved_0x28;
+  mem_entry_name_port_t retainedMappingEntry;
+  uint32_t reserved_0x2C;
   vm_address_t backupMappings[16];
   vm_address_t workerScratchPages[64];
 } PhysmapReadResult;
@@ -454,6 +455,7 @@ VMCOPY_ASSERT_OFFSET(PhysmapReadResult, mappedSize, 16);
 VMCOPY_ASSERT_OFFSET(PhysmapReadResult, processedPageMask, 24);
 VMCOPY_ASSERT_OFFSET(PhysmapReadResult, pageCount, 32);
 VMCOPY_ASSERT_OFFSET(PhysmapReadResult, memoryEntry, 36);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, retainedMappingEntry, 40);
 VMCOPY_ASSERT_OFFSET(PhysmapReadResult, backupMappings, 48);
 VMCOPY_ASSERT_OFFSET(PhysmapReadResult, workerScratchPages, 176);
 _Static_assert(sizeof(PhysmapReadResult) == 688, "PhysmapReadResult size mismatch");
@@ -6962,7 +6964,8 @@ LABEL_257:
     return 163848;
   if ( !kread_u32(v5, v122, outputStruct) || (outputStruct[0].msgh_bits & 0x3FF) - 3 >= 2 )
     return v305;
-  v123 = *(uint32_t *)(v4 + 13856);
+  PhysmapLoopState *physmapState = (PhysmapLoopState *)v4;
+  v123 = physmapState->retainedWorkerMemoryEntryCount;
   if ( !v123 )
   {
 LABEL_270:
@@ -6970,7 +6973,7 @@ LABEL_270:
     goto LABEL_271;
   }
   v124 = 0;
-  v125 = v4 + 13600;
+  v125 = (__int64)physmapState->retainedWorkerMemoryEntries;
   while ( 2 )
   {
     v126 = *(uint32_t *)(v125 + 4 * v124);
@@ -7005,30 +7008,31 @@ LABEL_269:
   {
     mach_port_deallocate(mach_task_self_, v126);
     *(uint32_t *)(v125 + 4 * v124) = 0;
-    v123 = *(uint32_t *)(v4 + 13856);
+    v123 = physmapState->retainedWorkerMemoryEntryCount;
     goto LABEL_269;
   }
   v10 = 163856;
 LABEL_271:
   v130 = 0;
-  *(uint32_t *)(v4 + 13856) = 0;
-  __handleb = (char *)(v4 + 192);
-  v131 = v4 + 64;
+  physmapState->retainedWorkerMemoryEntryCount = 0;
+  __handleb = (char *)physmap_read_result_at(v4, 0)->workerScratchPages;
+  v131 = (__int64)physmap_read_result_at(v4, 0)->backupMappings;
   while ( 2 )
   {
-    theDictc = (CFMutableDictionaryRef)(v4 + 688 * v130 + 16);
-    v293 = *(uint64_t *)theDictc;
-    if ( *(uint64_t *)theDictc )
+    PhysmapReadResult *cleanupResult = physmap_read_result_at(v4, v130);
+    theDictc = (CFMutableDictionaryRef)cleanupResult;
+    v293 = cleanupResult->mapping;
+    if ( cleanupResult->mapping )
     {
-      v296 = *(uint64_t *)(v4 + 688 * v130 + 32);
+      v296 = cleanupResult->mappedSize;
       if ( v296 )
       {
-        v132 = v4 + 688 * v130;
-        v272 = *(uint32_t *)(v132 + 56);
-        v284 = *(uint64_t *)(v132 + 24);
+        v132 = (__int64)cleanupResult - 16;
+        v272 = cleanupResult->retainedMappingEntry;
+        v284 = cleanupResult->requestedSize;
         if ( *(uint32_t *)v4 == 3 )
         {
-          v133 = *(uint32_t *)(v4 + 688 * v130 + 52);
+          v133 = cleanupResult->memoryEntry;
           if ( v133 + 1 >= 2 )
           {
             v136 = get_task_kobject_addr(krwCtx, v133);
