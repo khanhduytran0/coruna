@@ -1731,7 +1731,7 @@ __int64 __fastcall driver_close_internal(struct_krwCtx *krwCtx)
     v27 = -1;
     if ( !(unsigned int)fd_open_dev_null(&v27) )
     {
-      teardown_sptm_pgtable_state((__int64)krwCtx);
+      teardown_sptm_pgtable_state(krwCtx);
       fd_close(v27);
     }
   }
@@ -2980,4 +2980,3 @@ __int64 __fastcall fs_snapshot(__int64 a1, __int64 a2, __int64 a3, __int64 a4, _
 {
   return syscall(SYS_fs_snapshot, a1, a2, a3, a4, a5, a6);
 }
-

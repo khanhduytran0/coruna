@@ -461,7 +461,7 @@ bool __fastcall kread_physmap_decorated(struct_krwCtx *krwCtx, unsigned __int64 
 bool __fastcall kwrite_physmap_with_a3_ptr(struct_krwCtx *krwCtx, unsigned __int64 a2, __int64 a3);
 __int64 __fastcall krw_write_validation(struct_krwCtx *krwCtx);
 unsigned __int64 __fastcall find_sptm_pgtable_state_block(struct_krwCtx *krwCtx, unsigned __int64 a2, __int64 a3);
-__int64 __fastcall teardown_sptm_pgtable_state(__int64 a1);
+__int64 __fastcall teardown_sptm_pgtable_state(struct_krwCtx *krwCtx);
 bool __fastcall noppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address_t address, int a3);
 __int64 __fastcall iosurface_physmap_kwrite(struct_krwCtx *krwCtx, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5);
 bool __fastcall kread_u32(struct_krwCtx *krwCtx, unsigned __int64 vaddr, void *outBuf);
