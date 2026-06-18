@@ -269,6 +269,121 @@ typedef struct VmcopyThreadObjectView
   uint64_t next;
 } VmcopyThreadObjectView;
 
+typedef struct PhysmapPagePorts
+{
+  uint64_t objectId;
+  vm_address_t mappedAddress;
+  mem_entry_name_port_t workerMemoryEntry;
+  mem_entry_name_port_t objectHandles[3];
+  uint64_t retainedHandleCount;
+} PhysmapPagePorts;
+
+typedef struct PhysmapPageEntry
+{
+  struct PhysmapPageEntry *next;
+  uint64_t failureStage;
+  PhysmapPagePorts ports[3];
+  vm_address_t firstWideMap;
+  vm_address_t secondWideMap;
+  vm_address_t thirdMap;
+  vm_address_t thirdRemap;
+  vm_address_t thirdRemapCopy;
+  vm_address_t snapshotA;
+  vm_address_t snapshotB;
+  vm_address_t stagingMap;
+  vm_address_t stagingMirror;
+  vm_address_t retainedSource;
+  vm_address_t retainedSourceMirror;
+  vm_address_t retainedObjectMap;
+  vm_address_t retainedObjectMirror;
+  vm_address_t tailRemap;
+  vm_address_t tailCopy;
+} PhysmapPageEntry;
+
+typedef struct PhysmapSmallPageEntry
+{
+  struct PhysmapSmallPageEntry *next;
+  uint64_t failureStage;
+  PhysmapPagePorts ports;
+  vm_address_t mapping;
+} PhysmapSmallPageEntry;
+
+typedef struct PhysmapDualRootQueue
+{
+  void *roots[2];
+  uint64_t preservedRootIndex;
+  void *failedList;
+  uint64_t failedCount;
+} PhysmapDualRootQueue;
+
+typedef struct PhysmapSingleRootQueue
+{
+  void *root;
+  void *failedList;
+  uint64_t failedCount;
+} PhysmapSingleRootQueue;
+
+typedef struct IogpuPrivateCtx
+{
+  uint8_t gap_0x000[0x438];
+  vm_address_t largeBuffer;
+  vm_address_t largeBufferMirror;
+  vm_size_t largeBufferSize;
+  vm_address_t descriptorArena;
+  vm_address_t descriptorMirror;
+  vm_size_t descriptorArenaSize;
+  PhysmapDualRootQueue copyQueues[2];
+  PhysmapSingleRootQueue firstPageQueue;
+  uint64_t firstPageQueuePadding;
+  PhysmapSingleRootQueue secondPageQueue;
+  vm_address_t scratchFreePage;
+  uint8_t gap_0x4F8[0x20];
+  uint64_t descriptorObjectKaddr;
+  uint64_t mappedObjectSize;
+  uint64_t sourcePhys;
+  uint64_t destinationKaddr;
+  uint64_t auxKaddr;
+  uint64_t descriptorPhysBase;
+  vm_address_t scratchMap;
+  vm_address_t targetMap;
+  vm_size_t targetMapSize;
+  vm_address_t sourceMap;
+  vm_address_t mirrorMap;
+  vm_size_t mirrorMapSize;
+  vm_address_t auxMap;
+  vm_address_t sourceMapAlias;
+  vm_size_t sourceMapSize;
+  uint8_t gap_0x590[0x58];
+} IogpuPrivateCtx;
+
+typedef struct PhysmapLoopState
+{
+  uint8_t gap_0x0000[0x3518];
+  uint64_t marker;
+  mach_port_t retainedWorkerMemoryEntries[64];
+  uint32_t retainedWorkerMemoryEntryCount;
+  uint8_t gap_0x3624[4];
+  vm_address_t freeRegionBase;
+  uint64_t freeRegionSize;
+  mem_entry_name_port_t workerMemoryEntry;
+  uint8_t workerStopFlag;
+  uint8_t gap_0x363D[3];
+  uint32_t readyWorkerCount;
+} PhysmapLoopState;
+
+typedef struct PhysmapReadResult
+{
+  vm_address_t mapping;
+  vm_size_t requestedSize;
+  vm_size_t mappedSize;
+  uint64_t processedPageMask;
+  uint32_t pageCount;
+  mem_entry_name_port_t memoryEntry;
+  uint64_t reserved_0x28;
+  vm_address_t backupMappings[16];
+  vm_address_t workerScratchPages[64];
+} PhysmapReadResult;
+
 #define VMCOPY_ASSERT_OFFSET(type, field, offset) \
   _Static_assert(offsetof(type, field) == (offset), #type "." #field " offset mismatch")
 
@@ -300,6 +415,48 @@ VMCOPY_ASSERT_OFFSET(VmcopyThreadObjectView, waitLink, 264);
 VMCOPY_ASSERT_OFFSET(VmcopyThreadObjectView, policyBits, VMCOPY_MAPPED_THREAD_POLICY_OFFSET);
 VMCOPY_ASSERT_OFFSET(VmcopyThreadObjectView, next, VMCOPY_MAPPED_THREAD_NEXT_OFFSET);
 _Static_assert(sizeof(VmcopyThreadObjectView) == VMCOPY_THREAD_OBJECT_SNAPSHOT_BYTES, "VmcopyThreadObjectView size mismatch");
+VMCOPY_ASSERT_OFFSET(PhysmapPagePorts, objectId, 0);
+VMCOPY_ASSERT_OFFSET(PhysmapPagePorts, mappedAddress, 8);
+VMCOPY_ASSERT_OFFSET(PhysmapPagePorts, workerMemoryEntry, 16);
+VMCOPY_ASSERT_OFFSET(PhysmapPagePorts, objectHandles, 20);
+VMCOPY_ASSERT_OFFSET(PhysmapPagePorts, retainedHandleCount, 32);
+_Static_assert(sizeof(PhysmapPagePorts) == 40, "PhysmapPagePorts size mismatch");
+VMCOPY_ASSERT_OFFSET(PhysmapSmallPageEntry, ports, 16);
+VMCOPY_ASSERT_OFFSET(PhysmapSmallPageEntry, mapping, 56);
+_Static_assert(sizeof(PhysmapSmallPageEntry) == 64, "PhysmapSmallPageEntry size mismatch");
+VMCOPY_ASSERT_OFFSET(PhysmapPageEntry, ports[0], 16);
+VMCOPY_ASSERT_OFFSET(PhysmapPageEntry, ports[1], 56);
+VMCOPY_ASSERT_OFFSET(PhysmapPageEntry, ports[2], 96);
+VMCOPY_ASSERT_OFFSET(PhysmapPageEntry, firstWideMap, 136);
+VMCOPY_ASSERT_OFFSET(PhysmapPageEntry, tailCopy, 248);
+_Static_assert(sizeof(PhysmapPageEntry) == 256, "PhysmapPageEntry size mismatch");
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, largeBuffer, 1080);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, descriptorArena, 1104);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, copyQueues, 1128);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, firstPageQueue, 1208);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, secondPageQueue, 1240);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, scratchFreePage, 1264);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, descriptorObjectKaddr, 1304);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, auxKaddr, 1336);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, scratchMap, 1352);
+VMCOPY_ASSERT_OFFSET(IogpuPrivateCtx, sourceMapSize, 1416);
+_Static_assert(sizeof(IogpuPrivateCtx) == 0x5E8, "IogpuPrivateCtx size mismatch");
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, marker, 13592);
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, retainedWorkerMemoryEntries, 13600);
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, retainedWorkerMemoryEntryCount, 13856);
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, freeRegionBase, 13864);
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, freeRegionSize, 13872);
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, workerMemoryEntry, 13880);
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, workerStopFlag, 13884);
+VMCOPY_ASSERT_OFFSET(PhysmapLoopState, readyWorkerCount, 13888);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, requestedSize, 8);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, mappedSize, 16);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, processedPageMask, 24);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, pageCount, 32);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, memoryEntry, 36);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, backupMappings, 48);
+VMCOPY_ASSERT_OFFSET(PhysmapReadResult, workerScratchPages, 176);
+_Static_assert(sizeof(PhysmapReadResult) == 688, "PhysmapReadResult size mismatch");
 
 #undef VMCOPY_ASSERT_OFFSET
 
@@ -1245,6 +1402,7 @@ __int64 __fastcall start_physmap_worker_thread(__int64 a1, mem_entry_name_port_t
 //----- (0000000000006BBC) ----------------------------------------------------
 __int64 __fastcall request_physmap_page(uint64_t *a1, __int64 a2)
 {
+  PhysmapPagePorts *ports = (PhysmapPagePorts *)a2;
   vm_address_t *v4; // x21
   __int64 v5; // x24
   unsigned __int64 v6; // x0
@@ -1301,11 +1459,11 @@ LABEL_6:
   }
   v14 = 0;
   v15 = size;
-  *(uint64_t *)a2 = v8;
-  *(uint64_t *)(a2 + 8) = v15;
-  *(uint32_t *)(a2 + 16) = v10;
+  ports->objectId = v8;
+  ports->mappedAddress = v15;
+  ports->workerMemoryEntry = v10;
   v16 = v9 + ~HIDWORD(v11);
-  *(uint64_t *)(a2 + 32) = v16;
+  ports->retainedHandleCount = v16;
   while ( 1 )
   {
     v17 = object[v14];
@@ -1316,11 +1474,11 @@ LABEL_6:
     }
     else
     {
-      *(uint32_t *)(a2 + 20 + 4 * v14) = v17;
+      ports->objectHandles[v14] = v17;
     }
     if ( v14 == 3 )
       break;
-    v16 = *(uint64_t *)(a2 + 32);
+    v16 = ports->retainedHandleCount;
     ++v14;
   }
   return 1;
@@ -1659,36 +1817,34 @@ __int64 __fastcall physmap_vmregion_init(uint64_t *a1)
 //----- (00000000000076B0) ----------------------------------------------------
 void *__fastcall alloc_physmap_page_entry(uint64_t *a1)
 {
-  void *v2; // x19
-  vm_address_t v3; // x20
-  __int64 v4; // x1
+  PhysmapSmallPageEntry *entry; // x19
+  vm_address_t mappedPage; // x20
   vm_address_t address; // [xsp+8h] [xbp-28h] BYREF
 
-  v2 = calloc(1u, 0x40u);
+  entry = calloc(1u, sizeof(*entry));
   address = 0;
   vm_allocate(mach_task_self_, &address, 0xC000u, 1);
-  *((uint64_t *)v2 + 7) = address;
-  while ( !(unsigned int)request_physmap_page(a1, (__int64)v2 + 16) )
+  entry->mapping = address;
+  while ( !(unsigned int)request_physmap_page(a1, (__int64)&entry->ports) )
     ;
   thread_switch(0, 2, 0);
-  mach_port_deallocate(mach_task_self_, *((uint32_t *)v2 + 8));
-  *((uint32_t *)v2 + 8) = 0;
-  v3 = *((uint64_t *)v2 + 7);
-  vm_remap_inplace(v3, 0xC000u, 0);
-  if ( query_vm_region_nesting(v3).object_id != *((uint64_t *)v2 + 2) )
+  mach_port_deallocate(mach_task_self_, entry->ports.workerMemoryEntry);
+  entry->ports.workerMemoryEntry = 0;
+  mappedPage = entry->mapping;
+  vm_remap_inplace(mappedPage, 0xC000u, 0);
+  if ( query_vm_region_nesting(mappedPage).object_id != entry->ports.objectId )
   {
-    vm_deallocate(mach_task_self_, v3, 0xC000u);
-    *((uint64_t *)v2 + 7) = 0;
-    *((uint64_t *)v2 + 1) = 1;
+    vm_deallocate(mach_task_self_, mappedPage, 0xC000u);
+    entry->mapping = 0;
+    entry->failureStage = 1;
   }
-  return v2;
+  return entry;
 }
-// 775C: variable 'v4' is possibly undefined
 
 //----- (0000000000007794) ----------------------------------------------------
 void *__fastcall physmap_page_entry_alloc(uint64_t *a1, int a2)
 {
-  void *v4; // x19
+  PhysmapPageEntry *entry; // x19
   __int64 v5; // x1
   vm_address_t v6; // x3
   __int64 v7; // x1
@@ -1713,35 +1869,35 @@ void *__fastcall physmap_page_entry_alloc(uint64_t *a1, int a2)
   vm_prot_t cur_protection[2]; // [xsp+20h] [xbp-40h] BYREF
   vm_address_t address; // [xsp+28h] [xbp-38h] BYREF
 
-  v4 = calloc(1u, 0x100u);
+  entry = calloc(1u, sizeof(*entry));
   address = 0;
   vm_allocate(mach_task_self_, &address, 0x18000u, 1);
-  *((uint64_t *)v4 + 17) = address;
-  while ( !(unsigned int)request_physmap_page(a1, (__int64)v4 + 16) )
+  entry->firstWideMap = address;
+  while ( !(unsigned int)request_physmap_page(a1, (__int64)&entry->ports[0]) )
     ;
   thread_switch(0, 2, 0);
-  mach_port_deallocate(mach_task_self_, *((uint32_t *)v4 + 8));
-  *((uint32_t *)v4 + 8) = 0;
-  **((uint8_t **)v4 + 17) = 65;
-  if ( query_vm_region_nesting(*((uint64_t *)v4 + 17)).object_id != *((uint64_t *)v4 + 2) )
+  mach_port_deallocate(mach_task_self_, entry->ports[0].workerMemoryEntry);
+  entry->ports[0].workerMemoryEntry = 0;
+  *(uint8_t *)entry->firstWideMap = 65;
+  if ( query_vm_region_nesting(entry->firstWideMap).object_id != entry->ports[0].objectId )
   {
     v23 = 1;
 LABEL_23:
-    *((uint64_t *)v4 + 1) = v23;
-    return v4;
+    entry->failureStage = v23;
+    return entry;
   }
   address = 0;
   vm_allocate(mach_task_self_, &address, 0x14000u, 1);
   v6 = address;
-  *((uint64_t *)v4 + 18) = address;
-  vm_copy(mach_task_self_, *((uint64_t *)v4 + 17) + 0x4000LL, 0x14000u, v6);
-  while ( !(unsigned int)request_physmap_page(a1, (__int64)v4 + 56) )
+  entry->secondWideMap = address;
+  vm_copy(mach_task_self_, entry->firstWideMap + 0x4000LL, 0x14000u, v6);
+  while ( !(unsigned int)request_physmap_page(a1, (__int64)&entry->ports[1]) )
     ;
   thread_switch(0, 2, 0);
-  mach_port_deallocate(mach_task_self_, *((uint32_t *)v4 + 18));
-  *((uint32_t *)v4 + 18) = 0;
-  *(uint8_t *)(*((uint64_t *)v4 + 18) + 0x10000LL) = 65;
-  if ( query_vm_region_nesting(*((uint64_t *)v4 + 18)).object_id != *((uint64_t *)v4 + 7) )
+  mach_port_deallocate(mach_task_self_, entry->ports[1].workerMemoryEntry);
+  entry->ports[1].workerMemoryEntry = 0;
+  *(uint8_t *)(entry->secondWideMap + 0x10000LL) = 65;
+  if ( query_vm_region_nesting(entry->secondWideMap).object_id != entry->ports[1].objectId )
   {
     v23 = 2;
     goto LABEL_23;
@@ -1749,46 +1905,46 @@ LABEL_23:
   address = 0;
   vm_allocate(mach_task_self_, &address, 0x10000u, 1);
   v8 = address;
-  *((uint64_t *)v4 + 19) = address;
-  vm_copy(mach_task_self_, *((uint64_t *)v4 + 18), 0x10000u, v8);
-  while ( !(unsigned int)request_physmap_page(a1, (__int64)v4 + 96) )
+  entry->thirdMap = address;
+  vm_copy(mach_task_self_, entry->secondWideMap, 0x10000u, v8);
+  while ( !(unsigned int)request_physmap_page(a1, (__int64)&entry->ports[2]) )
     ;
   thread_switch(0, 2, 0);
-  mach_port_deallocate(mach_task_self_, *((uint32_t *)v4 + 28));
-  *((uint32_t *)v4 + 28) = 0;
-  *(uint8_t *)(*((uint64_t *)v4 + 19) + 0x8000LL) = 65;
-  if ( query_vm_region_nesting(*((uint64_t *)v4 + 19)).object_id != *((uint64_t *)v4 + 12) )
+  mach_port_deallocate(mach_task_self_, entry->ports[2].workerMemoryEntry);
+  entry->ports[2].workerMemoryEntry = 0;
+  *(uint8_t *)(entry->thirdMap + 0x8000LL) = 65;
+  if ( query_vm_region_nesting(entry->thirdMap).object_id != entry->ports[2].objectId )
   {
     v23 = 3;
     goto LABEL_23;
   }
-  v10 = vm_remap_new_target(*((uint64_t *)v4 + 19), 0x10000u, 0);
-  *((uint64_t *)v4 + 20) = v10;
+  v10 = vm_remap_new_target(entry->thirdMap, 0x10000u, 0);
+  entry->thirdRemap = v10;
   address = v10 + 0x4000;
   vm_allocate(mach_task_self_, &address, 0xC000u, 0x4000);
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 18), 0x14000u);
-  *((uint64_t *)v4 + 18) = 0;
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 17), 0x18000u);
-  *((uint64_t *)v4 + 17) = 0;
+  vm_deallocate(mach_task_self_, entry->secondWideMap, 0x14000u);
+  entry->secondWideMap = 0;
+  vm_deallocate(mach_task_self_, entry->firstWideMap, 0x18000u);
+  entry->firstWideMap = 0;
   thread_switch(0, 2, 0);
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 3), 0x4000u);
-  *((uint64_t *)v4 + 3) = 0;
-  *((uint64_t *)v4 + 21) = vm_remap_new_target(*((uint64_t *)v4 + 19), 0x10000u, 1);
+  vm_deallocate(mach_task_self_, entry->ports[0].mappedAddress, 0x4000u);
+  entry->ports[0].mappedAddress = 0;
+  entry->thirdRemapCopy = vm_remap_new_target(entry->thirdMap, 0x10000u, 1);
   address = 0;
   vm_allocate(mach_task_self_, &address, 0x10000u, 1);
-  *((uint64_t *)v4 + 22) = address;
+  entry->snapshotA = address;
   address = 0;
   vm_allocate(mach_task_self_, &address, 0x10000u, 1);
-  *((uint64_t *)v4 + 23) = address;
-  vm_copy(mach_task_self_, *((uint64_t *)v4 + 21), 0x10000u, *((uint64_t *)v4 + 22));
-  vm_copy(mach_task_self_, *((uint64_t *)v4 + 21), 0x10000u, *((uint64_t *)v4 + 23));
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 19), 0x10000u);
-  *((uint64_t *)v4 + 19) = 0;
-  v11 = *((uint64_t *)v4 + 21) + 0x8000LL;
+  entry->snapshotB = address;
+  vm_copy(mach_task_self_, entry->thirdRemapCopy, 0x10000u, entry->snapshotA);
+  vm_copy(mach_task_self_, entry->thirdRemapCopy, 0x10000u, entry->snapshotB);
+  vm_deallocate(mach_task_self_, entry->thirdMap, 0x10000u);
+  entry->thirdMap = 0;
+  v11 = entry->thirdRemapCopy + 0x8000LL;
   vm_protect(mach_task_self_, v11, 0x4000u, 0, 1);
   v13 = query_vm_region_nesting(v11).object_id;
   vm_protect(mach_task_self_, v11, 0x4000u, 0, 3);
-  if ( v13 != *((uint64_t *)v4 + 2) )
+  if ( v13 != entry->ports[0].objectId )
   {
     v23 = 4;
     goto LABEL_23;
@@ -1796,68 +1952,68 @@ LABEL_23:
   address = 0;
   vm_allocate(mach_task_self_, &address, 0x10000u, 1);
   v14 = address;
-  vm_copy(mach_task_self_, address, 0x10000u, *((uint64_t *)v4 + 20));
+  vm_copy(mach_task_self_, address, 0x10000u, entry->thirdRemap);
   vm_deallocate(mach_task_self_, v14, 0x10000u);
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 20) + 0x4000LL, 0xC000u);
+  vm_deallocate(mach_task_self_, entry->thirdRemap + 0x4000LL, 0xC000u);
   address = 0;
   vm_allocate(mach_task_self_, &address, 0x10000u, 1);
-  *((uint64_t *)v4 + 24) = address;
+  entry->stagingMap = address;
   thread_switch(0, 2, 0);
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 8), 0x4000u);
-  *((uint64_t *)v4 + 8) = 0;
-  *(uint8_t *)(*((uint64_t *)v4 + 24) + 0x4000LL) = 65;
-  *((uint64_t *)v4 + 25) = vm_remap_new_target(*((uint64_t *)v4 + 24), 0x10000u, 0);
-  if ( query_vm_region_nesting(*((uint64_t *)v4 + 24)).object_id != *((uint64_t *)v4 + 7) )
+  vm_deallocate(mach_task_self_, entry->ports[1].mappedAddress, 0x4000u);
+  entry->ports[1].mappedAddress = 0;
+  *(uint8_t *)(entry->stagingMap + 0x4000LL) = 65;
+  entry->stagingMirror = vm_remap_new_target(entry->stagingMap, 0x10000u, 0);
+  if ( query_vm_region_nesting(entry->stagingMap).object_id != entry->ports[1].objectId )
   {
     v23 = 5;
     goto LABEL_23;
   }
-  v16 = *((uint64_t *)v4 + 22);
-  *((uint64_t *)v4 + 26) = v16;
-  *((uint64_t *)v4 + 22) = 0;
-  *((uint64_t *)v4 + 27) = vm_remap_new_target(v16, 0x10000u, 0);
+  v16 = entry->snapshotA;
+  entry->retainedSource = v16;
+  entry->snapshotA = 0;
+  entry->retainedSourceMirror = vm_remap_new_target(v16, 0x10000u, 0);
   if ( (a2 & 1) == 0 )
-    **((uint8_t **)v4 + 26) = 65;
+    *(uint8_t *)entry->retainedSource = 65;
   thread_switch(0, 2, 0);
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 23), 0x10000u);
-  *((uint64_t *)v4 + 23) = 0;
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 13), 0x4000u);
-  *((uint64_t *)v4 + 13) = 0;
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 25), 0x10000u);
-  *((uint64_t *)v4 + 25) = 0;
-  vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 24), 0x10000u);
-  *((uint64_t *)v4 + 24) = 0;
-  v17 = *((uint64_t *)v4 + 21);
-  *((uint64_t *)v4 + 28) = v17;
-  *((uint64_t *)v4 + 21) = 0;
-  *((uint64_t *)v4 + 29) = vm_remap_new_target(v17, 0x10000u, 0);
-  v18 = *((uint64_t *)v4 + 28);
+  vm_deallocate(mach_task_self_, entry->snapshotB, 0x10000u);
+  entry->snapshotB = 0;
+  vm_deallocate(mach_task_self_, entry->ports[2].mappedAddress, 0x4000u);
+  entry->ports[2].mappedAddress = 0;
+  vm_deallocate(mach_task_self_, entry->stagingMirror, 0x10000u);
+  entry->stagingMirror = 0;
+  vm_deallocate(mach_task_self_, entry->stagingMap, 0x10000u);
+  entry->stagingMap = 0;
+  v17 = entry->thirdRemapCopy;
+  entry->retainedObjectMap = v17;
+  entry->thirdRemapCopy = 0;
+  entry->retainedObjectMirror = vm_remap_new_target(v17, 0x10000u, 0);
+  v18 = entry->retainedObjectMap;
   vm_protect(mach_task_self_, v18, 0x4000u, 0, 1);
   v20 = query_vm_region_nesting(v18).object_id;
   vm_protect(mach_task_self_, v18, 0x4000u, 0, 3);
-  if ( v20 != *((uint64_t *)v4 + 7) )
+  if ( v20 != entry->ports[1].objectId )
   {
     v23 = 6;
     goto LABEL_23;
   }
-  v21 = *((uint64_t *)v4 + 26);
+  v21 = entry->retainedSource;
   if ( a2 )
   {
-    *((uint64_t *)v4 + 30) = vm_remap_new_target(v21 + 0x4000, 0xC000u, 1);
+    entry->tailRemap = vm_remap_new_target(v21 + 0x4000, 0xC000u, 1);
     address = 0;
     vm_allocate(mach_task_self_, &address, 0xC000u, 1);
     v22 = address;
-    *((uint64_t *)v4 + 31) = address;
-    vm_copy(mach_task_self_, *((uint64_t *)v4 + 30), 0xC000u, v22);
+    entry->tailCopy = address;
+    vm_copy(mach_task_self_, entry->tailRemap, 0xC000u, v22);
   }
   else
   {
     vm_deallocate(mach_task_self_, v21 + 49152, 0x4000u);
-    vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 27) + 49152LL, 0x4000u);
+    vm_deallocate(mach_task_self_, entry->retainedSourceMirror + 49152LL, 0x4000u);
     v25 = a1[158];
     if ( v25 )
     {
-      v26 = *((uint64_t *)v4 + 27);
+      v26 = entry->retainedSourceMirror;
       *(uint64_t *)cur_protection = 0;
       address = v25;
       vm_remap(
@@ -1872,12 +2028,12 @@ LABEL_23:
         &cur_protection[1],
         cur_protection,
         1u);
-      vm_deallocate(mach_task_self_, *((uint64_t *)v4 + 27), 0xC000u);
-      *((uint64_t *)v4 + 27) = a1[158];
+      vm_deallocate(mach_task_self_, entry->retainedSourceMirror, 0xC000u);
+      entry->retainedSourceMirror = a1[158];
       a1[158] = 0;
     }
   }
-  return v4;
+  return entry;
 }
 // 7840: variable 'v5' is possibly undefined
 // 78D4: variable 'v7' is possibly undefined
@@ -1889,23 +2045,22 @@ LABEL_23:
 //----- (0000000000007DA4) ----------------------------------------------------
 uint64_t *__fastcall fill_physmap_page_entries(uint64_t *a1, __int64 a2)
 {
-  __int64 i; // x21
+  PhysmapDualRootQueue *queue = (PhysmapDualRootQueue *)a2;
   uint64_t *result; // x0
-  __int64 v6; // x9
 
-  for ( i = 0; i != 2; ++i )
+  for ( uint64_t i = 0; i != 2; ++i )
   {
     while ( 1 )
     {
       result = alloc_physmap_page_entry(a1);
-      if ( !result[1] )
+      PhysmapSmallPageEntry *entry = (PhysmapSmallPageEntry *)result;
+      if ( !entry->failureStage )
         break;
-      v6 = *(uint64_t *)(a2 + 32);
-      *result = *(uint64_t *)(a2 + 24);
-      *(uint64_t *)(a2 + 24) = result;
-      *(uint64_t *)(a2 + 32) = v6 + 1;
+      entry->next = queue->failedList;
+      queue->failedList = entry;
+      ++queue->failedCount;
     }
-    *(uint64_t *)(a2 + 8 * i) = result;
+    queue->roots[i] = result;
   }
   return result;
 }
@@ -1914,31 +2069,29 @@ uint64_t *__fastcall fill_physmap_page_entries(uint64_t *a1, __int64 a2)
 uint64_t *__fastcall dequeue_physmap_page_entry(uint64_t *a1, uint64_t *a2)
 {
   uint64_t *v3; // x20
-  uint64_t *v4; // x21
+  PhysmapSingleRootQueue *queue = (PhysmapSingleRootQueue *)a2;
   int v5; // w1
   uint64_t *result; // x0
-  __int64 v7; // x9
-  uint64_t *v8; // x8
 
   v3 = a1;
-  v4 = a1 + 151;
-  v5 = a1 + 151 == a2;
+  PhysmapSingleRootQueue *firstQueue = (PhysmapSingleRootQueue *)(a1 + 151);
+  v5 = firstQueue == queue;
   while ( 1 )
   {
     result = physmap_page_entry_alloc(a1, v5);
-    if ( !result[1] )
+    PhysmapPageEntry *entry = (PhysmapPageEntry *)result;
+    if ( !entry->failureStage )
       break;
-    v5 = v4 == a2;
-    v7 = a2[2];
-    *result = a2[1];
-    a2[1] = result;
-    a2[2] = v7 + 1;
+    v5 = firstQueue == queue;
+    entry->next = queue->failedList;
+    queue->failedList = entry;
+    ++queue->failedCount;
     a1 = v3;
   }
-  *a2 = result;
-  if ( a2[2] )
+  queue->root = result;
+  if ( queue->failedCount )
   {
-    v8 = a2 + 1;
+    uint64_t *v8 = (uint64_t *)&queue->failedList;
     do
       v8 = (uint64_t *)*v8;
     while ( v8 );
@@ -1950,10 +2103,11 @@ uint64_t *__fastcall dequeue_physmap_page_entry(uint64_t *a1, uint64_t *a2)
 uint64_t *__fastcall dequeue_multiple_physmap_entries(uint64_t *a1)
 {
 
-  fill_physmap_page_entries(a1, (__int64)(a1 + 141));
-  fill_physmap_page_entries(a1, (__int64)(a1 + 146));
-  dequeue_physmap_page_entry(a1, a1 + 151);
-  return dequeue_physmap_page_entry(a1, a1 + 155);
+  IogpuPrivateCtx *ctx = (IogpuPrivateCtx *)a1;
+  fill_physmap_page_entries(a1, (__int64)&ctx->copyQueues[0]);
+  fill_physmap_page_entries(a1, (__int64)&ctx->copyQueues[1]);
+  dequeue_physmap_page_entry(a1, (uint64_t *)&ctx->firstPageQueue);
+  return dequeue_physmap_page_entry(a1, (uint64_t *)&ctx->secondPageQueue);
 }
 // 7ECC: variable 'vars8' is possibly undefined
 
@@ -3623,7 +3777,7 @@ __int64 __fastcall iogpu_init_private_ctx(
   uint64_t dstKaddr; // [xsp+20h] [xbp-A0h]
   uint64_t auxKaddr; // x22
   kern_return_t kr; // w0
-  uint64_t *privateCtx; // x0
+  IogpuPrivateCtx *privateCtx; // x0
   vm_address_t stagedMirror; // x9
   vm_address_t fixedPage; // [xsp+28h] [xbp-98h] BYREF
   vm_address_t auxMap; // [xsp+48h] [xbp-78h] BYREF
@@ -3742,7 +3896,7 @@ __int64 __fastcall iogpu_init_private_ctx(
   if ( kr )
     goto mach_error;
 
-  privateCtx = calloc(1u, 0x5E8u);
+  privateCtx = calloc(1u, sizeof(*privateCtx));
   if ( !privateCtx )
   {
     status = 708617;
@@ -3750,24 +3904,24 @@ __int64 __fastcall iogpu_init_private_ctx(
   }
 
   status = 0;
-  privateCtx[163] = objectKaddr;
-  privateCtx[164] = pageAlignedSize;
-  privateCtx[165] = srcPhys;
-  privateCtx[166] = dstKaddr;
-  privateCtx[167] = auxKaddr;
-  privateCtx[169] = scratchMap;
+  privateCtx->descriptorObjectKaddr = objectKaddr;
+  privateCtx->mappedObjectSize = pageAlignedSize;
+  privateCtx->sourcePhys = srcPhys;
+  privateCtx->destinationKaddr = dstKaddr;
+  privateCtx->auxKaddr = auxKaddr;
+  privateCtx->scratchMap = scratchMap;
   stagedMirror = srcMap;
-  privateCtx[170] = targetMap;
-  privateCtx[171] = 49152;
+  privateCtx->targetMap = targetMap;
+  privateCtx->targetMapSize = 49152;
   scratchMap = 0;
   srcMap = 0;
   targetMap = 0;
-  privateCtx[172] = stagedMirror;
-  privateCtx[173] = mirrorMap;
-  privateCtx[174] = 49152;
-  privateCtx[175] = auxMap;
-  privateCtx[176] = stagedMirror;
-  privateCtx[177] = 49152;
+  privateCtx->sourceMap = stagedMirror;
+  privateCtx->mirrorMap = mirrorMap;
+  privateCtx->mirrorMapSize = 49152;
+  privateCtx->auxMap = auxMap;
+  privateCtx->sourceMapAlias = stagedMirror;
+  privateCtx->sourceMapSize = 49152;
   auxMap = 0;
   mirrorMap = 0;
   *a2 = (uint64_t)privateCtx;
@@ -3907,11 +4061,11 @@ __int64 __fastcall iogpu_krw_ctx_setup(struct_krwCtx *krwCtx, uint32_t *a2)
 //----- (000000000000B73C) ----------------------------------------------------
 __int64 __fastcall get_iogpu_physmap_base(struct_krwCtx *krwCtx)
 {
-  __int64 v1; // x8
+  IogpuPrivateCtx *privateCtx; // x8
 
-  v1 = krwCtx->iogpuCtx;
-  if ( v1 )
-    return *(uint64_t *)(v1 + 1336);
+  privateCtx = (IogpuPrivateCtx *)krwCtx->iogpuCtx;
+  if ( privateCtx )
+    return privateCtx->auxKaddr;
   else
     return 708609LL;
 }
@@ -4115,6 +4269,7 @@ unsigned __int64 __fastcall scan_for_macho_header(__int64 *krwCtx, __int64 a2)
 //----- (000000000000BBF4) ----------------------------------------------------
 __int64 __fastcall acquire_physmap_page_atomic(__int64 a1)
 {
+  PhysmapLoopState *state = (PhysmapLoopState *)a1;
   vm_size_t v1; // x19
   mem_entry_name_port_t v2; // w20
   bool v3; // zf
@@ -4122,25 +4277,25 @@ __int64 __fastcall acquire_physmap_page_atomic(__int64 a1)
   unsigned __int8 v5; // w8
   vm_address_t address; // [xsp+18h] [xbp-38h] BYREF
 
-  v1 = atomic_load((unsigned __int64 *)(a1 + 13872));
-  v2 = atomic_load((unsigned int *)(a1 + 13880));
+  v1 = atomic_load((unsigned __int64 *)&state->freeRegionSize);
+  v2 = atomic_load((unsigned int *)&state->workerMemoryEntry);
   TRACE_PHYSMAP("physmap worker enter state=%llx size=%llx port=%x flag=%u count=%u\n",
                 (unsigned long long)krwCtx,
                 (unsigned long long)v1,
                 v2,
-                atomic_load((unsigned __int8 *)(a1 + 13884)),
-                atomic_load((unsigned int *)(a1 + 13888)));
+                atomic_load((unsigned __int8 *)&state->workerStopFlag),
+                atomic_load((unsigned int *)&state->readyWorkerCount));
   if ( v1 )
     v3 = v2 == 0;
   else
     v3 = 1;
   if ( !v3 )
   {
-    atomic_fetch_add((atomic_uint *volatile)(a1 + 13888), 1u);
+    atomic_fetch_add((atomic_uint *volatile)&state->readyWorkerCount, 1u);
     TRACE_PHYSMAP("physmap worker counted state=%llx count=%u\n",
                   (unsigned long long)a1,
-                  atomic_load((unsigned int *)(a1 + 13888)));
-    v4 = (unsigned __int8 *)(a1 + 13884);
+                  atomic_load((unsigned int *)&state->readyWorkerCount));
+    v4 = (unsigned __int8 *)&state->workerStopFlag;
     do
     {
       v5 = atomic_load(v4);
@@ -4152,8 +4307,8 @@ __int64 __fastcall acquire_physmap_page_atomic(__int64 a1)
   }
   TRACE_PHYSMAP("physmap worker exit state=%llx flag=%u count=%u\n",
                 (unsigned long long)a1,
-                atomic_load((unsigned __int8 *)(a1 + 13884)),
-                atomic_load((unsigned int *)(a1 + 13888)));
+                atomic_load((unsigned __int8 *)&state->workerStopFlag),
+                atomic_load((unsigned int *)&state->readyWorkerCount));
   return 0;
 }
 
@@ -4278,6 +4433,8 @@ __int64 __fastcall vm_map_with_retry(vm_address_t *a1, vm_size_t size, vm_addres
 //----- (000000000000BED0) ----------------------------------------------------
 __int64 __fastcall kernel_read_loop_physmap(struct_krwCtx *krwCtx, __int64 a2, unsigned int a3, __int64 a4)
 {
+  PhysmapLoopState *physmapState = (PhysmapLoopState *)a2;
+  PhysmapReadResult *out = (PhysmapReadResult *)a4;
   __int64 v7; // x25
   __int64 v8; // x24
   vm_size_t v9; // x21
@@ -4467,16 +4624,16 @@ LABEL_9:
                   (unsigned long long)(v14 + 2 * v9));
     *v13 = 0;
     v13[1] = 0;
-    *(uint64_t *)(a2 + 13864) = 0;
-    atomic_store(0, (unsigned __int64 *)(a2 + 13872));
+    physmapState->freeRegionBase = 0;
+    atomic_store(0, (unsigned __int64 *)&physmapState->freeRegionSize);
   }
 #endif
   if ( *v13 && (v15 = v13[1]) != 0 )
   {
-    *(uint64_t *)(a2 + 13864) = *v13;
-    atomic_store(v15, (unsigned __int64 *)(a2 + 13872));
+    physmapState->freeRegionBase = *v13;
+    atomic_store(v15, (unsigned __int64 *)&physmapState->freeRegionSize);
   }
-  else if ( !*(uint64_t *)(a2 + 13864) )
+  else if ( !physmapState->freeRegionBase )
   {
     v115 = v8;
     v117 = v12;
@@ -4489,8 +4646,8 @@ LABEL_9:
       v120 = 0;
       goto LABEL_170;
     }
-    *(uint64_t *)(a2 + 13864) = free_region_address;
-    atomic_store(v139, (unsigned __int64 *)(a2 + 13872));
+    physmapState->freeRegionBase = free_region_address;
+    atomic_store(v139, (unsigned __int64 *)&physmapState->freeRegionSize);
     *v13 = free_region_address;
     v13[1] = v139;
     TRACE_PHYSMAP("kernel_read_loop_physmap free region base=%llx size=%llx required=%llx\n",
@@ -4500,16 +4657,16 @@ LABEL_9:
     v8 = v115;
     v12 = v117;
   }
-  if ( *(uint64_t *)(a2 + 13864) && (v16 = atomic_load((unsigned __int64 *)(a2 + 13872))) != 0 )
+  if ( physmapState->freeRegionBase && (v16 = atomic_load((unsigned __int64 *)&physmapState->freeRegionSize)) != 0 )
   {
     v114 = v8;
     v116 = v12;
     v110 = a3;
     v17 = 0;
     v18 = 0;
-    v19 = atomic_load((unsigned __int64 *)(a2 + 13872));
-    v20 = (unsigned __int8 *)(a2 + 13884);
-    v21 = (unsigned int *)(a2 + 13888);
+    v19 = atomic_load((unsigned __int64 *)&physmapState->freeRegionSize);
+    v20 = (unsigned __int8 *)&physmapState->workerStopFlag;
+    v21 = (unsigned int *)&physmapState->readyWorkerCount;
     v109 = v14;
     v113 = v11;
     while ( 1 )
@@ -4522,11 +4679,11 @@ LABEL_9:
                     (long long)v18,
                     v11,
                     (unsigned long long)v19,
-                    (unsigned long long)*(uint64_t *)(a2 + 13864),
-                    (unsigned long long)atomic_load((unsigned __int64 *)(a2 + 13872)));
+                    (unsigned long long)physmapState->freeRegionBase,
+                    (unsigned long long)atomic_load((unsigned __int64 *)&physmapState->freeRegionSize));
       if ( v11 )
       {
-        v42 = physmap_make_worker_memory_entries(v19, *(uint64_t *)(a2 + 13864), v11, object_handle, &v26);
+        v42 = physmap_make_worker_memory_entries(v19, physmapState->freeRegionBase, v11, object_handle, &v26);
         if ( (uint32_t)v42 )
         {
           v120 = v17;
@@ -4539,7 +4696,7 @@ LABEL_9:
         v112 = 0;
         v26 = 0;
       }
-      atomic_store(v26, (unsigned int *)(a2 + 13880));
+      atomic_store(v26, (unsigned int *)&physmapState->workerMemoryEntry);
       v27 = vm_page_size;
       v28 = vm_map(mach_task_self_, &address, v19, 0, 1, v26, 0, 0, 1, 1, 1u);
       if ( (uint32_t)v28 || (v28 = vm_map_with_retry(&v141, v27 + v19, 0x1FFFFFFu, 9, 16), (uint32_t)v28) )
@@ -4588,13 +4745,13 @@ LABEL_169:
       }
       while ( 1 )
       {
-        v35 = atomic_load((unsigned int *)(a2 + 13888));
+        v35 = atomic_load((unsigned int *)&physmapState->readyWorkerCount);
         if ( v35 == v112 )
           break;
         TRACE_PHYSMAP("kernel_read_loop_physmap wait workers count=%u expected=%u flag=%u\n",
                       v35,
                       v112,
-                      atomic_load((unsigned __int8 *)(a2 + 13884)));
+                      atomic_load((unsigned __int8 *)&physmapState->workerStopFlag));
         semaphore_timedwait_ns(v7, 0x3E8u);
       }
       TRACE_PHYSMAP("kernel_read_loop_physmap workers ready count=%u expected=%u\n", v35, v112);
@@ -4611,7 +4768,7 @@ LABEL_169:
         goto LABEL_72;
       }
       v121 = v7;
-      atomic_store(1u, (unsigned __int8 *)(a2 + 13884));
+      atomic_store(1u, (unsigned __int8 *)&physmapState->workerStopFlag);
       if ( v112 )
       {
         memory_entry_64 = physmap_join_worker_threads((pthread_t *)v145, v113);
@@ -4656,9 +4813,9 @@ LABEL_83:
               do
               {
                 v54 = *v53;
-                v55 = *(unsigned int *)(a2 + 13856);
-                *(uint32_t *)(a2 + 13856) = v55 + 1;
-                *(uint32_t *)(a2 + 4 * v55 + 13600) = v54;
+                v55 = physmapState->retainedWorkerMemoryEntryCount;
+                physmapState->retainedWorkerMemoryEntryCount = v55 + 1;
+                physmapState->retainedWorkerMemoryEntries[v55] = v54;
                 *v53++ = 0;
                 --v52;
               }
@@ -4745,10 +4902,10 @@ LABEL_158:
                             if ( !v100 )
                             {
 LABEL_219:
-                              *(uint64_t *)a4 = v38;
-                              *(uint64_t *)(a4 + 8) = 0;
-                              *(uint64_t *)(a4 + 16) = v19;
-                              *(uint64_t *)(a4 + 32) = 0;
+                              out->mapping = v38;
+                              out->requestedSize = 0;
+                              out->mappedSize = v19;
+                              out->pageCount = 0;
                               v42 = 5;
                               v141 = 0;
                               goto LABEL_168;
@@ -4760,28 +4917,28 @@ LABEL_219:
                               v103 = v100;
                               do
                               {
-                                *v103 = *(uint64_t *)(a2 + 13592);
+                                *v103 = physmapState->marker;
                                 v103 = (uint64_t *)((char *)v103 + v102);
                                 --v101;
                               }
                               while ( v101 );
                             }
-                            *(uint64_t *)a4 = v100;
-                            *(uint64_t *)(a4 + 8) = v109;
-                            *(uint64_t *)(a4 + 16) = v19;
-                            *(uint32_t *)(a4 + 32) = v110;
+                            out->mapping = v100;
+                            out->requestedSize = v109;
+                            out->mappedSize = v19;
+                            out->pageCount = v110;
                             v42 = vm_deallocate(mach_task_self_, v38, v19);
                             if ( !(uint32_t)v42 )
                             {
                               v141 = 0;
                               if ( !(unsigned int)iokit_slot_alloc_with_mem_entry(a2, v19, *(uint64_t *)((char *)info + 0x44), &v122) )
-                                *(uint32_t *)(a4 + 36) = v122;
+                                out->memoryEntry = v122;
                               for ( i = 0; i != 16; ++i )
                               {
                                 v105 = v143[i];
                                 if ( v105 )
                                 {
-                                  *(uint64_t *)(a4 + 48 + i * 8) = v105;
+                                  out->backupMappings[i] = v105;
                                   v143[i] = 0;
                                 }
                               }
@@ -4790,7 +4947,7 @@ LABEL_219:
                                 v107 = *(uint64_t *)&v144[j];
                                 if ( v107 )
                                 {
-                                  *(uint64_t *)(a4 + 176 + j) = v107;
+                                  out->workerScratchPages[j / 8] = v107;
                                   *(uint64_t *)&v144[j] = 0;
                                 }
                               }
@@ -4809,12 +4966,12 @@ LABEL_219:
                 if ( v69 == 512 )
                 {
 LABEL_145:
-                  *(uint64_t *)a4 = v38;
-                  *(uint64_t *)(a4 + 8) = 0;
-                  *(uint64_t *)(a4 + 16) = v19;
+                  out->mapping = v38;
+                  out->requestedSize = 0;
+                  out->mappedSize = v19;
                   v79 = name;
-                  *(uint32_t *)(a4 + 32) = 0;
-                  *(uint32_t *)(a4 + 36) = v79;
+                  out->pageCount = 0;
+                  out->memoryEntry = v79;
                   v141 = 0;
                   name = 0;
 LABEL_146:
@@ -4885,28 +5042,28 @@ LABEL_147:
                       v82 = (uint64_t *)v38;
                       do
                       {
-                        *v82 = *(uint64_t *)(a2 + 13592);
+                        *v82 = physmapState->marker;
                         v82 = (uint64_t *)((char *)v82 + v81);
                         --v80;
                       }
                       while ( v80 );
                     }
-                    *(uint64_t *)a4 = v38;
-                    *(uint64_t *)(a4 + 8) = v109;
-                    *(uint32_t *)(a4 + 32) = v110;
-                    *(uint64_t *)(a4 + 16) = v19;
+                    out->mapping = v38;
+                    out->requestedSize = v109;
+                    out->pageCount = v110;
+                    out->mappedSize = v19;
                     v42 = mach_port_deallocate(mach_task_self_, name);
                     if ( !(uint32_t)v42 )
                     {
                       name = 0;
                       if ( !(unsigned int)iokit_slot_alloc_with_mem_entry(a2, v19, *(uint64_t *)((char *)info + 0x44), &v122) )
-                        *(uint32_t *)(a4 + 36) = v122;
+                        out->memoryEntry = v122;
                       for ( k = 0; k != 512; k += 8 )
                       {
                         v84 = *(uint64_t *)&v144[k];
                         if ( v84 )
                         {
-                          *(uint64_t *)(a4 + 176 + k) = v84;
+                          out->workerScratchPages[k / 8] = v84;
                           *(uint64_t *)&v144[k] = 0;
                         }
                       }
@@ -4965,11 +5122,11 @@ LABEL_168:
         }
         while ( --v44 );
       }
-      v20 = (unsigned __int8 *)(a2 + 13884);
+      v20 = (unsigned __int8 *)&physmapState->workerStopFlag;
       v18 = v111 + 1;
       v42 = 5;
       v17 = v19;
-      v21 = (unsigned int *)(a2 + 13888);
+      v21 = (unsigned int *)&physmapState->readyWorkerCount;
       if ( v111 + 1 == v116 )
         return v42;
     }
@@ -4981,7 +5138,7 @@ LABEL_168:
     v42 = 5;
   }
 LABEL_170:
-  v88 = (unsigned __int8 *)(a2 + 13884);
+  v88 = (unsigned __int8 *)&physmapState->workerStopFlag;
   v89 = v11;
   do
   {
