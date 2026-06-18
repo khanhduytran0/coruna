@@ -745,39 +745,27 @@ __int64 __fastcall kreadbuf_via_tfp0(
         __int64 outBuf,
         uint64_t *a6)
 {
-  mach_vm_size_t v8; // x21
-  __int64 baseAddr; // x24
-  mach_vm_size_t v12; // x25
-  mach_vm_size_t v13; // x2
-  __int64 result; // x0
-  mach_vm_size_t outsize; // [xsp+8h] [xbp-48h] BYREF
-
   if ( !size )
     return 4;
-  v8 = size;
-  baseAddr = 0;
-  if ( size2 )
-    v12 = size2;
-  else
-    v12 = size;
-  while ( 1 )
+
+  mach_vm_size_t remaining = size;
+  mach_vm_size_t chunkLimit = size2 ? size2 : size;
+  uint32_t copied = 0;
+  while ( remaining )
   {
-    outsize = v8;
-    v13 = v8 >= v12 ? v12 : v8;
-    result = mach_vm_read_overwrite(target_task, baseAddr + vaddr, v13, baseAddr + outBuf, &outsize);
-    if ( (uint32_t)result )
-      break;
-    baseAddr = (unsigned int)(outsize + baseAddr);
-    v8 -= outsize;
-    if ( !v8 )
-    {
-      result = 0;
-      if ( a6 )
-        *a6 = baseAddr;
-      return result;
-    }
+    mach_vm_size_t outsize = remaining;
+    mach_vm_size_t chunkSize = remaining >= chunkLimit ? chunkLimit : remaining;
+    kern_return_t kr = mach_vm_read_overwrite(target_task, vaddr + copied, chunkSize, outBuf + copied, &outsize);
+    if ( kr )
+      return kr;
+
+    copied = (uint32_t)(copied + outsize);
+    remaining -= outsize;
   }
-  return result;
+
+  if ( a6 )
+    *a6 = copied;
+  return 0;
 }
 
 //----- (0000000000029B78) ----------------------------------------------------
@@ -1262,28 +1250,17 @@ bool __fastcall kwritebuf_last_0(struct_krwCtx *krwCtx, unsigned __int64 a2, con
 //----- (000000000002A574) ----------------------------------------------------
 mach_vm_address_t __fastcall ppl_kwrite32(struct_krwCtx *krwCtx, mach_vm_address_t a2, int a3)
 {
-  unsigned __int64 v4; // x21
-  struct_krwCtx *v5; // x19
-  mach_vm_address_t result; // x0
-  int newBytes; // [xsp+Ch] [xbp-24h] BYREF
-
-  v4 = a2;
-  v5 = krwCtx;
-  newBytes = a3;
   if ( krwCtx->xnuVersionPacked < XNU_VERSION_PACKED(8019, 60, 40, 0, 0) )
-  {
-LABEL_8:
     return noppl_kwrite32(krwCtx, a2, a3);
-  }
+
+  int newBytes = a3;
   if ( krw_ctx_has_flag(krwCtx, KRW_CTX_FLAG_CPU_A12_A13_A14_A15_A16_A17_MASK) )
-    return ppl_kwritebuf(v5, v4, &newBytes, 4);
-  result = remap_kaddr_through_physmap(v5, v4);
-  if ( result )
-  {
-    a2 = result;
-    goto LABEL_8;
-  }
-  return result;
+    return ppl_kwritebuf(krwCtx, a2, &newBytes, 4);
+
+  mach_vm_address_t remappedAddr = remap_kaddr_through_physmap(krwCtx, a2);
+  if ( !remappedAddr )
+    return 0;
+  return noppl_kwrite32(krwCtx, remappedAddr, a3);
 }
 
 //----- (000000000002A63C) ----------------------------------------------------
@@ -1377,102 +1354,62 @@ __int64 __fastcall mach_vm_read_with_attr_chunks(
 //----- (000000000002A8A4) ----------------------------------------------------
 __int64 __fastcall pgtable_write_aligned(struct_krwCtx *krwCtx)
 {
-  __int64 v1; // x19
-  kern_return_t v3; // w0
-  __int64 v5; // x21
-  unsigned __int64 v6; // x23
-  __int128 v7; // q0
-  mach_port_name_t iin_name; // w1
-  kern_return_t attributes; // w0
-  mach_port_name_t v10; // w2
-  unsigned __int64 v11; // x0
-  kern_return_t v12; // w0
-  mach_msg_type_number_t port_info_outCnt; // [xsp+Ch] [xbp-B4h] BYREF
-  integer_t port_info_out[4]; // [xsp+10h] [xbp-B0h] BYREF
-  __int128 v15; // [xsp+20h] [xbp-A0h]
-  __int128 v16; // [xsp+30h] [xbp-90h]
-  __int128 v17; // [xsp+40h] [xbp-80h]
-  int v18; // [xsp+50h] [xbp-70h]
-  mach_msg_type_number_t tree_infoCnt; // [xsp+54h] [xbp-6Ch] BYREF
-  ipc_info_tree_name_array_t tree_info; // [xsp+58h] [xbp-68h] BYREF
-  mach_msg_type_number_t table_infoCnt; // [xsp+64h] [xbp-5Ch] BYREF
-  ipc_info_name_array_t table_info; // [xsp+68h] [xbp-58h] BYREF
-  ipc_info_space_t space_info; // [xsp+70h] [xbp-50h] BYREF
-  mach_port_name_t v24; // [xsp+8Ch] [xbp-34h] BYREF
-
   if ( !krwCtx )
     return 708609;
   if ( bootstrap_port + 1 > 1 )
     return 0;
-  v1 = 163843;
-  v24 = 0;
-  if ( krw_task_for_pid(krwCtx, 1, &v24) )
+
+  __int64 status = 163843;
+  mach_port_name_t launchdTaskPort = 0;
+  if ( krw_task_for_pid(krwCtx, 1, &launchdTaskPort) )
   {
+    ipc_info_space_t space_info;
+    ipc_info_name_array_t table_info = 0;
+    mach_msg_type_number_t table_infoCnt = 0;
+    ipc_info_tree_name_array_t tree_info = 0;
+    mach_msg_type_number_t tree_infoCnt = 0;
     memset(&space_info, 0, sizeof(space_info));
-    table_info = 0;
-    table_infoCnt = 0;
-    tree_info = 0;
-    tree_infoCnt = 0;
-    v3 = mach_port_space_info(v24, &space_info, &table_info, &table_infoCnt, &tree_info, &tree_infoCnt);
-    if ( v3 )
+    kern_return_t kr = mach_port_space_info(launchdTaskPort, &space_info, &table_info, &table_infoCnt, &tree_info, &tree_infoCnt);
+    if ( kr )
     {
-      v1 = v3 | 0x80000000;
+      status = kr | 0x80000000;
     }
     else if ( table_infoCnt )
     {
-      v5 = 0;
-      v6 = 0;
-      v7 = 0u;
-      while ( 1 )
+      for ( mach_msg_type_number_t i = 0; i < table_infoCnt; ++i )
       {
-        v18 = 0;
-        v16 = v7;
-        v17 = v7;
-        *(__int128 *)port_info_out = v7;
-        v15 = v7;
-        port_info_outCnt = 17;
-        if ( (table_info[v5].iin_type & 0x1F0000) != 0 )
+        integer_t portAttributes[17] = {0};
+        mach_msg_type_number_t portAttributesCnt = 17;
+        mach_port_name_t name = table_info[i].iin_name;
+
+        if ( (table_info[i].iin_type & 0x1F0000) != 0 && name + 1 >= 2 )
         {
-          iin_name = table_info[v5].iin_name;
-          if ( iin_name + 1 >= 2 )
+          kr = mach_port_get_attributes(launchdTaskPort, name, 7, portAttributes, &portAttributesCnt);
+          if ( !kr && portAttributes[3] == 128 && (~*((uint8_t *)portAttributes + 36) & 6) == 0 )
           {
-            attributes = mach_port_get_attributes(v24, iin_name, 7, port_info_out, &port_info_outCnt);
-            v7 = 0u;
-            if ( !attributes && port_info_out[3] == 128 && (~BYTE4(v16) & 6) == 0 )
-              break;
-          }
-        }
-        ++v6;
-        ++v5;
-        if ( v6 >= table_infoCnt )
-          goto LABEL_8;
-      }
-      v10 = table_info[v5].iin_name;
-      if ( v10 + 1 >= 2 )
-      {
-        v11 = task_get_ipc_port(krwCtx, v24, v10);
-        if ( v11 )
-        {
-          v1 = plist_elem_is_string_6(krwCtx, v11, &bootstrap_port);
-          if ( !(uint32_t)v1 )
-          {
-            v12 = task_set_special_port(mach_task_self_, 4, bootstrap_port);
-            if ( v12 )
-              v1 = v12 | 0x80000000;
-            else
-              v1 = 0;
+            uint64_t portKobject = task_get_ipc_port(krwCtx, launchdTaskPort, name);
+            if ( portKobject )
+            {
+              status = plist_elem_is_string_6(krwCtx, portKobject, &bootstrap_port);
+              if ( !(uint32_t)status )
+              {
+                kr = task_set_special_port(mach_task_self_, 4, bootstrap_port);
+                status = kr ? kr | 0x80000000 : 0;
+              }
+            }
+            break;
           }
         }
       }
     }
-LABEL_8:
+
     if ( table_info && table_infoCnt )
       mach_vm_deallocate(mach_task_self_, (mach_vm_address_t)table_info, 28LL * table_infoCnt);
     if ( tree_info && tree_infoCnt )
       mach_vm_deallocate(mach_task_self_, (mach_vm_address_t)tree_info, 36LL * tree_infoCnt);
-    mach_port_deallocate(mach_task_self_, v24);
+    mach_port_deallocate(mach_task_self_, launchdTaskPort);
   }
-  return v1;
+  return status;
 }
 
 //----- (000000000002AABC) ----------------------------------------------------
