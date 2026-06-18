@@ -7,6 +7,7 @@
 #include <defs.h>
 #include <sys/syscall.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <Block.h>
 @import Foundation;
 
