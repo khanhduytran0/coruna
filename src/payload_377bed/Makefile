@@ -40,6 +40,7 @@ entry1_type0x09_CFLAGS = \
     -Wno-incompatible-library-redeclaration \
     -Wno-implicit-int \
     -fno-builtin \
+    -fblocks \
     -I.
 entry1_type0x09_FRAMEWORKS = CoreFoundation IOKit Security
 entry1_type0x09_INSTALL_PATH = /usr/local/lib

